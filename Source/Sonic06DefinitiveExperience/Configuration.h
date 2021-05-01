@@ -3,13 +3,17 @@
 enum ModelType
 {
     Sonic = 0,
+    SonicElise,
+};
+
+enum LanguageType
+{
+    English = 0,
+    Japanese,
 };
 
 class Configuration
 {
 public:
-
-    static ModelType m_modelType;
-
-    static bool load(const std::string& filePath);
+    static bool load(const std::string& rootPath);
 };

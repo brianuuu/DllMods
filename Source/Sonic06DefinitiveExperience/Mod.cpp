@@ -1,4 +1,3 @@
-#include "ArchiveTreePatcher.h"
 #include "Configuration.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
@@ -11,10 +10,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
         dir.erase(pos + 1);
     }
 
-    if (!Configuration::load(dir + "Config.ini"))
+    if (!Configuration::load(dir))
     {
         MessageBox(NULL, L"Failed to parse Config.ini", NULL, MB_ICONERROR);
     }
 
-    ArchiveTreePatcher::applyPatches();
 }

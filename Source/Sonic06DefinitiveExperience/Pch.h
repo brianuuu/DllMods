@@ -14,6 +14,9 @@
 #include <set>
 #include <vector>
 #include <sstream>
+#include <iostream>
+#include <fstream>
+#include <iomanip>
 
 // LostCodeLoader
 #include <LostCodeLoader.h>
