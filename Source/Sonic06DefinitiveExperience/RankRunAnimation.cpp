@@ -82,7 +82,7 @@ FUNCTION_PTR(void, __thiscall, CSonicContextChangeAnimation, 0xE74CC0, void* Thi
 void playRunAnimation()
 {
     void* pSonicContext = *(void**)0x1E5E2F0;
-    CSonicContextChangeAnimation(pSonicContext, RunResultLoop);
+    CSonicContextChangeAnimation(pSonicContext, RunResult);
 }
 
 uint32_t resultMessageReturnAddress = 0xE6E40D;
