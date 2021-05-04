@@ -6,10 +6,14 @@
     <ClCompile Include="Mod.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="bbWriter.cpp" />
+    <ClCompile Include="RankQuote.cpp" />
+    <ClCompile Include="RankRunAnimation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pch.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="bbWriter.h" />
+    <ClInclude Include="RankQuote.h" />
+    <ClInclude Include="RankRunAnimation.h" />
   </ItemGroup>
 </Project>
