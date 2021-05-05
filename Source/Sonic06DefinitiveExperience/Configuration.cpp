@@ -1,6 +1,11 @@
 #include "Configuration.h"
 #include "bbWriter.h"
 
+ModelType Configuration::m_model = ModelType::Sonic;
+LanguageType Configuration::m_language = LanguageType::English;
+bool Configuration::m_physics = false;
+RunResultType Configuration::m_run = RunResultType::Disable;
+
 bool Configuration::load(const std::string& rootPath)
 {
     const INIReader reader(rootPath + "mod.ini");
@@ -9,10 +14,10 @@ bool Configuration::load(const std::string& rootPath)
         return false;
     }
 
-    ModelType model = (ModelType)reader.GetInteger("Main", "nModel", 0);
-    LanguageType language = (LanguageType)reader.GetInteger("Main", "nLanguage", 0);
-    bool run = reader.GetBoolean("Main", "bRun", false);
-    bool physics = reader.GetBoolean("Main", "bPhysics", false);
+    m_model = (ModelType)reader.GetInteger("Main", "nModel", 0);
+    m_language = (LanguageType)reader.GetInteger("Main", "nLanguage", 0);
+    m_physics = reader.GetBoolean("Main", "bPhysics", false);
+    m_run = (RunResultType)reader.GetInteger("Main", "nRun", 0);
 
     string str;
 
@@ -36,8 +41,8 @@ bool Configuration::load(const std::string& rootPath)
         bb.addReplace("Languages\\Spanish", "Languages\\English");
 
         str = "cmn200";
-        bbWriter::applyModel(str, model);
-        bbWriter::applyLanguage(str, language);
+        bbWriter::applyModel(str, m_model);
+        bbWriter::applyLanguage(str, m_language);
         bb.addReplace("cmn200.ar.00", str + ".ar.00");
         bb.addName("cmn200.ar.01");
         bb.addReplace("cmn200.arl", str + ".arl");
@@ -56,7 +61,7 @@ bool Configuration::load(const std::string& rootPath)
         bb3.addReplace("Languages\\Spanish", "Languages\\English");
 
         // Physics
-        if (physics)
+        if (m_physics)
         {
             bb3.addReplace("#Sonic.ar.00", "#Sonic_06phy.ar.00");
             bb3.addReplace("#Sonic.arl", "#Sonic_06phy.arl");
@@ -68,86 +73,85 @@ bool Configuration::load(const std::string& rootPath)
 
         // stage animations
         str = "SonicBatabata";
-        bbWriter::applyModel(str, model);
+        bbWriter::applyModel(str, m_model);
         bb3.addReplace("SonicBatabata.ar.00", str + ".ar.00");
         bb3.addReplace("SonicBatabata.arl", str + ".arl");
         
         str = "SonicBoard";
-        bbWriter::applyModel(str, model);
+        bbWriter::applyModel(str, m_model);
         bb3.addReplace("SonicBoard.ar.00", str + ".ar.00");
         bb3.addReplace("SonicBoard.arl", str + ".arl");
         bb3.addReplace("SonicHoloska.ar.00", str + ".ar.00");
         bb3.addReplace("SonicHoloska.arl", str + ".arl");
 
         str = "SonicBoardCsc";
-        bbWriter::applyModel(str, model);
+        bbWriter::applyModel(str, m_model);
         bb3.addReplace("SonicBoardCsc.ar.00", str + ".ar.00");
         bb3.addReplace("SonicBoardCsc.arl", str + ".arl");
 
         str = "SonicBoardWap";
-        bbWriter::applyModel(str, model);
+        bbWriter::applyModel(str, m_model);
         bb3.addReplace("SonicBoardWap.ar.00", str + ".ar.00");
         bb3.addReplace("SonicBoardWap.arl", str + ".arl");
 
         str = "SonicBsd";
-        bbWriter::applyModel(str, model);
+        bbWriter::applyModel(str, m_model);
         bb3.addReplace("SonicBsd.ar.00", str + ".ar.00");
         bb3.addReplace("SonicBsd.arl", str + ".arl");
 
         str = "SonicChina";
-        bbWriter::applyModel(str, model);
+        bbWriter::applyModel(str, m_model);
         bb3.addReplace("SonicChina.ar.00", str + ".ar.00");
         bb3.addReplace("SonicChina.arl", str + ".arl");
 
         str = "SonicDiving";
-        bbWriter::applyModel(str, model);
+        bbWriter::applyModel(str, m_model);
         bb3.addReplace("SonicDiving.ar.00", str + ".ar.00");
         bb3.addReplace("SonicDiving.arl", str + ".arl");
 
         str = "SonicMission";
-        bbWriter::applyModel(str, model);
+        bbWriter::applyModel(str, m_model);
         bb3.addReplace("SonicMission.ar.00", str + ".ar.00");
         bb3.addReplace("SonicMission.arl", str + ".arl");
 
         str = "SonicPam";
-        bbWriter::applyModel(str, model);
+        bbWriter::applyModel(str, m_model);
         bb3.addReplace("SonicPam.ar.00", str + ".ar.00");
         bb3.addReplace("SonicPam.arl", str + ".arl");
 
         str = "SonicPla";
-        bbWriter::applyModel(str, model);
+        bbWriter::applyModel(str, m_model);
         bb3.addReplace("SonicPla.ar.00", str + ".ar.00");
         bb3.addReplace("SonicPla.arl", str + ".arl");
 
         str = "SonicSph";
-        bbWriter::applyModel(str, model);
+        bbWriter::applyModel(str, m_model);
         bb3.addReplace("SonicSph.ar.00", str + ".ar.00");
         bb3.addReplace("SonicSph.arl", str + ".arl");
 
         str = "SonicSsh";
-        bbWriter::applyModel(str, model);
+        bbWriter::applyModel(str, m_model);
         bb3.addReplace("SonicSsh.ar.00", str + ".ar.00");
         bb3.addReplace("SonicSsh.arl", str + ".arl");
 
         str = "SonicSsz";
-        bbWriter::applyModel(str, model);
+        bbWriter::applyModel(str, m_model);
         bb3.addReplace("SonicSsz.ar.00", str + ".ar.00");
         bb3.addReplace("SonicSsz.arl", str + ".arl");
 
         str = "SonicTpj";
-        bbWriter::applyModel(str, model);
+        bbWriter::applyModel(str, m_model);
         bb3.addReplace("SonicTpj.ar.00", str + ".ar.00");
         bb3.addReplace("SonicTpj.arl", str + ".arl");
 
         str = "SonicWater";
-        bbWriter::applyModel(str, model);
+        bbWriter::applyModel(str, m_model);
         bb3.addReplace("SonicWater.ar.00", str + ".ar.00");
         bb3.addReplace("SonicWater.arl", str + ".arl");
 
         // ranks
         str = "SonicRank";
-        bbWriter::applyRun(str, run, model);
-        bbWriter::applyModel(str, model);
+        bbWriter::applyModel(str, m_model);
         bb3.addReplace("SonicRankS.ar.00", str + ".ar.00");
         bb3.addReplace("SonicRankS.arl", str + ".arl");
         bb3.addReplace("SonicRankA.ar.00", str + ".ar.00");
@@ -160,31 +164,36 @@ bool Configuration::load(const std::string& rootPath)
         bb3.addReplace("SonicRankD.arl", str + ".arl");
 
         // voice
-        if (language == LanguageType::English)
+        if (m_language == LanguageType::English)
         {
             str = "voices\\English";
-            bbWriter::applyModel(str, model);
+            bbWriter::applyModel(str, m_model);
             bb3.addReplace("voices\\English", str);
         }
         else
         {
             str = "voices\\Japanese";
-            bbWriter::applyModel(str, model);
+            bbWriter::applyModel(str, m_model);
             bb3.addReplace("voices\\Japanese", str);
         }
 
         // Sonic.ar
         str = "Sonic";
-        bbWriter::applyPhysics(str, physics, model);
-        bbWriter::applyRun(str, run, model);
-        bbWriter::applyModel(str, model);
-        bbWriter::applyLanguage(str, language);
+        bbWriter::applyPhysics(str, m_physics, m_model);
+        bbWriter::applyModel(str, m_model);
+        bbWriter::applyLanguage(str, m_language);
         bb3.addReplace("Sonic.arl", str + ".arl");
         bb3.addReplace("Sonic.ar.00", str + ".ar.00");
 
         str = "Sonic";
-        bbWriter::applyModel(str, model);
+        bbWriter::applyModel(str, m_model);
         bb3.addReplace("Sonic.ar.01", str + ".ar.01");
+
+        // Running goal archive
+        if (m_model == ModelType::Sonic)
+        {
+            bb3.addName("Sonic.ar.02");
+        }
     }
 
     // Code

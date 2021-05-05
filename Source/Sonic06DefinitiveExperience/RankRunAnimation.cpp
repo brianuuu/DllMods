@@ -1,5 +1,6 @@
 #include "RankRunAnimation.h"
 
+#include "Configuration.h"
 #include <Hedgehog.h>
 
 struct CAnimationStateInfo
@@ -190,6 +191,9 @@ void __declspec(naked) addTransition()
 bool RankRunAnimation::m_enabled = false;
 void RankRunAnimation::applyPatches()
 {
+    if (Configuration::m_model != ModelType::Sonic) return;
+    if (Configuration::m_run == RunResultType::Disable) return;
+
     if (m_enabled) return;
     m_enabled = true;
 

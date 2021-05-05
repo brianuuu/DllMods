@@ -38,15 +38,6 @@ void bbWriter::applyPhysics(string& name, bool physics, ModelType type)
 	}
 }
 
-void bbWriter::applyRun(string& name, bool run, ModelType type)
-{
-	// for running at result screen
-	if (run && type == ModelType::Sonic)
-	{
-		name += "_run";
-	}
-}
-
 void bbWriter::addAR(std::string const& name, int count)
 {
 	for (int i = 0; i < count; i++)
