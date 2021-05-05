@@ -126,33 +126,62 @@ float flt_15C8614 = -1.0f;
 uint32_t sub_CE0600 = 0xCE0600;
 uint32_t sub_CDFB40 = 0xCDFB40;
 uint32_t sub_662010 = 0x662010;
+uint32_t stringConstructor = 0x6621A0;
+uint32_t stringDestructor = 0x661550;
 uint32_t addTransitionReturnAddress = 0xE22C61;
 void __declspec(naked) addTransition()
 {
     __asm
     {
-        lea     eax, RunResult
+        // Unknown function, still works without but do it anyway
+        push    RunResult
+        lea     ecx, [esp + 0x264 + 0x250]
+        call    [stringConstructor]
+        lea     ecx, [esp + 0x260 + 0x250]
         mov     ecx, ebx
         call    [sub_CE0600]
+        lea     ecx, [esp + 0x260 + 0x250]
+        call    [stringDestructor]
 
-        lea     eax, RunResultLoop
+        // Unknown function, still works without but do it anyway
+        push    RunResultLoop
+        lea     ecx, [esp + 0x264 + 0x238]
+        call    [stringConstructor]
+        lea     ecx, [esp + 0x260 + 0x238]
         mov     ecx, ebx
         call    [sub_CE0600]
+        lea     ecx, [esp + 0x260 + 0x238]
+        call    [stringDestructor]
 
-        lea     eax, RunResult
+        // Construct strings
+        push    RunResult
+        lea     ecx, [esp + 0x264 + 0x250]
+        call[stringConstructor]
+        push    RunResultLoop
+        lea     ecx, [esp + 0x264 + 0x234]
+        call[stringConstructor]
+
+        // Creates transition for RunResult
+        lea     eax, [esp + 0x260 + 0x250]
         push    eax
         push    ebx
         call    [sub_CDFB40]
-
         mov     eax, [eax]
         movss   xmm0, flt_15C8614
-        lea     ecx, RunResultLoop
+        lea     ecx, [esp + 0x260 + 0x234]
         push    ecx
         lea     ecx, [eax + 0x88]
         mov     byte ptr [eax + 0x90], 1
         movss   dword ptr [eax + 0x8C], xmm0
         call    [sub_662010]
 
+        // Destruct strings
+        lea     ecx, [esp + 0x260 + 0x250]
+        call    [stringDestructor]
+        lea     ecx, [esp + 0x260 + 0x234]
+        call    [stringDestructor]
+
+        // Resume original
         push    [0x015F8B5C]    // offset aCatchrocket
         jmp     [addTransitionReturnAddress]
     }

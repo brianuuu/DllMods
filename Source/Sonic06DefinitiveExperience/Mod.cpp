@@ -1,5 +1,8 @@
 #include "Configuration.h"
 
+#include "RankQuote.h"
+#include "RankRunAnimation.h"
+
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
     std::string dir = modInfo->CurrentMod->Path;
@@ -9,10 +12,12 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     {
         dir.erase(pos + 1);
     }
-
+    
     if (!Configuration::load(dir))
     {
         MessageBox(NULL, L"Failed to parse Config.ini", NULL, MB_ICONERROR);
     }
 
+    RankQuote::applyPatches();
+    RankRunAnimation::applyPatches();
 }
