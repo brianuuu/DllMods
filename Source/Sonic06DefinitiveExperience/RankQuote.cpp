@@ -7,7 +7,7 @@ bool RankQuote::m_playRankVoice = false;
 #if _DEBUG
 void __cdecl debugRank()
 {
-    switch (m_rank)
+    switch (RankQuote::m_rank)
     {
     case 4: printf("Got S rank!\n"); break;
     case 3: printf("Got A rank!\n"); break;
