@@ -79,21 +79,51 @@ HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* 
     originalCSonicCreateAnimationStates(This, Edx, A2, A3);
 }
 
-bool canPlayRunAnimation = true;
+#define STH2006_RUN_STAGE_COUNT 4
+const char* sth2006RunStageIDs[STH2006_RUN_STAGE_COUNT] = { "ghz200", "sph200", "ssh200", "euc200" };
+bool canPlayRunAnimation = false;
 void checkCanPlayRunAnimation()
 {
+    canPlayRunAnimation = false;
+
+    // Not Modern Sonic
     void* pModernSonicContext = *(void**)0x1E5E2F8;
-    if (pModernSonicContext)
+    if (!pModernSonicContext) return;
+
+    // Currently in super form
+    uint32_t superSonicAddress = (uint32_t)(pModernSonicContext) + 0x1A0;
+    if (*(void**)superSonicAddress) return;
+
+    char* currentStageID = (char*)0x01E774D4;
+    if (Configuration::m_run == RunResultType::STH2006)
     {
-        uint32_t superSonicAddress = (uint32_t)(pModernSonicContext) + 0x1A0;
-        if (!(*(void**)superSonicAddress))
+        // Only enable for STH2006 Project stages
+        for (int i = 0; i < STH2006_RUN_STAGE_COUNT; i++)
         {
-            canPlayRunAnimation = true;
-            return;
+            if (strcmp(currentStageID, sth2006RunStageIDs[i]) == 0)
+            {
+                canPlayRunAnimation = true;
+                return;
+            }
         }
+        return;
     }
 
-    canPlayRunAnimation = false;
+    if (Configuration::m_run == RunResultType::Custom)
+    {
+        // Only enable for custom defined stages
+        for (string const& stage : Configuration::m_runStages)
+        {
+            if (strcmp(currentStageID, stage.c_str()) == 0)
+            {
+                canPlayRunAnimation = true;
+                return;
+            }
+        }
+        return;
+    }
+
+    canPlayRunAnimation = true;
 }
 
 FUNCTION_PTR(void, __thiscall, CSonicContextChangeAnimation, 0xE74CC0, void* This, const Hedgehog::Base::CSharedString& name);

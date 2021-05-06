@@ -5,6 +5,7 @@ ModelType Configuration::m_model = ModelType::Sonic;
 LanguageType Configuration::m_language = LanguageType::English;
 bool Configuration::m_physics = false;
 RunResultType Configuration::m_run = RunResultType::Disable;
+vector<string> Configuration::m_runStages = {};
 
 bool Configuration::load(const std::string& rootPath)
 {
@@ -18,6 +19,19 @@ bool Configuration::load(const std::string& rootPath)
     m_language = (LanguageType)reader.GetInteger("Main", "nLanguage", 0);
     m_physics = reader.GetBoolean("Main", "bPhysics", false);
     m_run = (RunResultType)reader.GetInteger("Main", "nRun", 0);
+
+    // Get custom stage list
+    string runStages = reader.Get("Main", "sRunStages", "");
+    string delimiter = ",";
+    size_t pos = 0;
+    string token;
+    while ((pos = runStages.find(delimiter)) != string::npos)
+    {
+        token = runStages.substr(0, pos);
+        m_runStages.push_back(token);
+        runStages.erase(0, pos + delimiter.length());
+    }
+    m_runStages.push_back(runStages);
 
     string str;
 
