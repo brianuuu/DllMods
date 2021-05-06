@@ -79,11 +79,31 @@ HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* 
     originalCSonicCreateAnimationStates(This, Edx, A2, A3);
 }
 
+bool canPlayRunAnimation = true;
+void checkCanPlayRunAnimation()
+{
+    void* pModernSonicContext = *(void**)0x1E5E2F8;
+    if (pModernSonicContext)
+    {
+        uint32_t superSonicAddress = (uint32_t)(pModernSonicContext) + 0x1A0;
+        if (!(*(void**)superSonicAddress))
+        {
+            canPlayRunAnimation = true;
+            return;
+        }
+    }
+
+    canPlayRunAnimation = false;
+}
+
 FUNCTION_PTR(void, __thiscall, CSonicContextChangeAnimation, 0xE74CC0, void* This, const Hedgehog::Base::CSharedString& name);
 void playRunAnimation()
 {
-    void* pSonicContext = *(void**)0x1E5E2F0;
-    CSonicContextChangeAnimation(pSonicContext, RunResult);
+    if (canPlayRunAnimation)
+    {
+        void* pModernSonicContext = *(void**)0x1E5E2F8;
+        CSonicContextChangeAnimation(pModernSonicContext, RunResult);
+    }
 }
 
 uint32_t resultMessageReturnAddress = 0xE6E40D;
@@ -92,17 +112,27 @@ void __declspec(naked) resultMessage()
 {
     __asm
     {
+        push    esi
+        call    checkCanPlayRunAnimation
+        pop     esi
+
+        // Skip if we are not Modern Sonic and not in super form
+        mov     cl, canPlayRunAnimation
+        test    cl, cl
+        jz      jump
+
         // Compare change result state
         cmp     [esi + 0x10], 3
-        je      jump
-
-        // Call as normal for state 1 and 2
-        call    [resultStateFunctionAddress]
-        jmp     [resultMessageReturnAddress]
+        jne     jump
 
         // State 3 plays animation, skip
+        jmp     [resultMessageReturnAddress]
+
+        // Original function
         jump:
-        pop     esi
+        push    esi
+        lea     ecx, [edi - 0x28]
+        call    [resultStateFunctionAddress]
         jmp     [resultMessageReturnAddress]
     }
 }
@@ -135,41 +165,46 @@ void __declspec(naked) addTransition()
     __asm
     {
         // Unknown function, still works without but do it anyway
+        sub     esp, 4
         push    RunResult
-        lea     ecx, [esp + 0x264 + 0x250]
+        lea     ecx, [esp + 4]
         call    [stringConstructor]
-        lea     ecx, [esp + 0x260 + 0x250]
+        lea     ecx, [esp]
         mov     ecx, ebx
         call    [sub_CE0600]
-        lea     ecx, [esp + 0x260 + 0x250]
+        lea     ecx, [esp]
         call    [stringDestructor]
+        add     esp, 4
 
         // Unknown function, still works without but do it anyway
+        sub     esp, 4
         push    RunResultLoop
-        lea     ecx, [esp + 0x264 + 0x238]
+        lea     ecx, [esp + 4]
         call    [stringConstructor]
-        lea     ecx, [esp + 0x260 + 0x238]
+        lea     ecx, [esp]
         mov     ecx, ebx
         call    [sub_CE0600]
-        lea     ecx, [esp + 0x260 + 0x238]
+        lea     ecx, [esp]
         call    [stringDestructor]
+        add     esp, 4
 
         // Construct strings
+        sub     esp, 8
         push    RunResult
-        lea     ecx, [esp + 0x264 + 0x250]
+        lea     ecx, [esp + 8]
         call[stringConstructor]
         push    RunResultLoop
-        lea     ecx, [esp + 0x264 + 0x234]
+        lea     ecx, [esp + 4]
         call[stringConstructor]
 
         // Creates transition for RunResult
-        lea     eax, [esp + 0x260 + 0x250]
+        lea     eax, [esp + 4] // RunResult
         push    eax
         push    ebx
         call    [sub_CDFB40]
         mov     eax, [eax]
         movss   xmm0, flt_15C8614
-        lea     ecx, [esp + 0x260 + 0x234]
+        lea     ecx, [esp] // RunResultLoop
         push    ecx
         lea     ecx, [eax + 0x88]
         mov     byte ptr [eax + 0x90], 1
@@ -177,10 +212,11 @@ void __declspec(naked) addTransition()
         call    [sub_662010]
 
         // Destruct strings
-        lea     ecx, [esp + 0x260 + 0x250]
+        lea     ecx, [esp + 4] // RunResult
         call    [stringDestructor]
-        lea     ecx, [esp + 0x260 + 0x234]
+        lea     ecx, [esp] // RunResultLoop
         call    [stringDestructor]
+        add     esp, 8
 
         // Resume original
         push    [0x015F8B5C]    // offset aCatchrocket
@@ -205,7 +241,7 @@ void RankRunAnimation::applyPatches()
     WRITE_JUMP(0xE22C5C, addTransition);
 
     // Ignore original change animation during result screen
-    WRITE_JUMP(0xE6E408, resultMessage);
+    WRITE_JUMP(0xE6E404, resultMessage);
 
     // Play animation when screen faded to white
     WRITE_JUMP(0xE692D9, resultStateOne);
