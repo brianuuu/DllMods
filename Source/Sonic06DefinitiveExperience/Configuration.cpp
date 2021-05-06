@@ -210,14 +210,8 @@ bool Configuration::load(const std::string& rootPath)
         }
     }
 
-    // Code
-    //Patch "Disable Light Dash Hints" by "Hyper"
-    WRITE_MEMORY(0x528A08, uint8_t, 0xE9, 0xC8, 0x00, 0x00, 0x00);
-
-    //Patch "Disable Boost Button Prompt" by "Hyper"
-    WRITE_MEMORY(0x109BC7C, uint8_t, 0xE9, 0x71, 0x01, 0x00, 0x00);
-
-    //Patch "Disable Spin Dash on Dash Panels" by "Hyper"
+    // Optional codes
+    // Patch "Disable Spin Dash on Dash Panels" by "Hyper"
     bool noSpin = reader.GetBoolean("Main", "bNoSpin", true);
     if (noSpin)
     {
@@ -225,7 +219,7 @@ bool Configuration::load(const std::string& rootPath)
         WRITE_MEMORY(0xE0C734, uint8_t, 0xE9, 0x27, 0x01, 0x00, 0x00);
     }
 
-    //Patch "Disable Homing Reticle" by "Hyper"
+    // Patch "Disable Homing Reticle" by "Hyper"
     bool noCursor = reader.GetBoolean("Main", "bNoCursor", false);
     if (noCursor)
     {

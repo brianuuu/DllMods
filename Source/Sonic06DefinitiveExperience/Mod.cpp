@@ -20,4 +20,16 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     RankQuote::applyPatches();
     RankRunAnimation::applyPatches();
+
+    // Mandatory codes
+    // Patch "Disable Light Dash Hints" by "Hyper"
+    WRITE_MEMORY(0x528A08, uint8_t, 0xE9, 0xC8, 0x00, 0x00, 0x00);
+
+    // Patch "Disable Boost Button Prompt" by "Hyper"
+    WRITE_MEMORY(0x109BC7C, uint8_t, 0xE9, 0x71, 0x01, 0x00, 0x00);
+
+    // Patch "No Boosting Animation When Grinding" by "Skyth"
+    WRITE_MEMORY(0xDF2380, uint16_t, 0xA4E9);
+    WRITE_MEMORY(0xDF2382, uint8_t, 0x0);
+    WRITE_NOP(0xDF2385, 1);
 }
