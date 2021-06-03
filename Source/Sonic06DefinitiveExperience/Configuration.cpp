@@ -202,12 +202,6 @@ bool Configuration::load(const std::string& rootPath)
         str = "Sonic";
         bbWriter::applyModel(str, m_model);
         bb3.addReplace("Sonic.ar.01", str + ".ar.01");
-
-        // Running goal archive
-        if (m_model == ModelType::Sonic)
-        {
-            bb3.addName("Sonic.ar.02");
-        }
     }
 
     // Optional codes
@@ -223,6 +217,7 @@ bool Configuration::load(const std::string& rootPath)
     bool noCursor = reader.GetBoolean("Main", "bNoCursor", false);
     if (noCursor)
     {
+        WRITE_MEMORY(0xB6AB8C, uint8_t, 0xE9, 0xF7, 0x01, 0x00, 0x00);
         WRITE_MEMORY(0xDEBC36, uint8_t, 0x00);
     }
 
