@@ -80,6 +80,10 @@ bool Configuration::load(const std::string& rootPath)
             bb3.addReplace("#Sonic.ar.00", "#Sonic_06phy.ar.00");
             bb3.addReplace("#Sonic.arl", "#Sonic_06phy.arl");
         }
+        else
+        {
+            bb3.addAR("#Sonic", 1);
+        }
 
         // TODO: non-Sonic characters will edit these
         bb3.addAR("SonicActionCommon", 1);
