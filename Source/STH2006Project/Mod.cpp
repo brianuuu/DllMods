@@ -1,4 +1,5 @@
 #include "Configuration.h"
+#include "EnemyTrigger.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
@@ -15,7 +16,10 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
         MessageBox(NULL, L"Failed to parse Config.ini", NULL, MB_ICONERROR);
     }
 
-    // Mandatory codes
+    // -------------Patches--------------
+    EnemyTrigger::applyPatches();
+
+    // -------------Mandatory codes--------------
     // Patch "Disable Light Dash Hints" by "Hyper"
     WRITE_MEMORY(0x528A08, uint8_t, 0xE9, 0xC8, 0x00, 0x00, 0x00);
 
