@@ -81,18 +81,15 @@ HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* 
 
 #define STH2006_RUN_STAGE_COUNT 4
 const char* sth2006RunStageIDs[STH2006_RUN_STAGE_COUNT] = { "ghz200", "sph200", "ssh200", "euc200" };
-bool canPlayRunAnimation = false;
-void checkCanPlayRunAnimation()
+bool checkCanPlayRunAnimation()
 {
-    canPlayRunAnimation = false;
-
     // Not Modern Sonic
-    void* pModernSonicContext = *(void**)0x1E5E2F8;
-    if (!pModernSonicContext) return;
+    void* const pModernSonicContext = *(void**)0x1E5E2F8;
+    if (!pModernSonicContext) return false;
 
     // Currently in super form
     uint32_t superSonicAddress = (uint32_t)(pModernSonicContext) + 0x1A0;
-    if (*(void**)superSonicAddress) return;
+    if (*(void**)superSonicAddress) return false;
 
     char* currentStageID = (char*)0x01E774D4;
     if (Configuration::m_run == RunResultType::STH2006)
@@ -102,11 +99,10 @@ void checkCanPlayRunAnimation()
         {
             if (strcmp(currentStageID, sth2006RunStageIDs[i]) == 0)
             {
-                canPlayRunAnimation = true;
-                return;
+                return true;
             }
         }
-        return;
+        return false;
     }
 
     if (Configuration::m_run == RunResultType::Custom)
@@ -116,71 +112,35 @@ void checkCanPlayRunAnimation()
         {
             if (strcmp(currentStageID, stage.c_str()) == 0)
             {
-                canPlayRunAnimation = true;
-                return;
+                return true;
             }
         }
-        return;
+        return false;
     }
 
-    canPlayRunAnimation = true;
+    // RunResultType::EnableAll
+    return true;
 }
 
 FUNCTION_PTR(void, __thiscall, CSonicContextChangeAnimation, 0xE74CC0, void* This, const Hedgehog::Base::CSharedString& name);
-void playRunAnimation()
+HOOK(void, __fastcall, MsgChangeResultState, 0xE692C0, void* This, void* Edx, uint32_t a2)
 {
-    if (canPlayRunAnimation)
+    uint32_t const state = *(uint32_t*)(a2 + 16);
+    if (checkCanPlayRunAnimation())
     {
-        void* pModernSonicContext = *(void**)0x1E5E2F8;
-        CSonicContextChangeAnimation(pModernSonicContext, RunResult);
+        if (state == 1)
+        {
+            void* const pModernSonicContext = *(void**)0x1E5E2F8;
+            CSonicContextChangeAnimation(pModernSonicContext, RunResult);
+        }
+        else if (state == 3)
+        {
+            // Skip the normal rank animation
+            return;
+        }
     }
-}
 
-uint32_t resultMessageReturnAddress = 0xE6E40D;
-uint32_t resultStateFunctionAddress = 0xE692C0;
-void __declspec(naked) resultMessage()
-{
-    __asm
-    {
-        push    esi
-        call    checkCanPlayRunAnimation
-        pop     esi
-
-        // Skip if we are not Modern Sonic and not in super form
-        mov     cl, canPlayRunAnimation
-        test    cl, cl
-        jz      jump
-
-        // Compare change result state
-        cmp     [esi + 0x10], 3
-        jne     jump
-
-        // State 3 plays animation, skip
-        jmp     [resultMessageReturnAddress]
-
-        // Original function
-        jump:
-        push    esi
-        lea     ecx, [edi - 0x28]
-        call    [resultStateFunctionAddress]
-        jmp     [resultMessageReturnAddress]
-    }
-}
-
-uint32_t resultStateOneJumpAddress = 0xE69369;
-uint32_t resultStateOneReturnAddress = 0xE692DF;
-void __declspec(naked) resultStateOne()
-{
-    __asm
-    {
-        jnz     jump
-        call    playRunAnimation
-        jmp     [resultStateOneReturnAddress]
-
-        // Not state 1
-        jump:
-        jmp     [resultStateOneJumpAddress]
-    }
+    originalMsgChangeResultState(This, Edx, a2);
 }
 
 float flt_15C8614 = -1.0f;
@@ -254,14 +214,10 @@ void __declspec(naked) addTransition()
     }
 }
 
-bool RankRunAnimation::m_enabled = false;
 void RankRunAnimation::applyPatches()
 {
     if (Configuration::m_model != ModelType::Sonic) return;
     if (Configuration::m_run == RunResultType::Disable) return;
-
-    if (m_enabled) return;
-    m_enabled = true;
 
     // Add run goal animations to the animation list
     INSTALL_HOOK(InitializeSonicAnimationList);
@@ -270,9 +226,7 @@ void RankRunAnimation::applyPatches()
     // Add transition asm for RunResult->RunResultLoop
     WRITE_JUMP(0xE22C5C, addTransition);
 
-    // Ignore original change animation during result screen
-    WRITE_JUMP(0xE6E404, resultMessage);
-
     // Play animation when screen faded to white
-    WRITE_JUMP(0xE692D9, resultStateOne);
+    // Ignore original change animation during result screen
+    INSTALL_HOOK(MsgChangeResultState);
 }

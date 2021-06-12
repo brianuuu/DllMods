@@ -11,8 +11,6 @@
 
 class RankRunAnimation
 {
-	static bool m_enabled;
-
 public:
 	static void applyPatches();
 };
