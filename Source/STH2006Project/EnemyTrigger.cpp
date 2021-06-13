@@ -1,10 +1,10 @@
 #include "EnemyTrigger.h"
 
 uint32_t const MsgNotifyObjectEventOffset = 0x16811C0;
-uint32_t const EventTriggerFunction = 0xD5ED00;
-#define DAMAGE_EVENT_ASM(enemyName, failAddress, damageFunctionAddress) \
-    uint32_t const enemyName##DamageEventReturnAddress = failAddress; \
-    uint32_t const enemyName##JumpToDamageCall = failAddress + 0x0D; \
+FUNCTION_PTR(void*, __stdcall, fpEventTrigger, 0xD5ED00, void* This, int Event);
+#define DAMAGE_EVENT_ASM(enemyName, address, damageFunctionAddress) \
+    uint32_t const enemyName##DamageEventReturnAddress = address; \
+    uint32_t const enemyName##JumpToDamageCall = address + 0x0D; \
     uint32_t enemyName##Damaging = 0; \
     void __declspec(naked) enemyName##DamageEvent() \
     { \
@@ -33,24 +33,12 @@ uint32_t const EventTriggerFunction = 0xD5ED00;
             __asm jmp   [enemyName##JumpToDamageCall] \
         } \
     } \
-    uint32_t const enemyName##TriggerEventReturnAddress = failAddress + 0x16; \
-    uint32_t const enemyName##DamageFunctionAddress = damageFunctionAddress; \
-    void __declspec(naked) enemyName##TriggerEvent() \
+    HOOK(void, __fastcall, enemyName##MsgDamage, damageFunctionAddress, void* This, void* Edx, uint32_t* a2) \
     { \
-        __asm \
-        { \
-            /*Trigger 4*/ \
-            __asm push  4 \
-            __asm lea   ecx, [edi-28h] \
-            __asm push  ecx \
-            __asm call  [EventTriggerFunction] \
-            /*Original damage function*/ \
-            __asm push  esi \
-            __asm lea   ecx, [edi-0x28] \
-            __asm call  [enemyName##DamageFunctionAddress] \
-            __asm jmp   [enemyName##TriggerEventReturnAddress] \
-        } \
-    } 
+        /*Fire event 4*/ \
+        fpEventTrigger(This, 4); \
+        original##enemyName##MsgDamage(This, Edx, a2);\
+    }
 
 #define DAMAGE_EXPLODE_ASM(enemyName, failAddress, successAddress, originalASM, successASM) \
     uint32_t const enemyName##ExplodeFailAddress = failAddress; \
@@ -77,8 +65,7 @@ uint32_t const EventTriggerFunction = 0xD5ED00;
 
 #define WRITE_JUMP_EVENT_TRIGGER(address, enemyName) \
     WRITE_JUMP(address, enemyName##DamageEvent); \
-    WRITE_JUMP(address + 0x12, enemyName##TriggerEvent); \
-    WRITE_NOP(address + 0x17, 0x4);
+    INSTALL_HOOK(enemyName##MsgDamage);
 
 // ---------------------------------------------------
 // Enemies that explodes on spot
