@@ -25,4 +25,7 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     // Patch "Disable Boost Button Prompt" by "Hyper"
     WRITE_MEMORY(0x109BC7C, uint8_t, 0xE9, 0x71, 0x01, 0x00, 0x00);
+
+    //Patch "Red Rings Appear On New Game" by "brianuuu"
+    WRITE_NOP(0x11A9ECB, 2);
 }
