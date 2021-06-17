@@ -14,4 +14,6 @@ public:
     static bool m_enableLightdashSound;
     static bool m_enableNavigationSound;
     static SoundType m_navigationSoundType;
+    static bool m_enableLightdashPrompt;
+    static bool m_enableBumperRailSwitch;
 };

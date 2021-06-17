@@ -3,15 +3,28 @@
 
 bool NavigationSound::m_playedSoundThisFrame = false;
 float NavigationSound::m_lightdashTimer = 0.0f;
-uint32_t NavigationSound::m_esp = 0;
 
-// This may need to be updated if PlayNavigationHintSound() is changed...
-// Check ESP at 0x528A2B
-#if _DEBUG
-uint32_t const LightDashStackPtr = 0x19F898;
-#else
-uint32_t const LightDashStackPtr = 0x19FA68;
-#endif
+HOOK(void*, __fastcall, UpdateApplication, 0xE7BED0, void* This, void* Edx, float elapsedTime, uint8_t a3)
+{
+    if (NavigationSound::m_lightdashTimer > 0.0f)
+    {
+        NavigationSound::m_lightdashTimer -= elapsedTime;
+    }
+    return originalUpdateApplication(This, Edx, elapsedTime, a3);
+}
+
+uint32_t m_buttonType = 0;
+HOOK(void, __fastcall, MsgStartCommonButtonSign, 0x5289A0, void* This, void* Edx, uint32_t a2)
+{
+    // Disable Y button prompt?
+    m_buttonType = *(uint32_t*)(a2 + 16);
+    if (m_buttonType == 3 && !Configuration::m_enableLightdashPrompt)
+    {
+        return;
+    }
+
+    originalMsgStartCommonButtonSign(This, Edx, a2);
+}
 
 void PlayNavigationHintSound()
 {
@@ -21,7 +34,7 @@ void PlayNavigationHintSound()
         return;
     }
 
-    if (NavigationSound::m_esp == LightDashStackPtr)
+    if (m_buttonType == 3) // Y button
     {
         if (NavigationSound::m_lightdashTimer > 0.0f)
         {
@@ -45,22 +58,15 @@ void PlayNavigationHintSound()
     printf("Played Navigation Sound!\n");
 }
 
-HOOK(void*, __fastcall, UpdateApplication, 0xE7BED0, void* This, void* Edx, float elapsedTime, uint8_t a3)
-{
-    if (NavigationSound::m_lightdashTimer > 0.0f)
-    {
-        NavigationSound::m_lightdashTimer -= elapsedTime;
-    }
-    return originalUpdateApplication(This, Edx, elapsedTime, a3);
-}
-
 #define NAVIGATION_HINT_SOUND_ASM(hintName, returnAddress) \
     uint32_t const hintName##ReturnAddress = returnAddress; \
     void __declspec(naked) hintName##PlaySound() \
     { \
         __asm \
         { \
-            __asm mov     NavigationSound::m_esp, esp \
+            __asm mov     ecx, [ebp+8h] \
+            __asm mov     ecx, [ecx+10h] \
+            __asm mov     m_buttonType, ecx \
             __asm call    PlayNavigationHintSound \
             __asm lea     ecx, [esp+38h-24h] \
             __asm push    0 \
@@ -87,6 +93,7 @@ void NavigationSound::update()
 void NavigationSound::applyPatches()
 {
     INSTALL_HOOK(UpdateApplication);
+    INSTALL_HOOK(MsgStartCommonButtonSign);
 
     WRITE_JUMP_NAVIGATION(0x5287AE, boost);
     WRITE_JUMP_NAVIGATION(0x5288DE, quickstep);

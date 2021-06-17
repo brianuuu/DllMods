@@ -9,6 +9,5 @@ public:
 	
 	static float constexpr m_lightdashDelay = 2.0f;
 	static float m_lightdashTimer;
-	static uint32_t m_esp;
 };
 
