@@ -1,5 +1,6 @@
 #include "Configuration.h"
 #include "EnemyTrigger.h"
+#include "Navigation.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
@@ -17,15 +18,13 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     }
 
     // -------------Patches--------------
+    // Enable enemy event and triggers
     EnemyTrigger::applyPatches();
 
+    // Disable lightdash hints
+    Navigation::applyPatches();
+
     // -------------Mandatory codes--------------
-    // Patch "Disable Light Dash Hints" by "Hyper"
-    WRITE_MEMORY(0x528A08, uint8_t, 0xE9, 0xC8, 0x00, 0x00, 0x00);
-
-    // Patch "Disable Boost Button Prompt" by "Hyper"
-    WRITE_MEMORY(0x109BC7C, uint8_t, 0xE9, 0x71, 0x01, 0x00, 0x00);
-
-    //Patch "Red Rings Appear On New Game" by "brianuuu"
+    // Patch "Red Rings Appear On New Game" by "brianuuu"
     WRITE_NOP(0x11A9ECB, 2);
 }
