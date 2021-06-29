@@ -17,6 +17,11 @@
 #include <iomanip>
 #include <math.h>
 
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <Eigen/Eigen>
+#include <Eigen/Geometry>
+
 // LostCodeLoader
 #include <LostCodeLoader.h>
 
