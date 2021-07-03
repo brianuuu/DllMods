@@ -259,15 +259,8 @@ HOOK(void, __fastcall, CSonicUpdate, 0xE6BF20, void* This, void* Edx, float* dt)
 {
     originalCSonicUpdate(This, Edx, dt);
 
-    if (Chip::m_chipFollow.m_pObject)
-    {
-        Chip::m_chipFollow.advanceFollowSonic(*dt);
-    }
-
-    if (Chip::m_chipResult.m_pResult)
-    {
-        Chip::m_chipResult.advanceResult();
-    }
+    Chip::m_chipFollow.advanceFollowSonic(*dt);
+    Chip::m_chipResult.advanceResult();
 }
 
 HOOK(void, __fastcall, MsgPlayerGoal, 0xE692C0, void* This, void* Edx, uint32_t a2)
