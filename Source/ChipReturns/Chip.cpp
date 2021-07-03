@@ -253,6 +253,8 @@ HOOK(void, __fastcall, MsgChangeResultState, 0xE692C0, void* This, void* Edx, ui
 
 HOOK(void, __fastcall, CSonicUpdate, 0xE6BF20, void* This, void* Edx, float* dt)
 {
+    originalCSonicUpdate(This, Edx, dt);
+
     if (Chip::m_chipFollow.m_pObject)
     {
         if (std::string((char*)Chip::m_chipFollow.m_pObject[76], 9) == "chip_idle")
@@ -278,8 +280,6 @@ HOOK(void, __fastcall, CSonicUpdate, 0xE6BF20, void* This, void* Edx, float* dt)
             Chip::m_chipResult.reset();
         }
     }
-
-    originalCSonicUpdate(This, Edx, dt);
 }
 
 HOOK(void, __fastcall, MsgPlayerGoal, 0xE692C0, void* This, void* Edx, uint32_t a2)
@@ -903,12 +903,15 @@ void Chip::ChipFollow::advanceFollowSonic(float dt)
             m_randPosTarget = Eigen::Vector3f(getRandomFloat(-1.2f, 1.2f), getRandomFloat(1.0f, 1.8f), getRandomFloat(-1.1f, -0.5f));
         }
         m_randPosAdd = m_randPosAdd + (m_randPosTarget - m_randPosAdd) * min(dt * 0.5f, 1.0f);
-        targetPosition += targetRotation * (m_randPosAdd + Eigen::Vector3f(0.0f, (m_goalLeave ? m_goalLeaveYAdd : 0.0f), 0.0f));
 
-        // Interpolate pos and rot
+        // Interpolate rotation first
         float const lerpRate = min(dt * 2.0f, 1.0f);
-        m_position = m_position + (targetPosition - m_position) * lerpRate;
         m_rotation = m_rotation.slerp(lerpRate, targetRotation);
+        
+        // Interpolate position relative to rotation
+        targetPosition += m_rotation * (m_randPosAdd + Eigen::Vector3f(0.0f, (m_goalLeave ? m_goalLeaveYAdd : 0.0f), 0.0f));
+        Eigen::Vector3f distTravelling = (targetPosition - m_position) * lerpRate;
+        m_position += distTravelling;
 
         // After goal if Chip is far away from Sonic, delete
         if (m_goalLeave && m_position.y() > sonicY + maxGoalLeaveHeight - 3.0f)
@@ -923,9 +926,18 @@ void Chip::ChipFollow::advanceFollowSonic(float dt)
             return;
         }
 
+        // Get current speed
+        float const speed = distTravelling.norm() / dt;
+        bool const isMoving = speed > 4.0f;
+        //DebugDrawText::draw(format("Speed = %.3f", speed), { 0,0 }, 3);
+        
+        // Get horizontal speed, use for ChipState::MoveFast
+        distTravelling.y() = 0;
+        float const xySpeed = distTravelling.norm() / dt;
+        bool const isFastMoving = xySpeed > 30.0f;
+
         // Check how long have we been idle
-        bool const isSonicMoving = Chip::getSonicSpeedSquared() > 16.0f;
-        if (m_state == ChipState::Follow && !isSonicMoving)
+        if (m_state == ChipState::Follow && !isMoving)
         {
             m_idleTimer += dt;
         }
@@ -949,7 +961,7 @@ void Chip::ChipFollow::advanceFollowSonic(float dt)
                     Chip::updateGetFrameTime(m_pObject, (m_state == ChipState::IdleA ? 60.0f : 330.0f) / 30.0f);
                     printf("[Chip Follow] State change: Follow -> %s\n", m_state == ChipState::IdleA ? "IdleA" : "IdleB");
                 }
-                else if (isSonicMoving)
+                else if (isMoving)
                 {
                     Chip::updateGetFrameTime(m_pObject, 570.0f / 30.0f);
                     m_state = ChipState::IdleMove;
@@ -999,7 +1011,7 @@ void Chip::ChipFollow::advanceFollowSonic(float dt)
         {
             if (m_frameTime >= 615.0f)
             {
-                if (!isSonicMoving)
+                if (!isMoving)
                 {
                     Chip::updateGetFrameTime(m_pObject, 645.0f / 30.0f);
                     m_state = ChipState::MoveIdle;
