@@ -2,6 +2,8 @@
 
 #include "RankQuote.h"
 #include "RankRunAnimation.h"
+#include "SuperSonic.h"
+#include "Navigation.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
@@ -18,13 +20,20 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
         MessageBox(NULL, L"Failed to parse Config.ini", NULL, MB_ICONERROR);
     }
 
+    // -------------Patches--------------
+    // Allow rank comments
     RankQuote::applyPatches();
+
+    // Allow running goal animation for some stages
     RankRunAnimation::applyPatches();
 
-    // Mandatory codes
-    // Patch "Disable Light Dash Hints" by "Hyper"
-    WRITE_MEMORY(0x528A08, uint8_t, 0xE9, 0xC8, 0x00, 0x00, 0x00);
+    // Changer Super Sonic's properties
+    SuperSonic::applyPatches();
 
+    // Disable lightdash hints
+    Navigation::applyPatches();
+
+    // -------------Mandatory codes--------------
     // Patch "Disable Boost Button Prompt" by "Hyper"
     WRITE_MEMORY(0x109BC7C, uint8_t, 0xE9, 0x71, 0x01, 0x00, 0x00);
 

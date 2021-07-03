@@ -180,6 +180,7 @@
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="Mod.cpp" />
+    <ClCompile Include="Navigation.cpp" />
     <ClCompile Include="Pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pch.h</PrecompiledHeaderFile>
@@ -192,13 +193,16 @@
     </ClCompile>
     <ClCompile Include="RankQuote.cpp" />
     <ClCompile Include="RankRunAnimation.cpp" />
+    <ClCompile Include="SuperSonic.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bbWriter.h" />
     <ClInclude Include="Configuration.h" />
+    <ClInclude Include="Navigation.h" />
     <ClInclude Include="Pch.h" />
     <ClInclude Include="RankQuote.h" />
     <ClInclude Include="RankRunAnimation.h" />
+    <ClInclude Include="SuperSonic.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

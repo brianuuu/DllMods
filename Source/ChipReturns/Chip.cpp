@@ -244,6 +244,10 @@ HOOK(void, __fastcall, MsgChangeResultState, 0xE692C0, void* This, void* Edx, ui
                     Chip::m_chipResult.m_pResult = iter->second;
                     Chip::m_chipResult.m_rank = rank;
                 }
+                else
+                {
+                    printf("[Chip Result] Object not found, base layer maybe disabled by the stage\n");
+                }
             }
         }
     }
@@ -257,28 +261,12 @@ HOOK(void, __fastcall, CSonicUpdate, 0xE6BF20, void* This, void* Edx, float* dt)
 
     if (Chip::m_chipFollow.m_pObject)
     {
-        if (std::string((char*)Chip::m_chipFollow.m_pObject[76], 9) == "chip_idle")
-        {
-            Chip::m_chipFollow.advanceFollowSonic(*dt);
-        }
-        else
-        {
-            printf("[Chip Follow] Object no longer valid, removing.\n");
-            Chip::m_chipFollow.reset();
-        }
+        Chip::m_chipFollow.advanceFollowSonic(*dt);
     }
 
     if (Chip::m_chipResult.m_pResult)
     {
-        if (std::string((char*)Chip::m_chipResult.m_pResult[76], 9) == "chip_rank")
-        {
-            Chip::m_chipResult.advanceResult();
-        }
-        else
-        {
-            printf("[Chip Result] Object no longer valid, removing.\n");
-            Chip::m_chipResult.reset();
-        }
+        Chip::m_chipResult.advanceResult();
     }
 }
 
@@ -329,6 +317,36 @@ HOOK(void, __fastcall, CAudoDrawAdvance, 0x57C380, Chip::ChipEye* This, void* Ed
     originalCAudoDrawAdvance(This, Edx, dt);
 }
 
+HOOK(int, __fastcall, CGameObject3DDestruction, 0xD5D790, void* This, void* Edx)
+{
+    if (Chip::m_chipFollow.m_pObject == This)
+    {
+        printf("[Chip Follow] DESTRUCTED\n");
+        Chip::m_chipFollow.reset();
+    }
+
+    if (!Chip::m_chipResult.m_pResultList.empty())
+    {
+        bool destructResultObjects = false;
+        for (auto iter : Chip::m_chipResult.m_pResultList)
+        {
+            if (iter.second == This)
+            {
+                destructResultObjects = true;
+                break;
+            }
+        }
+
+        if (destructResultObjects)
+        {
+            printf("[Chip Result] DESTRUCTED\n");
+            Chip::m_chipResult.reset();
+        }
+    }
+
+    return originalCGameObject3DDestruction(This, Edx);
+}
+
 void Chip::applyPatches()
 {
     // Load Chip object physics
@@ -351,6 +369,9 @@ void Chip::applyPatches()
 
     // Manipulate autodraw for Chip's eyes
     INSTALL_HOOK(CAudoDrawAdvance);
+
+    // Check when Chip's object physics are destructed
+    INSTALL_HOOK(CGameObject3DDestruction);
 
     // Use Unleashed goal camera (default) param to avoid blocking Chip with HUD
     // CameraSp -> CameraSu (this doesn't read CameraSu, just fall back to default values)

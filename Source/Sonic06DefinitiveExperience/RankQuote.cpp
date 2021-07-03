@@ -1,7 +1,7 @@
 #include "RankQuote.h"
 
-int RankQuote::m_rank = 0;
-int RankQuote::m_rankSfxID = 1010002;
+uint32_t RankQuote::m_rank = 0;
+uint32_t RankQuote::m_rankSfxID = 1010002;
 bool RankQuote::m_playRankVoice = false;
 
 #if _DEBUG
@@ -135,12 +135,8 @@ void __declspec(naked) asmRank()
     }
 }
 
-bool RankQuote::m_enabled = false;
 void RankQuote::applyPatches()
 {
-    if (m_enabled) return;
-    m_enabled = true;
-
     // Grab rank
     WRITE_JUMP(0xE27BBC, asmGetRank);
 

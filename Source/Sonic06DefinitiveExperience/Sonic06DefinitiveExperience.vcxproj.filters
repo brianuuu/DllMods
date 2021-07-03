@@ -8,6 +8,8 @@
     <ClCompile Include="bbWriter.cpp" />
     <ClCompile Include="RankQuote.cpp" />
     <ClCompile Include="RankRunAnimation.cpp" />
+    <ClCompile Include="SuperSonic.cpp" />
+    <ClCompile Include="Navigation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pch.h" />
@@ -15,5 +17,7 @@
     <ClInclude Include="bbWriter.h" />
     <ClInclude Include="RankQuote.h" />
     <ClInclude Include="RankRunAnimation.h" />
+    <ClInclude Include="SuperSonic.h" />
+    <ClInclude Include="Navigation.h" />
   </ItemGroup>
 </Project>
