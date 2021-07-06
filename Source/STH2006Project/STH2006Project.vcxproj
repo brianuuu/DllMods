@@ -181,6 +181,7 @@
     <ClCompile Include="EnemyTrigger.cpp" />
     <ClCompile Include="Mod.cpp" />
     <ClCompile Include="Navigation.cpp" />
+    <ClCompile Include="Omochao.cpp" />
     <ClCompile Include="Pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pch.h</PrecompiledHeaderFile>
@@ -193,9 +194,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Common.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="EnemyTrigger.h" />
     <ClInclude Include="Navigation.h" />
+    <ClInclude Include="Omochao.h" />
     <ClInclude Include="Pch.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

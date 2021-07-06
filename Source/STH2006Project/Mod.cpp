@@ -1,6 +1,7 @@
 #include "Configuration.h"
 #include "EnemyTrigger.h"
 #include "Navigation.h"
+#include "Omochao.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
@@ -23,6 +24,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     // Disable lightdash hints
     Navigation::applyPatches();
+
+    // Character specific dialogs
+    Omochao::applyPatches();
 
     // -------------Mandatory codes--------------
     // Patch "Red Rings Appear On New Game" by "brianuuu"

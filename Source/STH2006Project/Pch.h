@@ -16,9 +16,17 @@
 #include <fstream>
 #include <iomanip>
 
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <Eigen/Eigen>
+#include <Eigen/Geometry>
+
 // LostCodeLoader
 #include <LostCodeLoader.h>
 
 // Other
 #include <INIReader.h>
 #include <Helpers.h>
+#include <Hedgehog.h>
+
+#include "Common.h"
