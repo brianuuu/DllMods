@@ -16,7 +16,7 @@ HOOK(int, __fastcall, OmochaoMsgNotifyObjectEvent, 0x114FB60, void* This, void* 
 	}
 	case 52:
 	{
-		// Sonic (not Elise) specific dialogs
+		// Non-Elise specific dialogs
 		if (Common::CheckPlayerSuperForm() || !Common::CheckPlayerNodeExist("ch_princess01_elise"))
 		{
 			*pEvent = 6;

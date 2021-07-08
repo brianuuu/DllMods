@@ -1,5 +1,5 @@
 /*----------------------------------------------------------*/
-//	Author: brianuuuSonic
+//	Author: brianuuuSonic https://github.com/brianuuu
 //	Year: 2021
 //	Description: Play custom animation at the beginning of result screen
 //  Requirement: sn_result_run.anm.hkx and sn_result_run_loop.anm.hkx

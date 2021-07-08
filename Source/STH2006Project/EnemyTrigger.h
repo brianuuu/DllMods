@@ -1,5 +1,5 @@
 /*----------------------------------------------------------*/
-//	Author: brianuuuSonic
+//	Author: brianuuuSonic https://github.com/brianuuu
 //	Year: 2021
 //	Description: Enable events to destroy enemy and trigger events
 //  Usage: Use event 12 to destroy enemy

@@ -1,5 +1,5 @@
 /*----------------------------------------------------------*/
-//	Author: brianuuuSonic
+//	Author: brianuuuSonic https://github.com/brianuuu
 //	Year: 2021
 //	Description: Play rank quotes at result screen
 //	Requirement: Add 5 voices with rank sfx with ID [40000-40004]
