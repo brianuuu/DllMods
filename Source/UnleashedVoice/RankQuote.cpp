@@ -194,5 +194,5 @@ void RankQuote::applyPatches()
     WRITE_JUMP(0x10B7856, asmRank);
 
     // Play rank quote on certain animation state
-    INSTALL_HOOK(ChangeAnimation);
+    //INSTALL_HOOK(ChangeAnimation);
 }
