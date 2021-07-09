@@ -12,6 +12,7 @@
 #include <Sonic/FxPipeline/Jobs/RenderGameScene/FxRenderGameScene.h>
 #include <Sonic/FxPipeline/Jobs/RenderScene/FxRenderScene.h>
 #include <Sonic/FxPipeline/Jobs/ShadowMap/FxShadowMap.h>
+#include <Sonic/FxPipeline/Jobs/ToneMapping/FxToneMapping.h>
 #include <Sonic/System/GameDocument.h>
 #include <Sonic/System/GameObject.h>
 #include <Sonic/System/InputState.h>
@@ -30,3 +31,6 @@
 #include <Sonic/Tool/ParameterEditor/ParameterCategory.h>
 #include <Sonic/Tool/ParameterEditor/ParameterFile.h>
 #include <Sonic/Tool/ParameterEditor/ParameterGroup.h>
+
+// Lost World/Forces style namespace alias
+namespace app = Sonic;
