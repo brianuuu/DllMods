@@ -2,6 +2,7 @@
 #include "EnemyTrigger.h"
 #include "Navigation.h"
 #include "Omochao.h"
+#include "ExpToSonic.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
@@ -27,6 +28,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     // Character specific dialogs
     Omochao::applyPatches();
+
+    // Make Chaos Energy goes to Sonic (mainly for hub worlds since boost HUD is offscreen)
+    ExpToSonic::applyPatches();
 
     // -------------Mandatory codes--------------
     // Patch "Red Rings Appear On New Game" by "brianuuu"

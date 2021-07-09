@@ -4,6 +4,7 @@
 #include "RankRunAnimation.h"
 #include "SuperSonic.h"
 #include "Navigation.h"
+#include "ExpToSonic.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
@@ -32,6 +33,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     // Disable lightdash hints
     Navigation::applyPatches();
+
+    // Make Chaos Energy goes to Sonic
+    ExpToSonic::applyPatches();
 
     // -------------Mandatory codes--------------
     // Patch "Disable Boost Button Prompt" by "Hyper"

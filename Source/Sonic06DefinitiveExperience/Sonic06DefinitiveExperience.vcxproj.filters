@@ -10,6 +10,7 @@
     <ClCompile Include="RankRunAnimation.cpp" />
     <ClCompile Include="SuperSonic.cpp" />
     <ClCompile Include="Navigation.cpp" />
+    <ClCompile Include="ExpToSonic.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pch.h" />
@@ -19,5 +20,7 @@
     <ClInclude Include="RankRunAnimation.h" />
     <ClInclude Include="SuperSonic.h" />
     <ClInclude Include="Navigation.h" />
+    <ClInclude Include="ExpToSonic.h" />
+    <ClInclude Include="Common.h" />
   </ItemGroup>
 </Project>

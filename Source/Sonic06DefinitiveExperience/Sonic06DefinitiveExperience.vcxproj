@@ -179,6 +179,7 @@
     <ClCompile Include="bbWriter.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DllMain.cpp" />
+    <ClCompile Include="ExpToSonic.cpp" />
     <ClCompile Include="Mod.cpp" />
     <ClCompile Include="Navigation.cpp" />
     <ClCompile Include="Pch.cpp">
@@ -197,7 +198,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bbWriter.h" />
+    <ClInclude Include="Common.h" />
     <ClInclude Include="Configuration.h" />
+    <ClInclude Include="ExpToSonic.h" />
     <ClInclude Include="Navigation.h" />
     <ClInclude Include="Pch.h" />
     <ClInclude Include="RankQuote.h" />
