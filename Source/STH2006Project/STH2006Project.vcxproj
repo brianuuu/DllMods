@@ -180,6 +180,7 @@
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="EnemyTrigger.cpp" />
     <ClCompile Include="ExpToSonic.cpp" />
+    <ClCompile Include="Itembox.cpp" />
     <ClCompile Include="Mod.cpp" />
     <ClCompile Include="Navigation.cpp" />
     <ClCompile Include="Omochao.cpp" />
@@ -199,6 +200,7 @@
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="EnemyTrigger.h" />
     <ClInclude Include="ExpToSonic.h" />
+    <ClInclude Include="Itembox.h" />
     <ClInclude Include="Navigation.h" />
     <ClInclude Include="Omochao.h" />
     <ClInclude Include="Pch.h" />

@@ -3,6 +3,7 @@
 #include "Navigation.h"
 #include "Omochao.h"
 #include "ExpToSonic.h"
+#include "Itembox.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
@@ -31,6 +32,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     // Make Chaos Energy goes to Sonic (mainly for hub worlds since boost HUD is offscreen)
     ExpToSonic::applyPatches();
+
+    // Handle itembox sfx
+    Itembox::applyPatches();
 
     // -------------Mandatory codes--------------
     // Patch "Red Rings Appear On New Game" by "brianuuu"

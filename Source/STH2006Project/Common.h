@@ -3,6 +3,7 @@
 void** const PLAYER_CONTEXT = (void**)0x1E5E2F0;
 void** const pModernSonicContext = (void**)0x1E5E2F8;
 void** const pClassicSonicContext = (void**)0x1E5E304;
+void** const pSuperSonicContext = (void**)0x1E5E310;
 
 struct MatrixNodeSingleElementNode
 {
@@ -21,12 +22,15 @@ struct MsgGetHudPosition
     uint32_t m_type;
 };
 
+using SharedPtrTypeless = boost::shared_ptr<void>;
+typedef void* __fastcall CSonicSpeedContextPlaySound(void*, void*, SharedPtrTypeless&, uint32_t cueId, uint32_t);
+
 namespace Common
 {
 
 inline bool CheckPlayerNodeExist(const Hedgehog::Base::CSharedString& name)
 {
-    void* context = *(void**)0x1E5E2F0;
+    void* context = *PLAYER_CONTEXT;
     if (context)
     {
         void* player = *(void**)((char*)context + 0x110);
@@ -38,6 +42,8 @@ inline bool CheckPlayerNodeExist(const Hedgehog::Base::CSharedString& name)
             return (node ? true : false);
         }
     }
+
+    return false;
 }
 
 inline bool CheckPlayerSuperForm()
@@ -73,6 +79,18 @@ inline bool GetPlayerTransform(Eigen::Vector3f& position, Eigen::Quaternionf& ro
     rotation.w() = pRot[3];
 
     return true;
+}
+
+inline void SonicContextPlaySound(SharedPtrTypeless& soundHandle, uint32_t cueID, uint32_t flag)
+{
+    void* pSonicContext = *pModernSonicContext;
+    if (!pSonicContext) pSonicContext = *pClassicSonicContext;
+    if (!pSonicContext) pSonicContext = *pSuperSonicContext;
+    if (!pSonicContext) return;
+
+    // Original code by Skyth: https://github.com/blueskythlikesclouds
+    CSonicSpeedContextPlaySound* playSoundFunc = *(CSonicSpeedContextPlaySound**)(*(uint32_t*)pSonicContext + 0x74);
+    playSoundFunc(pSonicContext, nullptr, soundHandle, cueID, flag);
 }
 
 } // namespace Common
