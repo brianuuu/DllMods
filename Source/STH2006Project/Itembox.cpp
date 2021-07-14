@@ -3,12 +3,12 @@
 float const c_10ringRadius = 0.57f;
 float const c_1upRadius = 0.70f;
 
-bool m_parsingSetdata = false;
+std::string m_setdataLayer;
 HOOK(bool, __stdcall, ParseSetdata, 0xEB5050, void* a1, char** pFileName, void* a3, void* a4, uint8_t a5, uint8_t a6)
 {
-	m_parsingSetdata = true;
+	m_setdataLayer = std::string(*(char**)pFileName);
 	bool result = originalParseSetdata(a1, pFileName, a3, a4, a5, a6);
-	m_parsingSetdata = false;
+	m_setdataLayer.clear();
 
 	return result;
 }
@@ -17,21 +17,24 @@ HOOK(uint32_t*, __fastcall, ReadXmlData, 0xCE5FC0, uint32_t size, char* pData, v
 {
     // Get all 1up and 10ring objects, add cmn_itembox_lock at the same position
     std::string injectStr;
-	if (!m_parsingSetdata || Itembox::getInjectStr(pData, size, injectStr) != tinyxml2::XML_SUCCESS || injectStr.empty())
+	if (!m_setdataLayer.empty())
 	{
-		return originalReadXmlData(size, pData, a3, a4);
+		if (Itembox::getInjectStr(pData, size, injectStr) == tinyxml2::XML_SUCCESS && !injectStr.empty())
+		{
+			const size_t newSize = size + injectStr.size();
+			const std::unique_ptr<char[]> pBuffer = std::make_unique<char[]>(newSize);
+			memcpy(pBuffer.get(), pData, size);
+
+			char* pInsertionPos = strstr(pBuffer.get(), "</SetObject>");
+
+			memmove(pInsertionPos + injectStr.size(), pInsertionPos, size - (size_t)(pInsertionPos - pBuffer.get()));
+			memcpy(pInsertionPos, injectStr.c_str(), injectStr.size());
+
+			return originalReadXmlData(newSize, pBuffer.get(), a3, a4);
+		}
 	}
-
-    const size_t newSize = size + injectStr.size();
-    const std::unique_ptr<char[]> pBuffer = std::make_unique<char[]>(newSize);
-    memcpy(pBuffer.get(), pData, size);
-
-    char* pInsertionPos = strstr(pBuffer.get(), "</SetObject>");
-
-    memmove(pInsertionPos + injectStr.size(), pInsertionPos, size - (size_t)(pInsertionPos - pBuffer.get()));
-    memcpy(pInsertionPos, injectStr.c_str(), injectStr.size());
-
-    return originalReadXmlData(newSize, pBuffer.get(), a3, a4);
+    
+	return originalReadXmlData(size, pData, a3, a4);
 }
 
 const char* volatile const ObjectProductionItemboxLock = "ObjectProductionItemboxLock.phy.xml";
@@ -111,7 +114,10 @@ tinyxml2::XMLError Itembox::getInjectStr(char const* pData, uint32_t size, std::
 		tinyxml2::XMLElement* pSetObjectIDElement = pObjectElement->FirstChildElement("SetObjectID");
 		if (pSetObjectIDElement)
 		{
-			uint32_t setObjectID = std::stoul(pSetObjectIDElement->GetText());
+			char const* setObjectIDChar = pSetObjectIDElement->GetText();
+			if (!setObjectIDChar) continue;
+
+			uint32_t setObjectID = std::stoul(setObjectIDChar);
 			setObjectIDs.insert(setObjectID);
 
 			std::string objName = pObjectElement->Name();
@@ -127,49 +133,53 @@ tinyxml2::XMLError Itembox::getInjectStr(char const* pData, uint32_t size, std::
 		}
 	}
 
-	for (auto const& iter : itemboxData)
+	if (!itemboxData.empty())
 	{
-		uint32_t const newSetObjectID = iter.first * 100;
-		PositionStr const& positionStr = iter.second;
-
-		// Only inject if ID not exist already
-		if (setObjectIDs.find(newSetObjectID) != setObjectIDs.end())
+		printf("[Itembox] Current layer: %s\n", m_setdataLayer.c_str());
+		for (auto const& iter : itemboxData)
 		{
-			printf("[Itembox] cmn_itembox_lock already injected!\n");
-			continue;
-		}
+			uint32_t const newSetObjectID = iter.first * 100;
+			PositionStr const& positionStr = iter.second;
 
-		printf("[Itembox] Injecting cmn_itembox_lock at pos: %s, %s, %s\n", positionStr.x.c_str(), positionStr.y.c_str(), positionStr.z.c_str());
-		injectStr += "<ObjectPhysics>\n";
-		injectStr += "    <AddRange>0</AddRange>\n";
-		injectStr += "    <CullingRange>15</CullingRange>\n";
-		injectStr += "    <DebrisTarget>\n";
-		injectStr += "        <x>0</x>\n";
-		injectStr += "        <y>0</y>\n";
-		injectStr += "        <z>0</z>\n";
-		injectStr += "    </DebrisTarget>\n";
-		injectStr += "    <GroundOffset>0</GroundOffset>\n";
-		injectStr += "    <IsCastShadow>true</IsCastShadow>\n";
-		injectStr += "    <IsDynamic>false</IsDynamic>\n";
-		injectStr += "    <IsReset>false</IsReset>\n";
-		injectStr += "    <Range>100</Range>\n";
-		injectStr += "    <SetObjectID>" + std::to_string(newSetObjectID) + "</SetObjectID>\n";
-		injectStr += "    <Type>cmn_itembox_lock</Type>\n";
-		injectStr += "    <WrappedObjectID>\n";
-		injectStr += "        <SetObjectID>0</SetObjectID>\n";
-		injectStr += "    </WrappedObjectID>\n";
-		injectStr += "    <Position>\n";
-		injectStr += "        <x>" + positionStr.x + "</x>\n";
-		injectStr += "        <y>" + positionStr.y + "</y>\n";
-		injectStr += "        <z>" + positionStr.z + "</z>\n";
-		injectStr += "    </Position>\n";
-		injectStr += "    <Rotation>\n";
-		injectStr += "        <x>0</x>";
-		injectStr += "        <y>0</y>";
-		injectStr += "        <z>0</z>";
-		injectStr += "        <w>1</w>";
-		injectStr += "    </Rotation>\n";
-		injectStr += "</ObjectPhysics>\n";
+			// Only inject if ID not exist already
+			if (setObjectIDs.find(newSetObjectID) != setObjectIDs.end())
+			{
+				printf("[Itembox] cmn_itembox_lock already injected!\n");
+				continue;
+			}
+
+			printf("[Itembox] Injecting cmn_itembox_lock (%u) at pos: %s, %s, %s\n", newSetObjectID, positionStr.x.c_str(), positionStr.y.c_str(), positionStr.z.c_str());
+			injectStr += "<ObjectPhysics>\n";
+			injectStr += "    <AddRange>0</AddRange>\n";
+			injectStr += "    <CullingRange>15</CullingRange>\n";
+			injectStr += "    <DebrisTarget>\n";
+			injectStr += "        <x>0</x>\n";
+			injectStr += "        <y>0</y>\n";
+			injectStr += "        <z>0</z>\n";
+			injectStr += "    </DebrisTarget>\n";
+			injectStr += "    <GroundOffset>0</GroundOffset>\n";
+			injectStr += "    <IsCastShadow>true</IsCastShadow>\n";
+			injectStr += "    <IsDynamic>false</IsDynamic>\n";
+			injectStr += "    <IsReset>false</IsReset>\n";
+			injectStr += "    <Range>100</Range>\n";
+			injectStr += "    <SetObjectID>" + std::to_string(newSetObjectID) + "</SetObjectID>\n";
+			injectStr += "    <Type>cmn_itembox_lock</Type>\n";
+			injectStr += "    <WrappedObjectID>\n";
+			injectStr += "        <SetObjectID>0</SetObjectID>\n";
+			injectStr += "    </WrappedObjectID>\n";
+			injectStr += "    <Position>\n";
+			injectStr += "        <x>" + positionStr.x + "</x>\n";
+			injectStr += "        <y>" + positionStr.y + "</y>\n";
+			injectStr += "        <z>" + positionStr.z + "</z>\n";
+			injectStr += "    </Position>\n";
+			injectStr += "    <Rotation>\n";
+			injectStr += "        <x>0</x>";
+			injectStr += "        <y>0</y>";
+			injectStr += "        <z>0</z>";
+			injectStr += "        <w>1</w>";
+			injectStr += "    </Rotation>\n";
+			injectStr += "</ObjectPhysics>\n";
+		}
 	}
 
 	return tinyxml2::XML_SUCCESS;
