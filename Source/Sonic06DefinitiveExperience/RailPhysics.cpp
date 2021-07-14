@@ -98,9 +98,16 @@ HOOK(void, __fastcall, CSonicPostureGrindAdvance, 0x11D81E0, void* This)
             RailPhysics::m_grindAccelTime -= dt;
         }
 
+        // Get Sonic's rotation in case he's going backwards
+        Eigen::Vector3f playerPosition;
+        Eigen::Quaternionf playerRotation;
+        Common::GetPlayerTransform(playerPosition, playerRotation);
+        Eigen::Vector3f playerDirection = playerRotation * Eigen::Vector3f(0, 0, 1);
+        bool forward = playerDirection.dot(velocity) >= 0.0f;
+
         // Set current velocity
         RailPhysics::m_grindSpeed = min(RailPhysics::m_grindSpeed, c_grindSpeedMax);
-        velocity = velocity.normalized() * RailPhysics::m_grindSpeed;
+        velocity = velocity.normalized() * RailPhysics::m_grindSpeed * (forward ? 1.0f : -1.0f);
         Common::SetPlayerVelocity(velocity);
     }
 }
