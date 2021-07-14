@@ -176,10 +176,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Application.cpp" />
+    <ClCompile Include="ArchiveTreePatcher.cpp" />
     <ClCompile Include="bbWriter.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="ExpToSonic.cpp" />
+    <ClCompile Include="Itembox.cpp" />
     <ClCompile Include="Mod.cpp" />
     <ClCompile Include="Navigation.cpp" />
     <ClCompile Include="Pch.cpp">
@@ -192,20 +195,27 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pch.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="RailPhysics.cpp" />
     <ClCompile Include="RankQuote.cpp" />
     <ClCompile Include="RankRunAnimation.cpp" />
     <ClCompile Include="SuperSonic.cpp" />
+    <ClCompile Include="tinyxml2.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Application.h" />
+    <ClInclude Include="ArchiveTreePatcher.h" />
     <ClInclude Include="bbWriter.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="ExpToSonic.h" />
+    <ClInclude Include="Itembox.h" />
     <ClInclude Include="Navigation.h" />
     <ClInclude Include="Pch.h" />
+    <ClInclude Include="RailPhysics.h" />
     <ClInclude Include="RankQuote.h" />
     <ClInclude Include="RankRunAnimation.h" />
     <ClInclude Include="SuperSonic.h" />
+    <ClInclude Include="tinyxml2.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

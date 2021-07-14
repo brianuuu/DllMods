@@ -1,10 +1,18 @@
 #include "Configuration.h"
 
+#include "Application.h"
 #include "RankQuote.h"
 #include "RankRunAnimation.h"
 #include "SuperSonic.h"
 #include "Navigation.h"
 #include "ExpToSonic.h"
+#include "RailPhysics.h"
+#include "ArchiveTreePatcher.h"
+#include "Itembox.h"
+
+extern "C" void __declspec(dllexport) OnFrame()
+{
+}
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
@@ -22,6 +30,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     }
 
     // -------------Patches--------------
+    // General application pathces
+    Application::applyPatches();
+
     // Allow rank comments
     RankQuote::applyPatches();
 
@@ -36,6 +47,12 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     // Make Chaos Energy goes to Sonic
     ExpToSonic::applyPatches();
+
+    // Allow 1up and 10ring to be locked-on
+    ArchiveTreePatcher::applyPatches();
+    Itembox::applyPatches();
+
+    RailPhysics::applyPatches();
 
     // -------------Mandatory codes--------------
     // Patch "Disable Boost Button Prompt" by "Hyper"
