@@ -4,12 +4,20 @@ vector<ArchiveDependency> ArchiveTreePatcher::m_archiveDependencies = {};
 
 HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* A1, char* pData, const size_t size, void* pDatabase)
 {
+    std::string originalData(pData, size);
     std::string str;
     {
         std::stringstream stream;
 
         for (ArchiveDependency const& node : ArchiveTreePatcher::m_archiveDependencies)
         {
+            if (originalData.find(node.m_archive) != std::string::npos)
+            {
+                printf("[ArchiveTreePatcher] Already injected \"%s\" archive!\n", node.m_archive.c_str());
+                continue;
+            }
+
+            printf("[ArchiveTreePatcher] Injecting \"%s\" archive\n", node.m_archive.c_str());
             stream << "  <Node>\n";
             stream << "    <Name>" << node.m_archive << "</Name>\n";
             stream << "    <Archive>" << node.m_archive << "</Archive>\n";
