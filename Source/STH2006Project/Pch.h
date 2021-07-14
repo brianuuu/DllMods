@@ -21,6 +21,8 @@
 #include <Eigen/Eigen>
 #include <Eigen/Geometry>
 
+#include "tinyxml2.h"
+
 // LostCodeLoader
 #include <LostCodeLoader.h>
 
@@ -28,5 +30,8 @@
 #include <INIReader.h>
 #include <Helpers.h>
 #include <Hedgehog.h>
+
+#define DEBUG_DRAW_TEXT_DLL_IMPORT
+#include <DebugDrawText.h>
 
 #include "Common.h"

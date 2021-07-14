@@ -3,6 +3,7 @@
 #include "Navigation.h"
 #include "Omochao.h"
 #include "ExpToSonic.h"
+#include "ArchiveTreePatcher.h"
 #include "Itembox.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
@@ -33,7 +34,8 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     // Make Chaos Energy goes to Sonic (mainly for hub worlds since boost HUD is offscreen)
     ExpToSonic::applyPatches();
 
-    // Handle itembox sfx
+    // Allow 1up and 10ring to be locked-on
+    ArchiveTreePatcher::applyPatches();
     Itembox::applyPatches();
 
     // -------------Mandatory codes--------------

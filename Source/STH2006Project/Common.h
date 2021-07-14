@@ -5,6 +5,9 @@ void** const pModernSonicContext = (void**)0x1E5E2F8;
 void** const pClassicSonicContext = (void**)0x1E5E304;
 void** const pSuperSonicContext = (void**)0x1E5E310;
 
+uint32_t const CStringConstructor = 0x6621A0;
+uint32_t const CStringDestructor = 0x661550;
+
 struct MatrixNodeSingleElementNode
 {
     INSERT_PADDING(0x60);
@@ -21,6 +24,10 @@ struct MsgGetHudPosition
     float m_speed; // just a guess?
     uint32_t m_type;
 };
+
+#ifndef XMLCheckResult
+#define XMLCheckResult(a_eResult) if (a_eResult != tinyxml2::XML_SUCCESS) { printf("XMLParse Error: %i\n", a_eResult); return a_eResult; }
+#endif
 
 using SharedPtrTypeless = boost::shared_ptr<void>;
 typedef void* __fastcall CSonicSpeedContextPlaySound(void*, void*, SharedPtrTypeless&, uint32_t cueId, uint32_t);
