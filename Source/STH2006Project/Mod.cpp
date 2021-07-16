@@ -5,6 +5,7 @@
 #include "ExpToSonic.h"
 #include "ArchiveTreePatcher.h"
 #include "Itembox.h"
+#include "Stage.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
@@ -37,6 +38,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     // Allow 1up and 10ring to be locked-on
     ArchiveTreePatcher::applyPatches();
     Itembox::applyPatches();
+
+    // Stage specific patches
+    Stage::applyPatches();
 
     // -------------Mandatory codes--------------
     // Patch "Red Rings Appear On New Game" by "brianuuu"
