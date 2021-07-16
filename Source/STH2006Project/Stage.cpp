@@ -3,7 +3,12 @@
 HOOK(int32_t*, __fastcall, MsgHitGrindPath, 0xE25680, void* This, void* Edx, uint32_t a2)
 {
     // If at Kingdom Valley, change sfx to wind
-    if (Common::CheckCurrentStage("euc200"))
+    // There are normal rails too, when x > 210
+    Eigen::Vector3f playerPosition;
+    Eigen::Quaternionf playerRotation;
+    if (Common::CheckCurrentStage("euc200") 
+     && Common::GetPlayerTransform(playerPosition, playerRotation)
+     && playerPosition.x() < 210.0f)
     {
         WRITE_MEMORY(0xE4FC73, uint8_t, 0);
         WRITE_MEMORY(0xE4FC82, uint32_t, 4042004);
@@ -23,7 +28,7 @@ HOOK(int32_t*, __fastcall, MsgHitGrindPath, 0xE25680, void* This, void* Edx, uin
 
 HOOK(int, __fastcall, CObjSpringSFX, 0x1038DA0, void* This)
 {
-    // If at Kingdom Valley, change sfx to wind
+    // If at Kingdom Valley, change sfx to rope
     if (Common::CheckCurrentStage("euc200"))
     {
         WRITE_MEMORY(0x1A6B7D8, uint32_t, 8000);
