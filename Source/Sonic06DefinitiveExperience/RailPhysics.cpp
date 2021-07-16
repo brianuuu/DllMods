@@ -120,7 +120,7 @@ HOOK(int, __fastcall, CSonicPostureBoardGrindBegin, 0x111D4F0, void* This)
     return originalCSonicPostureBoardGrindBegin(This);
 }
 
-HOOK(bool, __fastcall, CSonicPostureGrindSwitch, 0x1118930, void* This)
+HOOK(bool, __fastcall, CSonicStateGrindSquatAdvance, 0x1118930, void* This)
 {
     // Gain speed
     if (Configuration::m_physics)
@@ -132,7 +132,7 @@ HOOK(bool, __fastcall, CSonicPostureGrindSwitch, 0x1118930, void* This)
     static SharedPtrTypeless soundHandle;
     Common::SonicContextPlaySound(soundHandle, 80041020, 1);
 
-    return originalCSonicPostureGrindSwitch(This);
+    return originalCSonicStateGrindSquatAdvance(This);
 }
 
 uint32_t getHomingTargetObjReturnAddress = 0xE91412;
@@ -203,10 +203,6 @@ void __declspec(naked) forceQueryHomingCollision()
 
 void RailPhysics::applyPatches()
 {
-    // Disable GrindSquat and skip to GrindSwitch immdiately
-    WRITE_MEMORY(0x1118886, uint8_t, 0x58, 0x90);
-    WRITE_NOP(0x1118979, 0xA);
-
     // Don't disable rail sfx when doing GrindSwitch
     WRITE_MEMORY(0x123260D, uint8_t, 0xEB);
 
@@ -216,8 +212,12 @@ void RailPhysics::applyPatches()
     // Play normal rail sfx on board grind
     WRITE_MEMORY(0xE4FC78, uint8_t, 0xEB);
 
-    // Add speed with GrindSwitch
-    INSTALL_HOOK(CSonicPostureGrindSwitch);
+    // Add speed at start of GrindSquat
+    INSTALL_HOOK(CSonicStateGrindSquatAdvance);
+
+    // Disable GrindSquat and skip to GrindSwitch immdiately
+    WRITE_MEMORY(0x1118886, uint8_t, 0x58, 0x90);
+    WRITE_NOP(0x1118979, 0xA);
 
     // Skip BoardLand on grind rails
     WRITE_NOP(0x111D55A, 0x2);
