@@ -95,6 +95,7 @@ inline bool GetPlayerTransform(Eigen::Vector3f& position, Eigen::Quaternionf& ro
 
 inline void SonicContextPlaySound(SharedPtrTypeless& soundHandle, uint32_t cueID, uint32_t flag)
 {
+    // Note: This doesn't work at result screen, use PlaySoundStatic instead
     void* pSonicContext = *PLAYER_CONTEXT;
     if (!pSonicContext) return;
 

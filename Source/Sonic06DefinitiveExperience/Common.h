@@ -148,6 +148,7 @@ inline bool GetPlayerWorldDirection(Eigen::Vector3f& direction, bool normalize)
 
 inline void SonicContextPlaySound(SharedPtrTypeless& soundHandle, uint32_t cueID, uint32_t flag)
 {
+    // Note: This doesn't work at result screen, use PlaySoundStatic instead
     void* pSonicContext = *PLAYER_CONTEXT;
     if (!pSonicContext) return;
 
@@ -156,5 +157,14 @@ inline void SonicContextPlaySound(SharedPtrTypeless& soundHandle, uint32_t cueID
     playSoundFunc(pSonicContext, nullptr, soundHandle, cueID, flag);
 }
 
+FUNCTION_PTR(void*, __thiscall, sub_75FA60, 0x75FA60, void* This, SharedPtrTypeless&, uint32_t cueId);
+inline void PlaySoundStatic(SharedPtrTypeless& soundHandle, uint32_t cueID)
+{
+    uint32_t* syncObject = *(uint32_t**)0x1E79044;
+    if (syncObject)
+    {
+        sub_75FA60((void*)syncObject[8], soundHandle, cueID);
+    }
+}
 
 } // namespace Common
