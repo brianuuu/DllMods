@@ -52,6 +52,7 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     ArchiveTreePatcher::applyPatches();
     Itembox::applyPatches();
 
+    // Apply various 06 rail physics
     RailPhysics::applyPatches();
 
     // -------------Mandatory codes--------------

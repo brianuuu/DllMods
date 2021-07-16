@@ -83,21 +83,15 @@ HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* 
 const char* sth2006RunStageIDs[STH2006_RUN_STAGE_COUNT] = { "ghz200", "sph200", "ssh200", "euc200" };
 bool checkCanPlayRunAnimation()
 {
-    // Not Modern Sonic
-    void* const pModernSonicContext = *(void**)0x1E5E2F8;
-    if (!pModernSonicContext) return false;
+    // Not Modern Sonic or currently in super form
+    if (!*pModernSonicContext || Common::CheckPlayerSuperForm()) return false;
 
-    // Currently in super form
-    uint32_t superSonicAddress = (uint32_t)(pModernSonicContext) + 0x1A0;
-    if (*(void**)superSonicAddress) return false;
-
-    char* currentStageID = (char*)0x01E774D4;
     if (Configuration::m_run == RunResultType::STH2006)
     {
         // Only enable for STH2006 Project stages
         for (int i = 0; i < STH2006_RUN_STAGE_COUNT; i++)
         {
-            if (strcmp(currentStageID, sth2006RunStageIDs[i]) == 0)
+            if (Common::CheckCurrentStage(sth2006RunStageIDs[i]))
             {
                 return true;
             }
@@ -110,7 +104,7 @@ bool checkCanPlayRunAnimation()
         // Only enable for custom defined stages
         for (string const& stage : Configuration::m_runStages)
         {
-            if (strcmp(currentStageID, stage.c_str()) == 0)
+            if (Common::CheckCurrentStage(stage.c_str()))
             {
                 return true;
             }
@@ -130,8 +124,7 @@ HOOK(void, __fastcall, MsgChangeResultState, 0xE692C0, void* This, void* Edx, ui
     {
         if (state == 1)
         {
-            void* const pModernSonicContext = *(void**)0x1E5E2F8;
-            CSonicContextChangeAnimation(pModernSonicContext, RunResult);
+            CSonicContextChangeAnimation(*pModernSonicContext, RunResult);
         }
         else if (state == 3)
         {
@@ -182,10 +175,10 @@ void __declspec(naked) addTransition()
         sub     esp, 8
         push    RunResult
         lea     ecx, [esp + 8]
-        call[stringConstructor]
+        call    [stringConstructor]
         push    RunResultLoop
         lea     ecx, [esp + 4]
-        call[stringConstructor]
+        call    [stringConstructor]
 
         // Creates transition for RunResult
         lea     eax, [esp + 4] // RunResult

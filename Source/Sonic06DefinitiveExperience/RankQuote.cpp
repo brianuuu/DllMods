@@ -40,13 +40,7 @@ void __declspec(naked) asmGetRank()
 
 void __cdecl getRankSfx()
 {
-    /*
-    0x1E5E2F8: Modern context
-    0x1E5E304: Classic context
-    0x1E5E310: Super Sonic context
-    */
-    void* pModernSonicContext = *(void**)0x1E5E2F8;
-    if (pModernSonicContext && RankQuote::m_playRankVoice)
+    if (*pModernSonicContext && RankQuote::m_playRankVoice)
     {
         // S:40000 - D:40004
         RankQuote::m_rankSfxID = 40004 - RankQuote::m_rank;

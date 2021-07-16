@@ -1,9 +1,10 @@
 #pragma once
 
-void** const PLAYER_CONTEXT = (void**)0x1E5E2F0;
-void** const pModernSonicContext = (void**)0x1E5E2F8;
-void** const pClassicSonicContext = (void**)0x1E5E304;
-void** const pSuperSonicContext = (void**)0x1E5E310;
+typedef void* CSonicContext;
+CSonicContext* const PLAYER_CONTEXT = (CSonicContext*)0x1E5E2F0;
+CSonicContext* const pModernSonicContext = (CSonicContext*)0x1E5E2F8;
+CSonicContext* const pClassicSonicContext = (CSonicContext*)0x1E5E304;
+CSonicContext* const pSuperSonicContext = (CSonicContext*)0x1E5E310;
 
 uint32_t const CStringConstructor = 0x6621A0;
 uint32_t const CStringDestructor = 0x661550;
@@ -44,6 +45,24 @@ inline bool IsStringEndsWith(std::string const& value, std::string const& ending
 {
     if (ending.size() > value.size()) return false;
     return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+}
+
+inline bool CheckPlayerSuperForm()
+{
+    void* pSonicContext = *PLAYER_CONTEXT;
+    if (pSonicContext)
+    {
+        uint32_t superSonicAddress = (uint32_t)(pSonicContext)+0x1A0;
+        return (*(void**)superSonicAddress ? true : false);
+    }
+
+    return false;
+}
+
+inline bool CheckCurrentStage(char const* stageID)
+{
+    char const* currentStageID = (char*)0x01E774D4;
+    return strcmp(currentStageID, stageID) == 0;
 }
 
 inline bool GetPlayerTransform(Eigen::Vector3f& position, Eigen::Quaternionf& rotation)
@@ -129,9 +148,7 @@ inline bool GetPlayerWorldDirection(Eigen::Vector3f& direction, bool normalize)
 
 inline void SonicContextPlaySound(SharedPtrTypeless& soundHandle, uint32_t cueID, uint32_t flag)
 {
-    void* pSonicContext = *pModernSonicContext;
-    if (!pSonicContext) pSonicContext = *pClassicSonicContext;
-    if (!pSonicContext) pSonicContext = *pSuperSonicContext;
+    void* pSonicContext = *PLAYER_CONTEXT;
     if (!pSonicContext) return;
 
     // Original code by Skyth: https://github.com/blueskythlikesclouds
