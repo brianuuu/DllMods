@@ -81,8 +81,11 @@ HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* 
 
 #define STH2006_RUN_STAGE_COUNT 4
 const char* sth2006RunStageIDs[STH2006_RUN_STAGE_COUNT] = { "ghz200", "sph200", "ssh200", "euc200" };
-bool checkCanPlayRunAnimation()
+bool RankRunAnimation::checkCanPlayRunAnimation()
 {
+    if (Configuration::m_model != ModelType::Sonic) return false;
+    if (Configuration::m_run == RunResultType::Disable) return false;
+
     // Not Modern Sonic or currently in super form
     if (!*pModernSonicContext || Common::CheckPlayerSuperForm()) return false;
 
@@ -120,7 +123,7 @@ FUNCTION_PTR(void, __thiscall, CSonicContextChangeAnimation, 0xE74CC0, void* Thi
 HOOK(void, __fastcall, MsgChangeResultState, 0xE692C0, void* This, void* Edx, uint32_t a2)
 {
     uint32_t const state = *(uint32_t*)(a2 + 16);
-    if (checkCanPlayRunAnimation())
+    if (RankRunAnimation::checkCanPlayRunAnimation())
     {
         if (state == 1)
         {

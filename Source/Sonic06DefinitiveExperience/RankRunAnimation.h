@@ -13,5 +13,6 @@ class RankRunAnimation
 {
 public:
 	static void applyPatches();
+	static bool checkCanPlayRunAnimation();
 };
 
