@@ -1,9 +1,10 @@
 #pragma once
 
-void** const PLAYER_CONTEXT = (void**)0x1E5E2F0;
-void** const pModernSonicContext = (void**)0x1E5E2F8;
-void** const pClassicSonicContext = (void**)0x1E5E304;
-void** const pSuperSonicContext = (void**)0x1E5E310;
+typedef void* CSonicContext;
+CSonicContext* const PLAYER_CONTEXT = (CSonicContext*)0x1E5E2F0;
+CSonicContext* const pModernSonicContext = (CSonicContext*)0x1E5E2F8;
+CSonicContext* const pClassicSonicContext = (CSonicContext*)0x1E5E304;
+CSonicContext* const pSuperSonicContext = (CSonicContext*)0x1E5E310;
 
 uint32_t const CStringConstructor = 0x6621A0;
 uint32_t const CStringDestructor = 0x661550;
@@ -53,11 +54,15 @@ inline bool CheckPlayerNodeExist(const Hedgehog::Base::CSharedString& name)
     return false;
 }
 
+inline bool CheckCurrentStage(char const* stageID)
+{
+    char const* currentStageID = (char*)0x01E774D4;
+    return strcmp(currentStageID, stageID) == 0;
+}
+
 inline bool CheckPlayerSuperForm()
 {
-    void* pSonicContext = nullptr;
-    if (!pSonicContext) pSonicContext = *pModernSonicContext;
-    if (!pSonicContext) pSonicContext = *pClassicSonicContext;
+    void* pSonicContext = *PLAYER_CONTEXT;
     if (pSonicContext)
     {
         uint32_t superSonicAddress = (uint32_t)(pSonicContext)+0x1A0;
@@ -71,15 +76,15 @@ inline bool GetPlayerTransform(Eigen::Vector3f& position, Eigen::Quaternionf& ro
 {
     if (!*PLAYER_CONTEXT) return false;
 
-    const uint32_t result = *(uint32_t*)((uint32_t) * (void**)((uint32_t)*PLAYER_CONTEXT + 0x110) + 172);
+    const uint32_t result = *(uint32_t*)((uint32_t) * (void**)((uint32_t)*PLAYER_CONTEXT + 0x110) + 0xAC);
     if (!result) return false;
 
-    float* pPos = (float*)(*(uint32_t*)(result + 16) + 112);
+    float* pPos = (float*)(*(uint32_t*)(result + 0x10) + 0x70);
     position.x() = pPos[0];
     position.y() = pPos[1];
     position.z() = pPos[2];
 
-    float* pRot = (float*)(*(uint32_t*)(result + 16) + 96);
+    float* pRot = (float*)(*(uint32_t*)(result + 0x10) + 0x60);
     rotation.x() = pRot[0];
     rotation.y() = pRot[1];
     rotation.z() = pRot[2];
@@ -90,9 +95,7 @@ inline bool GetPlayerTransform(Eigen::Vector3f& position, Eigen::Quaternionf& ro
 
 inline void SonicContextPlaySound(SharedPtrTypeless& soundHandle, uint32_t cueID, uint32_t flag)
 {
-    void* pSonicContext = *pModernSonicContext;
-    if (!pSonicContext) pSonicContext = *pClassicSonicContext;
-    if (!pSonicContext) pSonicContext = *pSuperSonicContext;
+    void* pSonicContext = *PLAYER_CONTEXT;
     if (!pSonicContext) return;
 
     // Original code by Skyth: https://github.com/blueskythlikesclouds
