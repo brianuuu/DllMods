@@ -120,7 +120,7 @@ HOOK(int, __fastcall, CSonicPostureBoardGrindBegin, 0x111D4F0, void* This)
     return originalCSonicPostureBoardGrindBegin(This);
 }
 
-HOOK(bool, __fastcall, CSonicStateGrindSquatAdvance, 0x1118930, void* This)
+HOOK(int, __fastcall, CSonicStateGrindSquatBegin, 0x1118830, void* This)
 {
     // Gain speed
     if (Configuration::m_physics)
@@ -132,7 +132,7 @@ HOOK(bool, __fastcall, CSonicStateGrindSquatAdvance, 0x1118930, void* This)
     static SharedPtrTypeless soundHandle;
     Common::SonicContextPlaySound(soundHandle, 80041020, 1);
 
-    return originalCSonicStateGrindSquatAdvance(This);
+    return originalCSonicStateGrindSquatBegin(This);
 }
 
 uint32_t getHomingTargetObjReturnAddress = 0xE91412;
@@ -201,6 +201,49 @@ void __declspec(naked) forceQueryHomingCollision()
     }
 }
 
+uint32_t allowJumpDuringGrindSwitchReturnAddress = 0x1232659;
+uint32_t allowJumpDuringGrindSwitchSuccessAddress = 0x12326D1;
+uint32_t sub_DFF060 = 0xDFF060; // GrindJumpShort function
+uint32_t sub_DFCC70 = 0xDFCC70; // GrindJumpSide function
+void __declspec(naked) allowJumpDuringGrindSwitch()
+{
+    __asm
+    {
+        // Required pop to edi before returning
+        push    eax
+
+        // Replicate sub_DFF0B0 but only check GrindJumpShort & GrindJumpSide
+        mov     edi, ecx
+        mov     esi, eax
+        cmp     dword ptr[esi + 11F0h], 0
+        jz      jump
+
+        // Check GrindJumpShort
+        mov     eax, esi
+        call    [sub_DFF060]
+        test    al, al
+        jnz     success
+
+        // Check GrindJumpSide
+        push    edi
+        push    esi
+        call    [sub_DFCC70]
+        test    al, al
+        jz      jump
+
+        // State changed
+        success:
+        pop     edi
+        jmp     [allowJumpDuringGrindSwitchSuccessAddress]
+
+        // Original function
+        jump:
+        pop     edi
+        cmp     byte ptr [ebx + 68h], 0
+        jmp     [allowJumpDuringGrindSwitchReturnAddress]
+    }
+}
+
 void RailPhysics::applyPatches()
 {
     // Don't disable rail sfx when doing GrindSwitch
@@ -213,11 +256,12 @@ void RailPhysics::applyPatches()
     WRITE_MEMORY(0xE4FC78, uint8_t, 0xEB);
 
     // Add speed at start of GrindSquat
-    INSTALL_HOOK(CSonicStateGrindSquatAdvance);
+    INSTALL_HOOK(CSonicStateGrindSquatBegin);
 
     // Disable GrindSquat and skip to GrindSwitch immdiately
     WRITE_MEMORY(0x1118886, uint8_t, 0x58, 0x90);
     WRITE_NOP(0x1118979, 0xA);
+    WRITE_JUMP(0x1232653, allowJumpDuringGrindSwitch);
 
     // Skip BoardLand on grind rails
     WRITE_NOP(0x111D55A, 0x2);
