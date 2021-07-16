@@ -131,6 +131,9 @@ void __declspec(naked) asmRank()
 
 void RankQuote::applyPatches()
 {
+    // Disable result animation skip
+    WRITE_NOP(0x10B9C1A, 0x5);
+
     // Grab rank
     WRITE_JUMP(0xE27BBC, asmGetRank);
 
