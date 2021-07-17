@@ -143,8 +143,6 @@ float flt_15C8614 = -1.0f;
 uint32_t sub_CE0600 = 0xCE0600;
 uint32_t sub_CDFB40 = 0xCDFB40;
 uint32_t sub_662010 = 0x662010;
-uint32_t stringConstructor = 0x6621A0;
-uint32_t stringDestructor = 0x661550;
 uint32_t addTransitionReturnAddress = 0xE22C61;
 void __declspec(naked) addTransition()
 {
@@ -154,34 +152,34 @@ void __declspec(naked) addTransition()
         sub     esp, 4
         push    RunResult
         lea     ecx, [esp + 4]
-        call    [stringConstructor]
+        call    [CStringConstructor]
         lea     ecx, [esp]
         mov     ecx, ebx
         call    [sub_CE0600]
         lea     ecx, [esp]
-        call    [stringDestructor]
+        call    [CStringDestructor]
         add     esp, 4
 
         // Unknown function, still works without but do it anyway
         sub     esp, 4
         push    RunResultLoop
         lea     ecx, [esp + 4]
-        call    [stringConstructor]
+        call    [CStringConstructor]
         lea     ecx, [esp]
         mov     ecx, ebx
         call    [sub_CE0600]
         lea     ecx, [esp]
-        call    [stringDestructor]
+        call    [CStringDestructor]
         add     esp, 4
 
         // Construct strings
         sub     esp, 8
         push    RunResult
         lea     ecx, [esp + 8]
-        call    [stringConstructor]
+        call    [CStringConstructor]
         push    RunResultLoop
         lea     ecx, [esp + 4]
-        call    [stringConstructor]
+        call    [CStringConstructor]
 
         // Creates transition for RunResult
         lea     eax, [esp + 4] // RunResult
@@ -199,9 +197,9 @@ void __declspec(naked) addTransition()
 
         // Destruct strings
         lea     ecx, [esp + 4] // RunResult
-        call    [stringDestructor]
+        call    [CStringDestructor]
         lea     ecx, [esp] // RunResultLoop
-        call    [stringDestructor]
+        call    [CStringDestructor]
         add     esp, 8
 
         // Resume original
