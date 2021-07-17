@@ -45,4 +45,10 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     // -------------Mandatory codes--------------
     // Patch "Red Rings Appear On New Game" by "brianuuu"
     WRITE_NOP(0x11A9ECB, 2);
+
+    // Move EnemyEggRobo (Lancer/Stinger) lock-on
+    static float const c_eggRoboLockScale = 0.3f;
+    WRITE_MEMORY(0xBAAFBD, uint8_t, 0xD);
+    WRITE_MEMORY(0xBAAFBE, float*, &c_eggRoboLockScale);
+    WRITE_NOP(0xBAAFC2, 0x1);
 }
