@@ -1,4 +1,5 @@
 #include "RankQuote.h"
+#include "RankRunAnimation.h"
 
 uint32_t RankQuote::m_rank = 0;
 uint32_t RankQuote::m_rankSfxID = 1010002;
@@ -129,6 +130,21 @@ void __declspec(naked) asmRank()
     }
 }
 
+HOOK(void, __fastcall, MsgChangeResultState2, 0xE692C0, void* This, void* Edx, uint32_t a2)
+{
+    uint32_t const state = *(uint32_t*)(a2 + 16);
+    if (state == 3 
+    && !RankRunAnimation::checkCanPlayRunAnimation()
+    && !Common::CheckPlayerSuperForm())
+    {
+        // Play character stage complete voice
+        static SharedPtrTypeless soundHandle;
+        Common::PlaySoundStatic(soundHandle, 3002019);
+    }
+
+    originalMsgChangeResultState2(This, Edx, a2);
+}
+
 void RankQuote::applyPatches()
 {
     // Disable result animation skip
@@ -145,4 +161,7 @@ void RankQuote::applyPatches()
     WRITE_JUMP(0x10B8DA8, asmSkipRank);
     WRITE_JUMP(0x10B77A8, asmRankPerfect);
     WRITE_JUMP(0x10B7856, asmRank);
+
+    // Play character stage complete voice
+    INSTALL_HOOK(MsgChangeResultState2);
 }
