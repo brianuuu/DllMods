@@ -1,5 +1,7 @@
 #pragma once
 
+#define PI 3.141592
+
 typedef void* CSonicContext;
 CSonicContext* const PLAYER_CONTEXT = (CSonicContext*)0x1E5E2F0;
 CSonicContext* const pModernSonicContext = (CSonicContext*)0x1E5E2F8;
@@ -26,6 +28,19 @@ struct MsgGetHudPosition
     uint32_t m_type;
 };
 
+struct MsgSetPosition
+{
+    INSERT_PADDING(0x10);
+    Eigen::Vector3f position;
+    INSERT_PADDING(0x4);
+};
+
+struct MsgSetRotation
+{
+    INSERT_PADDING(0x10);
+    Eigen::Quaternionf rotation;
+};
+
 #ifndef XMLCheckResult
 #define XMLCheckResult(a_eResult) if (a_eResult != tinyxml2::XML_SUCCESS) { printf("XMLParse Error: %i\n", a_eResult); return a_eResult; }
 #endif
@@ -35,6 +50,12 @@ typedef void* __fastcall CSonicSpeedContextPlaySound(void*, void*, SharedPtrType
 
 namespace Common
 {
+
+inline bool IsStringEndsWith(std::string const& value, std::string const& ending)
+{
+    if (ending.size() > value.size()) return false;
+    return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+}
 
 inline bool CheckPlayerNodeExist(const Hedgehog::Base::CSharedString& name)
 {
@@ -102,6 +123,22 @@ inline void SonicContextPlaySound(SharedPtrTypeless& soundHandle, uint32_t cueID
     // Original code by Skyth: https://github.com/blueskythlikesclouds
     CSonicSpeedContextPlaySound* playSoundFunc = *(CSonicSpeedContextPlaySound**)(*(uint32_t*)pSonicContext + 0x74);
     playSoundFunc(pSonicContext, nullptr, soundHandle, cueID, flag);
+}
+
+inline void applyObjectPhysicsPosition(void* pObject, Eigen::Vector3f const& pos)
+{
+    FUNCTION_PTR(void*, __thiscall, processObjectMsgSetPosition, 0xEA2130, void* This, void* message);
+    alignas(16) MsgSetPosition msgSetPosition;
+    msgSetPosition.position = pos;
+    processObjectMsgSetPosition(pObject, &msgSetPosition);
+}
+
+inline void applyObjectPhysicsRotation(void* pObject, Eigen::Quaternionf const& rot)
+{
+    FUNCTION_PTR(void*, __thiscall, processObjectMsgSetRotation, 0xEA20D0, void* This, void* message);
+    alignas(16) MsgSetRotation msgSetRotation;
+    msgSetRotation.rotation = rot;
+    processObjectMsgSetRotation(pObject, &msgSetRotation);
 }
 
 } // namespace Common

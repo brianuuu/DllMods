@@ -6,6 +6,7 @@
 #include "ArchiveTreePatcher.h"
 #include "Itembox.h"
 #include "Stage.h"
+#include "SoleannaNPC.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
@@ -41,6 +42,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     // Stage specific patches
     Stage::applyPatches();
+
+    // Animate Soleanna NPCs
+    SoleannaNPC::applyPatches();
 
     // -------------Mandatory codes--------------
     // Patch "Red Rings Appear On New Game" by "brianuuu"
