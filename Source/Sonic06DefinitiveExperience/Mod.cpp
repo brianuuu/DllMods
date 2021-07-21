@@ -9,6 +9,7 @@
 #include "RailPhysics.h"
 #include "ArchiveTreePatcher.h"
 #include "Itembox.h"
+#include "NextGenPhysics.h"
 
 extern "C" void __declspec(dllexport) OnFrame()
 {
@@ -54,6 +55,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     // Apply various 06 rail physics
     RailPhysics::applyPatches();
+
+    // Replicate 06 physics
+    NextGenPhysics::applyPatches();
 
     // -------------Mandatory codes--------------
     // Patch "Disable Boost Button Prompt" by "Hyper"
