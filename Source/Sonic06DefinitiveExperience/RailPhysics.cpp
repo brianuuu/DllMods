@@ -9,6 +9,7 @@ uint32_t m_forceRailCollisionQuery = false;
 std::set<uint32_t*> RailPhysics::m_pPathContainer;
 std::vector<PathData> RailPhysics::m_pathData;
 
+float const c_lockOnRange = 8.0f;
 float RailPhysics::m_grindSpeed = 0.0f;
 float RailPhysics::m_grindAccelTime = 0.0f;
 float const c_grindSpeedInit = 23.0f;
@@ -333,6 +334,7 @@ void RailPhysics::updateHomingTargetPos()
     }
 
     // Find the closest lock-on position from the list of paths
+    float const rangeSquared = c_lockOnRange * c_lockOnRange;
     Eigen::Vector3f lockPos(0, 10000, 0);
     float minDistSquared = FLT_MAX;
     for (uint32_t index : closestPathIndices)
@@ -344,7 +346,8 @@ void RailPhysics::updateHomingTargetPos()
             Eigen::Vector3f const& p1 = pathData.m_points[i + 1];
 
             // Both points a too away, skip
-            if ((testPos - p0).squaredNorm() > 900.f && (testPos - p1).squaredNorm() > 900.f)
+            if ((testPos - p0).squaredNorm() > rangeSquared
+             && (testPos - p1).squaredNorm() > rangeSquared)
             {
                 continue;
             }
@@ -360,7 +363,8 @@ void RailPhysics::updateHomingTargetPos()
 
             Eigen::Vector3f pt = p0 + dir * t;
             float currentDistSquared = (pt - testPos).squaredNorm();
-            if (currentDistSquared < minDistSquared)
+            if (currentDistSquared <= rangeSquared
+             && currentDistSquared < minDistSquared)
             {
                 m_forceRailCollisionQuery = true;
                 lockPos = pt;
