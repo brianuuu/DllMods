@@ -2,11 +2,11 @@
 
 #define PI 3.141592
 
-typedef void* CSonicContext;
-CSonicContext* const PLAYER_CONTEXT = (CSonicContext*)0x1E5E2F0;
-CSonicContext* const pModernSonicContext = (CSonicContext*)0x1E5E2F8;
-CSonicContext* const pClassicSonicContext = (CSonicContext*)0x1E5E304;
-CSonicContext* const pSuperSonicContext = (CSonicContext*)0x1E5E310;
+typedef void CSonicContext;
+CSonicContext** const PLAYER_CONTEXT = (CSonicContext**)0x1E5E2F0;
+CSonicContext** const pModernSonicContext = (CSonicContext**)0x1E5E2F8;
+CSonicContext** const pClassicSonicContext = (CSonicContext**)0x1E5E304;
+CSonicContext** const pSuperSonicContext = (CSonicContext**)0x1E5E310;
 
 uint32_t const CStringConstructor = 0x6621A0;
 uint32_t const CStringDestructor = 0x661550;
