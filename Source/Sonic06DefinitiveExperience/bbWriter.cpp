@@ -11,28 +11,28 @@ bbWriter::~bbWriter()
 	m_file.close();
 }
 
-void bbWriter::applyModel(string& name, ModelType type)
+void bbWriter::applyModel(string& name, Configuration::ModelType type)
 {
 	switch (type)
 	{
-		case ModelType::Sonic: break;
-		case ModelType::SonicElise: name += "_Elise";
+		case Configuration::ModelType::Sonic: break;
+		case Configuration::ModelType::SonicElise: name += "_Elise";
 	}
 }
 
-void bbWriter::applyLanguage(string& name, LanguageType type)
+void bbWriter::applyLanguage(string& name, Configuration::LanguageType type)
 {
 	switch (type)
 	{
-	case LanguageType::English: break;
-	case LanguageType::Japanese: name += "_JPN";
+	case Configuration::LanguageType::English: break;
+	case Configuration::LanguageType::Japanese: name += "_JPN";
 	}
 }
 
-void bbWriter::applyPhysics(string& name, bool physics, ModelType type)
+void bbWriter::applyPhysics(string& name, bool physics, Configuration::ModelType type)
 {
 	// for affecting animation speed
-	if (physics && type == ModelType::Sonic)
+	if (physics && type == Configuration::ModelType::Sonic)
 	{
 		name += "_phy";
 	}

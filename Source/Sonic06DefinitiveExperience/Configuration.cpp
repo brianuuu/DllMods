@@ -1,10 +1,10 @@
 #include "Configuration.h"
 #include "bbWriter.h"
 
-ModelType Configuration::m_model = ModelType::Sonic;
-LanguageType Configuration::m_language = LanguageType::English;
+Configuration::ModelType Configuration::m_model = Configuration::ModelType::Sonic;
+Configuration::LanguageType Configuration::m_language = Configuration::LanguageType::English;
 bool Configuration::m_physics = false;
-RunResultType Configuration::m_run = RunResultType::Disable;
+Configuration::RunResultType Configuration::m_run = Configuration::RunResultType::Disable;
 vector<string> Configuration::m_runStages = {};
 
 bool Configuration::load(const std::string& rootPath)

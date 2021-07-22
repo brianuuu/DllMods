@@ -83,13 +83,13 @@ HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* 
 const char* sth2006RunStageIDs[STH2006_RUN_STAGE_COUNT] = { "ghz200", "sph200", "ssh200", "euc200" };
 bool RankRunAnimation::checkCanPlayRunAnimation()
 {
-    if (Configuration::m_model != ModelType::Sonic) return false;
-    if (Configuration::m_run == RunResultType::Disable) return false;
+    if (Configuration::m_model != Configuration::ModelType::Sonic) return false;
+    if (Configuration::m_run == Configuration::RunResultType::Disable) return false;
 
     // Not Modern Sonic or currently in super form
     if (!*pModernSonicContext || Common::CheckPlayerSuperForm()) return false;
 
-    if (Configuration::m_run == RunResultType::STH2006)
+    if (Configuration::m_run == Configuration::RunResultType::STH2006)
     {
         // Only enable for STH2006 Project stages
         for (int i = 0; i < STH2006_RUN_STAGE_COUNT; i++)
@@ -102,7 +102,7 @@ bool RankRunAnimation::checkCanPlayRunAnimation()
         return false;
     }
 
-    if (Configuration::m_run == RunResultType::Custom)
+    if (Configuration::m_run == Configuration::RunResultType::Custom)
     {
         // Only enable for custom defined stages
         for (string const& stage : Configuration::m_runStages)
@@ -210,8 +210,8 @@ void __declspec(naked) addTransition()
 
 void RankRunAnimation::applyPatches()
 {
-    if (Configuration::m_model != ModelType::Sonic) return;
-    if (Configuration::m_run == RunResultType::Disable) return;
+    if (Configuration::m_model != Configuration::ModelType::Sonic) return;
+    if (Configuration::m_run == Configuration::RunResultType::Disable) return;
 
     // Add run goal animations to the animation list
     INSTALL_HOOK(InitializeSonicAnimationList);

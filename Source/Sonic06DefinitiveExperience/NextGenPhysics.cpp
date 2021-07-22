@@ -107,6 +107,7 @@ void NextGenPhysics::applyPatches()
 
     // Implement bounce bracelet
     if (Configuration::m_model == ModelType::Sonic)
+    if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
         INSTALL_HOOK(CSonicStateGrounded);
         INSTALL_HOOK(CSonicStateStompingBegin);
