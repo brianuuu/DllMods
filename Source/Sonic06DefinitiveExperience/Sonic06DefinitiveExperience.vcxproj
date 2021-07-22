@@ -185,6 +185,7 @@
     <ClCompile Include="Itembox.cpp" />
     <ClCompile Include="Mod.cpp" />
     <ClCompile Include="Navigation.cpp" />
+    <ClCompile Include="NextGenPhysics.cpp" />
     <ClCompile Include="Pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pch.h</PrecompiledHeaderFile>
@@ -210,6 +211,7 @@
     <ClInclude Include="ExpToSonic.h" />
     <ClInclude Include="Itembox.h" />
     <ClInclude Include="Navigation.h" />
+    <ClInclude Include="NextGenPhysics.h" />
     <ClInclude Include="Pch.h" />
     <ClInclude Include="RailPhysics.h" />
     <ClInclude Include="RankQuote.h" />

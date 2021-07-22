@@ -16,6 +16,7 @@
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="Itembox.cpp" />
     <ClCompile Include="ArchiveTreePatcher.cpp" />
+    <ClCompile Include="NextGenPhysics.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pch.h" />
@@ -32,5 +33,6 @@
     <ClInclude Include="Application.h" />
     <ClInclude Include="Itembox.h" />
     <ClInclude Include="ArchiveTreePatcher.h" />
+    <ClInclude Include="NextGenPhysics.h" />
   </ItemGroup>
 </Project>
