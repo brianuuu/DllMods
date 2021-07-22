@@ -130,8 +130,8 @@ void NextGenPhysics::applyPatches()
         WRITE_MEMORY(0x12352B8, uint8_t, 0xEB);
     }
 
-    // Implement sweep kick
-    if (Configuration::m_model == ModelType::Sonic)
+    // Implement sweep kick and anti-gravity
+    if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
         // Change running Sliding to SquatKick
         WRITE_MEMORY(0xDFF857, uint32_t, 0x15F5608);
