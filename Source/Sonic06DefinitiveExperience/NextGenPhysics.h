@@ -9,5 +9,10 @@ class NextGenPhysics
 {
 public:
 	static void applyPatches();
+
+	static bool m_isStomping;
+	static bool m_bounced;
+	static bool m_isSquatKick;
+	static void bounceBraceletImpl();
 };
 

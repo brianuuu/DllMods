@@ -10,6 +10,7 @@
 #include "ArchiveTreePatcher.h"
 #include "Itembox.h"
 #include "NextGenPhysics.h"
+#include "StateManager.h"
 
 extern "C" void __declspec(dllexport) OnFrame()
 {
@@ -58,6 +59,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     // Replicate 06 physics
     NextGenPhysics::applyPatches();
+
+    // Debug state
+    WRITE_JUMP(0xE4FF30, StateManager::ChangeStateHOOK);
 
     // -------------Mandatory codes--------------
     // Patch "Disable Boost Button Prompt" by "Hyper"
