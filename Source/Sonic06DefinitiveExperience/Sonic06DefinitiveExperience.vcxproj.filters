@@ -33,6 +33,7 @@
     <ClInclude Include="Application.h" />
     <ClInclude Include="Itembox.h" />
     <ClInclude Include="ArchiveTreePatcher.h" />
+    <ClInclude Include="StateManager.h" />
     <ClInclude Include="NextGenPhysics.h" />
   </ItemGroup>
 </Project>

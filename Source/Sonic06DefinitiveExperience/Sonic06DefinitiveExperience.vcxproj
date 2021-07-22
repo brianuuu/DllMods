@@ -216,6 +216,7 @@
     <ClInclude Include="RailPhysics.h" />
     <ClInclude Include="RankQuote.h" />
     <ClInclude Include="RankRunAnimation.h" />
+    <ClInclude Include="StateManager.h" />
     <ClInclude Include="SuperSonic.h" />
     <ClInclude Include="tinyxml2.h" />
   </ItemGroup>
