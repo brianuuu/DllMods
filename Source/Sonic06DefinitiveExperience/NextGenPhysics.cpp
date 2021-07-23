@@ -1,6 +1,7 @@
 #include "NextGenPhysics.h"
 #include "Configuration.h"
 #include "StateManager.h"
+#include "Application.h"
 
 bool NextGenPhysics::m_isStomping = false;
 bool NextGenPhysics::m_bounced = false;
@@ -8,6 +9,7 @@ float const c_bouncePower = 17.0f;
 float const c_bouncePowerBig = 23.0f;
 
 bool NextGenPhysics::m_isSquatKick = false;
+float const c_squatKickPressMaxTime = 0.3f;
 
 HOOK(void, __cdecl, SetStickMagnitude, 0x9C69D0, int16_t* argX, int16_t* argY, int16_t a3, int16_t Deadzone)
 {
@@ -49,6 +51,7 @@ HOOK(void, __fastcall, CSonicStateSquatKickAdvance, 0x1252810, void* This)
     {
         static SharedPtrTypeless soundHandle;
         Common::SonicContextPlaySound(soundHandle, 80041021, 1);
+        Common::SonicContextPlaySound(soundHandle, 3002020, 0);
         NextGenPhysics::m_isSquatKick = true;
     }
     originalCSonicStateSquatKickAdvance(This);
@@ -58,6 +61,69 @@ HOOK(int*, __fastcall, CSonicStateSquatKickEnd, 0x12527B0, void* This)
 {
     NextGenPhysics::m_isSquatKick = false;
     return originalCSonicStateSquatKickEnd(This);
+}
+
+HOOK(bool, __stdcall, BActionHandler, 0xDFF660, CSonicContext* context, bool buttonHoldCheck)
+{
+    static float bHeldTimer(0.0f);
+
+    bool result = originalBActionHandler(context, buttonHoldCheck);
+    if (result)
+    {
+        bHeldTimer = 0.0f;
+        return result;
+    }
+
+    Eigen::Vector3f playerVelocity;
+    if (!Common::GetPlayerVelocity(playerVelocity))
+    {
+        return false;
+    }
+    bool moving = playerVelocity.norm() > 0.2f;
+
+    Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
+    bool bDown = padState->IsDown(Sonic::EKeyState::eKeyState_B);
+    bool bPressed = padState->IsTapped(Sonic::EKeyState::eKeyState_B);
+    bool bReleased = padState->IsReleased(Sonic::EKeyState::eKeyState_B);
+
+    CSonicStateFlags* flags = Common::GetSonicStateFlags();
+    if (bDown)
+    {
+        // Standing still and held B for a while (Spin Dash)
+        if (!moving && bHeldTimer > c_squatKickPressMaxTime)
+        {
+            StateManager::ChangeState(StateAction::Squat, *PLAYER_CONTEXT);
+            bHeldTimer = 0.0f;
+            return true;
+        }
+
+        // Remember how long we held B
+        bHeldTimer += Application::getDeltaTime();
+    }
+    else
+    {
+        if (bReleased && !flags->OnWater)
+        {
+            if (bHeldTimer <= c_squatKickPressMaxTime)
+            {
+                // Release B without holding it for too long (Squat Kick)
+                StateManager::ChangeState(StateAction::SquatKick, *PLAYER_CONTEXT);
+                bHeldTimer = 0.0f;
+                return true;
+            }
+            else if (moving && bHeldTimer > c_squatKickPressMaxTime)
+            {
+                // Sonic is moving and released B (Anti-Gravity)
+                StateManager::ChangeState(StateAction::Sliding, *PLAYER_CONTEXT);
+                bHeldTimer = 0.0f;
+                return true;
+            }
+        }
+
+        bHeldTimer = 0.0f;
+    }
+
+    return false;
 }
 
 uint32_t noAirDashOutOfControlReturnAddress = 0x1232445;
@@ -106,7 +172,6 @@ void NextGenPhysics::applyPatches()
     WRITE_JUMP(0x123243C, noAirDashOutOfControl);
 
     // Implement bounce bracelet
-    if (Configuration::m_model == ModelType::Sonic)
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
         INSTALL_HOOK(CSonicStateGrounded);
@@ -128,20 +193,39 @@ void NextGenPhysics::applyPatches()
 
         // Allow spin attack OnWater
         WRITE_MEMORY(0x12352B8, uint8_t, 0xEB);
+
+        // Skip B action check on Stomping
+        WRITE_NOP(0x12549CF, 0x8);
+        WRITE_NOP(0x12549DC, 0x2);
+        WRITE_MEMORY(0x12549DE, uint8_t, 0xEB);
     }
 
     // Implement sweep kick and anti-gravity
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
-        // Change running Sliding to SquatKick
-        WRITE_MEMORY(0xDFF857, uint32_t, 0x15F5608);
+        // Return 0 for Squat and Sliding, handle them ourselves
+        WRITE_MEMORY(0xDFF8D5, uint8_t, 0xEB, 0x05);
+        WRITE_MEMORY(0xDFF856, uint8_t, 0xE9, 0x81, 0x00, 0x00, 0x00);
+        INSTALL_HOOK(BActionHandler);
 
-        // Play sfx
+        // Play squat kick sfx
         INSTALL_HOOK(CSonicStateSquatKickAdvance);
         INSTALL_HOOK(CSonicStateSquatKickEnd);
 
+        // Enable sweep kick attack collision immediately
         static double const c_sweepKickActivateTime = 0.0;
         WRITE_MEMORY(0x125299E, double*, &c_sweepKickActivateTime);
+
+        // Change SquatKick's collision the same as sliding
+        WRITE_MEMORY(0x12529BE, uint8_t, 1);
+
+        // Change slide to hit enemy as if you're boosting
+        WRITE_MEMORY(0x11D72F3, uint32_t, 0x1E61B90);
+        WRITE_MEMORY(0x11D7090, uint32_t, 0x1E61B90);
+
+        // Spin animation for squat
+        WRITE_MEMORY(0x1230A84, uint32_t, 0x15F84F4);
+        WRITE_MEMORY(0x1230A9F, uint32_t, 0x15F84F4);
     }
 }
 
