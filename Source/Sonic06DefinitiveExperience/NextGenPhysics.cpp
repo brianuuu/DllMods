@@ -217,7 +217,17 @@ void NextGenPhysics::applyPatches()
         WRITE_MEMORY(0x125299E, double*, &c_sweepKickActivateTime);
 
         // Change SquatKick's collision the same as sliding
-        WRITE_MEMORY(0x12529BE, uint8_t, 1);
+        WRITE_MEMORY(0xDFCD6D, uint8_t, 0x5); // switch 6 cases
+        static uint32_t const collisionSwitchTable[6] = 
+        {
+            0xDFCD7B, // normal
+            0xDFCDC0, // slide
+            0xDFCD7B, // boost
+            0xDFCD7B,
+            0xDFCDFA, // unused
+            0xDFCDC0  // squat kick
+        };
+        WRITE_MEMORY(0xDFCD77, uint32_t*, collisionSwitchTable);
 
         // Change slide to hit enemy as if you're boosting
         WRITE_MEMORY(0x11D72F3, uint32_t, 0x1E61B90);
