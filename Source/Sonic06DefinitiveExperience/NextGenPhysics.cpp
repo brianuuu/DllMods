@@ -51,7 +51,6 @@ HOOK(void, __fastcall, CSonicStateSquatKickAdvance, 0x1252810, void* This)
     {
         static SharedPtrTypeless soundHandle;
         Common::SonicContextPlaySound(soundHandle, 80041021, 1);
-        Common::SonicContextPlaySound(soundHandle, 3002020, 0);
         NextGenPhysics::m_isSquatKick = true;
     }
     originalCSonicStateSquatKickAdvance(This);
@@ -200,7 +199,7 @@ void NextGenPhysics::applyPatches()
         WRITE_MEMORY(0x12549DE, uint8_t, 0xEB);
     }
 
-    // Implement sweep kick and anti-gravity
+    // Implement sweep kick, anti-gravity and spindash
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
         // Return 0 for Squat and Sliding, handle them ourselves
@@ -211,6 +210,11 @@ void NextGenPhysics::applyPatches()
         // Play squat kick sfx
         INSTALL_HOOK(CSonicStateSquatKickAdvance);
         INSTALL_HOOK(CSonicStateSquatKickEnd);
+        if (Configuration::m_model == Configuration::ModelType::Sonic
+         && Configuration::m_language == Configuration::LanguageType::English)
+        {
+            WRITE_MEMORY(0x1252740, uint32_t, 3002020);
+        }
 
         // Enable sweep kick attack collision immediately
         static double const c_sweepKickActivateTime = 0.0;
