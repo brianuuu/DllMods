@@ -28,7 +28,7 @@ struct MsgSetPosition
 struct MsgSetRotation
 {
     INSERT_PADDING(0x10);
-    Eigen::Quaternionf rotation;
+    Eigen::Quaternionf m_rotation;
 };
 
 struct CSonicStateFlags
@@ -354,6 +354,22 @@ inline void PlaySoundStatic(SharedPtrTypeless& soundHandle, uint32_t cueID)
         FUNCTION_PTR(void*, __thiscall, sub_75FA60, 0x75FA60, void* This, SharedPtrTypeless&, uint32_t cueId);
         sub_75FA60((void*)syncObject[8], soundHandle, cueID);
     }
+}
+
+inline void applyObjectPhysicsPosition(void* pObject, Eigen::Vector3f const& pos)
+{
+	FUNCTION_PTR(void*, __thiscall, processObjectMsgSetPosition, 0xEA2130, void* This, void* message);
+	alignas(16) MsgSetPosition msgSetPosition;
+	msgSetPosition.m_position = pos;
+	processObjectMsgSetPosition(pObject, &msgSetPosition);
+}
+
+inline void applyObjectPhysicsRotation(void* pObject, Eigen::Quaternionf const& rot)
+{
+	FUNCTION_PTR(void*, __thiscall, processObjectMsgSetRotation, 0xEA20D0, void* This, void* message);
+	alignas(16) MsgSetRotation msgSetRotation;
+	msgSetRotation.m_rotation = rot;
+	processObjectMsgSetRotation(pObject, &msgSetRotation);
 }
 
 } // namespace Common
