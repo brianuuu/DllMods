@@ -444,7 +444,7 @@ void NextGenPhysics::applyPatches()
         // Change SlideToSquat to SlidingEnd
         WRITE_NOP(0x11D6CA4, 0x51);
         WRITE_MEMORY(0x11D6CF6, uint32_t, 0x15F557C); // slide end state
-        WRITE_NOP(0x11D6FAD, 0x2C);
+        WRITE_NOP(0x11D6FAD, 0x23);
         WRITE_MEMORY(0x11D6FD1, uint32_t, 0x15F557C); // slide end state
 
         // Play spindash sfx
