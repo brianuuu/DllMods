@@ -1,5 +1,8 @@
 #pragma once
 
+#define PI 3.141592
+#define PI_F 3.141592f
+
 typedef void CSonicContext;
 CSonicContext** const PLAYER_CONTEXT = (CSonicContext**)0x1E5E2F0;
 CSonicContext** const pModernSonicContext = (CSonicContext**)0x1E5E2F8;
