@@ -11,6 +11,13 @@ float const c_bouncePowerBig = 23.0f;
 bool NextGenPhysics::m_isSquatKick = false;
 float const c_squatKickPressMaxTime = 0.3f;
 
+bool NextGenPhysics::m_isSpindash = false;
+float const c_slidingTime = 3.0f;
+float const c_slidingSpeedMin = 10.0f;
+float const c_slidingSpeedMax = 16.0f;
+float const c_spindashTime = 3.0f;
+float const c_spindashSpeed = 30.0f;
+
 HOOK(void, __cdecl, SetStickMagnitude, 0x9C69D0, int16_t* argX, int16_t* argY, int16_t a3, int16_t Deadzone)
 {
     const double x = min(1.0, max(-1.0, *argX / 32767.0));
@@ -45,7 +52,7 @@ HOOK(int, __fastcall, CSonicStateHomingAttackBegin, 0x1232040, void* This)
     return originalCSonicStateHomingAttackBegin(This);
 }
 
-HOOK(void, __fastcall, CSonicStateSquatKickAdvance, 0x1252810, void* This)
+HOOK(int*, __fastcall, CSonicStateSquatKickBegin, 0x12526D0, void* This)
 {
     if (!NextGenPhysics::m_isSquatKick)
     {
@@ -53,13 +60,59 @@ HOOK(void, __fastcall, CSonicStateSquatKickAdvance, 0x1252810, void* This)
         Common::SonicContextPlaySound(soundHandle, 80041021, 1);
         NextGenPhysics::m_isSquatKick = true;
     }
-    originalCSonicStateSquatKickAdvance(This);
+    return originalCSonicStateSquatKickBegin(This);
 }
 
 HOOK(int*, __fastcall, CSonicStateSquatKickEnd, 0x12527B0, void* This)
 {
     NextGenPhysics::m_isSquatKick = false;
     return originalCSonicStateSquatKickEnd(This);
+}
+
+static SharedPtrTypeless spinDashSoundHandle;
+HOOK(int*, __fastcall, CSonicStateSquatBegin, 0x1230A30, void* This)
+{
+    Common::SonicContextPlaySound(spinDashSoundHandle, 2002042, 1);
+    return originalCSonicStateSquatBegin(This);
+}
+
+HOOK(int*, __fastcall, CSonicStateSquatEnd, 0x12309A0, void* This)
+{
+    spinDashSoundHandle.reset();
+    if (NextGenPhysics::m_isSpindash)
+    {
+        static SharedPtrTypeless soundHandle;
+        Common::SonicContextPlaySound(soundHandle, 80041024, 1);
+    }
+    return originalCSonicStateSquatEnd(This);
+}
+
+HOOK(int, __fastcall, CSonicStateSlidingBegin, 0x11D7110, void* This)
+{
+    if (NextGenPhysics::m_isSpindash)
+    {
+        // Spin animation over slide
+        WRITE_MEMORY(0x11D7124, uint32_t, 0x15F84F4);
+        WRITE_MEMORY(0x11D6E6A, uint32_t, 0x15F84F4);
+        WRITE_MEMORY(0x11D6EDB, uint32_t, 0x15F84F4);
+
+        // Disable sliding sfx and voice
+        WRITE_MEMORY(0x11D722C, int, -1);
+        WRITE_MEMORY(0x11D72DC, int, -1);
+    }
+    else
+    {
+        // Original sliding animation
+        WRITE_MEMORY(0x11D7124, uint32_t, 0x15E69CC);
+        WRITE_MEMORY(0x11D6E6A, uint32_t, 0x15E69C4);
+        WRITE_MEMORY(0x11D6EDB, uint32_t, 0x15E69CC);
+
+        // Sliding sfx and voice
+        WRITE_MEMORY(0x11D722C, uint32_t, 2002032);
+        WRITE_MEMORY(0x11D72DC, uint32_t, 3002016);
+    }
+
+    return originalCSonicStateSlidingBegin(This);
 }
 
 HOOK(bool, __stdcall, BActionHandler, 0xDFF660, CSonicContext* context, bool buttonHoldCheck)
@@ -183,8 +236,68 @@ void __declspec(naked) lightDashHigherPriority()
     }
 }
 
+uint32_t slidingHorizontalTargetVelReturnAddress = 0x11D953E;
+void __declspec(naked) slidingHorizontalTargetVel()
+{
+    __asm
+    {
+        // Don't allow velocity change for SquatKick
+        cmp     NextGenPhysics::m_isSquatKick, 1
+        je      jump
+
+        // Get overrided target velocity
+        mov     ecx, ebx
+        call    NextGenPhysics::applySlidingHorizontalTargetVel
+        test    al, al
+        jnz     jump
+
+        // Original target velocity fallback code
+        movaps  xmm0, [esp + 10h]
+        movaps  xmmword ptr[ebx + 2A0h], xmm0
+
+        jump:
+        jmp     [slidingHorizontalTargetVelReturnAddress]
+    }
+}
+
+uint32_t startSpindashReturnAddress = 0x1230C39;
+void __declspec(naked) startSpindash()
+{
+    __asm
+    {
+        // Original function
+        mov     byte ptr[ebx + 5E8h], 1
+        mov     [ebx + 5E9h], al
+
+        // Set spindash state
+        mov     NextGenPhysics::m_isSpindash, 1
+        jmp     [startSpindashReturnAddress]
+    }
+}
+
+uint32_t CSonicStateSlidingEndReturnAddress = 0x11D702D;
+void __declspec(naked) CSonicStateSlidingEnd()
+{
+    __asm
+    {
+        // Original function
+        mov     eax, [edi + 534h]
+
+        // Set spindash state
+        mov     NextGenPhysics::m_isSpindash, 0
+        jmp     [CSonicStateSlidingEndReturnAddress]
+    }
+}
+
 void NextGenPhysics::applyPatches()
 {
+    // Always disable stomp voice and sfx for Sonic
+    if (Configuration::m_model == Configuration::ModelType::Sonic)
+    {
+        WRITE_MEMORY(0x1254E04, int, -1);
+        WRITE_MEMORY(0x1254F23, int, -1);
+    }
+
     if (!Configuration::m_physics) return;
 
     // Precise stick input, by Skyth (06 still has angle clamp, don't use)
@@ -237,10 +350,6 @@ void NextGenPhysics::applyPatches()
         WRITE_JUMP(0x1254A36, bounceBraceletASMImpl);
         WRITE_JUMP(0x12549C9, bounceBraceletASMImpl);
 
-        // Disable stomp voice and sfx
-        WRITE_MEMORY(0x1254E04, int, -1);
-        WRITE_MEMORY(0x1254F23, int, -1);
-
         // Disable jump ball sfx
         WRITE_MEMORY(0x11BCC7E, int, -1);
 
@@ -255,18 +364,30 @@ void NextGenPhysics::applyPatches()
         WRITE_NOP(0x12549CF, 0x8);
         WRITE_NOP(0x12549DC, 0x2);
         WRITE_MEMORY(0x12549DE, uint8_t, 0xEB);
+
+        // Change stomp and jumpball to hit enemy as if you're boosting
+        WRITE_MEMORY(0x11BCC43, uint32_t, 0x1E61B90); // jumpball start
+        WRITE_MEMORY(0x11BCBB2, uint32_t, 0x1E61B90); // jumpball end
+        WRITE_MEMORY(0x1254D62, uint32_t, 0x1E61B90); // stomping start
+        WRITE_MEMORY(0x1254BC5, uint32_t, 0x1E61B90); // stomping end
     }
 
     // Implement sweep kick, anti-gravity and spindash
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
+        //-------------------------------------------------------
+        // State handling
+        //-------------------------------------------------------
         // Return 0 for Squat and Sliding, handle them ourselves
         WRITE_MEMORY(0xDFF8D5, uint8_t, 0xEB, 0x05);
         WRITE_MEMORY(0xDFF856, uint8_t, 0xE9, 0x81, 0x00, 0x00, 0x00);
         INSTALL_HOOK(BActionHandler);
 
+        //-------------------------------------------------------
+        // Sweep Kick
+        //-------------------------------------------------------
         // Play squat kick sfx
-        INSTALL_HOOK(CSonicStateSquatKickAdvance);
+        INSTALL_HOOK(CSonicStateSquatKickBegin);
         INSTALL_HOOK(CSonicStateSquatKickEnd);
         if (Configuration::m_model == Configuration::ModelType::Sonic
          && Configuration::m_language == Configuration::LanguageType::English)
@@ -291,13 +412,44 @@ void NextGenPhysics::applyPatches()
         };
         WRITE_MEMORY(0xDFCD77, uint32_t*, collisionSwitchTable);
 
+        //-------------------------------------------------------
+        // Spindash & Anti-Gravity
+        //-------------------------------------------------------
         // Change slide to hit enemy as if you're boosting
         WRITE_MEMORY(0x11D72F3, uint32_t, 0x1E61B90);
         WRITE_MEMORY(0x11D7090, uint32_t, 0x1E61B90);
 
-        // Spin animation for squat
-        WRITE_MEMORY(0x1230A84, uint32_t, 0x15F84F4);
-        WRITE_MEMORY(0x1230A9F, uint32_t, 0x15F84F4);
+        // Spin animation for Squat
+        WRITE_MEMORY(0x1230A84, uint32_t, 0x15F84F4); // slide begin animation
+        WRITE_MEMORY(0x1230A9F, uint32_t, 0x15F84F4); // slide begin animation
+        WRITE_MEMORY(0x1230D74, uint32_t, 0x15F84F4); // slide hold animation
+
+        // Use spindash when release button
+        WRITE_JUMP(0x1230BDB, startSpindash);
+        WRITE_MEMORY(0x1230C3A, uint32_t, 0x15F5108); // change state to sliding
+
+         // Don't allow stick move start sliding from squat
+        WRITE_MEMORY(0x1230D62, uint8_t, 0xEB);
+        WRITE_MEMORY(0x1230DA9, uint8_t, 0xE9, 0xA8, 0x00, 0x00, 0x00, 0x90);
+
+        // Change SlideToSquat to SlidingEnd
+        WRITE_NOP(0x11D6CA4, 0x51);
+        WRITE_MEMORY(0x11D6CF6, uint32_t, 0x15F557C); // slide end state
+        WRITE_NOP(0x11D6FAD, 0x2C);
+        WRITE_MEMORY(0x11D6FD1, uint32_t, 0x15F557C); // slide end state
+
+        // Play spindash sfx
+        INSTALL_HOOK(CSonicStateSquatBegin);
+        INSTALL_HOOK(CSonicStateSquatEnd);
+
+        // Change sliding animation if we are spindashing
+        INSTALL_HOOK(CSonicStateSlidingBegin);
+        WRITE_JUMP(0x11D7027, CSonicStateSlidingEnd);
+
+        // Set constant sliding speed
+        WRITE_JUMP(0x11D9532, slidingHorizontalTargetVel);
+
+        // TODO stop sliding/spindash after timer, press B to cancel out
     }
 }
 
@@ -327,4 +479,33 @@ void NextGenPhysics::bounceBraceletImpl()
     // Set out of control
     FUNCTION_PTR(int, __stdcall, SetOutOfControl, 0xE5AC00, CSonicContext * context, float duration);
     SetOutOfControl(*pModernSonicContext, 0.1f);
+}
+
+bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context)
+{
+    // TODO: lerp between current & target direction
+    Eigen::Vector3f playerWorldDir;
+    if (!Common::GetPlayerWorldDirection(playerWorldDir, true)) return false;
+
+    Eigen::Vector3f playerVelocity;
+    if (!Common::GetPlayerVelocity(playerVelocity)) return false;
+
+    if (m_isSpindash)
+    {
+        playerWorldDir *= c_spindashSpeed;
+    }
+    else
+    {
+        playerVelocity.y() = 0;
+        float hSpeed = playerVelocity.norm();
+        hSpeed = max(hSpeed, c_slidingSpeedMin);
+        hSpeed = min(hSpeed, c_slidingSpeedMax);
+        playerWorldDir *= hSpeed;
+    }
+
+    float* targetHorizontalVel = (float*)((uint32_t)context + 0x2A0);
+    targetHorizontalVel[0] = playerWorldDir.x();
+    targetHorizontalVel[2] = playerWorldDir.z();
+
+    return true;
 }

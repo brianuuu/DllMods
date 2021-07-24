@@ -14,5 +14,8 @@ public:
 	static bool m_bounced;
 	static bool m_isSquatKick;
 	static void bounceBraceletImpl();
+
+	static bool m_isSpindash;
+	static bool __fastcall applySlidingHorizontalTargetVel(void* context);
 };
 
