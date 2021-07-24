@@ -55,4 +55,13 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     WRITE_MEMORY(0xBAAFBD, uint8_t, 0xD);
     WRITE_MEMORY(0xBAAFBE, float*, &c_eggRoboLockScale);
     WRITE_NOP(0xBAAFC2, 0x1);
+
+    // Change slide, jumpball and stomp to hit enemy as if you're boosting
+    // This will make targeted enemies don't trip or explode early and get launched to targets always
+    WRITE_MEMORY(0x11D72F3, uint32_t, 0x1E61B90); // slide start
+    WRITE_MEMORY(0x11D7090, uint32_t, 0x1E61B90); // slide end
+    WRITE_MEMORY(0x11BCC43, uint32_t, 0x1E61B90); // jumpball start
+    WRITE_MEMORY(0x11BCBB2, uint32_t, 0x1E61B90); // jumpball end
+    WRITE_MEMORY(0x1254D62, uint32_t, 0x1E61B90); // stomping start
+    WRITE_MEMORY(0x1254BC5, uint32_t, 0x1E61B90); // stomping end
 }
