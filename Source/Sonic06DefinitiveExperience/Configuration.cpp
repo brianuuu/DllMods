@@ -3,9 +3,12 @@
 
 Configuration::ModelType Configuration::m_model = Configuration::ModelType::Sonic;
 Configuration::LanguageType Configuration::m_language = Configuration::LanguageType::English;
-bool Configuration::m_physics = false;
+
 Configuration::RunResultType Configuration::m_run = Configuration::RunResultType::Disable;
 vector<string> Configuration::m_runStages = {};
+
+bool Configuration::m_physics = false;
+bool Configuration::m_xButtonAction = true;
 
 bool Configuration::load(const std::string& rootPath)
 {
@@ -19,6 +22,8 @@ bool Configuration::load(const std::string& rootPath)
     m_language = (LanguageType)reader.GetInteger("Main", "nLanguage", 0);
     m_physics = reader.GetBoolean("Main", "bPhysics", false);
     m_run = (RunResultType)reader.GetInteger("Main", "nRun", 0);
+
+    // TODO: Configuration for X button action
 
     // Get custom stage list
     string runStages = reader.Get("Main", "sRunStages", "");

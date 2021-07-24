@@ -81,9 +81,10 @@ HOOK(bool, __stdcall, BActionHandler, 0xDFF660, CSonicContext* context, bool but
     bool moving = playerVelocity.norm() > 0.2f;
 
     Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
-    bool bDown = padState->IsDown(Sonic::EKeyState::eKeyState_B);
-    bool bPressed = padState->IsTapped(Sonic::EKeyState::eKeyState_B);
-    bool bReleased = padState->IsReleased(Sonic::EKeyState::eKeyState_B);
+    Sonic::EKeyState actionButton = Configuration::m_xButtonAction ? Sonic::EKeyState::eKeyState_X : Sonic::EKeyState::eKeyState_B;
+    bool bDown = padState->IsDown(actionButton);
+    bool bPressed = padState->IsTapped(actionButton);
+    bool bReleased = padState->IsReleased(actionButton);
 
     CSonicStateFlags* flags = Common::GetSonicStateFlags();
     if (bDown)
@@ -160,12 +161,69 @@ void __declspec(naked) bounceBraceletASMImpl()
     }
 }
 
+uint32_t lightDashHigherPriorityReturnAddress = 0xDFDDD0;
+uint32_t lightDashHigherPrioritySuccessAddress = 0xDFDDED;
+uint32_t fpLightSpeedDash = 0xDFFD10;
+void __declspec(naked) lightDashHigherPriority()
+{
+    __asm
+    {
+        // Check light speed dash
+        mov     eax, esi
+        mov     ebx, [esp]
+        call    [fpLightSpeedDash]
+        test    al, al
+        jz      jump
+        jmp     [lightDashHigherPrioritySuccessAddress]
+
+        // Original check B-button actions
+        jump:
+        push    [0x15F55A4]
+        jmp     [lightDashHigherPriorityReturnAddress]
+    }
+}
+
 void NextGenPhysics::applyPatches()
 {
     if (!Configuration::m_physics) return;
 
     // Precise stick input, by Skyth (06 still has angle clamp, don't use)
     // INSTALL_HOOK(SetStickMagnitude);
+
+    // Change all actions to X button, change boost to R2
+    if (Configuration::m_xButtonAction)
+    {
+        // Check for light speed dash before stomp
+        WRITE_JUMP(0xDFDDCB, lightDashHigherPriority);
+
+        // X actions
+        WRITE_MEMORY(0xDFDDBD, uint32_t, 4);    // Stomping
+        WRITE_MEMORY(0xDFDE7F, uint32_t, 4);    // Unknown B hold
+        WRITE_MEMORY(0xDFDEBA, uint32_t, 4);    // GrindSquat start
+        WRITE_MEMORY(0xDFF6E5, uint32_t, 4);    // Stomp, slide, squat start
+        WRITE_MEMORY(0xDFFD5F, uint32_t, 4);    // LightSpeedDashReady
+        WRITE_MEMORY(0xE4910E, uint8_t, 4);     // Board Squat
+        WRITE_MEMORY(0x111761A, uint32_t, 4);   // LightSpeedDash
+        WRITE_MEMORY(0x1118970, uint32_t, 4);   // GrindSquat end
+        WRITE_MEMORY(0x11D6B03, uint32_t, 4);   // Sliding end
+        WRITE_MEMORY(0x1230BB6, uint32_t, 4);   // Squat end
+
+        // R2 actions
+        WRITE_MEMORY(0xDFF25B, uint32_t, 32);   // Grind Boost
+        WRITE_MEMORY(0xDFDF4C, uint32_t, 32);   // Air Boost
+        WRITE_MEMORY(0xE3D991, uint32_t, 32);   // Blast Off
+        WRITE_MEMORY(0xE4776B, uint32_t, 32);   // Dummy Boost
+        WRITE_MEMORY(0x11177EE, uint32_t, 32);  // Boost
+        WRITE_MEMORY(0x1118CEE, uint32_t, 32);  // Fall Boost
+        WRITE_MEMORY(0x111BE61, uint32_t, 32);  // Null Boost?
+        WRITE_MEMORY(0x111BEE8, uint32_t, 32);  // Dummy Boost plugin
+        WRITE_MEMORY(0x111D801, uint32_t, 32);  // Board Fall Boost
+        WRITE_MEMORY(0x11A0716, uint32_t, 32);  // Dummy Boost External
+        WRITE_MEMORY(0x11A07D7, uint32_t, 32);  // Speed external control
+        WRITE_MEMORY(0x11A0DA8, uint32_t, 32);  // Speed external control
+        //WRITE_MEMORY(0x11BD057, uint32_t, 32);  // DivingDive start
+        //WRITE_MEMORY(0x124AF01, uint32_t, 32);  // DivingDive end
+    }
 
     // No out of control for air dash
     WRITE_JUMP(0x123243C, noAirDashOutOfControl);
