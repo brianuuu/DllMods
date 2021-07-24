@@ -335,6 +335,17 @@ inline void SonicContextPlaySound(SharedPtrTypeless& soundHandle, uint32_t cueID
     playSoundFunc(pSonicContext, nullptr, soundHandle, cueID, flag);
 }
 
+inline void SonicContextPlayVoice(SharedPtrTypeless& soundHandle, uint32_t cueID, uint32_t priority)
+{
+	// Note: This doesn't work at result screen, use PlaySoundStatic instead
+	void* pSonicContext = *PLAYER_CONTEXT;
+	if (!pSonicContext) return;
+
+	// Original code by Skyth: https://github.com/blueskythlikesclouds
+	CSonicSpeedContextPlaySound* playSoundFunc = *(CSonicSpeedContextPlaySound**)(*(uint32_t*)pSonicContext + 0xA0);
+	playSoundFunc(pSonicContext, nullptr, soundHandle, cueID, priority);
+}
+
 inline void PlaySoundStatic(SharedPtrTypeless& soundHandle, uint32_t cueID)
 {
     uint32_t* syncObject = *(uint32_t**)0x1E79044;
