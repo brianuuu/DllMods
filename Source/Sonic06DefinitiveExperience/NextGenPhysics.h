@@ -16,6 +16,6 @@ public:
 	static void bounceBraceletImpl();
 
 	static bool m_isSpindash;
-	static bool __fastcall applySlidingHorizontalTargetVel(void* context);
+	static bool __fastcall applySlidingHorizontalTargetVel3D(void* context);
 };
 

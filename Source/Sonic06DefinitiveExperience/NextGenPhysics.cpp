@@ -58,17 +58,23 @@ HOOK(int, __fastcall, CSonicStateHomingAttackBegin, 0x1232040, void* This)
 
 HOOK(int*, __fastcall, CSonicStateSquatKickBegin, 0x12526D0, void* This)
 {
-    if (!NextGenPhysics::m_isSquatKick)
-    {
-        static SharedPtrTypeless soundHandle;
-        Common::SonicContextPlaySound(soundHandle, 80041021, 1);
-        NextGenPhysics::m_isSquatKick = true;
-    }
+    // Don't allow direction change for squat kick
+    WRITE_MEMORY(0x11D944A, uint8_t, 0);
+    static float const zeroTurnRate = 0.0f;
+    WRITE_MEMORY(0x11D9441, float*, &zeroTurnRate);
+
+    static SharedPtrTypeless soundHandle;
+    Common::SonicContextPlaySound(soundHandle, 80041021, 1);
+    NextGenPhysics::m_isSquatKick = true;
     return originalCSonicStateSquatKickBegin(This);
 }
 
 HOOK(int*, __fastcall, CSonicStateSquatKickEnd, 0x12527B0, void* This)
 {
+    // Unlock direction change for sliding/spindash
+    WRITE_MEMORY(0x11D944A, uint8_t, 1);
+    WRITE_MEMORY(0x11D9441, float*, &c_funcMaxTurnRate);
+
     NextGenPhysics::m_isSquatKick = false;
     return originalCSonicStateSquatKickEnd(This);
 }
@@ -241,18 +247,14 @@ void __declspec(naked) lightDashHigherPriority()
     }
 }
 
-uint32_t slidingHorizontalTargetVelReturnAddress = 0x11D953E;
-void __declspec(naked) slidingHorizontalTargetVel()
+uint32_t slidingHorizontalTargetVel3DReturnAddress = 0x11D953E;
+void __declspec(naked) slidingHorizontalTargetVel3D()
 {
     __asm
     {
-        // Don't allow velocity change for SquatKick
-        cmp     NextGenPhysics::m_isSquatKick, 1
-        je      jump
-
         // Get overrided target velocity
         mov     ecx, ebx
-        call    NextGenPhysics::applySlidingHorizontalTargetVel
+        call    NextGenPhysics::applySlidingHorizontalTargetVel3D
         test    al, al
         jnz     jump
 
@@ -261,7 +263,7 @@ void __declspec(naked) slidingHorizontalTargetVel()
         movaps  xmmword ptr[ebx + 2A0h], xmm0
 
         jump:
-        jmp     [slidingHorizontalTargetVelReturnAddress]
+        jmp     [slidingHorizontalTargetVel3DReturnAddress]
     }
 }
 
@@ -442,21 +444,23 @@ void NextGenPhysics::applyPatches()
         WRITE_MEMORY(0x1230DA9, uint8_t, 0xE9, 0xA8, 0x00, 0x00, 0x00, 0x90);
 
         // Change SlideToSquat to SlidingEnd
-        WRITE_NOP(0x11D6CA4, 0x51);
+        WRITE_NOP(0x11D6CA4, 0x9);
+        WRITE_NOP(0x11D6CB2, 0x43);
         WRITE_MEMORY(0x11D6CF6, uint32_t, 0x15F557C); // slide end state
-        WRITE_NOP(0x11D6FAD, 0x23);
+        WRITE_NOP(0x11D6FA4, 0x2C);
         WRITE_MEMORY(0x11D6FD1, uint32_t, 0x15F557C); // slide end state
 
         // Play spindash sfx
         INSTALL_HOOK(CSonicStateSquatBegin);
         INSTALL_HOOK(CSonicStateSquatEnd);
 
-        // Change sliding animation if we are spindashing
+        // Change sliding animation if we are spindashing, handle transition out
         INSTALL_HOOK(CSonicStateSlidingBegin);
         WRITE_JUMP(0x11D7027, CSonicStateSlidingEnd);
 
         // Set constant sliding speed
-        WRITE_JUMP(0x11D9532, slidingHorizontalTargetVel);
+        // TODO: 2D spindash not working
+        WRITE_JUMP(0x11D9532, slidingHorizontalTargetVel3D);
 
         // TODO stop sliding/spindash after timer, press B to cancel out
     }
@@ -490,7 +494,7 @@ void NextGenPhysics::bounceBraceletImpl()
     SetOutOfControl(*pModernSonicContext, 0.1f);
 }
 
-bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context)
+bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel3D(void* context)
 {
     // Lock velocity to Sonic's direction, which already has turning radius increased
     Eigen::Vector3f playerPosition;
@@ -498,25 +502,29 @@ bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context)
     if (!Common::GetPlayerTransform(playerPosition, playerRotation)) return false;
     Eigen::Vector3f playerDir = playerRotation * Eigen::Vector3f::UnitZ();
 
-    if (m_isSpindash)
+    Eigen::Vector3f playerVelocity;
+    if (!Common::GetPlayerVelocity(playerVelocity)) return false;
+
+    if (m_isSquatKick)
+    {
+        // Keep velocity with squat kick
+        playerDir = playerVelocity;
+    }
+    else if (m_isSpindash)
     {
         playerDir *= c_spindashSpeed;
     }
     else
     {
-        Eigen::Vector3f playerVelocity;
-        if (!Common::GetPlayerVelocity(playerVelocity)) return false;
-
-        playerVelocity.y() = 0;
         float hSpeed = playerVelocity.norm();
         hSpeed = max(hSpeed, c_slidingSpeedMin);
         hSpeed = min(hSpeed, c_slidingSpeedMax);
-
         playerDir *= hSpeed;
     }
 
     float* targetHorizontalVel = (float*)((uint32_t)context + 0x2A0);
     targetHorizontalVel[0] = playerDir.x();
+    targetHorizontalVel[1] = playerDir.y();
     targetHorizontalVel[2] = playerDir.z();
 
     return true;
