@@ -3,6 +3,10 @@
 #include "StateManager.h"
 #include "Application.h"
 
+// Used by sub_E310A0
+float const c_funcMaxTurnRate = 400.0f;
+float const c_funcTurnRateMultiplier = PI_F * 10.0f;
+
 bool NextGenPhysics::m_isStomping = false;
 bool NextGenPhysics::m_bounced = false;
 float const c_bouncePower = 17.0f;
@@ -119,8 +123,9 @@ HOOK(bool, __stdcall, BActionHandler, 0xDFF660, CSonicContext* context, bool but
 {
     static float bHeldTimer(0.0f);
 
+    bool* unknownFlags = *(bool**)((uint32_t)context + 0x11C);
     bool result = originalBActionHandler(context, buttonHoldCheck);
-    if (result)
+    if (result || unknownFlags[0x98] || unknownFlags[0x99])
     {
         bHeldTimer = 0.0f;
         return result;
@@ -303,6 +308,10 @@ void NextGenPhysics::applyPatches()
     // Precise stick input, by Skyth (06 still has angle clamp, don't use)
     // INSTALL_HOOK(SetStickMagnitude);
 
+    // Increase turning rate for spindash/sliding
+    WRITE_MEMORY(0x11D9441, float*, &c_funcMaxTurnRate);
+    WRITE_MEMORY(0x11D944D, float*, &c_funcTurnRateMultiplier);
+
     // Change all actions to X button, change boost to R2
     if (Configuration::m_xButtonAction)
     {
@@ -483,29 +492,32 @@ void NextGenPhysics::bounceBraceletImpl()
 
 bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context)
 {
-    // TODO: lerp between current & target direction
-    Eigen::Vector3f playerWorldDir;
-    if (!Common::GetPlayerWorldDirection(playerWorldDir, true)) return false;
-
-    Eigen::Vector3f playerVelocity;
-    if (!Common::GetPlayerVelocity(playerVelocity)) return false;
+    // Lock velocity to Sonic's direction, which already has turning radius increased
+    Eigen::Vector3f playerPosition;
+    Eigen::Quaternionf playerRotation;
+    if (!Common::GetPlayerTransform(playerPosition, playerRotation)) return false;
+    Eigen::Vector3f playerDir = playerRotation * Eigen::Vector3f::UnitZ();
 
     if (m_isSpindash)
     {
-        playerWorldDir *= c_spindashSpeed;
+        playerDir *= c_spindashSpeed;
     }
     else
     {
+        Eigen::Vector3f playerVelocity;
+        if (!Common::GetPlayerVelocity(playerVelocity)) return false;
+
         playerVelocity.y() = 0;
         float hSpeed = playerVelocity.norm();
         hSpeed = max(hSpeed, c_slidingSpeedMin);
         hSpeed = min(hSpeed, c_slidingSpeedMax);
-        playerWorldDir *= hSpeed;
+
+        playerDir *= hSpeed;
     }
 
     float* targetHorizontalVel = (float*)((uint32_t)context + 0x2A0);
-    targetHorizontalVel[0] = playerWorldDir.x();
-    targetHorizontalVel[2] = playerWorldDir.z();
+    targetHorizontalVel[0] = playerDir.x();
+    targetHorizontalVel[2] = playerDir.z();
 
     return true;
 }
