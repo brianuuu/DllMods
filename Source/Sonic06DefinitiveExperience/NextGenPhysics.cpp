@@ -16,6 +16,7 @@ bool NextGenPhysics::m_isSquatKick = false;
 float const c_squatKickPressMaxTime = 0.3f;
 
 bool NextGenPhysics::m_isSpindash = false;
+float NextGenPhysics::m_slidingTime = 0.0f;
 float const c_slidingTime = 3.0f;
 float const c_slidingSpeedMin = 10.0f;
 float const c_slidingSpeedMax = 16.0f;
@@ -68,6 +69,8 @@ HOOK(int*, __fastcall, CSonicStateSquatKickBegin, 0x12526D0, void* This)
     NextGenPhysics::m_isSquatKick = true;
     return originalCSonicStateSquatKickBegin(This);
 }
+
+// TODO: When transition out from squat kick/sliding, if no stick input, stop and flip Sonic?
 
 HOOK(int*, __fastcall, CSonicStateSquatKickEnd, 0x12527B0, void* This)
 {
@@ -122,7 +125,45 @@ HOOK(int, __fastcall, CSonicStateSlidingBegin, 0x11D7110, void* This)
         WRITE_MEMORY(0x11D72DC, uint32_t, 3002016);
     }
 
+    NextGenPhysics::m_slidingTime = NextGenPhysics::m_isSpindash ? c_spindashTime : c_slidingTime;
     return originalCSonicStateSlidingBegin(This);
+}
+
+HOOK(void, __fastcall, CSonicStateSlidingAdvance, 0x11D69A0, void* This)
+{
+    originalCSonicStateSlidingAdvance(This);
+
+    NextGenPhysics::m_slidingTime -= Application::getDeltaTime();
+    if (NextGenPhysics::m_slidingTime <= 0.0f)
+    {
+        StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
+        return;
+    }
+
+    Eigen::Vector3f playerVelocity;
+    if (!Common::GetPlayerVelocity(playerVelocity) || playerVelocity.norm() < 5.0f)
+    {
+        StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
+        return;
+    }
+
+    Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
+    Sonic::EKeyState actionButton = Configuration::m_xButtonAction ? Sonic::EKeyState::eKeyState_X : Sonic::EKeyState::eKeyState_B;
+    bool bPressed = padState->IsTapped(actionButton);
+
+    if (bPressed)
+    {
+        if (NextGenPhysics::m_isSpindash)
+        {
+            StateManager::ChangeState(StateAction::SquatKick, *PLAYER_CONTEXT);
+            return;
+        }
+        else
+        {
+            StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
+            return;
+        }
+    }
 }
 
 HOOK(bool, __stdcall, BActionHandler, 0xDFF660, CSonicContext* context, bool buttonHoldCheck)
@@ -405,6 +446,11 @@ void NextGenPhysics::applyPatches()
         {
             WRITE_MEMORY(0x1252740, uint32_t, 3002020);
         }
+        else
+        {
+            // Prevent stopping other voice with low priority
+            WRITE_MEMORY(0x1252732, uint8_t, 0);
+        }
 
         // Enable sweep kick attack collision immediately
         static double const c_sweepKickActivateTime = 0.0;
@@ -443,12 +489,10 @@ void NextGenPhysics::applyPatches()
         WRITE_MEMORY(0x1230D62, uint8_t, 0xEB);
         WRITE_MEMORY(0x1230DA9, uint8_t, 0xE9, 0xA8, 0x00, 0x00, 0x00, 0x90);
 
-        // Change SlideToSquat to SlidingEnd
-        WRITE_NOP(0x11D6CA4, 0x9);
-        WRITE_NOP(0x11D6CB2, 0x43);
-        WRITE_MEMORY(0x11D6CF6, uint32_t, 0x15F557C); // slide end state
-        WRITE_NOP(0x11D6FA4, 0x2C);
-        WRITE_MEMORY(0x11D6FD1, uint32_t, 0x15F557C); // slide end state
+        // Disable all Sliding transition out, handle them outselves
+        WRITE_MEMORY(0x11D6B7D, uint8_t, 0xEB);
+        WRITE_MEMORY(0x11D6CA2, uint8_t, 0xEB);
+        WRITE_MEMORY(0x11D6F82, uint8_t, 0x90, 0xE9);
 
         // Play spindash sfx
         INSTALL_HOOK(CSonicStateSquatBegin);
@@ -456,6 +500,7 @@ void NextGenPhysics::applyPatches()
 
         // Change sliding animation if we are spindashing, handle transition out
         INSTALL_HOOK(CSonicStateSlidingBegin);
+        INSTALL_HOOK(CSonicStateSlidingAdvance);
         WRITE_JUMP(0x11D7027, CSonicStateSlidingEnd);
 
         // Set constant sliding speed
@@ -524,7 +569,6 @@ bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel3D(void* context)
 
     float* targetHorizontalVel = (float*)((uint32_t)context + 0x2A0);
     targetHorizontalVel[0] = playerDir.x();
-    targetHorizontalVel[1] = playerDir.y();
     targetHorizontalVel[2] = playerDir.z();
 
     return true;

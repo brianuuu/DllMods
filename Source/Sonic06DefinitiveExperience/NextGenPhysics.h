@@ -16,6 +16,7 @@ public:
 	static void bounceBraceletImpl();
 
 	static bool m_isSpindash;
+	static float m_slidingTime;
 	static bool __fastcall applySlidingHorizontalTargetVel3D(void* context);
 };
 
