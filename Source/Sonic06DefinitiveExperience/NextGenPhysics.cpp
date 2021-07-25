@@ -424,11 +424,9 @@ void NextGenPhysics::applyPatches()
         WRITE_NOP(0x12549DC, 0x2);
         WRITE_MEMORY(0x12549DE, uint8_t, 0xEB);
 
-        // Change stomp and jumpball to hit enemy as if you're boosting
+        // Change jumpball to hit enemy as if you're boosting
         WRITE_MEMORY(0x11BCC43, uint32_t, 0x1E61B90); // jumpball start
         WRITE_MEMORY(0x11BCBB2, uint32_t, 0x1E61B90); // jumpball end
-        WRITE_MEMORY(0x1254D62, uint32_t, 0x1E61B90); // stomping start
-        WRITE_MEMORY(0x1254BC5, uint32_t, 0x1E61B90); // stomping end
     }
 
     //-------------------------------------------------------
