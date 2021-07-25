@@ -140,8 +140,9 @@ HOOK(void, __fastcall, CSonicStateSlidingAdvance, 0x11D69A0, void* This)
         return;
     }
 
+    float minSpeed = (NextGenPhysics::m_isSpindash ? c_spindashSpeed : c_slidingSpeedMin) - 5.0f;
     Eigen::Vector3f playerVelocity;
-    if (!Common::GetPlayerVelocity(playerVelocity) || playerVelocity.norm() < 5.0f)
+    if (!Common::GetPlayerVelocity(playerVelocity) || playerVelocity.norm() < minSpeed)
     {
         StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
         return;
@@ -222,7 +223,7 @@ HOOK(bool, __stdcall, BActionHandler, 0xDFF660, CSonicContext* context, bool but
                     return true;
                 }
             }
-            else if (moving && bHeldTimer > c_squatKickPressMaxTime)
+            else if (moving && bHeldTimer > c_squatKickPressMaxTime && !flags->KeepRunning)
             {
                 // Sonic is moving and released B (Anti-Gravity)
                 StateManager::ChangeState(StateAction::Sliding, *PLAYER_CONTEXT);
