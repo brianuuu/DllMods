@@ -19,5 +19,7 @@ public:
 	static float m_slidingTime;
 	static bool __fastcall applySpindashImpulse(void* context);
 	static bool __fastcall applySlidingHorizontalTargetVel(void* context, bool is2D);
+
+	static void getActionButtonStates(bool& bDown, bool& bPressed, bool& bReleased);
 };
 

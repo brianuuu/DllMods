@@ -82,6 +82,34 @@ HOOK(int*, __fastcall, CSonicStateSquatKickBegin, 0x12526D0, void* This)
 }
 
 // TODO: When transition out from squat kick/sliding, if no stick input, stop and flip Sonic?
+HOOK(void, __fastcall, CSonicStateSquatKickAdvance, 0x1252810, void* This)
+{
+    originalCSonicStateSquatKickAdvance(This);
+
+    // About to transition out and on ground
+    if (!StateManager::isCurrentAction(StateAction::SquatKick)
+     && !StateManager::isCurrentAction(StateAction::Fall))
+    {
+        bool bDown, bPressed, bReleased;
+        NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
+        Sonic::EKeyState actionButton = Configuration::m_xButtonAction ? Sonic::EKeyState::eKeyState_X : Sonic::EKeyState::eKeyState_B;
+        if (bDown)
+        {
+            // Immediately change to spindash if button is held
+            // TODO: do a flip first
+            StateManager::ChangeState(StateAction::Squat, *PLAYER_CONTEXT);
+            return;
+        }
+
+        Eigen::Vector3f inputDirection;
+        if (Common::GetWorldInputDirection(inputDirection) && inputDirection.isZero())
+        {
+            // Stops Sonic completely if not stick input
+            // TODO: do a flip first
+            Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+        }
+    }
+}
 
 HOOK(int*, __fastcall, CSonicStateSquatKickEnd, 0x12527B0, void* This)
 {
@@ -169,10 +197,8 @@ HOOK(void, __fastcall, CSonicStateSlidingAdvance, 0x11D69A0, void* This)
         return;
     }
 
-    Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
-    Sonic::EKeyState actionButton = Configuration::m_xButtonAction ? Sonic::EKeyState::eKeyState_X : Sonic::EKeyState::eKeyState_B;
-    bool bPressed = padState->IsTapped(actionButton);
-
+    bool bDown, bPressed, bReleased;
+    NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
     if (bPressed)
     {
         if (NextGenPhysics::m_isSpindash)
@@ -209,12 +235,8 @@ HOOK(bool, __stdcall, BActionHandler, 0xDFF660, CSonicContext* context, bool but
     }
     bool moving = playerVelocity.norm() > 0.2f;
 
-    Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
-    Sonic::EKeyState actionButton = Configuration::m_xButtonAction ? Sonic::EKeyState::eKeyState_X : Sonic::EKeyState::eKeyState_B;
-    bool bDown = padState->IsDown(actionButton);
-    bool bPressed = padState->IsTapped(actionButton);
-    bool bReleased = padState->IsReleased(actionButton);
-
+    bool bDown, bPressed, bReleased;
+    NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
     CSonicStateFlags* flags = Common::GetSonicStateFlags();
     if (bDown)
     {
@@ -491,6 +513,7 @@ void NextGenPhysics::applyPatches()
     {
         // Play squat kick sfx
         INSTALL_HOOK(CSonicStateSquatKickBegin);
+        INSTALL_HOOK(CSonicStateSquatKickAdvance);
         INSTALL_HOOK(CSonicStateSquatKickEnd);
         if (Configuration::m_model == Configuration::ModelType::Sonic
          && Configuration::m_language == Configuration::LanguageType::English)
@@ -675,4 +698,17 @@ bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context, b
     horizontalVel[2] = playerDir.z();
 
     return true;
+}
+
+void NextGenPhysics::getActionButtonStates(bool& bDown, bool& bPressed, bool& bReleased)
+{
+    Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
+    Sonic::EKeyState actionButton = 
+        Configuration::m_xButtonAction ? 
+        Sonic::EKeyState::eKeyState_X : 
+        Sonic::EKeyState::eKeyState_B;
+
+    bDown = padState->IsDown(actionButton);
+    bPressed = padState->IsTapped(actionButton);
+    bReleased = padState->IsReleased(actionButton);
 }
