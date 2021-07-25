@@ -34,6 +34,51 @@ struct MsgSetRotation
     Eigen::Quaternionf m_rotation;
 };
 
+enum ImpulseType : uint32_t
+{
+	None,
+	DashPanel,
+	UnknowCase_0x2,
+	UnknowCase_0x3,
+	UnknowCase_0x4,
+	UnknowCase_0x5,
+	JumpBoard,
+	JumpBoardSpecial,
+	DashRing,
+	DashRingR,
+	LookBack,
+	HomingAttackAfter,
+	BoardJumpBoard,
+	UnknowCase_0xD,
+	BoardJumpAdlibTrickA,
+	BoardJumpAdlibTrickB,
+	BoardJumpAdlibTrickC
+};
+
+struct MsgAddImpulse
+{
+	INSERT_PADDING(0x10);
+	Eigen::Vector3f m_position;
+	INSERT_PADDING(0x4);
+	Eigen::Vector3f m_impulse;
+	INSERT_PADDING(0x4);
+	float m_outOfControl;
+	INSERT_PADDING(0x4);
+	ImpulseType m_impulseType;
+	float m_unknown60; // related to m_outOfControl
+	bool m_notRelative; // if false, add impulse direction relative to Sonic
+	bool m_snapPosition; // snap Sonic to m_position
+	INSERT_PADDING(0x3);
+	bool m_pathInterpolate; // linked to 80
+	INSERT_PADDING(0xA);
+	Eigen::Vector3f m_unknown80; // related to position interpolate?
+	INSERT_PADDING(0x4);
+	float m_alwaysMinusOne; // seems to be always -1.0f
+	INSERT_PADDING(0xC);
+
+	MsgAddImpulse() : m_alwaysMinusOne(-1.0f) {}
+};
+
 struct CSonicStateFlags
 {
 	bool EarthGround;
@@ -377,7 +422,15 @@ inline void PlaySoundStatic(SharedPtrTypeless& soundHandle, uint32_t cueID)
     }
 }
 
-inline void applyObjectPhysicsPosition(void* pObject, Eigen::Vector3f const& pos)
+inline void ApplyPlayerAddImpulse(MsgAddImpulse const& message)
+{
+	FUNCTION_PTR(void, __thiscall, processPlayerMsgAddImpulse, 0xE6CFA0, void* This, void* message);
+	alignas(16) MsgAddImpulse msgAddImpulse = message;
+	void* player = *(void**)((uint32_t)*PLAYER_CONTEXT + 0x110);
+	processPlayerMsgAddImpulse(player, &msgAddImpulse);
+}
+
+inline void ApplyObjectPhysicsPosition(void* pObject, Eigen::Vector3f const& pos)
 {
 	FUNCTION_PTR(void*, __thiscall, processObjectMsgSetPosition, 0xEA2130, void* This, void* message);
 	alignas(16) MsgSetPosition msgSetPosition;
@@ -385,7 +438,7 @@ inline void applyObjectPhysicsPosition(void* pObject, Eigen::Vector3f const& pos
 	processObjectMsgSetPosition(pObject, &msgSetPosition);
 }
 
-inline void applyObjectPhysicsRotation(void* pObject, Eigen::Quaternionf const& rot)
+inline void ApplyObjectPhysicsRotation(void* pObject, Eigen::Quaternionf const& rot)
 {
 	FUNCTION_PTR(void*, __thiscall, processObjectMsgSetRotation, 0xEA20D0, void* This, void* message);
 	alignas(16) MsgSetRotation msgSetRotation;

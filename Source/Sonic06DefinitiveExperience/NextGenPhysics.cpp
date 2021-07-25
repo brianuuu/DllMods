@@ -318,6 +318,23 @@ void __declspec(naked) lightDashHigherPriority()
     }
 }
 
+uint32_t slidingHorizontalTargetVel2DReturnAddress = 0x11D98AC;
+void __declspec(naked) slidingHorizontalTargetVel2D()
+{
+    __asm
+    {
+        // Get overrided target velocity
+        mov     ecx, esi
+        mov     edx, 1
+        call    NextGenPhysics::applySlidingHorizontalTargetVel
+        pop     edi
+        pop     esi
+        pop     ebx
+        mov     esp, ebp
+        jmp     [slidingHorizontalTargetVel2DReturnAddress]
+    }
+}
+
 uint32_t slidingHorizontalTargetVel3DReturnAddress = 0x11D953E;
 void __declspec(naked) slidingHorizontalTargetVel3D()
 {
@@ -325,7 +342,8 @@ void __declspec(naked) slidingHorizontalTargetVel3D()
     {
         // Get overrided target velocity
         mov     ecx, ebx
-        call    NextGenPhysics::applySlidingHorizontalTargetVel3D
+        mov     edx, 0
+        call    NextGenPhysics::applySlidingHorizontalTargetVel
         test    al, al
         jnz     jump
 
@@ -346,6 +364,10 @@ void __declspec(naked) startSpindash()
         // Original function
         mov     byte ptr[ebx + 5E8h], 1
         mov     [ebx + 5E9h], al
+
+        // Give Sonic the initial nudge
+        mov     ecx, ebx
+        call    NextGenPhysics::applySpindashImpulse
 
         // Set spindash state
         mov     NextGenPhysics::m_isSpindash, 1
@@ -521,6 +543,8 @@ void NextGenPhysics::applyPatches()
 
         // Set constant sliding speed
         // TODO: 2D spindash not working
+        WRITE_JUMP(0x11D989B, slidingHorizontalTargetVel2D);
+        WRITE_JUMP(0x11D98A7, slidingHorizontalTargetVel2D);
         WRITE_JUMP(0x11D9532, slidingHorizontalTargetVel3D);
     }
 
@@ -577,9 +601,48 @@ void NextGenPhysics::bounceBraceletImpl()
     SetOutOfControl(*pModernSonicContext, 0.1f);
 }
 
-bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel3D(void* context)
+bool __fastcall NextGenPhysics::applySpindashImpulse(void* context)
 {
-    // Lock velocity to Sonic's direction, which already has turning radius increased
+    // This function is necessary for 2D otherwise Sonic will stop immediately
+    Eigen::Vector3f playerPosition;
+    Eigen::Quaternionf playerRotation;
+    if (!Common::GetPlayerTransform(playerPosition, playerRotation)) return false;
+
+    Eigen::Vector3f playerVelocity;
+    if (!Common::GetPlayerVelocity(playerVelocity)) return false;
+
+    MsgAddImpulse message;
+    message.m_position = playerPosition;
+    message.m_impulse = playerRotation * Eigen::Vector3f::UnitZ();
+    message.m_impulseType = ImpulseType::None;
+    message.m_notRelative = true;
+    message.m_snapPosition = false;
+    message.m_pathInterpolate = false;
+
+    if (m_isSquatKick)
+    {
+        // Keep velocity with squat kick
+        message.m_impulse = playerVelocity;
+    }
+    else if (m_isSpindash)
+    {
+        message.m_impulse *= c_spindashSpeed;
+    }
+    else
+    {
+        float hSpeed = playerVelocity.norm();
+        hSpeed = max(hSpeed, c_slidingSpeedMin);
+        hSpeed = min(hSpeed, c_slidingSpeedMax);
+        message.m_impulse *= hSpeed;
+    }
+
+    Common::ApplyPlayerAddImpulse(message);
+
+    return true;
+}
+
+bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context, bool is2D)
+{
     Eigen::Vector3f playerPosition;
     Eigen::Quaternionf playerRotation;
     if (!Common::GetPlayerTransform(playerPosition, playerRotation)) return false;
@@ -605,9 +668,11 @@ bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel3D(void* context)
         playerDir *= hSpeed;
     }
 
-    float* targetHorizontalVel = (float*)((uint32_t)context + 0x2A0);
-    targetHorizontalVel[0] = playerDir.x();
-    targetHorizontalVel[2] = playerDir.z();
+    // For 2D we have to override the actual velocity (+0x290)
+    // For 3D we have to override target velocity (+0x2A0)
+    float* horizontalVel = (float*)((uint32_t)context + (is2D ? 0x290 : 0x2A0));
+    horizontalVel[0] = playerDir.x();
+    horizontalVel[2] = playerDir.z();
 
     return true;
 }

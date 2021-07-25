@@ -17,6 +17,7 @@ public:
 
 	static bool m_isSpindash;
 	static float m_slidingTime;
-	static bool __fastcall applySlidingHorizontalTargetVel3D(void* context);
+	static bool __fastcall applySpindashImpulse(void* context);
+	static bool __fastcall applySlidingHorizontalTargetVel(void* context, bool is2D);
 };
 
