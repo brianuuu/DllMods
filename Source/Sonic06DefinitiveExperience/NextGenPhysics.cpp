@@ -506,8 +506,6 @@ void NextGenPhysics::applyPatches()
         // Set constant sliding speed
         // TODO: 2D spindash not working
         WRITE_JUMP(0x11D9532, slidingHorizontalTargetVel3D);
-
-        // TODO stop sliding/spindash after timer, press B to cancel out
     }
 }
 
