@@ -119,7 +119,6 @@ bool RankRunAnimation::checkCanPlayRunAnimation()
     return true;
 }
 
-FUNCTION_PTR(void, __thiscall, CSonicContextChangeAnimation, 0xE74CC0, void* This, const Hedgehog::Base::CSharedString& name);
 HOOK(void, __fastcall, MsgChangeResultState, 0xE692C0, void* This, void* Edx, uint32_t a2)
 {
     uint32_t const state = *(uint32_t*)(a2 + 16);
@@ -127,7 +126,7 @@ HOOK(void, __fastcall, MsgChangeResultState, 0xE692C0, void* This, void* Edx, ui
     {
         if (state == 1)
         {
-            CSonicContextChangeAnimation(*pModernSonicContext, RunResult);
+            Common::SonicContextChangeAnimation(RunResult);
         }
         else if (state == 3)
         {
