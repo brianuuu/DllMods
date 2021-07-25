@@ -3,6 +3,9 @@
 #include "StateManager.h"
 #include "Application.h"
 
+float const c_funcMaxTurnRate = 400.0f;
+float const c_funcTurnRateMultiplier = PI_F * 10.0f;
+
 bool NextGenPhysics::m_isStomping = false;
 bool NextGenPhysics::m_bounced = false;
 float const c_bouncePower = 17.0f;
@@ -29,6 +32,20 @@ HOOK(void, __cdecl, SetStickMagnitude, 0x9C69D0, int16_t* argX, int16_t* argY, i
 
     *argX = (int16_t)(x / magnitude * newMagnitude * 32767.0);
     *argY = (int16_t)(y / magnitude * newMagnitude * 32767.0);
+}
+
+HOOK(void, __stdcall, CSonicRotationAdvance, 0xE310A0, void* a1, float* targetDir, float turnRate1, float turnRateMultiplier, bool noLockDirection, float turnRate2)
+{
+    CSonicContext* context = (CSonicContext*)(((uint32_t*)a1)[2]);
+    if (noLockDirection)
+    {
+        // If direction is not locked, pump up turn rate
+        originalCSonicRotationAdvance(a1, targetDir, c_funcMaxTurnRate, c_funcTurnRateMultiplier, noLockDirection, c_funcMaxTurnRate);
+    }
+    else
+    {
+        originalCSonicRotationAdvance(a1, targetDir, turnRate1, turnRateMultiplier, noLockDirection, turnRate2);
+    }
 }
 
 HOOK(char, __stdcall, CSonicStateGrounded, 0xDFF660, int* a1, bool a2)
@@ -80,6 +97,17 @@ HOOK(int*, __fastcall, CSonicStateSquatBegin, 0x1230A30, void* This)
 {
     Common::SonicContextPlaySound(spinDashSoundHandle, 2002042, 1);
     return originalCSonicStateSquatBegin(This);
+}
+
+HOOK(void, __fastcall, CSonicStateSquatAdvance, 0x1230B60, void* This)
+{
+    originalCSonicStateSquatAdvance(This);
+    Eigen::Vector3f worldDirection;
+    if (!Common::GetPlayerWorldDirection(worldDirection, true)) return;
+
+    // Allow changing Sonic's rotation when charging spindash
+    alignas(16) float dir[4] = { worldDirection.x(), worldDirection.y(), worldDirection.z(), 0 };
+    originalCSonicRotationAdvance(This, dir, c_funcMaxTurnRate, c_funcTurnRateMultiplier, true, c_funcMaxTurnRate);
 }
 
 HOOK(int*, __fastcall, CSonicStateSquatEnd, 0x12309A0, void* This)
@@ -149,35 +177,16 @@ HOOK(void, __fastcall, CSonicStateSlidingAdvance, 0x11D69A0, void* This)
     {
         if (NextGenPhysics::m_isSpindash)
         {
+            // Cancel spindash, this will still do sweep kick and will also allow jumping before it
             StateManager::ChangeState(StateAction::Walk, *PLAYER_CONTEXT);
             return;
         }
         else
         {
+            // Cancel sliding
             StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
             return;
         }
-    }
-}
-
-HOOK(void, __stdcall, CSonicPosture3DAdvance, 0xE577F0, CSonicContext* context, float* velocity, float dt)
-{
-    originalCSonicPosture3DAdvance(context, velocity, dt);
-}
-
-HOOK(void, __stdcall, CSonicRotationAdvance, 0xE310A0, void* a1, float* velocity, float turnRate1, float turnRateMultiplier, bool noLockDirection, float turnRate2)
-{
-    CSonicContext* context = (CSonicContext*)(((uint32_t*)a1)[2]);
-    if (noLockDirection)
-    {
-        // If direction is not locked, pump up turn rate
-        float const c_funcMaxTurnRate = 400.0f;
-        float const c_funcTurnRateMultiplier = PI_F * 10.0f;
-        originalCSonicRotationAdvance(a1, velocity, c_funcMaxTurnRate, c_funcTurnRateMultiplier, noLockDirection, c_funcMaxTurnRate);
-    }
-    else
-    {
-        originalCSonicRotationAdvance(a1, velocity, turnRate1, turnRateMultiplier, noLockDirection, turnRate2);
     }
 }
 
@@ -532,6 +541,7 @@ void NextGenPhysics::applyPatches()
 
         // Play spindash sfx
         INSTALL_HOOK(CSonicStateSquatBegin);
+        INSTALL_HOOK(CSonicStateSquatAdvance);
         INSTALL_HOOK(CSonicStateSquatEnd);
     }
 }
