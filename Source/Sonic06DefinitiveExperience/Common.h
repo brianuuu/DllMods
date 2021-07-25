@@ -297,14 +297,23 @@ inline bool SetPlayerVelocity(Eigen::Vector3f const& velocity)
     return true;
 }
 
+inline bool GetWorldInputDirection(Eigen::Vector3f& direction)
+{
+	if (!*PLAYER_CONTEXT) return false;
+
+	float* worldDir = (float*)((uint32_t)*PLAYER_CONTEXT + 0x130);
+	direction.x() = worldDir[0];
+	direction.y() = worldDir[1];
+	direction.z() = worldDir[2];
+
+	return true;
+}
+
 inline bool GetPlayerWorldDirection(Eigen::Vector3f& direction, bool normalize)
 {
     if (!*PLAYER_CONTEXT) return false;
 
-    float* worldDir = (float*)((uint32_t)*PLAYER_CONTEXT + 0x130);
-    direction.x() = worldDir[0];
-    direction.y() = worldDir[1];
-    direction.z() = worldDir[2];
+	if (!GetWorldInputDirection(direction)) return false;
 
     if (direction.isZero())
     {
@@ -325,6 +334,15 @@ inline bool GetPlayerWorldDirection(Eigen::Vector3f& direction, bool normalize)
     }
 
     return true;
+}
+
+inline void SonicContextChangeAnimation(const Hedgehog::Base::CSharedString& name)
+{
+	void* pSonicContext = *PLAYER_CONTEXT;
+	if (!pSonicContext) return;
+
+	FUNCTION_PTR(void, __thiscall, CSonicContextChangeAnimation, 0xE74CC0, CSonicContext* context, const Hedgehog::Base::CSharedString& name);
+	CSonicContextChangeAnimation(pSonicContext, name);
 }
 
 inline void SonicContextPlaySound(SharedPtrTypeless& soundHandle, uint32_t cueID, uint32_t flag)
