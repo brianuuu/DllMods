@@ -3,10 +3,6 @@
 #include "StateManager.h"
 #include "Application.h"
 
-// Used by sub_E310A0
-float const c_funcMaxTurnRate = 400.0f;
-float const c_funcTurnRateMultiplier = PI_F * 10.0f;
-
 bool NextGenPhysics::m_isStomping = false;
 bool NextGenPhysics::m_bounced = false;
 float const c_bouncePower = 17.0f;
@@ -61,8 +57,6 @@ HOOK(int*, __fastcall, CSonicStateSquatKickBegin, 0x12526D0, void* This)
 {
     // Don't allow direction change for squat kick
     WRITE_MEMORY(0x11D944A, uint8_t, 0);
-    static float const zeroTurnRate = 0.0f;
-    WRITE_MEMORY(0x11D9441, float*, &zeroTurnRate);
 
     static SharedPtrTypeless soundHandle;
     Common::SonicContextPlaySound(soundHandle, 80041021, 1);
@@ -76,7 +70,6 @@ HOOK(int*, __fastcall, CSonicStateSquatKickEnd, 0x12527B0, void* This)
 {
     // Unlock direction change for sliding/spindash
     WRITE_MEMORY(0x11D944A, uint8_t, 1);
-    WRITE_MEMORY(0x11D9441, float*, &c_funcMaxTurnRate);
 
     NextGenPhysics::m_isSquatKick = false;
     return originalCSonicStateSquatKickEnd(This);
@@ -164,6 +157,27 @@ HOOK(void, __fastcall, CSonicStateSlidingAdvance, 0x11D69A0, void* This)
             StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
             return;
         }
+    }
+}
+
+HOOK(void, __stdcall, CSonicPosture3DAdvance, 0xE577F0, CSonicContext* context, float* velocity, float dt)
+{
+    originalCSonicPosture3DAdvance(context, velocity, dt);
+}
+
+HOOK(void, __stdcall, CSonicRotationAdvance, 0xE310A0, void* a1, float* velocity, float turnRate1, float turnRateMultiplier, bool noLockDirection, float turnRate2)
+{
+    CSonicContext* context = (CSonicContext*)(((uint32_t*)a1)[2]);
+    if (noLockDirection)
+    {
+        // If direction is not locked, pump up turn rate
+        float const c_funcMaxTurnRate = 400.0f;
+        float const c_funcTurnRateMultiplier = PI_F * 10.0f;
+        originalCSonicRotationAdvance(a1, velocity, c_funcMaxTurnRate, c_funcTurnRateMultiplier, noLockDirection, c_funcMaxTurnRate);
+    }
+    else
+    {
+        originalCSonicRotationAdvance(a1, velocity, turnRate1, turnRateMultiplier, noLockDirection, turnRate2);
     }
 }
 
@@ -358,9 +372,8 @@ void NextGenPhysics::applyPatches()
     // Precise stick input, by Skyth (06 still has angle clamp, don't use)
     // INSTALL_HOOK(SetStickMagnitude);
 
-    // Increase turning rate for spindash/sliding
-    WRITE_MEMORY(0x11D9441, float*, &c_funcMaxTurnRate);
-    WRITE_MEMORY(0x11D944D, float*, &c_funcTurnRateMultiplier);
+    // Increase turning rate
+    INSTALL_HOOK(CSonicRotationAdvance);
 
     // Change all actions to X button, change boost to R2
     if (Configuration::m_xButtonAction)
