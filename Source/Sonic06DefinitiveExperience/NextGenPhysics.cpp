@@ -149,7 +149,7 @@ HOOK(void, __fastcall, CSonicStateSlidingAdvance, 0x11D69A0, void* This)
     {
         if (NextGenPhysics::m_isSpindash)
         {
-            StateManager::ChangeState(StateAction::SquatKick, *PLAYER_CONTEXT);
+            StateManager::ChangeState(StateAction::Walk, *PLAYER_CONTEXT);
             return;
         }
         else
