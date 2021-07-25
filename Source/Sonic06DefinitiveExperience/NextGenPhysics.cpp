@@ -197,9 +197,12 @@ HOOK(bool, __stdcall, BActionHandler, 0xDFF660, CSonicContext* context, bool but
         // Standing still and held B for a while (Spin Dash)
         if (!moving && bHeldTimer > c_squatKickPressMaxTime)
         {
-            StateManager::ChangeState(StateAction::Squat, *PLAYER_CONTEXT);
-            bHeldTimer = 0.0f;
-            return true;
+            if (Configuration::m_model == Configuration::ModelType::Sonic)
+            {
+                StateManager::ChangeState(StateAction::Squat, *PLAYER_CONTEXT);
+                bHeldTimer = 0.0f;
+                return true;
+            }
         }
 
         // Remember how long we held B
@@ -211,10 +214,13 @@ HOOK(bool, __stdcall, BActionHandler, 0xDFF660, CSonicContext* context, bool but
         {
             if (bHeldTimer <= c_squatKickPressMaxTime)
             {
-                // Release B without holding it for too long (Squat Kick)
-                StateManager::ChangeState(StateAction::SquatKick, *PLAYER_CONTEXT);
-                bHeldTimer = 0.0f;
-                return true;
+                if (Configuration::m_model == Configuration::ModelType::Sonic)
+                {
+                    // Release B without holding it for too long (Squat Kick)
+                    StateManager::ChangeState(StateAction::SquatKick, *PLAYER_CONTEXT);
+                    bHeldTimer = 0.0f;
+                    return true;
+                }
             }
             else if (moving && bHeldTimer > c_squatKickPressMaxTime)
             {
@@ -424,20 +430,19 @@ void NextGenPhysics::applyPatches()
         WRITE_MEMORY(0x1254BC5, uint32_t, 0x1E61B90); // stomping end
     }
 
-    // Implement sweep kick, anti-gravity and spindash
+    //-------------------------------------------------------
+    // B-Action State handling
+    //-------------------------------------------------------
+    // Return 0 for Squat and Sliding, handle them ourselves
+    WRITE_MEMORY(0xDFF8D5, uint8_t, 0xEB, 0x05);
+    WRITE_MEMORY(0xDFF856, uint8_t, 0xE9, 0x81, 0x00, 0x00, 0x00);
+    INSTALL_HOOK(BActionHandler);
+
+    //-------------------------------------------------------
+    // Sweep Kick
+    //-------------------------------------------------------
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
-        //-------------------------------------------------------
-        // State handling
-        //-------------------------------------------------------
-        // Return 0 for Squat and Sliding, handle them ourselves
-        WRITE_MEMORY(0xDFF8D5, uint8_t, 0xEB, 0x05);
-        WRITE_MEMORY(0xDFF856, uint8_t, 0xE9, 0x81, 0x00, 0x00, 0x00);
-        INSTALL_HOOK(BActionHandler);
-
-        //-------------------------------------------------------
-        // Sweep Kick
-        //-------------------------------------------------------
         // Play squat kick sfx
         INSTALL_HOOK(CSonicStateSquatKickBegin);
         INSTALL_HOOK(CSonicStateSquatKickEnd);
@@ -468,35 +473,22 @@ void NextGenPhysics::applyPatches()
             0xDFCDC0  // squat kick
         };
         WRITE_MEMORY(0xDFCD77, uint32_t*, collisionSwitchTable);
+    }
 
-        //-------------------------------------------------------
-        // Spindash & Anti-Gravity
-        //-------------------------------------------------------
+    //-------------------------------------------------------
+    // Anti-Gravity
+    //-------------------------------------------------------
+    if (Configuration::m_model == Configuration::ModelType::Sonic
+     || Configuration::m_model == Configuration::ModelType::SonicElise)
+    {
         // Change slide to hit enemy as if you're boosting
         WRITE_MEMORY(0x11D72F3, uint32_t, 0x1E61B90);
         WRITE_MEMORY(0x11D7090, uint32_t, 0x1E61B90);
-
-        // Spin animation for Squat
-        WRITE_MEMORY(0x1230A84, uint32_t, 0x15F84F4); // slide begin animation
-        WRITE_MEMORY(0x1230A9F, uint32_t, 0x15F84F4); // slide begin animation
-        WRITE_MEMORY(0x1230D74, uint32_t, 0x15F84F4); // slide hold animation
-
-        // Use spindash when release button
-        WRITE_JUMP(0x1230BDB, startSpindash);
-        WRITE_MEMORY(0x1230C3A, uint32_t, 0x15F5108); // change state to sliding
-
-         // Don't allow stick move start sliding from squat
-        WRITE_MEMORY(0x1230D62, uint8_t, 0xEB);
-        WRITE_MEMORY(0x1230DA9, uint8_t, 0xE9, 0xA8, 0x00, 0x00, 0x00, 0x90);
 
         // Disable all Sliding transition out, handle them outselves
         WRITE_MEMORY(0x11D6B7D, uint8_t, 0xEB);
         WRITE_MEMORY(0x11D6CA2, uint8_t, 0xEB);
         WRITE_MEMORY(0x11D6F82, uint8_t, 0x90, 0xE9);
-
-        // Play spindash sfx
-        INSTALL_HOOK(CSonicStateSquatBegin);
-        INSTALL_HOOK(CSonicStateSquatEnd);
 
         // Change sliding animation if we are spindashing, handle transition out
         INSTALL_HOOK(CSonicStateSlidingBegin);
@@ -506,6 +498,29 @@ void NextGenPhysics::applyPatches()
         // Set constant sliding speed
         // TODO: 2D spindash not working
         WRITE_JUMP(0x11D9532, slidingHorizontalTargetVel3D);
+    }
+
+    //-------------------------------------------------------
+    // Spindashing
+    //-------------------------------------------------------
+    if (Configuration::m_model == Configuration::ModelType::Sonic)
+    {
+        // Spin animation for Squat
+        WRITE_MEMORY(0x1230A84, uint32_t, 0x15F84F4); // slide begin animation
+        WRITE_MEMORY(0x1230A9F, uint32_t, 0x15F84F4); // slide begin animation
+        WRITE_MEMORY(0x1230D74, uint32_t, 0x15F84F4); // slide hold animation
+
+        // Use spindash when release button
+        WRITE_JUMP(0x1230BDB, startSpindash);
+        WRITE_MEMORY(0x1230C3A, uint32_t, 0x15F5108); // change state to sliding
+
+        // Don't allow stick move start sliding from squat
+        WRITE_MEMORY(0x1230D62, uint8_t, 0xEB);
+        WRITE_MEMORY(0x1230DA9, uint8_t, 0xE9, 0xA8, 0x00, 0x00, 0x00, 0x90);
+
+        // Play spindash sfx
+        INSTALL_HOOK(CSonicStateSquatBegin);
+        INSTALL_HOOK(CSonicStateSquatEnd);
     }
 }
 
