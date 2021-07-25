@@ -376,6 +376,9 @@ void NextGenPhysics::applyPatches()
         WRITE_MEMORY(0x1254F23, int, -1);
     }
 
+    // Never transition to Fall after jumpboard, must use long jumpboard animation
+    WRITE_MEMORY(0x11DE31E, uint8_t, 0xEB);
+
     if (!Configuration::m_physics) return;
 
     // Precise stick input, by Skyth (06 still has angle clamp, don't use)
