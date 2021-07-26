@@ -185,28 +185,10 @@ HOOK(void, __fastcall, CSonicStateSlidingAdvance, 0x11D69A0, void* This)
 {
     originalCSonicStateSlidingAdvance(This);
 
-    NextGenPhysics::m_slidingTime -= Application::getDeltaTime();
-    if (NextGenPhysics::m_slidingTime <= 0.0f)
-    {
-        StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
-        return;
-    }
-    
-    // For 2D slide/spindash, there's one frame delay before Sonic can goto max speed, lower the minSpeed
-    float minSpeed = (NextGenPhysics::m_isSpindash ? c_spindashSpeed : c_slidingSpeedMin) - 5.0f;
-    minSpeed = NextGenPhysics::m_isSliding2D ? 2.0f : minSpeed;
-
-    Eigen::Vector3f playerVelocity;
-    bool result = NextGenPhysics::m_isSliding2D ? Common::GetPlayerTargetVelocity(playerVelocity) : Common::GetPlayerVelocity(playerVelocity);
-    if (!result || playerVelocity.norm() <= minSpeed)
-    {
-        StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
-        return;
-    }
-
     bool bDown, bPressed, bReleased;
     NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
-    if (bPressed)
+    NextGenPhysics::m_slidingTime -= Application::getDeltaTime();
+    if (bPressed || NextGenPhysics::m_slidingTime <= 0.0f)
     {
         if (NextGenPhysics::m_isSpindash)
         {
@@ -220,6 +202,18 @@ HOOK(void, __fastcall, CSonicStateSlidingAdvance, 0x11D69A0, void* This)
             StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
             return;
         }
+    }
+    
+    // For 2D slide/spindash, there's one frame delay before Sonic can goto max speed, lower the minSpeed
+    float minSpeed = (NextGenPhysics::m_isSpindash ? c_spindashSpeed : c_slidingSpeedMin) - 5.0f;
+    minSpeed = NextGenPhysics::m_isSliding2D ? 2.0f : minSpeed;
+
+    Eigen::Vector3f playerVelocity;
+    bool result = NextGenPhysics::m_isSliding2D ? Common::GetPlayerTargetVelocity(playerVelocity) : Common::GetPlayerVelocity(playerVelocity);
+    if (!result || playerVelocity.norm() <= minSpeed)
+    {
+        StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
+        return;
     }
 }
 
