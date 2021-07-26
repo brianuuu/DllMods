@@ -6,12 +6,15 @@
 float const c_funcMaxTurnRate = 400.0f;
 float const c_funcTurnRateMultiplier = PI_F * 10.0f;
 
+bool NextGenPhysics::m_isFlipStop = false;
+
 bool NextGenPhysics::m_isStomping = false;
 bool NextGenPhysics::m_bounced = false;
 float const c_bouncePower = 17.0f;
 float const c_bouncePowerBig = 23.0f;
 
 bool NextGenPhysics::m_isSquatKick = false;
+Eigen::Vector3f NextGenPhysics::m_squatKickVelocity(0, 0, 0);
 float const c_squatKickPressMaxTime = 0.3f;
 
 bool NextGenPhysics::m_isSpindash = false;
@@ -22,6 +25,8 @@ float const c_slidingSpeedMin = 10.0f;
 float const c_slidingSpeedMax = 16.0f;
 float const c_spindashTime = 3.0f;
 float const c_spindashSpeed = 30.0f;
+
+float NextGenPhysics::m_bHeldTimer = 0.0f;
 
 HOOK(void, __cdecl, SetStickMagnitude, 0x9C69D0, int16_t* argX, int16_t* argY, int16_t a3, int16_t Deadzone)
 {
@@ -76,6 +81,9 @@ HOOK(int*, __fastcall, CSonicStateSquatKickBegin, 0x12526D0, void* This)
     // Don't allow direction change for squat kick
     WRITE_MEMORY(0x11D944A, uint8_t, 0);
 
+    // Get current speed so we can keep it
+    Common::GetPlayerVelocity(NextGenPhysics::m_squatKickVelocity);
+
     static SharedPtrTypeless soundHandle;
     Common::SonicContextPlaySound(soundHandle, 80041021, 1);
     NextGenPhysics::m_isSquatKick = true;
@@ -87,29 +95,20 @@ HOOK(void, __fastcall, CSonicStateSquatKickAdvance, 0x1252810, void* This)
 {
     originalCSonicStateSquatKickAdvance(This);
 
-    // About to transition out and on ground
-    CSonicStateFlags* flags = Common::GetSonicStateFlags();
-    if (!flags->KeepRunning
-        && !StateManager::isCurrentAction(StateAction::SquatKick)
-        && !StateManager::isCurrentAction(StateAction::Fall))
+    if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
-        bool bDown, bPressed, bReleased;
-        NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
-        Sonic::EKeyState actionButton = Configuration::m_xButtonAction ? Sonic::EKeyState::eKeyState_X : Sonic::EKeyState::eKeyState_B;
-        if (bDown)
+        // About to transition out and on ground
+        CSonicStateFlags* flags = Common::GetSonicStateFlags();
+        if (!flags->KeepRunning
+         && !StateManager::isCurrentAction(StateAction::SquatKick)
+         && !StateManager::isCurrentAction(StateAction::Fall))
         {
-            // Immediately change to spindash if button is held
-            // TODO: do a flip first
-            StateManager::ChangeState(StateAction::Squat, *PLAYER_CONTEXT);
-            return;
-        }
-
-        Eigen::Vector3f inputDirection;
-        if (Common::GetWorldInputDirection(inputDirection) && inputDirection.isZero())
-        {
-            // Stops Sonic completely if not stick input
-            // TODO: do a flip first
-            Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+            Eigen::Vector3f inputDirection;
+            if (Common::GetWorldInputDirection(inputDirection) && inputDirection.isZero())
+            {
+                // Stops Sonic completely if no stick input
+                StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
+            }
         }
     }
 }
@@ -219,69 +218,52 @@ HOOK(void, __fastcall, CSonicStateSlidingAdvance, 0x11D69A0, void* This)
 
 HOOK(bool, __stdcall, BActionHandler, 0xDFF660, CSonicContext* context, bool buttonHoldCheck)
 {
-    static float bHeldTimer(0.0f);
-
     bool* unknownFlags = *(bool**)((uint32_t)context + 0x11C);
     bool result = originalBActionHandler(context, buttonHoldCheck);
     if (result || unknownFlags[0x98] || unknownFlags[0x99])
     {
-        bHeldTimer = 0.0f;
+        NextGenPhysics::m_bHeldTimer = 0.0f;
         return result;
     }
 
-    Eigen::Vector3f playerVelocity;
-    if (!Common::GetPlayerVelocity(playerVelocity))
-    {
-        return false;
-    }
-    bool moving = playerVelocity.norm() > 0.2f;
+    return NextGenPhysics::bActionHandlerImpl();
+}
 
-    bool bDown, bPressed, bReleased;
-    NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
-    CSonicStateFlags* flags = Common::GetSonicStateFlags();
-    if (bDown)
+HOOK(int, __fastcall, CSonicStateSlidingEndBegin, 0x1230F80, void* This)
+{
+    // For Sonic only, do a flip if no stick input
+    if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
-        // Standing still and held B for a while (Spin Dash)
-        if (!moving && bHeldTimer > c_squatKickPressMaxTime)
+        Eigen::Vector3f inputDirection;
+        if (Common::GetWorldInputDirection(inputDirection) && inputDirection.isZero())
         {
-            if (Configuration::m_model == Configuration::ModelType::Sonic)
-            {
-                StateManager::ChangeState(StateAction::Squat, *PLAYER_CONTEXT);
-                bHeldTimer = 0.0f;
-                return true;
-            }
+            // TODO: change to flip animation
+            NextGenPhysics::m_isFlipStop = true;
         }
-
-        // Remember how long we held B
-        bHeldTimer += Application::getDeltaTime();
-    }
-    else
-    {
-        if (bReleased && !flags->OnWater)
+        else
         {
-            if (bHeldTimer <= c_squatKickPressMaxTime)
-            {
-                if (Configuration::m_model == Configuration::ModelType::Sonic)
-                {
-                    // Release B without holding it for too long (Squat Kick)
-                    StateManager::ChangeState(StateAction::SquatKick, *PLAYER_CONTEXT);
-                    bHeldTimer = 0.0f;
-                    return true;
-                }
-            }
-            else if (moving && bHeldTimer > c_squatKickPressMaxTime && !flags->KeepRunning)
-            {
-                // Sonic is moving and released B (Anti-Gravity)
-                StateManager::ChangeState(StateAction::Sliding, *PLAYER_CONTEXT);
-                bHeldTimer = 0.0f;
-                return true;
-            }
-        }
 
-        bHeldTimer = 0.0f;
+        }
     }
 
-    return false;
+    return originalCSonicStateSlidingEndBegin(This);
+}
+
+HOOK(int*, __fastcall, CSonicStateSlidingEndAdvance, 0x1230EE0, void* This)
+{
+    int* result = originalCSonicStateSlidingEndAdvance(This);
+    if (NextGenPhysics::m_isFlipStop)
+    {
+        // Only detect B-action during the flip, not normal SlidingEnd
+        NextGenPhysics::bActionHandlerImpl();
+    }
+    return result;
+}
+
+HOOK(int*, __fastcall, CSonicStateSlidingEndEnd, 0x1230E60, void* This)
+{
+    NextGenPhysics::m_isFlipStop = false;
+    return originalCSonicStateSlidingEndEnd(This);
 }
 
 uint32_t noAirDashOutOfControlReturnAddress = 0x1232445;
@@ -506,6 +488,9 @@ void NextGenPhysics::applyPatches()
     WRITE_MEMORY(0xDFF8D5, uint8_t, 0xEB, 0x05);
     WRITE_MEMORY(0xDFF856, uint8_t, 0xE9, 0x81, 0x00, 0x00, 0x00);
     INSTALL_HOOK(BActionHandler);
+    INSTALL_HOOK(CSonicStateSlidingEndBegin);
+    INSTALL_HOOK(CSonicStateSlidingEndAdvance);
+    INSTALL_HOOK(CSonicStateSlidingEndEnd);
 
     //-------------------------------------------------------
     // Sweep Kick
@@ -646,12 +631,7 @@ bool __fastcall NextGenPhysics::applySpindashImpulse(void* context)
     message.m_snapPosition = false;
     message.m_pathInterpolate = false;
 
-    if (m_isSquatKick)
-    {
-        // Keep velocity with squat kick
-        message.m_impulse = playerVelocity;
-    }
-    else if (m_isSpindash)
+    if (m_isSpindash)
     {
         message.m_impulse *= c_spindashSpeed;
     }
@@ -678,10 +658,14 @@ bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context)
     Eigen::Vector3f playerVelocity;
     if (!Common::GetPlayerVelocity(playerVelocity)) return false;
 
-    if (m_isSquatKick)
+    if (m_isFlipStop)
+    {
+        playerDir = Eigen::Vector3f::Zero();
+    }
+    else if (m_isSquatKick)
     {
         // Keep velocity with squat kick
-        playerDir = playerVelocity;
+        playerDir = m_squatKickVelocity;
     }
     else if (m_isSpindash)
     {
@@ -722,4 +706,61 @@ void NextGenPhysics::getActionButtonStates(bool& bDown, bool& bPressed, bool& bR
     // Release button doesn't work for keyboard, get from Application.h
     bReleased = Application::getKeyIsReleased(actionButton);
     //bReleased = padState->IsReleased(actionButton);
+}
+
+bool NextGenPhysics::bActionHandlerImpl()
+{
+    Eigen::Vector3f playerVelocity;
+    if (!Common::GetPlayerVelocity(playerVelocity))
+    {
+        return false;
+    }
+    bool moving = playerVelocity.norm() > 0.2f;
+
+    bool bDown, bPressed, bReleased;
+    NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
+    CSonicStateFlags* flags = Common::GetSonicStateFlags();
+    if (bDown)
+    {
+        // Standing still and held B for a while (Spin Dash)
+        if (!moving && NextGenPhysics::m_bHeldTimer > c_squatKickPressMaxTime)
+        {
+            if (Configuration::m_model == Configuration::ModelType::Sonic)
+            {
+                StateManager::ChangeState(StateAction::Squat, *PLAYER_CONTEXT);
+                NextGenPhysics::m_bHeldTimer = 0.0f;
+                return true;
+            }
+        }
+
+        // Remember how long we held B
+        NextGenPhysics::m_bHeldTimer += Application::getDeltaTime();
+    }
+    else
+    {
+        if (bReleased && !flags->OnWater)
+        {
+            if (NextGenPhysics::m_bHeldTimer <= c_squatKickPressMaxTime)
+            {
+                if (Configuration::m_model == Configuration::ModelType::Sonic)
+                {
+                    // Release B without holding it for too long (Squat Kick)
+                    StateManager::ChangeState(StateAction::SquatKick, *PLAYER_CONTEXT);
+                    NextGenPhysics::m_bHeldTimer = 0.0f;
+                    return true;
+                }
+            }
+            else if (moving && NextGenPhysics::m_bHeldTimer > c_squatKickPressMaxTime && !flags->KeepRunning)
+            {
+                // Sonic is moving and released B (Anti-Gravity)
+                StateManager::ChangeState(StateAction::Sliding, *PLAYER_CONTEXT);
+                NextGenPhysics::m_bHeldTimer = 0.0f;
+                return true;
+            }
+        }
+
+        NextGenPhysics::m_bHeldTimer = 0.0f;
+    }
+
+    return false;
 }

@@ -10,9 +10,12 @@ class NextGenPhysics
 public:
 	static void applyPatches();
 
+	static bool m_isFlipStop;
+
 	static bool m_isStomping;
 	static bool m_bounced;
 	static bool m_isSquatKick;
+	static Eigen::Vector3f m_squatKickVelocity;
 	static void bounceBraceletImpl();
 
 	static bool m_isSpindash;
@@ -22,5 +25,8 @@ public:
 	static bool __fastcall applySlidingHorizontalTargetVel(void* context);
 
 	static void getActionButtonStates(bool& bDown, bool& bPressed, bool& bReleased);
+
+	static float m_bHeldTimer;
+	static bool bActionHandlerImpl();
 };
 
