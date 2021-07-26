@@ -37,6 +37,24 @@ HOOK(uint32_t*, __fastcall, ReadXmlData, 0xCE5FC0, uint32_t size, char* pData, v
 	return originalReadXmlData(size, pData, a3, a4);
 }
 
+void playItemboxVoice()
+{
+	static SharedPtrTypeless soundHandle;
+	Common::SonicContextPlaySound(soundHandle, 3002021, 0);
+}
+
+HOOK(void, __fastcall, SuperRingMsgHitEventCollision, 0x11F2F10, void* This, void* Edx, void* a2)
+{
+	playItemboxVoice();
+	originalSuperRingMsgHitEventCollision(This, Edx, a2);
+}
+
+HOOK(void, __fastcall, ItemMsgHitEventCollision, 0xFFF810, void* This, void* Edx, void* a2)
+{
+	playItemboxVoice();
+	originalItemMsgHitEventCollision(This, Edx, a2);
+}
+
 const char* volatile const ObjectProductionItemboxLock = "ObjectProductionItemboxLock.phy.xml";
 uint32_t LoadItemboxLockAsmHookReturnAddress = 0xD45FAA;
 uint32_t sub_EA0450 = 0xEA0450;
@@ -71,11 +89,34 @@ void __declspec(naked) objItemPlaySfx()
 	}
 }
 
+void playRainbowRingVoice()
+{
+	static SharedPtrTypeless soundHandle;
+	Common::SonicContextPlaySound(soundHandle, 3002022, 0);
+}
+
+// Play rainbow ring voice
+uint32_t objRainbowRingVoiceReturnAddress = 0x115A8F2;
+void __declspec(naked) objRainbowRingVoice()
+{
+	__asm
+	{
+		push	esi
+		call	playRainbowRingVoice
+		pop		esi
+
+		mov     eax, [esi + 0B8h]
+		jmp		[objItemPlaySfxReturnAddress]
+	}
+}
+
 void Itembox::applyPatches()
 {
-	// Play itembox sfx for 1up and 10ring
-	WRITE_MEMORY(0x011F2FE0, uint32_t, 4002032);
+	// Play itembox and voice sfx for 10ring and 1up
+	WRITE_MEMORY(0x11F2FE0, uint32_t, 4002032);
+	INSTALL_HOOK(SuperRingMsgHitEventCollision);
 	WRITE_JUMP(0xFFF9AA, objItemPlaySfx);
+	INSTALL_HOOK(ItemMsgHitEventCollision);
 
 	// Set itembox radius
 	WRITE_MEMORY(0x11F3353, float*, &c_10ringRadius);
@@ -87,6 +128,9 @@ void Itembox::applyPatches()
 	// Inject lock-on object
 	INSTALL_HOOK(ParseSetdata);
 	INSTALL_HOOK(ReadXmlData);
+
+	// I have no good place to put general voice mod yet, include here for now
+	WRITE_JUMP(0x115A8EC, objRainbowRingVoice);
 }
 
 void Itembox::playItemboxSfx()
