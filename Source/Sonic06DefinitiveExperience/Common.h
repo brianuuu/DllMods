@@ -327,6 +327,21 @@ inline bool GetPlayerVelocity(Eigen::Vector3f& velocity)
     return true;
 }
 
+inline bool GetPlayerTargetVelocity(Eigen::Vector3f& velocity)
+{
+	if (!*PLAYER_CONTEXT) return false;
+
+	const uint32_t result = *(uint32_t*)((uint32_t) * (void**)((uint32_t)*PLAYER_CONTEXT + 0x110) + 0xAC);
+	if (!result) return false;
+
+	float* pVel = (float*)(result + 0x2A0);
+	velocity.x() = pVel[0];
+	velocity.y() = pVel[1];
+	velocity.z() = pVel[2];
+
+	return true;
+}
+
 inline bool SetPlayerVelocity(Eigen::Vector3f const& velocity)
 {
     if (!*PLAYER_CONTEXT) return false;

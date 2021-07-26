@@ -15,6 +15,7 @@ bool NextGenPhysics::m_isSquatKick = false;
 float const c_squatKickPressMaxTime = 0.3f;
 
 bool NextGenPhysics::m_isSpindash = false;
+bool NextGenPhysics::m_isSliding2D = false;
 float NextGenPhysics::m_slidingTime = 0.0f;
 float const c_slidingTime = 3.0f;
 float const c_slidingSpeedMin = 10.0f;
@@ -190,10 +191,14 @@ HOOK(void, __fastcall, CSonicStateSlidingAdvance, 0x11D69A0, void* This)
         StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
         return;
     }
-
+    
+    // For 2D slide/spindash, there's one frame delay before Sonic can goto max speed, lower the minSpeed
     float minSpeed = (NextGenPhysics::m_isSpindash ? c_spindashSpeed : c_slidingSpeedMin) - 5.0f;
+    minSpeed = (NextGenPhysics::m_isSpindash && NextGenPhysics::m_isSliding2D) ? 5.0f : minSpeed;
+
     Eigen::Vector3f playerVelocity;
-    if (!Common::GetPlayerVelocity(playerVelocity) || playerVelocity.norm() < minSpeed)
+    bool result = NextGenPhysics::m_isSliding2D ? Common::GetPlayerTargetVelocity(playerVelocity) : Common::GetPlayerVelocity(playerVelocity);
+    if (!result || playerVelocity.norm() < minSpeed)
     {
         StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
         return;
@@ -349,7 +354,7 @@ void __declspec(naked) slidingHorizontalTargetVel2D()
     {
         // Get overrided target velocity
         mov     ecx, esi
-        mov     edx, 1
+        mov     NextGenPhysics::m_isSliding2D, 1
         call    NextGenPhysics::applySlidingHorizontalTargetVel
         pop     edi
         pop     esi
@@ -366,7 +371,7 @@ void __declspec(naked) slidingHorizontalTargetVel3D()
     {
         // Get overrided target velocity
         mov     ecx, ebx
-        mov     edx, 0
+        mov     NextGenPhysics::m_isSliding2D, 0
         call    NextGenPhysics::applySlidingHorizontalTargetVel
         test    al, al
         jnz     jump
@@ -587,6 +592,9 @@ void NextGenPhysics::applyPatches()
         WRITE_JUMP(0x1230BDB, startSpindash);
         WRITE_MEMORY(0x1230C3A, uint32_t, 0x15F5108); // change state to sliding
 
+        // If in tight spaces, still allow Sonic to unduck (aka use spindash)
+        WRITE_NOP(0x1230BCB, 0x2);
+
         // Don't allow stick move start sliding from squat
         WRITE_MEMORY(0x1230D62, uint8_t, 0xEB);
         WRITE_MEMORY(0x1230DA9, uint8_t, 0xE9, 0xA8, 0x00, 0x00, 0x00, 0x90);
@@ -666,7 +674,7 @@ bool __fastcall NextGenPhysics::applySpindashImpulse(void* context)
     return true;
 }
 
-bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context, bool is2D)
+bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context)
 {
     Eigen::Vector3f playerPosition;
     Eigen::Quaternionf playerRotation;
@@ -695,9 +703,9 @@ bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context, b
 
     // For 2D we have to override the actual velocity (+0x290)
     // For 3D we have to override target velocity (+0x2A0)
-    float* horizontalVel = (float*)((uint32_t)context + (is2D ? 0x290 : 0x2A0));
+    float* horizontalVel = (float*)((uint32_t)context + (NextGenPhysics::m_isSliding2D ? 0x290 : 0x2A0));
     horizontalVel[0] = playerDir.x();
-    if (is2D)
+    if (NextGenPhysics::m_isSliding2D)
     {
         horizontalVel[1] = playerDir.y();
     }
