@@ -194,11 +194,11 @@ HOOK(void, __fastcall, CSonicStateSlidingAdvance, 0x11D69A0, void* This)
     
     // For 2D slide/spindash, there's one frame delay before Sonic can goto max speed, lower the minSpeed
     float minSpeed = (NextGenPhysics::m_isSpindash ? c_spindashSpeed : c_slidingSpeedMin) - 5.0f;
-    minSpeed = (NextGenPhysics::m_isSpindash && NextGenPhysics::m_isSliding2D) ? 5.0f : minSpeed;
+    minSpeed = NextGenPhysics::m_isSliding2D ? 2.0f : minSpeed;
 
     Eigen::Vector3f playerVelocity;
     bool result = NextGenPhysics::m_isSliding2D ? Common::GetPlayerTargetVelocity(playerVelocity) : Common::GetPlayerVelocity(playerVelocity);
-    if (!result || playerVelocity.norm() < minSpeed)
+    if (!result || playerVelocity.norm() <= minSpeed)
     {
         StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
         return;
