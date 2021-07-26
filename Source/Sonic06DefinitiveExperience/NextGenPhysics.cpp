@@ -87,8 +87,10 @@ HOOK(void, __fastcall, CSonicStateSquatKickAdvance, 0x1252810, void* This)
     originalCSonicStateSquatKickAdvance(This);
 
     // About to transition out and on ground
-    if (!StateManager::isCurrentAction(StateAction::SquatKick)
-     && !StateManager::isCurrentAction(StateAction::Fall))
+    CSonicStateFlags* flags = Common::GetSonicStateFlags();
+    if (!flags->KeepRunning
+        && !StateManager::isCurrentAction(StateAction::SquatKick)
+        && !StateManager::isCurrentAction(StateAction::Fall))
     {
         bool bDown, bPressed, bReleased;
         NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
