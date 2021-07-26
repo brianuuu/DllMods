@@ -37,22 +37,17 @@ HOOK(uint32_t*, __fastcall, ReadXmlData, 0xCE5FC0, uint32_t size, char* pData, v
 	return originalReadXmlData(size, pData, a3, a4);
 }
 
-void playItemboxVoice()
-{
-	static SharedPtrTypeless soundHandle;
-	Common::SonicContextPlaySound(soundHandle, 3002021, 0);
-}
-
 HOOK(void, __fastcall, SuperRingMsgHitEventCollision, 0x11F2F10, void* This, void* Edx, void* a2)
 {
-	playItemboxVoice();
+	Itembox::playItemboxVoice();
 	originalSuperRingMsgHitEventCollision(This, Edx, a2);
 }
 
-HOOK(void, __fastcall, ItemMsgHitEventCollision, 0xFFF810, void* This, void* Edx, void* a2)
+HOOK(void, __fastcall, ClassicItemBoxMsgGetItemType, 0xE6D7D0, void* This, void* Edx, void* a2)
 {
-	playItemboxVoice();
-	originalItemMsgHitEventCollision(This, Edx, a2);
+	// This function also plays for Modern 1up
+	Itembox::playItemboxVoice();
+	originalClassicItemBoxMsgGetItemType(This, Edx, a2);
 }
 
 const char* volatile const ObjectProductionItemboxLock = "ObjectProductionItemboxLock.phy.xml";
@@ -89,12 +84,6 @@ void __declspec(naked) objItemPlaySfx()
 	}
 }
 
-void playRainbowRingVoice()
-{
-	static SharedPtrTypeless soundHandle;
-	Common::SonicContextPlaySound(soundHandle, 3002022, 0);
-}
-
 // Play rainbow ring voice
 uint32_t objRainbowRingVoiceReturnAddress = 0x115A8F2;
 void __declspec(naked) objRainbowRingVoice()
@@ -102,7 +91,7 @@ void __declspec(naked) objRainbowRingVoice()
 	__asm
 	{
 		push	esi
-		call	playRainbowRingVoice
+		call	Itembox::playRainbowRingVoice
 		pop		esi
 
 		mov     eax, [esi + 0B8h]
@@ -116,7 +105,7 @@ void Itembox::applyPatches()
 	WRITE_MEMORY(0x11F2FE0, uint32_t, 4002032);
 	INSTALL_HOOK(SuperRingMsgHitEventCollision);
 	WRITE_JUMP(0xFFF9AA, objItemPlaySfx);
-	INSTALL_HOOK(ItemMsgHitEventCollision);
+	INSTALL_HOOK(ClassicItemBoxMsgGetItemType);
 
 	// Set itembox radius
 	WRITE_MEMORY(0x11F3353, float*, &c_10ringRadius);
@@ -137,6 +126,20 @@ void Itembox::playItemboxSfx()
 {
 	static SharedPtrTypeless soundHandle;
 	Common::SonicContextPlaySound(soundHandle, 4002032, 0);
+}
+
+void Itembox::playItemboxVoice()
+{
+	static SharedPtrTypeless soundHandle;
+	soundHandle.reset();
+	Common::SonicContextPlaySound(soundHandle, 3002021, 0);
+}
+
+void Itembox::playRainbowRingVoice()
+{
+	static SharedPtrTypeless soundHandle;
+	soundHandle.reset();
+	Common::SonicContextPlaySound(soundHandle, 3002022, 0);
 }
 
 tinyxml2::XMLError Itembox::getInjectStr(char const* pData, uint32_t size, std::string& injectStr)

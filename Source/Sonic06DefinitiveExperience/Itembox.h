@@ -18,6 +18,8 @@ class Itembox
 public:
 	static void applyPatches();
 	static void playItemboxSfx();
+	static void playItemboxVoice();
+	static void playRainbowRingVoice();
 	static tinyxml2::XMLError getInjectStr(char const* pData, uint32_t size, std::string& injectStr);
 };
 
