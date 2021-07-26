@@ -695,6 +695,10 @@ bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context, b
     // For 3D we have to override target velocity (+0x2A0)
     float* horizontalVel = (float*)((uint32_t)context + (is2D ? 0x290 : 0x2A0));
     horizontalVel[0] = playerDir.x();
+    if (is2D)
+    {
+        horizontalVel[1] = playerDir.y();
+    }
     horizontalVel[2] = playerDir.z();
 
     return true;
