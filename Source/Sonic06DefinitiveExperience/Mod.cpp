@@ -32,7 +32,7 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     }
 
     // -------------Patches--------------
-    // General application pathces
+    // General application patches
     Application::applyPatches();
 
     // Allow rank comments

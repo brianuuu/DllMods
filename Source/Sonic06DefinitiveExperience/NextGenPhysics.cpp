@@ -714,5 +714,8 @@ void NextGenPhysics::getActionButtonStates(bool& bDown, bool& bPressed, bool& bR
 
     bDown = padState->IsDown(actionButton);
     bPressed = padState->IsTapped(actionButton);
-    bReleased = padState->IsReleased(actionButton);
+
+    // Release button doesn't work for keyboard, get from Application.h
+    bReleased = Application::getKeyIsReleased(actionButton);
+    //bReleased = padState->IsReleased(actionButton);
 }
