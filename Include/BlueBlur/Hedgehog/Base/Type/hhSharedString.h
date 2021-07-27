@@ -8,6 +8,7 @@ namespace Hedgehog::Base
 
     static FUNCTION_PTR(CSharedString*, __thiscall, fpCSharedStringCtor, 0x6621A0, CSharedString* This, const char* pValue);
     static FUNCTION_PTR(void, __thiscall, fpCSharedStringDtor, 0x661550, CSharedString* This);
+    static FUNCTION_PTR(CSharedString*, __thiscall, fpCSharedStringAssign, 0x662010, CSharedString* This, CSharedString const* Other);
 
     class CSharedString
     {
@@ -22,6 +23,11 @@ namespace Hedgehog::Base
         ~CSharedString()
         {
             fpCSharedStringDtor(this);
+        }
+
+        void operator= (const CSharedString& other)
+        {
+            fpCSharedStringAssign(this, &other);
         }
     };
 

@@ -1,6 +1,7 @@
 #include "Configuration.h"
 
 #include "Application.h"
+#include "AnimationSetPatcher.h"
 #include "RankQuote.h"
 #include "RankRunAnimation.h"
 #include "SuperSonic.h"
@@ -34,6 +35,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     // -------------Patches--------------
     // General application patches
     Application::applyPatches();
+    
+    // Inject new animations
+    AnimationSetPatcher::applyPatches();
 
     // Allow rank comments
     RankQuote::applyPatches();
