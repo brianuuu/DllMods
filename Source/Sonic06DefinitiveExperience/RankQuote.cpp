@@ -5,40 +5,6 @@ uint32_t RankQuote::m_rank = 0;
 uint32_t RankQuote::m_rankSfxID = 1010002;
 bool RankQuote::m_playRankVoice = false;
 
-#if _DEBUG
-void __cdecl debugRank()
-{
-    switch (RankQuote::m_rank)
-    {
-    case 4: printf("Got S rank!\n"); break;
-    case 3: printf("Got A rank!\n"); break;
-    case 2: printf("Got B rank!\n"); break;
-    case 1: printf("Got C rank!\n"); break;
-    default: printf("Got D rank!\n"); break;
-    }
-}
-#endif
-
-uint32_t asmGetRankReturnAddress = 0xE27BC2;
-void __declspec(naked) asmGetRank()
-{
-    __asm
-    {
-        mov     eax, [esi + 0x14]
-        mov     RankQuote::m_rank, eax
-
-#if _DEBUG
-        // eax is used after
-        push    eax
-        call    debugRank
-        pop     eax
-#endif
-
-        cmp     eax, 4
-        jmp     [asmGetRankReturnAddress]
-    }
-}
-
 void __cdecl getRankSfx()
 {
     if (*pModernSonicContext && RankQuote::m_playRankVoice)
@@ -132,6 +98,7 @@ void __declspec(naked) asmRank()
 
 HOOK(void, __fastcall, MsgChangeResultState2, 0xE692C0, void* This, void* Edx, uint32_t a2)
 {
+    RankQuote::m_rank = *(uint32_t*)(a2 + 20);
     uint32_t const state = *(uint32_t*)(a2 + 16);
     if (state == 3 
     && !RankRunAnimation::checkCanPlayRunAnimation()
@@ -149,9 +116,6 @@ void RankQuote::applyPatches()
 {
     // Disable result animation skip
     WRITE_NOP(0x10B9C1A, 0x5);
-
-    // Grab rank
-    WRITE_JUMP(0xE27BBC, asmGetRank);
 
     // Change rank sfx
     WRITE_JUMP(0x11D2379, asmChangeRankVoice);
