@@ -75,8 +75,6 @@ struct MsgAddImpulse
 	INSERT_PADDING(0x4);
 	float m_alwaysMinusOne; // seems to be always -1.0f
 	INSERT_PADDING(0xC);
-
-	MsgAddImpulse() : m_alwaysMinusOne(-1.0f) {}
 };
 
 struct CSonicStateFlags

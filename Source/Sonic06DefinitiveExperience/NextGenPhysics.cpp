@@ -14,6 +14,7 @@ float const c_bouncePower = 17.0f;
 float const c_bouncePowerBig = 23.0f;
 
 bool NextGenPhysics::m_isSquatKick = false;
+Eigen::Vector3f NextGenPhysics::m_squatKickDir(0, 0, 1);
 Eigen::Vector3f NextGenPhysics::m_squatKickVelocity(0, 0, 0);
 float const c_squatKickPressMaxTime = 0.3f;
 
@@ -43,6 +44,15 @@ HOOK(void, __cdecl, SetStickMagnitude, 0x9C69D0, int16_t* argX, int16_t* argY, i
 HOOK(void, __stdcall, CSonicRotationAdvance, 0xE310A0, void* a1, float* targetDir, float turnRate1, float turnRateMultiplier, bool noLockDirection, float turnRate2)
 {
     CSonicContext* context = (CSonicContext*)(((uint32_t*)a1)[2]);
+
+    // Flip stop doesn't have a target dir so we need to enforce it
+    if (NextGenPhysics::m_isFlipStop)
+    {
+        targetDir[0] = NextGenPhysics::m_squatKickDir.x();
+        targetDir[1] = NextGenPhysics::m_squatKickDir.y();
+        targetDir[2] = NextGenPhysics::m_squatKickDir.z();
+    }
+
     if (noLockDirection)
     {
         // If direction is not locked, pump up turn rate
@@ -82,6 +92,12 @@ HOOK(int*, __fastcall, CSonicStateSquatKickBegin, 0x12526D0, void* This)
     WRITE_MEMORY(0x11D944A, uint8_t, 0);
 
     // Get current speed so we can keep it
+    Eigen::Vector3f playerPosition;
+    Eigen::Quaternionf playerRotation;
+    if (Common::GetPlayerTransform(playerPosition, playerRotation))
+    {
+        NextGenPhysics::m_squatKickDir = playerRotation * Eigen::Vector3f::UnitZ();
+    }
     Common::GetPlayerVelocity(NextGenPhysics::m_squatKickVelocity);
 
     static SharedPtrTypeless soundHandle;
@@ -94,6 +110,10 @@ HOOK(int*, __fastcall, CSonicStateSquatKickBegin, 0x12526D0, void* This)
 HOOK(void, __fastcall, CSonicStateSquatKickAdvance, 0x1252810, void* This)
 {
     originalCSonicStateSquatKickAdvance(This);
+
+    // Lock squat kick's rotation
+    alignas(16) float dir[4] = { NextGenPhysics::m_squatKickDir.x(), NextGenPhysics::m_squatKickDir.y(), NextGenPhysics::m_squatKickDir.z(), 0 };
+    originalCSonicRotationAdvance(This, dir, c_funcMaxTurnRate, c_funcTurnRateMultiplier, true, c_funcMaxTurnRate);
 
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
@@ -630,6 +650,7 @@ bool __fastcall NextGenPhysics::applySpindashImpulse(void* context)
     message.m_notRelative = true;
     message.m_snapPosition = false;
     message.m_pathInterpolate = false;
+    message.m_alwaysMinusOne = -1.0f;
 
     if (m_isSpindash)
     {

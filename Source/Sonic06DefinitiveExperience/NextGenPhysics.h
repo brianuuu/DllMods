@@ -15,6 +15,7 @@ public:
 	static bool m_isStomping;
 	static bool m_bounced;
 	static bool m_isSquatKick;
+	static Eigen::Vector3f m_squatKickDir;
 	static Eigen::Vector3f m_squatKickVelocity;
 	static void bounceBraceletImpl();
 
