@@ -53,9 +53,8 @@ HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* 
 
         // Initialise data on destination state
         bool found = false;
-        for (size_t i = 0; i < AnimationSetPatcher::m_newAnimationData.size(); i++)
+        for (NewAnimationData const& destData : AnimationSetPatcher::m_newAnimationData)
         {
-            NewAnimationData const& destData = AnimationSetPatcher::m_newAnimationData[i];
             if (data.m_destinationState == destData.m_stateName)
             {
                 uint32_t* pTransitionDestData = fpGetAnimationTransitionData(A2, destData.m_stateName);
