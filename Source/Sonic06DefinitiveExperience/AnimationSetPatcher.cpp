@@ -85,15 +85,18 @@ HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* 
     originalCSonicCreateAnimationStates(This, Edx, A2, A3);
 }
 
+const char* volatile const AnimationSetPatcher::RunResult = "RunResult";
+const char* volatile const AnimationSetPatcher::RunResultLoop = "RunResultLoop";
+const char* volatile const AnimationSetPatcher::BrakeFlip = "BrakeFlip";
+
 void AnimationSetPatcher::applyPatches()
 {
     if (Configuration::m_model == Configuration::ModelType::Sonic &&
         Configuration::m_run != Configuration::RunResultType::Disable)
     {
-        static const char* volatile const RunResult = "RunResult";
-        static const char* volatile const RunResultLoop = "RunResultLoop";
         m_newAnimationData.emplace_back(RunResult, "sn_result_run", 1.0f, false, RunResultLoop);
         m_newAnimationData.emplace_back(RunResultLoop, "sn_result_run_loop", 1.0f, true, nullptr);
+        m_newAnimationData.emplace_back(BrakeFlip, "sn_brake_flip", 1.0f, false, nullptr);
     }
 
     if (!m_newAnimationData.empty())

@@ -51,5 +51,10 @@ class AnimationSetPatcher
 public:
     static std::vector<NewAnimationData> m_newAnimationData;
     static void applyPatches();
+
+    // New animation states
+    static const char* volatile const RunResult;
+    static const char* volatile const RunResultLoop;
+    static const char* volatile const BrakeFlip;
 };
 
