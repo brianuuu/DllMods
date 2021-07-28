@@ -837,6 +837,7 @@ bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context)
     Eigen::Vector3f playerVelocity;
     if (!Common::GetPlayerVelocity(playerVelocity)) return false;
 
+    bool superForm = Common::CheckPlayerSuperForm();
     if (m_isBrakeFlip)
     {
         playerDir = Eigen::Vector3f::Zero();
@@ -849,9 +850,13 @@ bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context)
     else if (m_isSpindash)
     {
         playerDir *= c_spindashSpeed;
+        if (superForm) playerDir *= 2.0f;
     }
     else
     {
+        // Use default sliding behavior for super
+        if (superForm) return false;
+
         float hSpeed = playerVelocity.norm();
         hSpeed = max(hSpeed, c_slidingSpeedMin);
         hSpeed = min(hSpeed, c_slidingSpeedMax);

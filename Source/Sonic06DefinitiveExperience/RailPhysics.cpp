@@ -89,7 +89,7 @@ HOOK(void, __fastcall, CSonicPostureGrindAdvance, 0x11D81E0, void* This)
     originalCSonicPostureGrindAdvance(This);
 
     Eigen::Vector3f velocity;
-    if (Common::GetPlayerVelocity(velocity))
+    if (!Common::CheckPlayerSuperForm() && Common::GetPlayerVelocity(velocity))
     {
         // Acclerate after doing grind trick
         if (RailPhysics::m_grindAccelTime > 0.0f)
