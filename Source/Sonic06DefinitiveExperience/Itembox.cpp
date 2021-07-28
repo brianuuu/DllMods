@@ -95,7 +95,7 @@ void __declspec(naked) objRainbowRingVoice()
 		pop		esi
 
 		mov     eax, [esi + 0B8h]
-		jmp		[objItemPlaySfxReturnAddress]
+		jmp		[objRainbowRingVoiceReturnAddress]
 	}
 }
 
