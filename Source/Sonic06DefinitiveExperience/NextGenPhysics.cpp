@@ -332,14 +332,12 @@ void __declspec(naked) bounceBraceletASMImpl()
 
 uint32_t lightDashHigherPriorityReturnAddress = 0xDFDDD0;
 uint32_t lightDashHigherPrioritySuccessAddress = 0xDFDDED;
-uint32_t fpLightSpeedDash = 0xDFFD10;
+uint32_t fpLightSpeedDash = 0xDFB3F0;
 void __declspec(naked) lightDashHigherPriority()
 {
     __asm
     {
         // Check light speed dash
-        mov     eax, esi
-        mov     ebx, [esp]
         call    [fpLightSpeedDash]
         test    al, al
         jz      jump
@@ -596,7 +594,7 @@ void NextGenPhysics::applyPatches()
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
         // Spin animation for Squat
-        WRITE_MEMORY(0x1230A84, uint32_t, 0x15F84F4); // slide begin animation
+        WRITE_MEMORY(0x1230A85, uint32_t, 0x15F84F4); // slide begin animation
         WRITE_MEMORY(0x1230A9F, uint32_t, 0x15F84F4); // slide begin animation
         WRITE_MEMORY(0x1230D74, uint32_t, 0x15F84F4); // slide hold animation
 
