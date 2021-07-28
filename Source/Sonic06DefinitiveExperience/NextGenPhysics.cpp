@@ -489,6 +489,18 @@ void NextGenPhysics::applyPatches()
         WRITE_MEMORY(0x11A0DA8, uint32_t, 32);  // Speed external control
         //WRITE_MEMORY(0x11BD057, uint32_t, 32);  // DivingDive start
         //WRITE_MEMORY(0x124AF01, uint32_t, 32);  // DivingDive end
+
+        // Map drift to B-button
+        WRITE_MEMORY(0xDF2DFF, uint32_t, 1);
+        WRITE_MEMORY(0xDFF62B, uint32_t, 1);
+        WRITE_NOP(0xDFF80D, 2);
+        WRITE_MEMORY(0xDFF810, uint8_t, 0xB3);
+        WRITE_MEMORY(0xDFF816, uint32_t, 1);
+        WRITE_MEMORY(0xDFF81B, uint8_t, 0x81);
+        WRITE_MEMORY(0x1119549, uint32_t, 1);
+        WRITE_MEMORY(0x119910D, uint32_t, 1);
+
+        // TODO: Change notification buttons?
     }
 
     if (!Configuration::m_characterMoveset) return;
