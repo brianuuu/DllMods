@@ -652,8 +652,8 @@ void NextGenPhysics::applyCharacterAnimationSpeed()
         // Modifying movement animation speed
         if (Configuration::m_physics)
         {
-            jog_speedFactor = 3.0f;
-            run_speedFactor = 3.5f;
+            jog_speedFactor = 2.7f;
+            run_speedFactor = 3.2f;
             dash_speedFactor = 5.0f;
             jet_speedFactor = 12.0f;
             jetWall_speedFactor = 17.0f;
