@@ -1,5 +1,10 @@
-#pragma once
+/*----------------------------------------------------------*/
+//	Author: brianuuuSonic https://github.com/brianuuu
+//	Year: 2021
+//	Description: Inject new animations
+/*----------------------------------------------------------*/
 
+#pragma once
 struct CAnimationStateInfo
 {
     const char* m_Name;
