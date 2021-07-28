@@ -91,11 +91,16 @@ const char* volatile const AnimationSetPatcher::BrakeFlip = "BrakeFlip";
 
 void AnimationSetPatcher::applyPatches()
 {
-    if (Configuration::m_model == Configuration::ModelType::Sonic &&
-        Configuration::m_run != Configuration::RunResultType::Disable)
+    if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
-        m_newAnimationData.emplace_back(RunResult, "sn_result_run", 1.0f, false, RunResultLoop);
-        m_newAnimationData.emplace_back(RunResultLoop, "sn_result_run_loop", 1.0f, true, nullptr);
+        // Running goal
+        if (Configuration::m_run != Configuration::RunResultType::Disable)
+        {
+            m_newAnimationData.emplace_back(RunResult, "sn_result_run", 1.0f, false, RunResultLoop);
+            m_newAnimationData.emplace_back(RunResultLoop, "sn_result_run_loop", 1.0f, true, nullptr);
+        }
+
+        // Brake flip (for 06 physics)
         m_newAnimationData.emplace_back(BrakeFlip, "sn_brake_flip", 1.0f, false, nullptr);
     }
 
