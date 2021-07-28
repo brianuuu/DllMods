@@ -416,6 +416,9 @@ void __declspec(naked) CSonicStateSlidingEnd()
 
 void NextGenPhysics::applyPatches()
 {
+    // Change character movement aniamtion speeds
+    applyCharacterAnimationSpeed();
+
     // Always disable stomp voice and sfx for Sonic
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
@@ -603,6 +606,105 @@ void NextGenPhysics::applyPatches()
         INSTALL_HOOK(CSonicStateSquatAdvance);
         INSTALL_HOOK(CSonicStateSquatEnd);
     }
+}
+
+void NextGenPhysics::applyCharacterAnimationSpeed()
+{
+    // playbackSpeed: how fast animation plays
+    // speedFactor: how much distance to play one loop, -1.0 to use constant playbackSpeed
+
+    static float walk_playbackSpeed = 1.0f;
+    static float walk_speedFactor = 1.35f;
+    static float walkFast_playbackSpeed = 1.0f;
+    static float walkFast_speedFactor = 2.0f;
+
+    static float jog_playbackSpeed = 1.0f;
+    static float jog_speedFactor = 3.3f;
+
+    static float run_playbackSpeed = 1.0f;
+    static float run_speedFactor = 9.0f;
+
+    static float dash_playbackSpeed = 1.0f;
+    static float dash_speedFactor = 12.0f;
+
+    static float jet_playbackSpeed = 1.0f;
+    static float jet_speedFactor = 13.0f;
+    static float jetWall_playbackSpeed = 1.0f;
+    static float jetWall_speedFactor = 20.0f;
+
+    static float boost_playbackSpeed = 1.0f;
+    static float boost_speedFactor = 13.0f;
+    static float boostWall_playbackSpeed = 1.0f;
+    static float boostWall_speedFactor = 20.0f;
+
+    if (Configuration::m_model == Configuration::ModelType::Sonic)
+    {
+        // Modifying movement animation speed
+        if (Configuration::m_physics)
+        {
+            jog_speedFactor = 3.0f;
+            run_speedFactor = 3.5f;
+            dash_speedFactor = 5.0f;
+            jet_speedFactor = 12.0f;
+            jetWall_speedFactor = 17.0f;
+            boost_speedFactor = 12.0f;
+            boostWall_speedFactor = 17.0f;
+        }
+        else
+        {
+            run_speedFactor = 6.0f;
+            dash_speedFactor = 9.0f;
+        }
+    }
+
+    WRITE_MEMORY(0x12724AA, float*, &walk_playbackSpeed);
+    WRITE_MEMORY(0x12724D7, float*, &walk_speedFactor);
+
+    WRITE_MEMORY(0x127251B, float*, &walkFast_playbackSpeed);
+    WRITE_MEMORY(0x1272546, float*, &walkFast_speedFactor);
+
+    WRITE_MEMORY(0x127258A, float*, &jog_playbackSpeed);
+    WRITE_MEMORY(0x12725F9, float*, &jog_playbackSpeed);
+    WRITE_MEMORY(0x1272668, float*, &jog_playbackSpeed);
+    WRITE_MEMORY(0x12725B5, float*, &jog_speedFactor);
+    WRITE_MEMORY(0x1272624, float*, &jog_speedFactor);
+    WRITE_MEMORY(0x1272693, float*, &jog_speedFactor);
+
+    WRITE_MEMORY(0x12726D7, float*, &run_playbackSpeed);
+    WRITE_MEMORY(0x1272746, float*, &run_playbackSpeed);
+    WRITE_MEMORY(0x12727B5, float*, &run_playbackSpeed);
+    WRITE_MEMORY(0x1272702, float*, &run_speedFactor);
+    WRITE_MEMORY(0x1272771, float*, &run_speedFactor);
+    WRITE_MEMORY(0x12727E0, float*, &run_speedFactor);
+
+    WRITE_MEMORY(0x1272824, float*, &dash_playbackSpeed);
+    WRITE_MEMORY(0x1272893, float*, &dash_playbackSpeed);
+    WRITE_MEMORY(0x1272902, float*, &dash_playbackSpeed);
+    WRITE_MEMORY(0x127284F, float*, &dash_speedFactor);
+    WRITE_MEMORY(0x12728BE, float*, &dash_speedFactor);
+    WRITE_MEMORY(0x127292D, float*, &dash_speedFactor);
+
+    WRITE_MEMORY(0x1272971, float*, &jet_playbackSpeed);
+    WRITE_MEMORY(0x12729E0, float*, &jet_playbackSpeed);
+    WRITE_MEMORY(0x1272A4F, float*, &jet_playbackSpeed);
+    WRITE_MEMORY(0x1272ABE, float*, &jetWall_playbackSpeed);
+    WRITE_MEMORY(0x1272B2D, float*, &jetWall_playbackSpeed);
+    WRITE_MEMORY(0x127299C, float*, &jet_speedFactor);
+    WRITE_MEMORY(0x1272A0B, float*, &jet_speedFactor);
+    WRITE_MEMORY(0x1272A7A, float*, &jet_speedFactor);
+    WRITE_MEMORY(0x1272AE9, float*, &jetWall_speedFactor);
+    WRITE_MEMORY(0x1272B58, float*, &jetWall_speedFactor);
+
+    WRITE_MEMORY(0x1272B9C, float*, &boost_playbackSpeed);
+    WRITE_MEMORY(0x1272C0B, float*, &boost_playbackSpeed);
+    WRITE_MEMORY(0x1272C7A, float*, &boost_playbackSpeed);
+    WRITE_MEMORY(0x1272CE9, float*, &boostWall_playbackSpeed);
+    WRITE_MEMORY(0x1272D58, float*, &boostWall_playbackSpeed);
+    WRITE_MEMORY(0x1272BC7, float*, &boost_speedFactor);
+    WRITE_MEMORY(0x1272C36, float*, &boost_speedFactor);
+    WRITE_MEMORY(0x1272CA5, float*, &boost_speedFactor);
+    WRITE_MEMORY(0x1272D14, float*, &boostWall_speedFactor);
+    WRITE_MEMORY(0x1272D83, float*, &boostWall_speedFactor);
 }
 
 void NextGenPhysics::bounceBraceletImpl()
