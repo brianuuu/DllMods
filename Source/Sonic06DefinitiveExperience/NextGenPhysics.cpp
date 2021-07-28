@@ -435,7 +435,10 @@ void NextGenPhysics::applyPatches()
     }
 
     // Never transition to Fall after jumpboard, must use long jumpboard animation
-    WRITE_MEMORY(0x11DE31E, uint8_t, 0xEB);
+    if (Configuration::m_model == Configuration::ModelType::Sonic)
+    {
+        WRITE_MEMORY(0x11DE31E, uint8_t, 0xEB);
+    }
 
     if (!Configuration::m_physics) return;
 
@@ -444,6 +447,9 @@ void NextGenPhysics::applyPatches()
 
     // Increase turning rate
     INSTALL_HOOK(CSonicRotationAdvance);
+
+    // No out of control for air dash
+    WRITE_JUMP(0x123243C, noAirDashOutOfControl);
 
     // Change all actions to X button, change boost to R2
     if (Configuration::m_xButtonAction)
@@ -480,10 +486,20 @@ void NextGenPhysics::applyPatches()
         //WRITE_MEMORY(0x124AF01, uint32_t, 32);  // DivingDive end
     }
 
-    // No out of control for air dash
-    WRITE_JUMP(0x123243C, noAirDashOutOfControl);
+    //-------------------------------------------------------
+    // B-Action State handling
+    //-------------------------------------------------------
+    // Return 0 for Squat and Sliding, handle them ourselves
+    WRITE_MEMORY(0xDFF8D5, uint8_t, 0xEB, 0x05);
+    WRITE_MEMORY(0xDFF856, uint8_t, 0xE9, 0x81, 0x00, 0x00, 0x00);
+    INSTALL_HOOK(BActionHandler);
+    INSTALL_HOOK(CSonicStateSlidingEndBegin);
+    INSTALL_HOOK(CSonicStateSlidingEndAdvance);
+    INSTALL_HOOK(CSonicStateSlidingEndEnd);
 
-    // Implement bounce bracelet
+    //-------------------------------------------------------
+    // Bounce Bracelet
+    //-------------------------------------------------------
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
         INSTALL_HOOK(CSonicStateGrounded);
@@ -511,17 +527,6 @@ void NextGenPhysics::applyPatches()
         WRITE_MEMORY(0x11BCC43, uint32_t, 0x1E61B90); // jumpball start
         WRITE_MEMORY(0x11BCBB2, uint32_t, 0x1E61B90); // jumpball end
     }
-
-    //-------------------------------------------------------
-    // B-Action State handling
-    //-------------------------------------------------------
-    // Return 0 for Squat and Sliding, handle them ourselves
-    WRITE_MEMORY(0xDFF8D5, uint8_t, 0xEB, 0x05);
-    WRITE_MEMORY(0xDFF856, uint8_t, 0xE9, 0x81, 0x00, 0x00, 0x00);
-    INSTALL_HOOK(BActionHandler);
-    INSTALL_HOOK(CSonicStateSlidingEndBegin);
-    INSTALL_HOOK(CSonicStateSlidingEndAdvance);
-    INSTALL_HOOK(CSonicStateSlidingEndEnd);
 
     //-------------------------------------------------------
     // Sweep Kick
@@ -582,7 +587,6 @@ void NextGenPhysics::applyPatches()
         WRITE_JUMP(0x11D7027, CSonicStateSlidingEnd);
 
         // Set constant sliding speed
-        // TODO: 2D spindash not working
         WRITE_JUMP(0x11D989B, slidingHorizontalTargetVel2D);
         WRITE_JUMP(0x11D98A7, slidingHorizontalTargetVel2D);
         WRITE_JUMP(0x11D9532, slidingHorizontalTargetVel3D);
@@ -618,6 +622,7 @@ void NextGenPhysics::applyPatches()
 
 void NextGenPhysics::applyCharacterAnimationSpeed()
 {
+    // Note: All animations have 81 frames [0-80]
     // playbackSpeed: how fast animation plays
     // speedFactor: how much distance to play one loop, -1.0 to use constant playbackSpeed
 
@@ -645,23 +650,41 @@ void NextGenPhysics::applyCharacterAnimationSpeed()
     static float boostWall_playbackSpeed = 1.0f;
     static float boostWall_speedFactor = 20.0f;
 
-    if (Configuration::m_model == Configuration::ModelType::Sonic)
+    // Modifying movement animation speed
+    switch (Configuration::m_model)
     {
-        // Modifying movement animation speed
-        if (Configuration::m_physics)
+        case Configuration::ModelType::Sonic:
         {
-            jog_speedFactor = 2.7f;
-            run_speedFactor = 3.2f;
-            dash_speedFactor = 5.0f;
-            jet_speedFactor = 12.0f;
-            jetWall_speedFactor = 17.0f;
-            boost_speedFactor = 12.0f;
-            boostWall_speedFactor = 17.0f;
+            if (Configuration::m_physics)
+            {
+                jog_speedFactor = 2.7f;
+                run_speedFactor = 3.2f;
+                dash_speedFactor = 5.0f;
+                jet_speedFactor = 12.0f;
+                jetWall_speedFactor = 17.0f;
+                boost_speedFactor = 12.0f;
+                boostWall_speedFactor = 17.0f;
+            }
+            else
+            {
+                run_speedFactor = 6.0f;
+                dash_speedFactor = 9.0f;
+            }
+            break;
         }
-        else
+        case Configuration::ModelType::SonicElise:
         {
-            run_speedFactor = 6.0f;
-            dash_speedFactor = 9.0f;
+            if (Configuration::m_physics)
+            {
+                run_speedFactor = 5.0f;
+                dash_speedFactor = 7.0f;
+            }
+            else
+            {
+                run_speedFactor = 6.0f;
+                dash_speedFactor = 9.0f;
+            }
+            break;
         }
     }
 
