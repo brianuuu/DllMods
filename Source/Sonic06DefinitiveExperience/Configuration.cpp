@@ -204,7 +204,6 @@ bool Configuration::load(const std::string& rootPath)
 
         // Sonic.ar
         str = "Sonic";
-        bbWriter::applyPhysics(str, m_physics, m_model);
         bbWriter::applyModel(str, m_model);
         bbWriter::applyLanguage(str, m_language);
         bb3.addReplace("Sonic.arl", str + ".arl");

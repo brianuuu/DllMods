@@ -28,7 +28,7 @@ void bbWriter::applyLanguage(string& name, Configuration::LanguageType type)
 	case Configuration::LanguageType::Japanese: name += "_JPN";
 	}
 }
-
+/*
 void bbWriter::applyPhysics(string& name, bool physics, Configuration::ModelType type)
 {
 	// for affecting animation speed
@@ -37,7 +37,7 @@ void bbWriter::applyPhysics(string& name, bool physics, Configuration::ModelType
 		name += "_phy";
 	}
 }
-
+*/
 void bbWriter::addAR(std::string const& name, int count)
 {
 	for (int i = 0; i < count; i++)
