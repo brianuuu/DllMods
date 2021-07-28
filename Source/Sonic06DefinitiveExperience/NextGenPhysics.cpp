@@ -443,16 +443,18 @@ void NextGenPhysics::applyPatches()
         WRITE_MEMORY(0x11DE31E, uint8_t, 0xEB);
     }
 
-    if (!Configuration::m_physics) return;
+    // 06 physics general code
+    if (Configuration::m_physics)
+    {
+        // Precise stick input, by Skyth (06 still has angle clamp, don't use)
+        // INSTALL_HOOK(SetStickMagnitude);
 
-    // Precise stick input, by Skyth (06 still has angle clamp, don't use)
-    // INSTALL_HOOK(SetStickMagnitude);
+        // Increase turning rate
+        INSTALL_HOOK(CSonicRotationAdvance);
 
-    // Increase turning rate
-    INSTALL_HOOK(CSonicRotationAdvance);
-
-    // No out of control for air dash
-    WRITE_JUMP(0x123243C, noAirDashOutOfControl);
+        // No out of control for air dash
+        WRITE_JUMP(0x123243C, noAirDashOutOfControl);
+    }
 
     // Change all actions to X button, change boost to R2
     if (Configuration::m_xButtonAction)
@@ -488,6 +490,8 @@ void NextGenPhysics::applyPatches()
         //WRITE_MEMORY(0x11BD057, uint32_t, 32);  // DivingDive start
         //WRITE_MEMORY(0x124AF01, uint32_t, 32);  // DivingDive end
     }
+
+    if (!Configuration::m_characterMoveset) return;
 
     //-------------------------------------------------------
     // B-Action State handling

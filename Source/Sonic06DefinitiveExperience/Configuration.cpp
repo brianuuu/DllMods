@@ -4,11 +4,12 @@
 Configuration::ModelType Configuration::m_model = Configuration::ModelType::Sonic;
 Configuration::LanguageType Configuration::m_language = Configuration::LanguageType::English;
 
+bool Configuration::m_physics = false;
+bool Configuration::m_characterMoveset = false;
+bool Configuration::m_xButtonAction = false;
+
 Configuration::RunResultType Configuration::m_run = Configuration::RunResultType::Disable;
 vector<string> Configuration::m_runStages = {};
-
-bool Configuration::m_physics = false;
-bool Configuration::m_xButtonAction = true;
 
 bool Configuration::load(const std::string& rootPath)
 {
@@ -20,12 +21,12 @@ bool Configuration::load(const std::string& rootPath)
 
     m_model = (ModelType)reader.GetInteger("Main", "nModel", 0);
     m_language = (LanguageType)reader.GetInteger("Main", "nLanguage", 0);
+
     m_physics = reader.GetBoolean("Main", "bPhysics", false);
-    m_run = (RunResultType)reader.GetInteger("Main", "nRun", 0);
+    m_characterMoveset = reader.GetBoolean("Main", "bCharacterMoveset", false);
+    m_xButtonAction = reader.GetBoolean("Main", "bXAction", false);
 
-    // TODO: Configuration for X button action
-
-    // Get custom stage list
+    // Get running goal custom stage list
     string runStages = reader.Get("Main", "sRunStages", "");
     string delimiter = ",";
     size_t pos = 0;
@@ -37,6 +38,7 @@ bool Configuration::load(const std::string& rootPath)
         runStages.erase(0, pos + delimiter.length());
     }
     m_runStages.push_back(runStages);
+    m_run = (RunResultType)reader.GetInteger("Main", "nRun", 0);
 
     string str;
 
