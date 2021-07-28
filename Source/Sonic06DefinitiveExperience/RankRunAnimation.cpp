@@ -1,5 +1,6 @@
 #include "RankRunAnimation.h"
 #include "Configuration.h"
+#include "AnimationSetPatcher.h"
 
 #define STH2006_RUN_STAGE_COUNT 4
 const char* sth2006RunStageIDs[STH2006_RUN_STAGE_COUNT] = { "ghz200", "sph200", "ssh200", "euc200" };
@@ -48,7 +49,7 @@ HOOK(void, __fastcall, MsgChangeResultState, 0xE692C0, void* This, void* Edx, ui
     {
         if (state == 1)
         {
-            Common::SonicContextChangeAnimation("RunResult");
+            Common::SonicContextChangeAnimation(AnimationSetPatcher::RunResult);
         }
         else if (state == 3)
         {
