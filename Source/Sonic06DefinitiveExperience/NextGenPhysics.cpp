@@ -2,11 +2,12 @@
 #include "Configuration.h"
 #include "StateManager.h"
 #include "Application.h"
+#include "AnimationSetPatcher.h"
 
 float const c_funcMaxTurnRate = 400.0f;
 float const c_funcTurnRateMultiplier = PI_F * 10.0f;
 
-bool NextGenPhysics::m_isFlipStop = false;
+bool NextGenPhysics::m_isBrakeFlip = false;
 
 bool NextGenPhysics::m_isStomping = false;
 bool NextGenPhysics::m_bounced = false;
@@ -14,11 +15,13 @@ float const c_bouncePower = 17.0f;
 float const c_bouncePowerBig = 23.0f;
 
 bool NextGenPhysics::m_isSquatKick = false;
-Eigen::Vector3f NextGenPhysics::m_squatKickDir(0, 0, 1);
+Eigen::Vector3f NextGenPhysics::m_brakeFlipDir(0, 0, 1);
 Eigen::Vector3f NextGenPhysics::m_squatKickVelocity(0, 0, 0);
 float const c_squatKickPressMaxTime = 0.3f;
 
+bool slidingEndWasSliding = false;
 bool NextGenPhysics::m_isSpindash = false;
+bool NextGenPhysics::m_isSliding = false;
 bool NextGenPhysics::m_isSliding2D = false;
 float NextGenPhysics::m_slidingTime = 0.0f;
 float const c_slidingTime = 3.0f;
@@ -45,12 +48,12 @@ HOOK(void, __stdcall, CSonicRotationAdvance, 0xE310A0, void* a1, float* targetDi
 {
     CSonicContext* context = (CSonicContext*)(((uint32_t*)a1)[2]);
 
-    // Flip stop doesn't have a target dir so we need to enforce it
-    if (NextGenPhysics::m_isFlipStop)
+    // Brake flip doesn't have a target dir so we need to enforce it
+    if (NextGenPhysics::m_isBrakeFlip)
     {
-        targetDir[0] = NextGenPhysics::m_squatKickDir.x();
-        targetDir[1] = NextGenPhysics::m_squatKickDir.y();
-        targetDir[2] = NextGenPhysics::m_squatKickDir.z();
+        targetDir[0] = NextGenPhysics::m_brakeFlipDir.x();
+        targetDir[1] = NextGenPhysics::m_brakeFlipDir.y();
+        targetDir[2] = NextGenPhysics::m_brakeFlipDir.z();
     }
 
     if (noLockDirection)
@@ -96,7 +99,7 @@ HOOK(int*, __fastcall, CSonicStateSquatKickBegin, 0x12526D0, void* This)
     Eigen::Quaternionf playerRotation;
     if (Common::GetPlayerTransform(playerPosition, playerRotation))
     {
-        NextGenPhysics::m_squatKickDir = playerRotation * Eigen::Vector3f::UnitZ();
+        NextGenPhysics::m_brakeFlipDir = playerRotation * Eigen::Vector3f::UnitZ();
     }
     Common::GetPlayerVelocity(NextGenPhysics::m_squatKickVelocity);
 
@@ -106,13 +109,12 @@ HOOK(int*, __fastcall, CSonicStateSquatKickBegin, 0x12526D0, void* This)
     return originalCSonicStateSquatKickBegin(This);
 }
 
-// TODO: When transition out from squat kick/sliding, if no stick input, stop and flip Sonic?
 HOOK(void, __fastcall, CSonicStateSquatKickAdvance, 0x1252810, void* This)
 {
     originalCSonicStateSquatKickAdvance(This);
 
     // Lock squat kick's rotation
-    alignas(16) float dir[4] = { NextGenPhysics::m_squatKickDir.x(), NextGenPhysics::m_squatKickDir.y(), NextGenPhysics::m_squatKickDir.z(), 0 };
+    alignas(16) float dir[4] = { NextGenPhysics::m_brakeFlipDir.x(), NextGenPhysics::m_brakeFlipDir.y(), NextGenPhysics::m_brakeFlipDir.z(), 0 };
     originalCSonicRotationAdvance(This, dir, c_funcMaxTurnRate, c_funcTurnRateMultiplier, true, c_funcMaxTurnRate);
 
     if (Configuration::m_model == Configuration::ModelType::Sonic)
@@ -127,6 +129,7 @@ HOOK(void, __fastcall, CSonicStateSquatKickAdvance, 0x1252810, void* This)
             if (Common::GetWorldInputDirection(inputDirection) && inputDirection.isZero())
             {
                 // Stops Sonic completely if no stick input
+                slidingEndWasSliding = NextGenPhysics::m_isSliding;
                 StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
             }
         }
@@ -194,6 +197,8 @@ HOOK(int, __fastcall, CSonicStateSlidingBegin, 0x11D7110, void* This)
         // Sliding sfx and voice
         WRITE_MEMORY(0x11D722C, uint32_t, 2002032);
         WRITE_MEMORY(0x11D72DC, uint32_t, 3002016);
+
+        NextGenPhysics::m_isSliding = true;
     }
 
     NextGenPhysics::m_slidingTime = NextGenPhysics::m_isSpindash ? c_spindashTime : c_slidingTime;
@@ -218,6 +223,7 @@ HOOK(void, __fastcall, CSonicStateSlidingAdvance, 0x11D69A0, void* This)
         else
         {
             // Cancel sliding
+            slidingEndWasSliding = NextGenPhysics::m_isSliding;
             StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
             return;
         }
@@ -231,6 +237,7 @@ HOOK(void, __fastcall, CSonicStateSlidingAdvance, 0x11D69A0, void* This)
     bool result = NextGenPhysics::m_isSliding2D ? Common::GetPlayerTargetVelocity(playerVelocity) : Common::GetPlayerVelocity(playerVelocity);
     if (!result || playerVelocity.norm() <= minSpeed)
     {
+        slidingEndWasSliding = NextGenPhysics::m_isSliding;
         StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
         return;
     }
@@ -257,12 +264,14 @@ HOOK(int, __fastcall, CSonicStateSlidingEndBegin, 0x1230F80, void* This)
         Eigen::Vector3f inputDirection;
         if (Common::GetWorldInputDirection(inputDirection) && inputDirection.isZero())
         {
-            // TODO: change to flip animation
-            NextGenPhysics::m_isFlipStop = true;
+            // Do brake flip animation
+            NextGenPhysics::m_isBrakeFlip = true;
+            WRITE_MEMORY(0x1230F88, char*, AnimationSetPatcher::BrakeFlip);
         }
         else
         {
-
+            // Original SlidingToWalk animation
+            WRITE_MEMORY(0x1230F88, uint32_t, 0x15E6A00);
         }
     }
 
@@ -272,7 +281,7 @@ HOOK(int, __fastcall, CSonicStateSlidingEndBegin, 0x1230F80, void* This)
 HOOK(int*, __fastcall, CSonicStateSlidingEndAdvance, 0x1230EE0, void* This)
 {
     int* result = originalCSonicStateSlidingEndAdvance(This);
-    if (NextGenPhysics::m_isFlipStop)
+    if (NextGenPhysics::m_isBrakeFlip && !slidingEndWasSliding)
     {
         // Only detect B-action during the flip, not normal SlidingEnd
         NextGenPhysics::bActionHandlerImpl();
@@ -282,7 +291,7 @@ HOOK(int*, __fastcall, CSonicStateSlidingEndAdvance, 0x1230EE0, void* This)
 
 HOOK(int*, __fastcall, CSonicStateSlidingEndEnd, 0x1230E60, void* This)
 {
-    NextGenPhysics::m_isFlipStop = false;
+    NextGenPhysics::m_isBrakeFlip = false;
     return originalCSonicStateSlidingEndEnd(This);
 }
 
@@ -408,7 +417,8 @@ void __declspec(naked) CSonicStateSlidingEnd()
         // Original function
         mov     eax, [edi + 534h]
 
-        // Set spindash state
+        // Set spindash/sliding state
+        mov     NextGenPhysics::m_isSliding, 0
         mov     NextGenPhysics::m_isSpindash, 0
         jmp     [CSonicStateSlidingEndReturnAddress]
     }
@@ -778,10 +788,16 @@ bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context)
     if (!Common::GetPlayerTransform(playerPosition, playerRotation)) return false;
     Eigen::Vector3f playerDir = playerRotation * Eigen::Vector3f::UnitZ();
 
+    // Squat kick already have direction saved
+    if (!m_isSquatKick)
+    {
+        NextGenPhysics::m_brakeFlipDir = playerDir;
+    }
+
     Eigen::Vector3f playerVelocity;
     if (!Common::GetPlayerVelocity(playerVelocity)) return false;
 
-    if (m_isFlipStop)
+    if (m_isBrakeFlip)
     {
         playerDir = Eigen::Vector3f::Zero();
     }
