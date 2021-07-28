@@ -96,9 +96,10 @@ void __declspec(naked) asmRank()
     }
 }
 
+FUNCTION_PTR(bool, __cdecl, fpIsPerfectBonus, perfectBonusFunctionAddress);
 HOOK(void, __fastcall, MsgChangeResultState2, 0xE692C0, void* This, void* Edx, uint32_t a2)
 {
-    RankQuote::m_rank = *(uint32_t*)(a2 + 20);
+    RankQuote::m_rank = *(uint32_t*)(a2 + 20) + fpIsPerfectBonus();
     uint32_t const state = *(uint32_t*)(a2 + 16);
     if (state == 3 
     && !RankRunAnimation::checkCanPlayRunAnimation()
