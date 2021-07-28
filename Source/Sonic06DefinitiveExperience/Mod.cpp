@@ -2,6 +2,7 @@
 
 #include "Application.h"
 #include "AnimationSetPatcher.h"
+#include "VoiceOver.h"
 #include "RankQuote.h"
 #include "RankRunAnimation.h"
 #include "SuperSonic.h"
@@ -11,7 +12,6 @@
 #include "ArchiveTreePatcher.h"
 #include "Itembox.h"
 #include "NextGenPhysics.h"
-#include "StateManager.h"
 
 extern "C" void __declspec(dllexport) OnFrame()
 {
@@ -38,6 +38,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     
     // Inject new animations
     AnimationSetPatcher::applyPatches();
+
+    // Handle voice modifications
+    VoiceOver::applyPatches();
 
     // Allow rank comments
     RankQuote::applyPatches();

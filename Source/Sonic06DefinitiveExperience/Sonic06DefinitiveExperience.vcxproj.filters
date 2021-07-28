@@ -18,6 +18,7 @@
     <ClCompile Include="ArchiveTreePatcher.cpp" />
     <ClCompile Include="NextGenPhysics.cpp" />
     <ClCompile Include="AnimationSetPatcher.cpp" />
+    <ClCompile Include="VoiceOver.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pch.h" />
@@ -37,5 +38,6 @@
     <ClInclude Include="StateManager.h" />
     <ClInclude Include="NextGenPhysics.h" />
     <ClInclude Include="AnimationSetPatcher.h" />
+    <ClInclude Include="VoiceOver.h" />
   </ItemGroup>
 </Project>

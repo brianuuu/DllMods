@@ -1,4 +1,5 @@
 #include "Itembox.h"
+#include "VoiceOver.h"
 
 float const c_10ringRadius = 0.57f;
 float const c_1upRadius = 0.70f;
@@ -39,14 +40,14 @@ HOOK(uint32_t*, __fastcall, ReadXmlData, 0xCE5FC0, uint32_t size, char* pData, v
 
 HOOK(void, __fastcall, SuperRingMsgHitEventCollision, 0x11F2F10, void* This, void* Edx, void* a2)
 {
-	Itembox::playItemboxVoice();
+	VoiceOver::playItemboxVoice();
 	originalSuperRingMsgHitEventCollision(This, Edx, a2);
 }
 
 HOOK(void, __fastcall, ClassicItemBoxMsgGetItemType, 0xE6D7D0, void* This, void* Edx, void* a2)
 {
 	// This function also plays for Modern 1up
-	Itembox::playItemboxVoice();
+	VoiceOver::playItemboxVoice();
 	originalClassicItemBoxMsgGetItemType(This, Edx, a2);
 }
 
@@ -84,21 +85,6 @@ void __declspec(naked) objItemPlaySfx()
 	}
 }
 
-// Play rainbow ring voice
-uint32_t objRainbowRingVoiceReturnAddress = 0x115A8F2;
-void __declspec(naked) objRainbowRingVoice()
-{
-	__asm
-	{
-		push	esi
-		call	Itembox::playRainbowRingVoice
-		pop		esi
-
-		mov     eax, [esi + 0B8h]
-		jmp		[objRainbowRingVoiceReturnAddress]
-	}
-}
-
 void Itembox::applyPatches()
 {
 	// Play itembox and voice sfx for 10ring and 1up
@@ -117,29 +103,12 @@ void Itembox::applyPatches()
 	// Inject lock-on object
 	INSTALL_HOOK(ParseSetdata);
 	INSTALL_HOOK(ReadXmlData);
-
-	// I have no good place to put general voice mod yet, include here for now
-	WRITE_JUMP(0x115A8EC, objRainbowRingVoice);
 }
 
 void Itembox::playItemboxSfx()
 {
 	static SharedPtrTypeless soundHandle;
 	Common::SonicContextPlaySound(soundHandle, 4002032, 0);
-}
-
-void Itembox::playItemboxVoice()
-{
-	static SharedPtrTypeless soundHandle;
-	soundHandle.reset();
-	Common::SonicContextPlaySound(soundHandle, 3002021, 0);
-}
-
-void Itembox::playRainbowRingVoice()
-{
-	static SharedPtrTypeless soundHandle;
-	soundHandle.reset();
-	Common::SonicContextPlaySound(soundHandle, 3002022, 0);
 }
 
 tinyxml2::XMLError Itembox::getInjectStr(char const* pData, uint32_t size, std::string& injectStr)

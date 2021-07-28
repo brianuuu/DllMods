@@ -129,7 +129,7 @@ HOOK(int, __fastcall, CSonicStateGrindSquatBegin, 0x1118830, void* This)
         RailPhysics::m_grindAccelTime += c_grindAccelTime;
     }
 
-    // Play sfx
+    // Play grind trick sfx
     static SharedPtrTypeless soundHandle;
     Common::SonicContextPlaySound(soundHandle, 80041020, 1);
 

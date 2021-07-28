@@ -1,6 +1,5 @@
 #include "NextGenPhysics.h"
 #include "Configuration.h"
-#include "StateManager.h"
 #include "Application.h"
 #include "AnimationSetPatcher.h"
 
@@ -103,8 +102,10 @@ HOOK(int*, __fastcall, CSonicStateSquatKickBegin, 0x12526D0, void* This)
     }
     Common::GetPlayerVelocity(NextGenPhysics::m_squatKickVelocity);
 
+    // Play squat kick sfx
     static SharedPtrTypeless soundHandle;
     Common::SonicContextPlaySound(soundHandle, 80041021, 1);
+
     NextGenPhysics::m_isSquatKick = true;
     return originalCSonicStateSquatKickBegin(This);
 }
@@ -148,6 +149,7 @@ HOOK(int*, __fastcall, CSonicStateSquatKickEnd, 0x12527B0, void* This)
 static SharedPtrTypeless spinDashSoundHandle;
 HOOK(int*, __fastcall, CSonicStateSquatBegin, 0x1230A30, void* This)
 {
+    // Play spindash charge sfx
     Common::SonicContextPlaySound(spinDashSoundHandle, 2002042, 1);
     return originalCSonicStateSquatBegin(This);
 }
@@ -168,6 +170,7 @@ HOOK(int*, __fastcall, CSonicStateSquatEnd, 0x12309A0, void* This)
     spinDashSoundHandle.reset();
     if (NextGenPhysics::m_isSpindash)
     {
+        // Play spindash launch sfx
         static SharedPtrTypeless soundHandle;
         Common::SonicContextPlaySound(soundHandle, 80041024, 1);
     }

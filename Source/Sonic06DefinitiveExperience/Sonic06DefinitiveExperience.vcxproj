@@ -202,6 +202,7 @@
     <ClCompile Include="RankRunAnimation.cpp" />
     <ClCompile Include="SuperSonic.cpp" />
     <ClCompile Include="tinyxml2.cpp" />
+    <ClCompile Include="VoiceOver.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimationSetPatcher.h" />
@@ -221,6 +222,7 @@
     <ClInclude Include="StateManager.h" />
     <ClInclude Include="SuperSonic.h" />
     <ClInclude Include="tinyxml2.h" />
+    <ClInclude Include="VoiceOver.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
