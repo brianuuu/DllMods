@@ -564,6 +564,7 @@ void NextGenPhysics::applyPatches()
         else
         {
             // Prevent stopping other voice with low priority
+            WRITE_MEMORY(0x1252740, int, -1);
             WRITE_MEMORY(0x1252732, uint8_t, 0);
         }
 
