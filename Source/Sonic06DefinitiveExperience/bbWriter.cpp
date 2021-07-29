@@ -19,7 +19,7 @@ void bbWriter::applyModel(string& name, Configuration::ModelType type)
 		case Configuration::ModelType::SonicElise: name += "_Elise";
 	}
 }
-
+/*
 void bbWriter::applyLanguage(string& name, Configuration::LanguageType type)
 {
 	switch (type)
@@ -28,7 +28,7 @@ void bbWriter::applyLanguage(string& name, Configuration::LanguageType type)
 	case Configuration::LanguageType::Japanese: name += "_JPN";
 	}
 }
-/*
+
 void bbWriter::applyPhysics(string& name, bool physics, Configuration::ModelType type)
 {
 	// for affecting animation speed
