@@ -51,6 +51,7 @@ bool Configuration::load(const std::string& rootPath)
         bb.addAR("SonicActionCommonHud", 1);
 
         // common
+        bb.addAR("cmn200", 1);
         bb.addAR("ssz202", 1);
         bb.addAR("#SystemCommonItemboxLock", 1);
         bb.addAR("ItemboxLock", 1);
@@ -62,13 +63,6 @@ bool Configuration::load(const std::string& rootPath)
         bb.addReplace("Languages\\German", "Languages\\English");
         bb.addReplace("Languages\\Italian", "Languages\\English");
         bb.addReplace("Languages\\Spanish", "Languages\\English");
-
-        str = "cmn200";
-        bbWriter::applyModel(str, m_model);
-        bbWriter::applyLanguage(str, m_language);
-        bb.addReplace("cmn200.ar.00", str + ".ar.00");
-        bb.addName("cmn200.ar.01");
-        bb.addReplace("cmn200.arl", str + ".arl");
     }
 
     // Write bb3.ini
@@ -207,13 +201,8 @@ bool Configuration::load(const std::string& rootPath)
         // Sonic.ar
         str = "Sonic";
         bbWriter::applyModel(str, m_model);
-        bbWriter::applyLanguage(str, m_language);
         bb3.addReplace("Sonic.arl", str + ".arl");
         bb3.addReplace("Sonic.ar.00", str + ".ar.00");
-
-        str = "Sonic";
-        bbWriter::applyModel(str, m_model);
-        bb3.addReplace("Sonic.ar.01", str + ".ar.01");
     }
 
     // Optional codes
