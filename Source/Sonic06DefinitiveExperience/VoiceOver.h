@@ -12,7 +12,9 @@ public:
 	static void applyPatches();
 
 	// All public voices functions
+	static void playJumpVoice();
 	static void playItemboxVoice();
 	static void playRainbowRingVoice();
+	static void playHomingAttackVoice();
 };
 
