@@ -1,8 +1,9 @@
 #include "ChaosEnergy.h"
+#include "Configuration.h"
 
-static float const c_chaosEnergyRecoveryRate = 0.05f;
+static float const c_chaosEnergyReward = 5.0f;
 
-HOOK(void, __fastcall, ChaosEnergy_GetHudPosition, 0x1096790, void* This, void* Edx, MsgGetHudPosition* message)
+HOOK(void, __fastcall, ChaosEnergy_MsgGetHudPosition, 0x1096790, void* This, void* Edx, MsgGetHudPosition* message)
 {
 	if (message->m_type == 0)
 	{
@@ -16,36 +17,60 @@ HOOK(void, __fastcall, ChaosEnergy_GetHudPosition, 0x1096790, void* This, void* 
 		}
 	}
 
-	originalChaosEnergy_GetHudPosition(This, Edx, message);
+	originalChaosEnergy_MsgGetHudPosition(This, Edx, message);
 }
 
 // Play rainbow ring voice
-uint32_t forceChaosEnergyRateReturnAddress = 0xE60D29;
-void __declspec(naked) forceChaosEnergyRate()
+uint32_t fpAddBoostToSonicContext = 0xE5D990;
+uint32_t addBoostFromChaosEnergyReturnAddress = 0x112459F;
+void __declspec(naked) addBoostFromChaosEnergy()
 {
 	__asm
 	{
+		// Check Sonic context just in case
+		mov		esi, PLAYER_CONTEXT
+		cmp		[esi], 0
+		je		jump
+
+		// Award Sonic 5 boost
+		push	ecx
+		push	edi
+		push	0
+		movss	xmm1, c_chaosEnergyReward
+		mov		esi, [esi]
+		call	[fpAddBoostToSonicContext]
+		pop		edi
+		pop		ecx
+
 		// original function
-		ja		jump
-
-		// override rate
-		movss	xmm1, c_chaosEnergyRecoveryRate
-
 		jump:
-		jmp		[forceChaosEnergyRateReturnAddress]
+		mov		eax, 4002073 // cue ID
+		jmp		[addBoostFromChaosEnergyReturnAddress]
 	}
 }
 
 void ChaosEnergy::applyPatches()
 {
 	// Make Chaos Energy goes to Sonic
-	INSTALL_HOOK(ChaosEnergy_GetHudPosition);
+	INSTALL_HOOK(ChaosEnergy_MsgGetHudPosition);
 
-	// Chaos energy always award 5% boost (20 to max)
-	WRITE_JUMP(0xE60D24, forceChaosEnergyRate);
+	if (!Configuration::m_physics) return;
 
-	// Don't reward chaos energy on object physics
-	WRITE_NOP(0xE18280, 0x7);
+	// Don't boost rewards, handle them ourselves
+	WRITE_JUMP(0xE1827B, (void*)0xE182E0); // MsgDamageSuccess
+	WRITE_MEMORY(0x11A128F, uint8_t, 0x83, 0xC4, 0x04, 0x90, 0x90); // Board trick jump
+
+	// Don't reward boost from enemy spawned chaos energy
+	WRITE_JUMP(0xE60C6C, (void*)0xE60D79);
+
+	// Award 5 boost when chaos energy reach Sonic
+	WRITE_JUMP(0x112459A, addBoostFromChaosEnergy);
+
+	// Spawn chaos energy base on currect trick level
+	WRITE_MEMORY(0x16D1970, uint32_t, 1, 1, 2, 3);
+
+	// Give 3 chaos energy for board trick jump
+	WRITE_MEMORY(0x11A12E4, uint8_t, 3);
 
 	// Change number of chaos energy spawn from enemies
 	// TODO: bigger enemies reward 2 instead of 1
