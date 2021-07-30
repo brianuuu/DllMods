@@ -222,5 +222,13 @@ bool Configuration::load(const std::string& rootPath)
         WRITE_MEMORY(0xDEBC36, uint8_t, 0x00);
     }
 
+    // Patch "Boost Gauge Starts Empty" by "PTKickass"
+    bool noBoost = reader.GetBoolean("Main", "bNoBoost", false);
+    if (noBoost)
+    {
+        WRITE_MEMORY(0xE64F2F, uint32_t, 0x90C9570F);
+        WRITE_NOP(0xE64F33, 4);
+    }
+
     return true;
 }
