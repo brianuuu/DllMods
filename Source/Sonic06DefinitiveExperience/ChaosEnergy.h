@@ -1,12 +1,13 @@
 /*----------------------------------------------------------*/
 //	Author: brianuuuSonic https://github.com/brianuuu
 //	Year: 2021
-//	Description: Make Boost Particles goes to Sonic instead of HUD
+//	Description: Changes how Chaos Enemgy awards boost
 /*----------------------------------------------------------*/
 
 #pragma once
-class ExpToSonic
+class ChaosEnergy
 {
 public:
 	static void applyPatches();
 };
+

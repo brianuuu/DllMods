@@ -7,11 +7,11 @@
 #include "RankRunAnimation.h"
 #include "SuperSonic.h"
 #include "Navigation.h"
-#include "ExpToSonic.h"
 #include "RailPhysics.h"
 #include "ArchiveTreePatcher.h"
 #include "Itembox.h"
 #include "NextGenPhysics.h"
+#include "ChaosEnergy.h"
 
 extern "C" void __declspec(dllexport) OnFrame()
 {
@@ -54,9 +54,6 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     // Disable lightdash hints
     Navigation::applyPatches();
 
-    // Make Chaos Energy goes to Sonic
-    ExpToSonic::applyPatches();
-
     // Allow 1up and 10ring to be locked-on
     ArchiveTreePatcher::applyPatches();
     Itembox::applyPatches();
@@ -66,6 +63,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     // Replicate 06 physics
     NextGenPhysics::applyPatches();
+
+    // Changes how Chaos Enemgy awards boost
+    ChaosEnergy::applyPatches();
 
     // Debug state
     WRITE_JUMP(0xE4FF30, StateManager::ChangeStateHOOK);

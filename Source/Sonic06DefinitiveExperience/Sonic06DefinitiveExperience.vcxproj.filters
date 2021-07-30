@@ -10,7 +10,6 @@
     <ClCompile Include="RankRunAnimation.cpp" />
     <ClCompile Include="SuperSonic.cpp" />
     <ClCompile Include="Navigation.cpp" />
-    <ClCompile Include="ExpToSonic.cpp" />
     <ClCompile Include="tinyxml2.cpp" />
     <ClCompile Include="RailPhysics.cpp" />
     <ClCompile Include="Application.cpp" />
@@ -19,6 +18,7 @@
     <ClCompile Include="NextGenPhysics.cpp" />
     <ClCompile Include="AnimationSetPatcher.cpp" />
     <ClCompile Include="VoiceOver.cpp" />
+    <ClCompile Include="ChaosEnergy.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pch.h" />
@@ -28,7 +28,6 @@
     <ClInclude Include="RankRunAnimation.h" />
     <ClInclude Include="SuperSonic.h" />
     <ClInclude Include="Navigation.h" />
-    <ClInclude Include="ExpToSonic.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="tinyxml2.h" />
     <ClInclude Include="RailPhysics.h" />
@@ -39,5 +38,6 @@
     <ClInclude Include="NextGenPhysics.h" />
     <ClInclude Include="AnimationSetPatcher.h" />
     <ClInclude Include="VoiceOver.h" />
+    <ClInclude Include="ChaosEnergy.h" />
   </ItemGroup>
 </Project>
