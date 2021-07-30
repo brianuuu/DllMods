@@ -15,7 +15,9 @@ float RailPhysics::m_grindAccelTime = 0.0f;
 float const c_grindSpeedInit = 23.0f;
 float const c_grindSpeedBoard = 28.0f;
 float const c_grindSpeedMax = 40.0f;
+float const c_grindSpeedMaxSuper = 60.0f;
 float const c_grindAccel = 15.0f;
+float const c_grindAccelSuper = 30.0f;
 float const c_grindAccelTime = 0.333f;
 
 FUNCTION_PTR(void*, __thiscall, processGameObjectMsgSetPosition, 0xD5CEB0, void* This, void* message);
@@ -89,13 +91,20 @@ HOOK(void, __fastcall, CSonicPostureGrindAdvance, 0x11D81E0, void* This)
     originalCSonicPostureGrindAdvance(This);
 
     Eigen::Vector3f velocity;
-    if (!Common::CheckPlayerSuperForm() && Common::GetPlayerVelocity(velocity))
+    if (Common::GetPlayerVelocity(velocity))
     {
-        // Acclerate after doing grind trick
-        if (RailPhysics::m_grindAccelTime > 0.0f)
+        float dt = Application::getDeltaTime();
+        bool isSuper = Common::CheckPlayerSuperForm();
+
+        if (Common::GetSonicStateFlags()->Boost)
         {
-            float dt = Application::getDeltaTime();
-            RailPhysics::m_grindSpeed += c_grindAccel * min(RailPhysics::m_grindAccelTime, dt);
+            // Always allow accleration when boosting, but slower
+            RailPhysics::m_grindSpeed += (isSuper ? c_grindAccelSuper : c_grindAccel) * dt * 0.3f;
+        }
+        else if (RailPhysics::m_grindAccelTime > 0.0f)
+        {
+            // Acclerate after doing grind trick
+            RailPhysics::m_grindSpeed += (isSuper ? c_grindAccelSuper : c_grindAccel) * min(RailPhysics::m_grindAccelTime, dt);
             RailPhysics::m_grindAccelTime -= dt;
         }
 
@@ -107,7 +116,7 @@ HOOK(void, __fastcall, CSonicPostureGrindAdvance, 0x11D81E0, void* This)
         bool forward = playerDirection.dot(velocity) >= 0.0f;
 
         // Set current velocity
-        RailPhysics::m_grindSpeed = min(RailPhysics::m_grindSpeed, c_grindSpeedMax);
+        RailPhysics::m_grindSpeed = min(RailPhysics::m_grindSpeed, (isSuper ? c_grindSpeedMaxSuper : c_grindSpeedMax));
         velocity = velocity.normalized() * RailPhysics::m_grindSpeed * (forward ? 1.0f : -1.0f);
         Common::SetPlayerVelocity(velocity);
     }
