@@ -54,25 +54,26 @@ void ChaosEnergy::applyPatches()
 	// Make Chaos Energy goes to Sonic
 	INSTALL_HOOK(ChaosEnergy_MsgGetHudPosition);
 
-	if (!Configuration::m_physics) return;
+	if (Configuration::m_physics)
+	{
+		// Don't boost rewards, handle them ourselves
+		WRITE_JUMP(0xE1827B, (void*)0xE182E0); // MsgDamageSuccess
+		WRITE_MEMORY(0x11A128F, uint8_t, 0x83, 0xC4, 0x04, 0x90, 0x90); // Board trick jump
 
-	// Don't boost rewards, handle them ourselves
-	WRITE_JUMP(0xE1827B, (void*)0xE182E0); // MsgDamageSuccess
-	WRITE_MEMORY(0x11A128F, uint8_t, 0x83, 0xC4, 0x04, 0x90, 0x90); // Board trick jump
+		// Don't reward boost from enemy spawned chaos energy
+		WRITE_JUMP(0xE60C6C, (void*)0xE60D79);
 
-	// Don't reward boost from enemy spawned chaos energy
-	WRITE_JUMP(0xE60C6C, (void*)0xE60D79);
+		// Award 5 boost when chaos energy reach Sonic
+		WRITE_JUMP(0x112459A, addBoostFromChaosEnergy);
 
-	// Award 5 boost when chaos energy reach Sonic
-	WRITE_JUMP(0x112459A, addBoostFromChaosEnergy);
+		// Spawn chaos energy base on currect trick level
+		WRITE_MEMORY(0x16D1970, uint32_t, 1, 1, 2, 3);
 
-	// Spawn chaos energy base on currect trick level
-	WRITE_MEMORY(0x16D1970, uint32_t, 1, 1, 2, 3);
+		// Give 3 chaos energy for board trick jump
+		WRITE_MEMORY(0x11A12E4, uint8_t, 3);
 
-	// Give 3 chaos energy for board trick jump
-	WRITE_MEMORY(0x11A12E4, uint8_t, 3);
-
-	// Change number of chaos energy spawn from enemies
-	// TODO: bigger enemies reward 2 instead of 1
-	WRITE_MEMORY(0xBDF7F2, uint32_t, 1);
+		// Change number of chaos energy spawn from enemies
+		// TODO: bigger enemies reward 2 instead of 1
+		WRITE_MEMORY(0xBDF7F2, uint32_t, 1);
+	}
 }
