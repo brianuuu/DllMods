@@ -430,6 +430,9 @@ void NextGenPhysics::applyPatches()
     // Change character movement aniamtion speeds
     applyCharacterAnimationSpeed();
 
+    // Always disable jump ball sfx
+    WRITE_MEMORY(0x11BCC7E, int, -1);
+
     // Always disable stomp voice and sfx for Sonic
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
@@ -527,9 +530,6 @@ void NextGenPhysics::applyPatches()
         WRITE_JUMP(0x1254A36, bounceBraceletASMImpl);
         WRITE_JUMP(0x12549C9, bounceBraceletASMImpl);
 
-        // Disable jump ball sfx
-        WRITE_MEMORY(0x11BCC7E, int, -1);
-
         // Replace stomp land sfx with bounce
         WRITE_MEMORY(0x12548FC, uint32_t, 80041022);
         WRITE_MEMORY(0x12549D8, uint32_t, 80041022);
@@ -542,7 +542,7 @@ void NextGenPhysics::applyPatches()
         WRITE_NOP(0x12549DC, 0x2);
         WRITE_MEMORY(0x12549DE, uint8_t, 0xEB);
 
-        // Change jumpball to hit enemy as if you're boosting
+        // Change jumpball to hit enemy as if you're squat kicking (TypeSonicSquatKick)
         WRITE_MEMORY(0x11BCC43, uint32_t, 0x1E61B90); // jumpball start
         WRITE_MEMORY(0x11BCBB2, uint32_t, 0x1E61B90); // jumpball end
     }
@@ -592,7 +592,7 @@ void NextGenPhysics::applyPatches()
     if (Configuration::m_model == Configuration::ModelType::Sonic
      || Configuration::m_model == Configuration::ModelType::SonicElise)
     {
-        // Change slide to hit enemy as if you're boosting
+        // Change slide to hit enemy as if you're squat kicking (TypeSonicSquatKick)
         WRITE_MEMORY(0x11D72F3, uint32_t, 0x1E61B90);
         WRITE_MEMORY(0x11D7090, uint32_t, 0x1E61B90);
 
@@ -778,8 +778,8 @@ void NextGenPhysics::bounceBraceletImpl()
         velocity[1] -= 5.0f;
     }
     velocity[2] = 0.0f;
-    StateManager::ChangeState(StateAction::Jump, *pModernSonicContext);
     NextGenPhysics::m_bounced = true;
+    StateManager::ChangeState(StateAction::Jump, *pModernSonicContext);
 
     // Set out of control
     FUNCTION_PTR(int, __stdcall, SetOutOfControl, 0xE5AC00, CSonicContext * context, float duration);
