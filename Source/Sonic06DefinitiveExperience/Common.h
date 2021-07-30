@@ -144,7 +144,7 @@ struct CSonicStateFlags
 	bool NoDead;
 	bool Damaging;
 	bool Paralyzing;
-	bool SuperSonic;
+	bool ReactinJumpPathChange;
 	bool ForcePitchRollGround;
 	bool EnableAttenuateJump;
 	bool NoGroundFall;
