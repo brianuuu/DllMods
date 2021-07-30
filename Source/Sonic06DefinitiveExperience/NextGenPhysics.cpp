@@ -93,7 +93,7 @@ HOOK(int*, __fastcall, CSonicStateSquatKickBegin, 0x12526D0, void* This)
     // Don't allow direction change for squat kick
     WRITE_MEMORY(0x11D944A, uint8_t, 0);
 
-    // Get current speed so we can keep it
+    // Get initial brake flip direction
     Eigen::Vector3f playerPosition;
     Eigen::Quaternionf playerRotation;
     if (Common::GetPlayerTransform(playerPosition, playerRotation))
@@ -101,6 +101,7 @@ HOOK(int*, __fastcall, CSonicStateSquatKickBegin, 0x12526D0, void* This)
         NextGenPhysics::m_brakeFlipDir = playerRotation * Eigen::Vector3f::UnitZ();
     }
 
+    // Get current speed so we can keep it
     Eigen::Vector3f playerVelocity;
     if (Common::GetPlayerVelocity(playerVelocity))
     {
