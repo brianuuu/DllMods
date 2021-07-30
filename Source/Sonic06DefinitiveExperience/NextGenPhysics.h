@@ -16,7 +16,7 @@ public:
 	static bool m_bounced;
 	static bool m_isSquatKick;
 	static Eigen::Vector3f m_brakeFlipDir;
-	static Eigen::Vector3f m_squatKickVelocity;
+	static float m_squatKickSpeed;
 	static void bounceBraceletImpl();
 
 	static bool m_isSpindash;

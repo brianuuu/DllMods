@@ -15,7 +15,7 @@ float const c_bouncePowerBig = 23.0f;
 
 bool NextGenPhysics::m_isSquatKick = false;
 Eigen::Vector3f NextGenPhysics::m_brakeFlipDir(0, 0, 1);
-Eigen::Vector3f NextGenPhysics::m_squatKickVelocity(0, 0, 0);
+float NextGenPhysics::m_squatKickSpeed = 0.0f;
 float const c_squatKickPressMaxTime = 0.3f;
 
 bool slidingEndWasSliding = false;
@@ -100,7 +100,12 @@ HOOK(int*, __fastcall, CSonicStateSquatKickBegin, 0x12526D0, void* This)
     {
         NextGenPhysics::m_brakeFlipDir = playerRotation * Eigen::Vector3f::UnitZ();
     }
-    Common::GetPlayerVelocity(NextGenPhysics::m_squatKickVelocity);
+
+    Eigen::Vector3f playerVelocity;
+    if (Common::GetPlayerVelocity(playerVelocity))
+    {
+        NextGenPhysics::m_squatKickSpeed = playerVelocity.norm();
+    }
 
     // Play squat kick sfx
     static SharedPtrTypeless soundHandle;
@@ -114,9 +119,12 @@ HOOK(void, __fastcall, CSonicStateSquatKickAdvance, 0x1252810, void* This)
 {
     originalCSonicStateSquatKickAdvance(This);
 
-    // Lock squat kick's rotation
-    alignas(16) float dir[4] = { NextGenPhysics::m_brakeFlipDir.x(), NextGenPhysics::m_brakeFlipDir.y(), NextGenPhysics::m_brakeFlipDir.z(), 0 };
-    originalCSonicRotationAdvance(This, dir, c_funcMaxTurnRate, c_funcTurnRateMultiplier, true, c_funcMaxTurnRate);
+    // Lock squat kick's rotation if not moving
+    if (NextGenPhysics::m_squatKickSpeed == 0.0f)
+    {
+        alignas(16) float dir[4] = { NextGenPhysics::m_brakeFlipDir.x(), NextGenPhysics::m_brakeFlipDir.y(), NextGenPhysics::m_brakeFlipDir.z(), 0 };
+        originalCSonicRotationAdvance(This, dir, c_funcMaxTurnRate, c_funcTurnRateMultiplier, true, c_funcMaxTurnRate);
+    }
 
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
@@ -829,8 +837,8 @@ bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context)
     if (!Common::GetPlayerTransform(playerPosition, playerRotation)) return false;
     Eigen::Vector3f playerDir = playerRotation * Eigen::Vector3f::UnitZ();
 
-    // Squat kick already have direction saved
-    if (!m_isSquatKick)
+    // If not moving, squat kick already have direction saved
+    if (!(m_isSquatKick && m_squatKickSpeed == 0.0f))
     {
         NextGenPhysics::m_brakeFlipDir = playerDir;
     }
@@ -846,7 +854,7 @@ bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context)
     else if (m_isSquatKick)
     {
         // Keep velocity with squat kick
-        playerDir = m_squatKickVelocity;
+        playerDir *= m_squatKickSpeed;
     }
     else if (m_isSpindash)
     {
