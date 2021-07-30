@@ -13,9 +13,10 @@ float const c_lockOnRange = 8.0f;
 float RailPhysics::m_grindSpeed = 0.0f;
 float RailPhysics::m_grindAccelTime = 0.0f;
 float const c_grindSpeedInit = 23.0f;
+float const c_grindSpeedInitSuper = 40.0f;
 float const c_grindSpeedBoard = 28.0f;
 float const c_grindSpeedMax = 40.0f;
-float const c_grindSpeedMaxSuper = 60.0f;
+float const c_grindSpeedMaxSuper = 70.0f;
 float const c_grindAccel = 15.0f;
 float const c_grindAccelSuper = 30.0f;
 float const c_grindAccelTime = 0.333f;
@@ -81,7 +82,7 @@ HOOK(uint32_t*, __cdecl, CEventCollisionConstructor, 0x11836F0, int a1, int a2, 
 
 HOOK(int, __fastcall, CSonicPostureGrindBegin, 0x11D8060, void* This)
 {
-    RailPhysics::m_grindSpeed = c_grindSpeedInit;
+    RailPhysics::m_grindSpeed = Common::CheckPlayerSuperForm() ? c_grindSpeedInitSuper : c_grindSpeedInit;
     RailPhysics::m_grindAccelTime = 0.0f;
     return originalCSonicPostureGrindBegin(This);
 }
@@ -99,7 +100,7 @@ HOOK(void, __fastcall, CSonicPostureGrindAdvance, 0x11D81E0, void* This)
         if (Common::GetSonicStateFlags()->Boost)
         {
             // Always allow accleration when boosting, but slower
-            RailPhysics::m_grindSpeed += (isSuper ? c_grindAccelSuper : c_grindAccel) * dt * 0.3f;
+            RailPhysics::m_grindSpeed += (isSuper ? c_grindAccelSuper : (c_grindAccel * 0.3f)) * dt;
         }
         else if (RailPhysics::m_grindAccelTime > 0.0f)
         {
