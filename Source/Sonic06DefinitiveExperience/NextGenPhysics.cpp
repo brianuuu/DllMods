@@ -88,6 +88,21 @@ HOOK(int, __fastcall, CSonicStateHomingAttackBegin, 0x1232040, void* This)
     return originalCSonicStateHomingAttackBegin(This);
 }
 
+HOOK(char*, __fastcall, CSonicStateJumpBallBegin, 0x11BCBE0, void* This)
+{
+    if (!NextGenPhysics::m_bounced)
+    {
+        // Disable jumpball collision
+        WRITE_MEMORY(0x11BCC4B, uint8_t, 0x71);
+    }
+    else
+    {
+        WRITE_MEMORY(0x11BCC4B, uint8_t, 0xC1);
+    }
+
+    return originalCSonicStateJumpBallBegin(This);
+}
+
 HOOK(int*, __fastcall, CSonicStateSquatKickBegin, 0x12526D0, void* This)
 {
     // Don't allow direction change for squat kick
@@ -466,6 +481,10 @@ void NextGenPhysics::applyPatches()
 
         // No out of control for air dash
         WRITE_JUMP(0x123243C, noAirDashOutOfControl);
+
+        // Disable jumpball collision
+        INSTALL_HOOK(CSonicStateJumpBallBegin);
+        WRITE_MEMORY(0x1118FFA, uint8_t, 0xC2, 0xC5); // Fall state
     }
 
     // Change all actions to X button, change boost to R2
@@ -552,8 +571,8 @@ void NextGenPhysics::applyPatches()
         WRITE_MEMORY(0x12549DE, uint8_t, 0xEB);
 
         // Change jumpball to hit enemy as if you're squat kicking (TypeSonicSquatKick)
-        WRITE_MEMORY(0x11BCC43, uint32_t, 0x1E61B90); // jumpball start
-        WRITE_MEMORY(0x11BCBB2, uint32_t, 0x1E61B90); // jumpball end
+        WRITE_MEMORY(0x11BCC43, uint32_t, SonicCollision::TypeSonicSquatKick); // jumpball start
+        WRITE_MEMORY(0x11BCBB2, uint32_t, SonicCollision::TypeSonicSquatKick); // jumpball end
     }
 
     //-------------------------------------------------------
@@ -602,8 +621,8 @@ void NextGenPhysics::applyPatches()
      || Configuration::m_model == Configuration::ModelType::SonicElise)
     {
         // Change slide to hit enemy as if you're squat kicking (TypeSonicSquatKick)
-        WRITE_MEMORY(0x11D72F3, uint32_t, 0x1E61B90);
-        WRITE_MEMORY(0x11D7090, uint32_t, 0x1E61B90);
+        WRITE_MEMORY(0x11D72F3, uint32_t, SonicCollision::TypeSonicSquatKick);
+        WRITE_MEMORY(0x11D7090, uint32_t, SonicCollision::TypeSonicSquatKick);
 
         // Disable all Sliding transition out, handle them outselves
         WRITE_MEMORY(0x11D6B7D, uint8_t, 0xEB);
@@ -860,12 +879,20 @@ bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context)
     else if (m_isSpindash)
     {
         playerDir *= c_spindashSpeed;
-        if (superForm) playerDir *= 2.0f;
+
+        // Double speed for super and normal physics
+        if (superForm || !Configuration::m_physics)
+        {
+            playerDir *= 2.0f;
+        }
     }
     else
     {
-        // Use default sliding behavior for super
-        if (superForm) return false;
+        // Use default sliding behavior for super and normal physics
+        if (superForm || !Configuration::m_physics)
+        {
+            return false;
+        }
 
         float hSpeed = playerVelocity.norm();
         hSpeed = max(hSpeed, c_slidingSpeedMin);

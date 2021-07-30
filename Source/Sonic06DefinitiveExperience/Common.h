@@ -12,6 +12,29 @@ CSonicContext** const pSuperSonicContext = (CSonicContext**)0x1E5E310;
 uint32_t const CStringConstructor = 0x6621A0;
 uint32_t const CStringDestructor = 0x661550;
 
+enum SonicCollision : uint32_t
+{
+	TypeNoAttack			= 0x1E61B5C,
+	TypeRagdoll				= 0x1E61B60,
+	TypeSonicSpinCharge		= 0x1E61B64,
+	TypeSonicSpin			= 0x1E61B68,
+	TypeSonicUnbeaten		= 0x1E61B6C,
+	TypeSuperSonic			= 0x1E61B70,
+	TypeSonicSliding		= 0x1E61B74,
+	TypeSonicHoming			= 0x1E61B78,
+	TypeSonicSelectJump		= 0x1E61B7C,
+	TypeSonicDrift			= 0x1E61B80,
+	TypeSonicBoost			= 0x1E61B84,
+	TypeSonicStomping		= 0x1E61B88,
+	TypeSonicTrickAttack	= 0x1E61B8C,
+	TypeSonicSquatKick		= 0x1E61B90,
+	TypeSonicClassicSpin	= 0x1E61B94,
+	TypeExplosion			= 0x1E61B98,
+	TypeBossAttack			= 0x1E61B9C,
+	TypeGunTruckAttack		= 0x1E61BA0,
+	TypeRagdollEnemyAttack	= 0x1E61BA4,
+};
+
 struct MsgGetHudPosition
 {
     INSERT_PADDING(0x10);
