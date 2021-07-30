@@ -273,14 +273,7 @@ inline CSonicStateFlags* GetSonicStateFlags()
 
 inline bool CheckPlayerSuperForm()
 {
-    void* pSonicContext = *PLAYER_CONTEXT;
-    if (pSonicContext)
-    {
-        uint32_t superSonicAddress = (uint32_t)(pSonicContext)+0x1A0;
-        return (*(void**)superSonicAddress ? true : false);
-    }
-
-    return false;
+    return GetSonicStateFlags()->InvokeSuperSonic;
 }
 
 inline bool CheckCurrentStage(char const* stageID)
