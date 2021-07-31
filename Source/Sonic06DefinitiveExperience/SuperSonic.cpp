@@ -6,7 +6,7 @@ uint32_t isSuperSonic = 0;
 void checkIsSuperSonic()
 {
     // Modern Sonic in super form
-    isSuperSonic = *pModernSonicContext && Common::CheckPlayerSuperForm();
+    isSuperSonic = *pModernSonicContext && Common::IsPlayerSuper();
 }
 
 uint32_t const SuperSonicSpeedASMReturnAddress = 0xDFE118;

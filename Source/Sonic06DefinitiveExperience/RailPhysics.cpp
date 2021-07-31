@@ -20,6 +20,8 @@ float const c_grindSpeedMaxSuper = 70.0f;
 float const c_grindAccel = 15.0f;
 float const c_grindAccelSuper = 30.0f;
 float const c_grindAccelTime = 0.333f;
+float const c_grindJumpPower = 18.0f;
+float const c_grindJumpSpeedMax = 15.0f;
 
 FUNCTION_PTR(void*, __thiscall, processGameObjectMsgSetPosition, 0xD5CEB0, void* This, void* message);
 FUNCTION_PTR(void*, __thiscall, processGameObjectMsgSetRotation, 0xD5CE70, void* This, void* message);
@@ -82,7 +84,7 @@ HOOK(uint32_t*, __cdecl, CEventCollisionConstructor, 0x11836F0, int a1, int a2, 
 
 HOOK(int, __fastcall, CSonicPostureGrindBegin, 0x11D8060, void* This)
 {
-    RailPhysics::m_grindSpeed = Common::CheckPlayerSuperForm() ? c_grindSpeedInitSuper : c_grindSpeedInit;
+    RailPhysics::m_grindSpeed = Common::IsPlayerOnBoard() ? c_grindSpeedBoard : (Common::IsPlayerSuper() ? c_grindSpeedInitSuper : c_grindSpeedInit);
     RailPhysics::m_grindAccelTime = 0.0f;
     return originalCSonicPostureGrindBegin(This);
 }
@@ -95,7 +97,7 @@ HOOK(void, __fastcall, CSonicPostureGrindAdvance, 0x11D81E0, void* This)
     if (Common::GetPlayerVelocity(velocity))
     {
         float dt = Application::getDeltaTime();
-        bool isSuper = Common::CheckPlayerSuperForm();
+        bool isSuper = Common::IsPlayerSuper();
 
         if (Common::GetSonicStateFlags()->Boost)
         {
@@ -123,14 +125,6 @@ HOOK(void, __fastcall, CSonicPostureGrindAdvance, 0x11D81E0, void* This)
     }
 }
 
-HOOK(int, __fastcall, CSonicPostureBoardGrindBegin, 0x111D4F0, void* This)
-{
-    // This is called after CSonicPostureGrindBegin
-    RailPhysics::m_grindSpeed = c_grindSpeedBoard;
-    RailPhysics::m_grindAccelTime = 0.0f;
-    return originalCSonicPostureBoardGrindBegin(This);
-}
-
 HOOK(int, __fastcall, CSonicStateGrindSquatBegin, 0x1118830, void* This)
 {
     // Gain speed
@@ -144,6 +138,33 @@ HOOK(int, __fastcall, CSonicStateGrindSquatBegin, 0x1118830, void* This)
     Common::SonicContextPlaySound(soundHandle, 80041020, 1);
 
     return originalCSonicStateGrindSquatBegin(This);
+}
+
+HOOK(bool, __fastcall, CSonicStateGrindJumpShortBegin, 0x124A8C0, void* This)
+{
+    bool result = originalCSonicStateGrindJumpShortBegin(This);
+
+    if (!Common::IsPlayerOnBoard())
+    {
+        float* targetVel = (float*)((uint32_t)*PLAYER_CONTEXT + 0x2A0);
+        Eigen::Vector3f vel(targetVel[0], 0, targetVel[2]);
+        if (vel.squaredNorm() > c_grindJumpSpeedMax * c_grindJumpSpeedMax)
+        {
+            // Cap horizontal speed
+            vel = vel.normalized() * c_grindJumpSpeedMax;
+        }
+
+        vel.y() = c_grindJumpPower;
+        if (targetVel[1] > 0.0f)
+        {
+            // Only add vertical speed if going up, otherwise use fixed jump power
+            vel.y() += targetVel[1];
+        }
+
+        Common::SetPlayerVelocity(vel);
+    }
+
+    return result;
 }
 
 uint32_t getHomingTargetObjReturnAddress = 0xE91412;
@@ -304,7 +325,9 @@ void RailPhysics::applyPatches()
         // Force constant velocity on rails
         INSTALL_HOOK(CSonicPostureGrindBegin);
         INSTALL_HOOK(CSonicPostureGrindAdvance);
-        INSTALL_HOOK(CSonicPostureBoardGrindBegin);
+
+        // Normalize grind jump speed
+        INSTALL_HOOK(CSonicStateGrindJumpShortBegin);
 
         // Patch "Disable Rail Boosters" by "Hyper"
         WRITE_MEMORY(0x166F238, uint8_t, 0x00);

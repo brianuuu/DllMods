@@ -102,7 +102,7 @@ HOOK(void, __fastcall, MsgChangeResultState2, 0xE692C0, void* This, void* Edx, u
     uint32_t const state = *(uint32_t*)(a2 + 16);
     if (state == 3 
     && !RankRunAnimation::checkCanPlayRunAnimation()
-    && !Common::CheckPlayerSuperForm())
+    && !Common::IsPlayerSuper())
     {
         // Play character stage complete voice
         static SharedPtrTypeless soundHandle;

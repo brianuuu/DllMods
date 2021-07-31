@@ -294,19 +294,26 @@ inline CSonicStateFlags* GetSonicStateFlags()
 	return reinterpret_cast<CSonicStateFlags*>(*reinterpret_cast<int*>(context[0x14D] + 4));
 }
 
-inline bool CheckPlayerSuperForm()
+inline bool IsPlayerSuper()
 {
     return GetSonicStateFlags()->InvokeSuperSonic;
 }
 
+inline bool IsPlayerOnBoard()
+{
+	return GetSonicStateFlags()->InvokeSkateBoard;
+}
+
 inline bool IsPlayerIn2D()
 {
+	// sub_E145A0 MsgIs2DMode
 	if (!*PLAYER_CONTEXT) return false;
 	return *(bool*)((uint32_t)*PLAYER_CONTEXT + 0x172);
 }
 
-inline bool IsPlayerInGrinding()
+inline bool IsPlayerGrinding()
 {
+	// sub_E144E0 MsgIsGrind
 	if (!*PLAYER_CONTEXT) return false;
 	return *(bool*)((uint32_t)*PLAYER_CONTEXT + 0x11F0);
 }

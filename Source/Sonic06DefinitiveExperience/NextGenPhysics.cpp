@@ -10,7 +10,7 @@ bool NextGenPhysics::m_isBrakeFlip = false;
 
 bool NextGenPhysics::m_isStomping = false;
 bool NextGenPhysics::m_bounced = false;
-float const c_bouncePower = 17.0f;
+float const c_bouncePower = 18.0f;
 float const c_bouncePowerBig = 23.0f;
 
 bool NextGenPhysics::m_isSquatKick = false;
@@ -44,7 +44,7 @@ HOOK(void, __cdecl, SetStickMagnitude, 0x9C69D0, int16_t* argX, int16_t* argY, i
 
 HOOK(void, __stdcall, CSonicRotationAdvance, 0xE310A0, void* a1, float* targetDir, float turnRate1, float turnRateMultiplier, bool noLockDirection, float turnRate2)
 {
-    if (noLockDirection)
+    if (noLockDirection && !Common::IsPlayerOnBoard())
     {
         // If direction is not locked, pump up turn rate
         originalCSonicRotationAdvance(a1, targetDir, c_funcMaxTurnRate, c_funcTurnRateMultiplier, noLockDirection, c_funcMaxTurnRate);
@@ -878,7 +878,7 @@ bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context)
     }
 
     NextGenPhysics::m_brakeFlipDir = playerDir;
-    bool superForm = Common::CheckPlayerSuperForm();
+    bool superForm = Common::IsPlayerSuper();
     if (m_isSquatKick)
     {
         // Keep velocity with squat kick
