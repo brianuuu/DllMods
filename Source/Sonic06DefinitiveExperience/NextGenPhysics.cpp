@@ -441,6 +441,30 @@ void __declspec(naked) CSonicStateSlidingEnd()
     }
 }
 
+uint32_t lockJumpStandAnimationReturnAddress = 0x11DE349;
+uint32_t lockJumpStandAnimationSuccessAddress = 0x11DE34E;
+void __declspec(naked) lockJumpStandAnimation()
+{
+    __asm
+    {
+        push    esi
+        push    edi
+        call    NextGenPhysics::lockJumpStandAnimationImpl
+        pop     edi
+        pop     esi
+        test    al, al
+        jnz     jump
+
+        // Original function
+        push    [0x15F5030] // Fall
+        jmp     [lockJumpStandAnimationReturnAddress]
+
+        // Lock animation
+        jump:
+        jmp     [lockJumpStandAnimationSuccessAddress]
+    }
+}
+
 void NextGenPhysics::applyPatches()
 {
     // TODO: No trick rainbow ring but keep the animation?
@@ -460,7 +484,7 @@ void NextGenPhysics::applyPatches()
     // Never transition to Fall after jumpboard, must use long jumpboard animation
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
-        WRITE_MEMORY(0x11DE31E, uint8_t, 0xEB);
+        WRITE_JUMP(0x11DE344, lockJumpStandAnimation);
     }
 
     // 06 physics general code
@@ -663,6 +687,19 @@ void NextGenPhysics::applyPatches()
         INSTALL_HOOK(CSonicStateSquatAdvance);
         INSTALL_HOOK(CSonicStateSquatEnd);
     }
+}
+
+bool NextGenPhysics::lockJumpStandAnimationImpl()
+{
+    static MsgGetAnimationInfo message;
+    Common::SonicContextGetAnimationInfo(message);
+    //printf("%s, %.3f\n", message.m_name, message.m_frame);
+
+    // Don't transition to fall if animation is: JumpBoard/JumpBoardRev/JumpBoardSpecialL/JumpBoardSpecialR
+    return message.IsAnimation("JumpBoard") ||
+           message.IsAnimation("JumpBoardRev") ||
+           message.IsAnimation("JumpBoardSpecialL") ||
+           message.IsAnimation("JumpBoardSpecialR");
 }
 
 void NextGenPhysics::applyCharacterAnimationSpeed()

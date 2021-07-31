@@ -57,6 +57,18 @@ struct MsgSetRotation
     Eigen::Quaternionf m_rotation;
 };
 
+struct MsgGetAnimationInfo
+{
+	INSERT_PADDING(0x14);
+	char* m_name;
+	float m_frame;
+
+	bool IsAnimation(char const* anim)
+	{
+		return strstr(m_name, anim);
+	}
+};
+
 enum ImpulseType : uint32_t
 {
 	None,
@@ -458,6 +470,18 @@ inline void SonicContextPlayVoice(SharedPtrTypeless& soundHandle, uint32_t cueID
 	// Original code by Skyth: https://github.com/blueskythlikesclouds
 	CSonicSpeedContextPlaySound* playSoundFunc = *(CSonicSpeedContextPlaySound**)(*(uint32_t*)pSonicContext + 0xA0);
 	playSoundFunc(pSonicContext, nullptr, soundHandle, cueID, priority);
+}
+
+inline void SonicContextGetAnimationInfo(MsgGetAnimationInfo& message)
+{
+	// Note: This doesn't work at result screen, use PlaySoundStatic instead
+	void* pSonicContext = *PLAYER_CONTEXT;
+	if (!pSonicContext) return;
+
+	// Original code by Skyth: https://github.com/blueskythlikesclouds
+	FUNCTION_PTR(void, __thiscall, CSonicSpeedProcMsgGetAnimationInfo, 0xE6A370, void* This, void* pMessage);
+	void* player = *(void**)((uint32_t)*PLAYER_CONTEXT + 0x110);
+	CSonicSpeedProcMsgGetAnimationInfo(player, &message);
 }
 
 inline void PlaySoundStatic(SharedPtrTypeless& soundHandle, uint32_t cueID)
