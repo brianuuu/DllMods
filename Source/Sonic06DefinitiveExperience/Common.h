@@ -299,6 +299,18 @@ inline bool CheckPlayerSuperForm()
     return GetSonicStateFlags()->InvokeSuperSonic;
 }
 
+inline bool IsPlayerIn2D()
+{
+	if (!*PLAYER_CONTEXT) return false;
+	return *(bool*)((uint32_t)*PLAYER_CONTEXT + 0x172);
+}
+
+inline bool IsPlayerInGrinding()
+{
+	if (!*PLAYER_CONTEXT) return false;
+	return *(bool*)((uint32_t)*PLAYER_CONTEXT + 0x11F0);
+}
+
 inline bool CheckCurrentStage(char const* stageID)
 {
     char const* currentStageID = (char*)0x01E774D4;

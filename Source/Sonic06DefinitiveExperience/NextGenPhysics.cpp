@@ -21,7 +21,6 @@ float const c_squatKickPressMaxTime = 0.3f;
 bool slidingEndWasSliding = false;
 bool NextGenPhysics::m_isSpindash = false;
 bool NextGenPhysics::m_isSliding = false;
-bool NextGenPhysics::m_isSliding2D = false;
 float NextGenPhysics::m_slidingTime = 0.0f;
 float const c_slidingTime = 3.0f;
 float const c_slidingSpeedMin = 10.0f;
@@ -46,15 +45,6 @@ HOOK(void, __cdecl, SetStickMagnitude, 0x9C69D0, int16_t* argX, int16_t* argY, i
 HOOK(void, __stdcall, CSonicRotationAdvance, 0xE310A0, void* a1, float* targetDir, float turnRate1, float turnRateMultiplier, bool noLockDirection, float turnRate2)
 {
     CSonicContext* context = (CSonicContext*)(((uint32_t*)a1)[2]);
-
-    // Brake flip doesn't have a target dir so we need to enforce it
-    if (NextGenPhysics::m_isBrakeFlip)
-    {
-        targetDir[0] = NextGenPhysics::m_brakeFlipDir.x();
-        targetDir[1] = NextGenPhysics::m_brakeFlipDir.y();
-        targetDir[2] = NextGenPhysics::m_brakeFlipDir.z();
-    }
-
     if (noLockDirection)
     {
         // If direction is not locked, pump up turn rate
@@ -120,6 +110,7 @@ HOOK(int*, __fastcall, CSonicStateSquatKickBegin, 0x12526D0, void* This)
     Eigen::Vector3f playerVelocity;
     if (Common::GetPlayerVelocity(playerVelocity))
     {
+        playerVelocity.y() = 0.0f;
         NextGenPhysics::m_squatKickSpeed = playerVelocity.norm();
     }
 
@@ -258,10 +249,10 @@ HOOK(void, __fastcall, CSonicStateSlidingAdvance, 0x11D69A0, void* This)
     
     // For 2D slide/spindash, there's one frame delay before Sonic can goto max speed, lower the minSpeed
     float minSpeed = (NextGenPhysics::m_isSpindash ? c_spindashSpeed : c_slidingSpeedMin) - 5.0f;
-    minSpeed = NextGenPhysics::m_isSliding2D ? 2.0f : minSpeed;
+    minSpeed = Common::IsPlayerIn2D() ? 2.0f : minSpeed;
 
     Eigen::Vector3f playerVelocity;
-    bool result = NextGenPhysics::m_isSliding2D ? Common::GetPlayerTargetVelocity(playerVelocity) : Common::GetPlayerVelocity(playerVelocity);
+    bool result = Common::IsPlayerIn2D() ? Common::GetPlayerTargetVelocity(playerVelocity) : Common::GetPlayerVelocity(playerVelocity);
     if (!result || playerVelocity.norm() <= minSpeed)
     {
         slidingEndWasSliding = NextGenPhysics::m_isSliding;
@@ -312,6 +303,10 @@ HOOK(int*, __fastcall, CSonicStateSlidingEndAdvance, 0x1230EE0, void* This)
     {
         // Only detect B-action during the flip, not normal SlidingEnd
         NextGenPhysics::bActionHandlerImpl();
+
+        // Enforce brake flip rotation
+        alignas(16) float dir[4] = { NextGenPhysics::m_brakeFlipDir.x(), NextGenPhysics::m_brakeFlipDir.y(), NextGenPhysics::m_brakeFlipDir.z(), 0 };
+        originalCSonicRotationAdvance(This, dir, c_funcMaxTurnRate, c_funcTurnRateMultiplier, true, c_funcMaxTurnRate);
     }
     return result;
 }
@@ -384,7 +379,6 @@ void __declspec(naked) slidingHorizontalTargetVel2D()
     {
         // Get overrided target velocity
         mov     ecx, esi
-        mov     NextGenPhysics::m_isSliding2D, 1
         call    NextGenPhysics::applySlidingHorizontalTargetVel
         pop     edi
         pop     esi
@@ -401,7 +395,6 @@ void __declspec(naked) slidingHorizontalTargetVel3D()
     {
         // Get overrided target velocity
         mov     ecx, ebx
-        mov     NextGenPhysics::m_isSliding2D, 0
         call    NextGenPhysics::applySlidingHorizontalTargetVel
         test    al, al
         jnz     jump
@@ -857,21 +850,33 @@ bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context)
     if (!Common::GetPlayerTransform(playerPosition, playerRotation)) return false;
     Eigen::Vector3f playerDir = playerRotation * Eigen::Vector3f::UnitZ();
 
-    // If not moving, squat kick already have direction saved
-    if (!(m_isSquatKick && m_squatKickSpeed == 0.0f))
-    {
-        NextGenPhysics::m_brakeFlipDir = playerDir;
-    }
-
     Eigen::Vector3f playerVelocity;
-    if (!Common::GetPlayerVelocity(playerVelocity)) return false;
-
-    bool superForm = Common::CheckPlayerSuperForm();
-    if (m_isBrakeFlip)
+    if (Common::IsPlayerIn2D())
     {
-        playerDir = Eigen::Vector3f::Zero();
+        Common::GetPlayerTargetVelocity(playerVelocity);
     }
-    else if (m_isSquatKick)
+    else
+    {
+        Common::GetPlayerVelocity(playerVelocity);
+    }
+
+    // If not moving, don't update brake flip direction
+    if (m_isBrakeFlip || (m_isSquatKick && m_squatKickSpeed == 0.0f))
+    {
+        // Stop Sonic immediately
+        float* horizontalVel = (float*)((uint32_t)context + 0x290);
+        float* horizontalTargetVel = (float*)((uint32_t)context + 0x2A0);
+        horizontalVel[0] = 0;
+        horizontalVel[2] = 0;
+        horizontalTargetVel[0] = 0;
+        horizontalTargetVel[2] = 0;
+
+        return true;
+    }
+
+    NextGenPhysics::m_brakeFlipDir = playerDir;
+    bool superForm = Common::CheckPlayerSuperForm();
+    if (m_isSquatKick)
     {
         // Keep velocity with squat kick
         playerDir *= m_squatKickSpeed;
@@ -883,7 +888,7 @@ bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context)
         // Double speed for super and normal physics
         if (superForm || !Configuration::m_physics)
         {
-            playerDir *= 2.0f;
+            playerDir *= Common::IsPlayerIn2D() ? 1.5f : 2.0f;
         }
     }
     else
@@ -902,9 +907,9 @@ bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context)
 
     // For 2D we have to override the actual velocity (+0x290)
     // For 3D we have to override target velocity (+0x2A0)
-    float* horizontalVel = (float*)((uint32_t)context + (NextGenPhysics::m_isSliding2D ? 0x290 : 0x2A0));
+    float* horizontalVel = (float*)((uint32_t)context + (Common::IsPlayerIn2D() ? 0x290 : 0x2A0));
     horizontalVel[0] = playerDir.x();
-    if (NextGenPhysics::m_isSliding2D)
+    if (Common::IsPlayerIn2D())
     {
         horizontalVel[1] = playerDir.y();
     }
