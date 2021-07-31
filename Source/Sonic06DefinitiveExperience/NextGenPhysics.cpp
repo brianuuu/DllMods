@@ -465,6 +465,16 @@ void __declspec(naked) lockJumpStandAnimation()
     }
 }
 
+uint32_t loseAllRingsReturnAddress = 0xE6621E;
+void __declspec(naked) loseAllRings()
+{
+    __asm
+    {
+        mov     dword ptr [edi + 5B8h], 0
+        jmp     [loseAllRingsReturnAddress]
+    }
+}
+
 void NextGenPhysics::applyPatches()
 {
     // TODO: No trick rainbow ring but keep the animation?
@@ -506,6 +516,9 @@ void NextGenPhysics::applyPatches()
         // Override HOMING_ATTACK_TARGET_SENSITIVE to 0
         static float const HOMING_ATTACK_TARGET_SENSITIVE = 0.0f;
         WRITE_MEMORY(0x10EEB92, float*, &HOMING_ATTACK_TARGET_SENSITIVE);
+
+        // Set rings to 0 when getting damaged
+        WRITE_JUMP(0xE66218, loseAllRings);
     }
 
     // Change all actions to X button, change boost to R2
