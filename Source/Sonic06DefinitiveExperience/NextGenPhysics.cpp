@@ -443,6 +443,7 @@ void __declspec(naked) CSonicStateSlidingEnd()
 
 void NextGenPhysics::applyPatches()
 {
+    // TODO: No trick rainbow ring but keep the animation?
     // Change character movement aniamtion speeds
     applyCharacterAnimationSpeed();
 

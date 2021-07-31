@@ -49,6 +49,18 @@ void __declspec(naked) addBoostFromChaosEnergy()
 	}
 }
 
+uint32_t getEnemyChaosEnergyAmountReturnAddress = 0xBE05EF;
+void __declspec(naked) getEnemyChaosEnergyAmount()
+{
+	__asm
+	{
+		mov		ecx, esi
+		call	ChaosEnergy::getEnemyChaosEnergyAmountImpl
+		mov		ecx, eax
+		jmp		[getEnemyChaosEnergyAmountReturnAddress]
+	}
+}
+
 void ChaosEnergy::applyPatches()
 {
 	// Make Chaos Energy goes to Sonic
@@ -73,7 +85,22 @@ void ChaosEnergy::applyPatches()
 		WRITE_MEMORY(0x11A12E4, uint8_t, 3);
 
 		// Change number of chaos energy spawn from enemies
-		// TODO: bigger enemies reward 2 instead of 1
-		WRITE_MEMORY(0xBDF7F2, uint32_t, 1);
+		WRITE_JUMP(0xBE05E9, getEnemyChaosEnergyAmount);
+	}
+}
+
+uint32_t __fastcall ChaosEnergy::getEnemyChaosEnergyAmountImpl(uint32_t* pEnemy)
+{
+	//printf("0x%08X\n", pEnemy[0]);
+	switch (pEnemy[0])
+	{
+	case 0x016F7C9C: // CEnemyEggRobo
+	{
+		// CEnemyEggRobo[104] == 1 -> missile
+		return pEnemy[104] ? 1 : 2;
+	}
+	case 0x016FB1FC: return 3; // CEnemyELauncher
+	case 0x016F95CC: return 2; // CEnemyCrawler
+	default: return 1;
 	}
 }
