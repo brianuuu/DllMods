@@ -44,7 +44,6 @@ HOOK(void, __cdecl, SetStickMagnitude, 0x9C69D0, int16_t* argX, int16_t* argY, i
 
 HOOK(void, __stdcall, CSonicRotationAdvance, 0xE310A0, void* a1, float* targetDir, float turnRate1, float turnRateMultiplier, bool noLockDirection, float turnRate2)
 {
-    CSonicContext* context = (CSonicContext*)(((uint32_t*)a1)[2]);
     if (noLockDirection)
     {
         // If direction is not locked, pump up turn rate
@@ -478,6 +477,10 @@ void NextGenPhysics::applyPatches()
         // Disable jumpball collision
         INSTALL_HOOK(CSonicStateJumpBallBegin);
         WRITE_MEMORY(0x1118FFA, uint8_t, 0xC2, 0xC5); // Fall state
+
+        // Override HOMING_ATTACK_TARGET_SENSITIVE to 0
+        static float const HOMING_ATTACK_TARGET_SENSITIVE = 0.0f;
+        WRITE_MEMORY(0x10EEB92, float*, &HOMING_ATTACK_TARGET_SENSITIVE);
     }
 
     // Change all actions to X button, change boost to R2
