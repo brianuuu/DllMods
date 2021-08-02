@@ -61,14 +61,14 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     // Calculate current target camera distance
     float playerSpeed = playerVelocity.norm();
     float speedDistAdd = (c_cameraToPlayerDistMax - c_cameraToPlayerDistMin) * playerSpeed / 20.0f;
-    float cameraToPlayerDist = c_cameraToPlayerDistMin;// min(c_cameraToPlayerDistMax, c_cameraToPlayerDistMin + speedDistAdd);
-    if (flags->KeepRunning || Common::IsPlayerOnBoard())
+    float cameraToPlayerDist = min(c_cameraToPlayerDistMax, c_cameraToPlayerDistMin + speedDistAdd);
+    bool distOverride = flags->KeepRunning || Common::IsPlayerOnBoard();
+    if (distOverride)
     {
         cameraToPlayerDist = c_cameraToPlayerDistFixed;
     }
-    float const targetCameraSpeed = 2.0f;
-    targetCameraToPlayerDist += targetCameraSpeed * dt * (cameraToPlayerDist > targetCameraToPlayerDist ? 1.0f : -1.0f);
-    ClampFloat(targetCameraToPlayerDist, c_cameraToPlayerDistMin, c_cameraToPlayerDistMax);
+    targetCameraToPlayerDist += (cameraToPlayerDist - targetCameraToPlayerDist) * c_cameraLerpRate * dt;
+    ClampFloat(targetCameraToPlayerDist, distOverride ? c_cameraToPlayerDistFixed : c_cameraToPlayerDistMin, c_cameraToPlayerDistMax);
 
     // Calculate current pitch correction
     float pitchCorrection = flags->KeepRunning ? c_pitchCorrectionMachSpeed : c_pitchCorrection;
@@ -128,7 +128,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     Eigen::Quaternionf rotationPitch(0, 0, 0, 1);
     rotationPitch = Eigen::AngleAxisf(90.0f * DEG_TO_RAD - pitch, pitchAxis);
     dir = rotationPitch * Eigen::Vector3f::UnitY();
-    cameraPosCached = playerPosition + dir * cameraToPlayerDist;
+    cameraPosCached = playerPosition + dir * targetCameraToPlayerDist;
 
     // Apply pitch correction
     pitch += targetPitchCorrection;
@@ -136,7 +136,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     Eigen::Quaternionf rotationPitchAdd(0, 0, 0, 1);
     rotationPitchAdd = Eigen::AngleAxisf(90.0f * DEG_TO_RAD - targetPitch, pitchAxis);
     dir = rotationPitchAdd * Eigen::Vector3f::UnitY();
-    Eigen::Vector3f cameraPosPitchCorrected = playerPosition + dir * cameraToPlayerDist;
+    Eigen::Vector3f cameraPosPitchCorrected = playerPosition + dir * targetCameraToPlayerDist;
     printf("dist = %.3f, pitch = %.3f, pitch correction = %.3f\n", targetCameraToPlayerDist, targetPitch * RAD_TO_DEG, targetPitchCorrection * RAD_TO_DEG);
 
     // Apply final rotation
