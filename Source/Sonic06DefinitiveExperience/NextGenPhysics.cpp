@@ -513,10 +513,6 @@ void NextGenPhysics::applyPatches()
         INSTALL_HOOK(CSonicStateJumpBallBegin);
         WRITE_MEMORY(0x1118FFA, uint8_t, 0xC2, 0xC5); // Fall state
 
-        // Override HOMING_ATTACK_TARGET_SENSITIVE to 0
-        static float const HOMING_ATTACK_TARGET_SENSITIVE = 0.0f;
-        WRITE_MEMORY(0x10EEB92, float*, &HOMING_ATTACK_TARGET_SENSITIVE);
-
         // Set rings to 0 when getting damaged
         WRITE_JUMP(0xE66218, loseAllRings);
     }
@@ -755,10 +751,14 @@ void NextGenPhysics::applyCharacterAnimationSpeed()
                 jog_speedFactor = 2.7f;
                 run_speedFactor = 3.2f;
                 dash_speedFactor = 5.0f;
-                jet_speedFactor = 12.0f;
-                jetWall_speedFactor = 17.0f;
-                boost_speedFactor = 12.0f;
-                boostWall_speedFactor = 17.0f;
+                jet_playbackSpeed = 6.0f;
+                jet_speedFactor = -1.0f;
+                jetWall_playbackSpeed = 6.0f;
+                jetWall_speedFactor = -1.0f;
+                boost_playbackSpeed = 7.0f;
+                boost_speedFactor = -1.0f;
+                boostWall_playbackSpeed = 7.0f;
+                boostWall_speedFactor = -1.0f;
             }
             else
             {
