@@ -2,6 +2,8 @@
 
 #define PI 3.141592
 #define PI_F 3.141592f
+#define DEG_TO_RAD PI_F / 180.0f
+#define RAD_TO_DEG 180.0f / PI_F
 
 typedef void CSonicContext;
 CSonicContext** const PLAYER_CONTEXT = (CSonicContext**)0x1E5E2F0;
@@ -328,6 +330,13 @@ inline bool IsPlayerGrinding()
 	// sub_E144E0 MsgIsGrind
 	if (!*PLAYER_CONTEXT) return false;
 	return *(bool*)((uint32_t)*PLAYER_CONTEXT + 0x11F0);
+}
+
+inline bool IsPlayerInGrounded()
+{
+	// sub_E6ACA0 MsgGetGroundInfo
+	if (!*PLAYER_CONTEXT) return false;
+	return *(bool*)((uint32_t)*PLAYER_CONTEXT + 0x440);
 }
 
 inline bool CheckCurrentStage(char const* stageID)
