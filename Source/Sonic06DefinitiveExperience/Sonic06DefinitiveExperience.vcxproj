@@ -180,6 +180,7 @@
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="ArchiveTreePatcher.cpp" />
     <ClCompile Include="bbWriter.cpp" />
+    <ClCompile Include="CustomCamera.cpp" />
     <ClCompile Include="ChaosEnergy.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DllMain.cpp" />
@@ -209,6 +210,7 @@
     <ClInclude Include="Application.h" />
     <ClInclude Include="ArchiveTreePatcher.h" />
     <ClInclude Include="bbWriter.h" />
+    <ClInclude Include="CustomCamera.h" />
     <ClInclude Include="ChaosEnergy.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Configuration.h" />

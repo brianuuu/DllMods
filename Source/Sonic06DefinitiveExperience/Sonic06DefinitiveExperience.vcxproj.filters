@@ -19,6 +19,7 @@
     <ClCompile Include="AnimationSetPatcher.cpp" />
     <ClCompile Include="VoiceOver.cpp" />
     <ClCompile Include="ChaosEnergy.cpp" />
+    <ClCompile Include="CustomCamera.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pch.h" />
@@ -39,5 +40,6 @@
     <ClInclude Include="AnimationSetPatcher.h" />
     <ClInclude Include="VoiceOver.h" />
     <ClInclude Include="ChaosEnergy.h" />
+    <ClInclude Include="CustomCamera.h" />
   </ItemGroup>
 </Project>

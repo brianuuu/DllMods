@@ -12,9 +12,12 @@
 #include "Itembox.h"
 #include "NextGenPhysics.h"
 #include "ChaosEnergy.h"
+#include "CustomCamera.h"
 
 extern "C" void __declspec(dllexport) OnFrame()
 {
+    // Detect whether custom camera was used last frame
+    CustomCamera::advance();
 }
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
@@ -66,6 +69,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     // Changes how Chaos Enemgy awards boost
     ChaosEnergy::applyPatches();
+
+    // Implement custom camera
+    CustomCamera::applyPatches();
 
     // Debug state
     WRITE_JUMP(0xE4FF30, StateManager::ChangeStateHOOK);
