@@ -15,6 +15,11 @@ void ClampFloat(float& number, float min, float max)
     if (number > max) number = max;
 }
 
+bool IsLoadingScreen()
+{
+    return (*(uint32_t**)0x1E66B40)[2] > 0;
+}
+
 float const c_pitchDefault = 6.0f * DEG_TO_RAD;
 float const c_pitchCorrection = 10.0f * DEG_TO_RAD;
 float const c_pitchCorrectionMachSpeed = 15.0f * DEG_TO_RAD;
@@ -24,15 +29,17 @@ float const c_cameraToPlayerDistFixed = 6.0f;
 float const c_cameraToPlayerDistMin = 6.5f;
 float const c_cameraToPlayerDistMax = 8.0f;
 float const c_cameraTargetOffset = 1.05f;
-float const c_cameraInAirVelocitySensitivePositive = 0.8f;
-float const c_cameraInAirVelocitySensitiveNegative = 0.5f;
+float const c_cameraInAirVelocitySensitivePositive = 0.5f;
+float const c_cameraInAirVelocitySensitiveNegative = 0.2f;
 float targetYawAdd = 0.0f;
 float targetPitch = 0.0f;
 float targetPitchCorrection = c_pitchCorrection;
 float targetCameraToPlayerDist = 0.0f;
+bool m_wasPaused = false;
 bool m_usedCustomCamera = false;
 bool m_usedCustomCameraLastFrame = false;
-Eigen::Vector3f cameraPosCached;
+Eigen::Vector3f cameraPosCached(0, 0, 0);
+Eigen::Quaternionf targetPlayerRotation(1, 0, 0, 0);
 HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
 {
     uint32_t offset = (uint32_t)This;
@@ -96,17 +103,30 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
         dir = -(playerRotation * Eigen::Vector3f::UnitZ());
     }
     
+    // Get and smooth current player rotation
+    targetPlayerRotation = targetPlayerRotation.slerp(c_cameraRotateRate * dt, Common::IsPlayerInGrounded() ? playerRotation : Eigen::Quaternionf(1, 0, 0, 0));
+    if (IsLoadingScreen())
+    {
+        targetPlayerRotation = Eigen::Quaternionf(1, 0, 0, 0);
+    }
+    Eigen::Vector3f playerUpAxis = targetPlayerRotation * Eigen::Vector3f::UnitY();
+    //printf("%.3f, %.3f, %.3f\n", playerUpAxis.x(), playerUpAxis.y(), playerUpAxis.z());
+        
     // Apply yaw
     float const cameraYawAdd = padState->RightStickHorizontal * c_cameraRotateRate * dt;
     targetYawAdd += (cameraYawAdd - targetYawAdd) * c_cameraLerpRate * dt;
     Eigen::Quaternionf rotationYaw(0, 0, 0, 1);
-    rotationYaw = Eigen::AngleAxisf(targetYawAdd, Eigen::Vector3f::UnitY());
+    rotationYaw = Eigen::AngleAxisf(targetYawAdd, playerUpAxis);
     dir = rotationYaw * dir;
 
     // Apply pitch
-    Eigen::Vector3f pitchAxis = Eigen::Vector3f::UnitY().cross(dir);
+    Eigen::Vector3f pitchAxis = playerUpAxis.cross(dir);
+    if (pitchAxis.isZero())
+    {
+        pitchAxis = Eigen::Vector3f::UnitZ();
+    }
     pitchAxis.normalize();
-    float pitch = 90.0f * DEG_TO_RAD - acos(dir.dot(Eigen::Vector3f::UnitY()));
+    float pitch = 90.0f * DEG_TO_RAD - acos(dir.dot(playerUpAxis));
     if (isReset)
     {
         pitch = c_pitchDefault;
@@ -127,7 +147,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     // Pitch before correction
     Eigen::Quaternionf rotationPitch(0, 0, 0, 1);
     rotationPitch = Eigen::AngleAxisf(90.0f * DEG_TO_RAD - pitch, pitchAxis);
-    dir = rotationPitch * Eigen::Vector3f::UnitY();
+    dir = rotationPitch * playerUpAxis;
     cameraPosCached = playerPosition + dir * targetCameraToPlayerDist;
 
     // Apply pitch correction
@@ -135,9 +155,9 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     targetPitch += (pitch - targetPitch) * c_cameraLerpRate * dt;
     Eigen::Quaternionf rotationPitchAdd(0, 0, 0, 1);
     rotationPitchAdd = Eigen::AngleAxisf(90.0f * DEG_TO_RAD - targetPitch, pitchAxis);
-    dir = rotationPitchAdd * Eigen::Vector3f::UnitY();
+    dir = rotationPitchAdd * playerUpAxis;
     Eigen::Vector3f cameraPosPitchCorrected = playerPosition + dir * targetCameraToPlayerDist;
-    printf("dist = %.3f, pitch = %.3f, pitch correction = %.3f\n", targetCameraToPlayerDist, targetPitch * RAD_TO_DEG, targetPitchCorrection * RAD_TO_DEG);
+    //printf("dist = %.3f, pitch = %.3f, pitch correction = %.3f\n", targetCameraToPlayerDist, targetPitch * RAD_TO_DEG, targetPitchCorrection * RAD_TO_DEG);
 
     // Apply final rotation
     Eigen::Quaternionf rotation = Eigen::Quaternionf::FromTwoVectors(Eigen::Vector3f::UnitZ(), dir);
@@ -148,6 +168,18 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
 
     m_usedCustomCamera = true;
     return result;
+}
+
+HOOK(bool, __fastcall, CustomCamera_MsgStartPause, 0x010BC130, void* This, void* Edx, void* a2)
+{
+    m_wasPaused = true;
+    return originalCustomCamera_MsgStartPause(This, Edx, a2);
+}
+
+HOOK(int, __fastcall, CustomCamera_MsgFinishPause, 0x010BC110, void* This, void* Edx, void* a2)
+{
+    m_wasPaused = false;
+    return originalCustomCamera_MsgFinishPause(This, Edx, a2);
 }
 
 void CustomCamera::applyPatches()
@@ -161,6 +193,8 @@ void CustomCamera::applyPatches()
     WRITE_MEMORY(0x10E7BA6, float*, &BOOST_LOOP_FOVY_TARGET);
 
     INSTALL_HOOK(CPlayer3DNormalCameraAdvance);
+    INSTALL_HOOK(CustomCamera_MsgStartPause);
+    INSTALL_HOOK(CustomCamera_MsgFinishPause);
 
     if (Configuration::m_physics)
     {
@@ -172,6 +206,9 @@ void CustomCamera::applyPatches()
 
 void CustomCamera::advance()
 {
-    m_usedCustomCameraLastFrame = m_usedCustomCamera;
+    if (!m_wasPaused)
+    {
+        m_usedCustomCameraLastFrame = m_usedCustomCamera;
+    }
     m_usedCustomCamera = false;
 }
