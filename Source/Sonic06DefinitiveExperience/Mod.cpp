@@ -73,7 +73,7 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     // Implement custom camera
     CustomCamera::applyPatches();
 
-    // Debug state
+    // For checking current state
     WRITE_JUMP(0xE4FF30, StateManager::ChangeStateHOOK);
 
     // -------------Mandatory codes--------------

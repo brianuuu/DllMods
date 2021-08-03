@@ -10,6 +10,8 @@ class NextGenPhysics
 public:
 	static void applyPatches();
 
+	static float m_homingDownSpeed;
+
 	static bool lockJumpStandAnimationImpl();
 
 	static bool m_isBrakeFlip;

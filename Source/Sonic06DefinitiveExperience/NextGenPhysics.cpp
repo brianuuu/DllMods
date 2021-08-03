@@ -5,6 +5,8 @@
 
 float const c_funcMaxTurnRate = 400.0f;
 float const c_funcTurnRateMultiplier = PI_F * 10.0f;
+float NextGenPhysics::m_homingDownSpeed = 0.0f;
+float const c_homingDownSpeedAdd = 15.0f;
 
 bool NextGenPhysics::m_isBrakeFlip = false;
 
@@ -73,8 +75,33 @@ HOOK(int, __fastcall, CSonicStateStompingBegin, 0x1254CA0, void* This)
 
 HOOK(int, __fastcall, CSonicStateHomingAttackBegin, 0x1232040, void* This)
 {
+    // Remember down speed just before homing attack
+    if (Configuration::m_physics)
+    {
+        Eigen::Vector3f playerVelocity;
+        Common::GetPlayerVelocity(playerVelocity);
+        NextGenPhysics::m_homingDownSpeed = min(playerVelocity.y(), 0.0f);
+        printf("Down speed = %.3f\n", NextGenPhysics::m_homingDownSpeed);
+    }
+
+    // For Sonic's bounce bracelet
     NextGenPhysics::m_bounced = false;
+
     return originalCSonicStateHomingAttackBegin(This);
+}
+
+HOOK(int*, __fastcall, CSonicStateHomingAttackEnd, 0x1231F80, void* This)
+{
+    // Apply down speed before homing attack
+    if (Configuration::m_physics && StateManager::isCurrentAction(StateAction::Fall))
+    {
+        Eigen::Vector3f playerVelocity;
+        Common::GetPlayerVelocity(playerVelocity);
+        playerVelocity.y() += NextGenPhysics::m_homingDownSpeed - c_homingDownSpeedAdd;
+        Common::SetPlayerVelocity(playerVelocity);
+    }
+
+    return originalCSonicStateHomingAttackEnd(This);
 }
 
 HOOK(char*, __fastcall, CSonicStateJumpBallBegin, 0x11BCBE0, void* This)
@@ -484,6 +511,10 @@ void NextGenPhysics::applyPatches()
     // Always disable jump ball sfx
     WRITE_MEMORY(0x11BCC7E, int, -1);
 
+    // Maintain down speed when homing attack finished (for 06 physics)
+    INSTALL_HOOK(CSonicStateHomingAttackBegin);
+    INSTALL_HOOK(CSonicStateHomingAttackEnd);
+
     // Always disable stomp voice and sfx for Sonic
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
@@ -584,7 +615,6 @@ void NextGenPhysics::applyPatches()
     {
         INSTALL_HOOK(CSonicStateGrounded);
         INSTALL_HOOK(CSonicStateStompingBegin);
-        INSTALL_HOOK(CSonicStateHomingAttackBegin);
         WRITE_JUMP(0x1254A36, bounceBraceletASMImpl);
         WRITE_JUMP(0x12549C9, bounceBraceletASMImpl);
 
