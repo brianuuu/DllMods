@@ -17,7 +17,9 @@ void ClampFloat(float& number, float min, float max)
 
 bool IsLoadingScreen()
 {
-    return (*(uint32_t**)0x1E66B40)[2] > 0;
+    uint32_t** hudCount = (uint32_t**)0x1E66B40;
+    if (!*hudCount) return false;
+    return (*hudCount)[2] > 0;
 }
 
 float const c_pitchDefault = 6.0f * DEG_TO_RAD;
