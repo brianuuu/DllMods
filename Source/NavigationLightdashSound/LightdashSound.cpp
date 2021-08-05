@@ -2,7 +2,7 @@
 
 float LightdashSound::m_lightdashSoundTimer = 0.0f;
 
-HOOK(void, __fastcall, CLightDashUpdate, 0xDF6320, void* This, void* Edx)
+HOOK(void, __fastcall, CLightDashUpdate, 0xDF6320, void* This)
 {
     if (LightdashSound::m_lightdashSoundTimer <= 0.0f)
     {
@@ -21,20 +21,17 @@ HOOK(void, __fastcall, CLightDashUpdate, 0xDF6320, void* This, void* Edx)
         printf("%.4f\n", LightdashSound::m_lightdashSoundTimer);
     }
 
-    return originalCLightDashUpdate(This, Edx);
+    return originalCLightDashUpdate(This);
 }
 
-HOOK(void*, __fastcall, UpdateApplication2, 0xE7BED0, void* This, void* Edx, float elapsedTime, uint8_t a3)
+HOOK(void, __fastcall, LightDashSound_CSonicUpdate, 0xE6BF20, void* This, void* Edx, float* dt)
 {
-    if (LightdashSound::m_lightdashSoundTimer > 0.0f)
-    {
-        LightdashSound::m_lightdashSoundTimer -= elapsedTime;
-    }
-    return originalUpdateApplication2(This, Edx, elapsedTime, a3);
+    LightdashSound::m_lightdashSoundTimer = max(0.0f, LightdashSound::m_lightdashSoundTimer - *dt);
+    originalLightDashSound_CSonicUpdate(This, Edx, dt);
 }
 
 void LightdashSound::applyPatches()
 {
-    INSTALL_HOOK(UpdateApplication2);
+    INSTALL_HOOK(LightDashSound_CSonicUpdate);
     INSTALL_HOOK(CLightDashUpdate);
 }

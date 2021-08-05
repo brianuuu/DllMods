@@ -4,13 +4,10 @@
 bool NavigationSound::m_playedSoundThisFrame = false;
 float NavigationSound::m_lightdashTimer = 0.0f;
 
-HOOK(void*, __fastcall, UpdateApplication, 0xE7BED0, void* This, void* Edx, float elapsedTime, uint8_t a3)
+HOOK(void, __fastcall, NavigationSound_CSonicUpdate, 0xE6BF20, void* This, void* Edx, float* dt)
 {
-    if (NavigationSound::m_lightdashTimer > 0.0f)
-    {
-        NavigationSound::m_lightdashTimer -= elapsedTime;
-    }
-    return originalUpdateApplication(This, Edx, elapsedTime, a3);
+    NavigationSound::m_lightdashTimer = max(0.0f, NavigationSound::m_lightdashTimer - *dt);
+    originalNavigationSound_CSonicUpdate(This, Edx, dt);
 }
 
 uint32_t m_buttonType = 0;
@@ -92,7 +89,7 @@ void NavigationSound::update()
 
 void NavigationSound::applyPatches()
 {
-    INSTALL_HOOK(UpdateApplication);
+    INSTALL_HOOK(NavigationSound_CSonicUpdate);
     INSTALL_HOOK(MsgStartCommonButtonSign);
 
     WRITE_JUMP_NAVIGATION(0x5287AE, boost);

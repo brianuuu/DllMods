@@ -44,6 +44,97 @@ HOOK(void, __fastcall, MsgEndCommonButtonSign, 0xE68870, void* This, void* Edx, 
     }
 }
 
+static void* const pCGlitterCreate = (void*)0xE73890;
+static void* fCGlitterCreate
+(
+    void* pContext,
+    SharedPtrTypeless& handle,
+    void* pMatrixTransformNode,
+    Hedgehog::Base::CSharedString const* name,
+    uint32_t flag
+)
+{
+    __asm
+    {
+        push    flag
+        push    name
+        push    pMatrixTransformNode
+        mov     eax, pContext
+        mov     esi, handle
+        call[pCGlitterCreate]
+    }
+}
+
+static void* const pCGlitterEnd = (void*)0xE72650;
+static void* const pCGlitterKill = (void*)0xE72570;
+static void fCGlitterEnd
+(
+    void* pContext,
+    SharedPtrTypeless& handle,
+    bool instantStop
+)
+{
+    __asm
+    {
+        mov     eax, [handle]
+        mov     ebx, [eax + 4]
+        push    ebx
+        mov     ebx, [eax]
+        push    ebx
+        mov     eax, pContext
+        cmp     instantStop, 0
+        jnz     jump
+        call[pCGlitterEnd]
+        jmp     end
+
+        jump :
+        call[pCGlitterKill]
+
+            end :
+    }
+}
+
+SharedPtrTypeless lightDashGlitterHandle;
+
+void playLightDashGlitter()
+{
+    void* context = GetCurrentSonicContext();
+    void* matrixNode = (void*)((uint32_t)context + 0x30);
+    fCGlitterCreate(context, lightDashGlitterHandle, matrixNode, (Hedgehog::Base::CSharedString const*)0x1E61DC4, 1);
+}
+
+void stopLightDashGlitter()
+{
+    void* context = GetCurrentSonicContext();
+    fCGlitterEnd(context, lightDashGlitterHandle, true);
+}
+
+uint32_t CSonicStateLightSpeedDashBeginReturnAddress = 0x12318AA;
+void __declspec(naked) CSonicStateLightSpeedDashBegin()
+{
+    __asm
+    {
+        push    eax
+        call    playLightDashGlitter
+        pop     eax
+        push    [0x15E6AA4] // LightSpeedDash
+        jmp     [CSonicStateLightSpeedDashBeginReturnAddress]
+    }
+}
+
+uint32_t CSonicStateLightSpeedDashEndReturnAddress = 0x12319E7;
+void __declspec(naked) CSonicStateLightSpeedDashEnd()
+{
+    __asm
+    {
+        push    eax
+        call    stopLightDashGlitter
+        pop     eax
+        push    [0x15E613C] // LightSpeedDash
+        jmp     [CSonicStateLightSpeedDashEndReturnAddress]
+    }
+}
+
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
     std::string dir = modInfo->CurrentMod->Path;
@@ -64,6 +155,22 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     if (Configuration::m_enableLightdashSound)
     {
         LightdashSound::applyPatches();
+    }
+
+    if (Configuration::m_enableLightdashEffect)
+    {
+        WRITE_JUMP(0x12318A5, CSonicStateLightSpeedDashBegin);
+        WRITE_JUMP(0x12319E2, CSonicStateLightSpeedDashEnd);
+    }
+
+    if (Configuration::m_enableLightdashRings)
+    {
+        // Patch "All Rings Can Be Light Dashed" by "Skyth"
+        WRITE_MEMORY(0x105334D, uint32_t, 0x10C47C6);
+        WRITE_NOP(0x1053351, 16);
+
+        // Patch "Disable Light Dash Particles" by "Hyper"
+        WRITE_MEMORY(0x10538EB, uint8_t, 0xE9, 0x8F, 0x00, 0x00, 0x00, 0x90);
     }
 
     if (Configuration::m_enableNavigationSound)
