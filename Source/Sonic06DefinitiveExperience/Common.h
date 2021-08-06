@@ -308,6 +308,14 @@ inline CSonicStateFlags* GetSonicStateFlags()
 	return reinterpret_cast<CSonicStateFlags*>(*reinterpret_cast<int*>(context[0x14D] + 4));
 }
 
+inline bool IsPlayerControlLocked()
+{
+	if (!*PLAYER_CONTEXT) return false;
+
+	bool* unknownFlags = *(bool**)((uint32_t)*PLAYER_CONTEXT + 0x11C);
+	return unknownFlags[0x98] || unknownFlags[0x99];
+}
+
 inline bool IsPlayerSuper()
 {
     return GetSonicStateFlags()->InvokeSuperSonic;

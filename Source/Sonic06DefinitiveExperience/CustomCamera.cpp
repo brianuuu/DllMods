@@ -73,7 +73,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
 
     float dt = Application::getDeltaTime();
-    bool isReset = padState->IsTapped(Sonic::EKeyState::eKeyState_LeftTrigger);
+    bool isReset = !Common::IsPlayerControlLocked() && padState->IsTapped(Sonic::EKeyState::eKeyState_LeftTrigger);
 
     // Calculate current pitch correction
     float pitchCorrection = flags->KeepRunning ? c_pitchCorrectionMachSpeed : c_pitchCorrection;
@@ -111,7 +111,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     //printf("%.3f, %.3f, %.3f\n", playerUpAxis.x(), playerUpAxis.y(), playerUpAxis.z());
         
     // Apply yaw
-    float const cameraYawAdd = padState->RightStickHorizontal * c_cameraRotateRate * dt;
+    float const cameraYawAdd = Common::IsPlayerControlLocked() ? 0.0f : padState->RightStickHorizontal * c_cameraRotateRate * dt;
     targetYawAdd += (cameraYawAdd - targetYawAdd) * c_cameraLerpRate * dt;
     Eigen::Quaternionf rotationYaw(0, 0, 0, 1);
     rotationYaw = Eigen::AngleAxisf(targetYawAdd, playerUpAxis);
@@ -131,7 +131,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     }
     else
     {
-        pitch += -(padState->RightStickVertical) * c_cameraRotateRate * dt;
+        pitch += Common::IsPlayerControlLocked() ? 0.0f : -(padState->RightStickVertical) * c_cameraRotateRate * dt;
     }
     ClampFloat(pitch, pitchMin, pitchMax);
     

@@ -328,9 +328,8 @@ HOOK(void, __fastcall, CSonicStateSlidingAdvance, 0x11D69A0, void* This)
 
 HOOK(bool, __stdcall, BActionHandler, 0xDFF660, CSonicContext* context, bool buttonHoldCheck)
 {
-    bool* unknownFlags = *(bool**)((uint32_t)context + 0x11C);
     bool result = originalBActionHandler(context, buttonHoldCheck);
-    if (result || unknownFlags[0x98] || unknownFlags[0x99])
+    if (result || Common::IsPlayerControlLocked())
     {
         NextGenPhysics::m_bHeldTimer = 0.0f;
         return result;
