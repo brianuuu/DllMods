@@ -408,7 +408,7 @@ void RailPhysics::updateHomingTargetPos()
 
     if (m_forceRailCollisionQuery)
     {
-        printf("Lock Pos: %.3f, %.3f, %.3f\n", lockPos.x(), lockPos.y(), lockPos.z());
+        //printf("Lock Pos: %.3f, %.3f, %.3f\n", lockPos.x(), lockPos.y(), lockPos.z());
     }
     setHomingTargetPos(lockPos);
 }
