@@ -12,8 +12,6 @@ public:
 
 	static float m_homingDownSpeed;
 
-	static bool lockJumpStandAnimationImpl();
-
 	static bool m_isBrakeFlip;
 
 	static bool m_isStomping;

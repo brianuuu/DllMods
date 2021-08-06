@@ -32,18 +32,6 @@ float const c_spindashSpeed = 30.0f;
 
 float NextGenPhysics::m_bHeldTimer = 0.0f;
 
-HOOK(void, __cdecl, SetStickMagnitude, 0x9C69D0, int16_t* argX, int16_t* argY, int16_t a3, int16_t Deadzone)
-{
-    const double x = min(1.0, max(-1.0, *argX / 32767.0));
-    const double y = min(1.0, max(-1.0, *argY / 32767.0));
-    const double magnitude = sqrt(x * x + y * y);
-    const double deadzone = Deadzone / 32767.0;
-    const double newMagnitude = max(0.0, min(1.0, (magnitude - deadzone) / (1 - deadzone)));
-
-    *argX = (int16_t)(x / magnitude * newMagnitude * 32767.0);
-    *argY = (int16_t)(y / magnitude * newMagnitude * 32767.0);
-}
-
 HOOK(void, __stdcall, CSonicRotationAdvance, 0xE310A0, void* a1, float* targetDir, float turnRate1, float turnRateMultiplier, bool noLockDirection, float turnRate2)
 {
     if (noLockDirection && !Common::IsPlayerOnBoard())
@@ -67,6 +55,57 @@ HOOK(char, __stdcall, CSonicStateGrounded, 0xDFF660, int* a1, bool a2)
     return originalCSonicStateGrounded(a1, a2);
 }
 
+bool pendingFallAnimation = false;
+HOOK(int, __fastcall, CSonicStateFallBegin, 0x1118FB0, void* This)
+{
+    alignas(16) MsgGetAnimationInfo message {};
+    Common::SonicContextGetAnimationInfo(message);
+    //printf("Animation = %s\n", message.m_name);
+
+    if (message.IsAnimation("UpReelEnd") ||
+        message.IsAnimation("LookBack") ||
+        message.IsAnimation("DashRingL") ||
+        message.IsAnimation("DashRingR") ||
+        message.IsAnimation("JumpSpring") ||
+        message.IsAnimation("JumpBoard") ||
+        message.IsAnimation("JumpBoardRev") ||
+        message.IsAnimation("JumpBoardSpecialL") ||
+        message.IsAnimation("JumpBoardSpecialR"))
+    {
+        // Delay transition to SpinFall until we start falling
+        pendingFallAnimation = true;
+        WRITE_JUMP(0x111911F, (void*)0x1119188);
+    }
+    else
+    {
+        pendingFallAnimation = false;
+        WRITE_MEMORY(0x111911F, uint8_t, 0x8D, 0x8E, 0xA0, 0x02, 0x00, 0x00);
+    }
+
+    return originalCSonicStateFallBegin(This);
+}
+
+HOOK(bool, __fastcall, CSonicStateFallAdvance, 0x1118C50, void* This)
+{
+    if (pendingFallAnimation)
+    {
+        Eigen::Vector3f playerVelocity;
+        Common::GetPlayerVelocity(playerVelocity);
+        float const vSpeed = playerVelocity.y();
+        playerVelocity.y() = 0.0f;
+        float const hSpeed = playerVelocity.norm();
+
+        if (vSpeed < 5.0f)
+        {
+            //printf("hSpeed = %.3f\n", hSpeed);
+            Common::SonicContextChangeAnimation(hSpeed <= 5.0f ? AnimationSetPatcher::SpinFallSpring : AnimationSetPatcher::SpinFall);
+            pendingFallAnimation = false;
+        }
+    }
+
+    return originalCSonicStateFallAdvance(This);
+}
+
 HOOK(int, __fastcall, CSonicStateStompingBegin, 0x1254CA0, void* This)
 {
     NextGenPhysics::m_isStomping = true;
@@ -81,7 +120,7 @@ HOOK(int, __fastcall, CSonicStateHomingAttackBegin, 0x1232040, void* This)
         Eigen::Vector3f playerVelocity;
         Common::GetPlayerVelocity(playerVelocity);
         NextGenPhysics::m_homingDownSpeed = min(playerVelocity.y(), 0.0f);
-        printf("Down speed = %.3f\n", NextGenPhysics::m_homingDownSpeed);
+        //printf("Down speed = %.3f\n", NextGenPhysics::m_homingDownSpeed);
     }
 
     // For Sonic's bounce bracelet
@@ -468,30 +507,6 @@ void __declspec(naked) CSonicStateSlidingEnd()
     }
 }
 
-uint32_t lockJumpStandAnimationReturnAddress = 0x11DE349;
-uint32_t lockJumpStandAnimationSuccessAddress = 0x11DE34E;
-void __declspec(naked) lockJumpStandAnimation()
-{
-    __asm
-    {
-        push    esi
-        push    edi
-        call    NextGenPhysics::lockJumpStandAnimationImpl
-        pop     edi
-        pop     esi
-        test    al, al
-        jnz     jump
-
-        // Original function
-        push    [0x15F5030] // Fall
-        jmp     [lockJumpStandAnimationReturnAddress]
-
-        // Lock animation
-        jump:
-        jmp     [lockJumpStandAnimationSuccessAddress]
-    }
-}
-
 uint32_t loseAllRingsReturnAddress = 0xE6621E;
 void __declspec(naked) loseAllRings()
 {
@@ -522,18 +537,23 @@ void NextGenPhysics::applyPatches()
         WRITE_MEMORY(0x1254F23, int, -1);
     }
 
-    // Never transition to Fall after jumpboard, must use long jumpboard animation
+    // Do SpinFall animation when Sonic starts to fall
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
-        WRITE_JUMP(0x11DE344, lockJumpStandAnimation);
+        // Transition to Fall immediately without checking down speed for CPlayerSpeedStateSpecialJump
+        WRITE_JUMP(0x11DE320, (void*)0x11DE344);
+
+        // Don't transition to FallLarge when speed < -15.0f
+        WRITE_MEMORY(0x1118DE5, uint8_t, 0xEB);
+
+        // Change animation at CSonicStateFall base on current animation
+        INSTALL_HOOK(CSonicStateFallBegin);
+        INSTALL_HOOK(CSonicStateFallAdvance);
     }
 
     // 06 physics general code
     if (Configuration::m_physics)
     {
-        // Precise stick input, by Skyth (06 still has angle clamp, don't use)
-        // INSTALL_HOOK(SetStickMagnitude);
-
         // Increase turning rate
         INSTALL_HOOK(CSonicRotationAdvance);
 
@@ -726,19 +746,6 @@ void NextGenPhysics::applyPatches()
         INSTALL_HOOK(CSonicStateSquatAdvance);
         INSTALL_HOOK(CSonicStateSquatEnd);
     }
-}
-
-bool NextGenPhysics::lockJumpStandAnimationImpl()
-{
-    static MsgGetAnimationInfo message;
-    Common::SonicContextGetAnimationInfo(message);
-    //printf("%s, %.3f\n", message.m_name, message.m_frame);
-
-    // Don't transition to fall if animation is: JumpBoard/JumpBoardRev/JumpBoardSpecialL/JumpBoardSpecialR
-    return message.IsAnimation("JumpBoard") ||
-           message.IsAnimation("JumpBoardRev") ||
-           message.IsAnimation("JumpBoardSpecialL") ||
-           message.IsAnimation("JumpBoardSpecialR");
 }
 
 void NextGenPhysics::applyCharacterAnimationSpeed()
