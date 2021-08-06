@@ -329,7 +329,7 @@ inline bool IsPlayerGrinding()
 {
 	// sub_E144E0 MsgIsGrind
 	if (!*PLAYER_CONTEXT) return false;
-	return *(bool*)((uint32_t)*PLAYER_CONTEXT + 0x11F0);
+	return *(uint32_t*)((uint32_t)*PLAYER_CONTEXT + 0x11F0) != 0;
 }
 
 inline bool IsPlayerInGrounded()
