@@ -363,10 +363,13 @@ HOOK(int, __fastcall, CSonicStateSlidingEndBegin, 0x1230F80, void* This)
 HOOK(int*, __fastcall, CSonicStateSlidingEndAdvance, 0x1230EE0, void* This)
 {
     int* result = originalCSonicStateSlidingEndAdvance(This);
-    if (NextGenPhysics::m_isBrakeFlip && !slidingEndWasSliding)
+    if (NextGenPhysics::m_isBrakeFlip)
     {
-        // Only detect B-action during the flip, not normal SlidingEnd
-        NextGenPhysics::bActionHandlerImpl();
+        if (!slidingEndWasSliding)
+        {
+            // Only detect B-action during the flip, not normal SlidingEnd
+            NextGenPhysics::bActionHandlerImpl();
+        }
 
         // Enforce brake flip rotation
         alignas(16) float dir[4] = { NextGenPhysics::m_brakeFlipDir.x(), NextGenPhysics::m_brakeFlipDir.y(), NextGenPhysics::m_brakeFlipDir.z(), 0 };
