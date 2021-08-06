@@ -91,6 +91,7 @@ const char* volatile const AnimationSetPatcher::BrakeFlip = "BrakeFlip";
 const char* volatile const AnimationSetPatcher::SpinFall = "SpinFall";
 const char* volatile const AnimationSetPatcher::SpinFallSpring = "SpinFallSpring";
 const char* volatile const AnimationSetPatcher::SpinFallLoop = "SpinFallLoop";
+const char* volatile const AnimationSetPatcher::HomingAttackLoop = "HomingAttackLoop";
 
 void AnimationSetPatcher::applyPatches()
 {
@@ -120,6 +121,13 @@ void AnimationSetPatcher::applyPatches()
         WRITE_MEMORY(0x1276CB9, uint8_t, 0x1D); // JumpBoardSpecialR
         WRITE_MEMORY(0x1276D20, uint8_t, 0x1D); // DashRingL
         WRITE_MEMORY(0x1276D87, uint8_t, 0x1D); // DashRingR
+    }
+    
+    if (Configuration::m_model == Configuration::ModelType::SonicElise)
+    {
+        // Use unique animation for homing attack
+        m_newAnimationData.emplace_back(HomingAttackLoop, "sn_homing_loop", 1.0f, true, nullptr);
+        WRITE_MEMORY(0x1232056, char*, HomingAttackLoop);
     }
 
     if (!m_newAnimationData.empty())
