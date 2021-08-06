@@ -61,5 +61,8 @@ public:
     static const char* volatile const RunResult;
     static const char* volatile const RunResultLoop;
     static const char* volatile const BrakeFlip;
+    static const char* volatile const SpinFall;
+    static const char* volatile const SpinFallSpring;
+    static const char* volatile const SpinFallLoop;
 };
 

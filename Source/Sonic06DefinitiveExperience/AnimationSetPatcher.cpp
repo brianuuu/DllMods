@@ -88,6 +88,9 @@ HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* 
 const char* volatile const AnimationSetPatcher::RunResult = "RunResult";
 const char* volatile const AnimationSetPatcher::RunResultLoop = "RunResultLoop";
 const char* volatile const AnimationSetPatcher::BrakeFlip = "BrakeFlip";
+const char* volatile const AnimationSetPatcher::SpinFall = "SpinFall";
+const char* volatile const AnimationSetPatcher::SpinFallSpring = "SpinFallSpring";
+const char* volatile const AnimationSetPatcher::SpinFallLoop = "SpinFallLoop";
 
 void AnimationSetPatcher::applyPatches()
 {
@@ -102,6 +105,21 @@ void AnimationSetPatcher::applyPatches()
 
         // Brake flip (for 06 physics)
         m_newAnimationData.emplace_back(BrakeFlip, "sn_brake_flip", 1.0f, false, nullptr);
+
+        // Remove JumpBoard to Fall transition and add spin fall
+        WRITE_JUMP(0xE1F503, (void*)0xE1F56E);
+        m_newAnimationData.emplace_back(SpinFall, "sn_spin_fall", 1.0f, false, SpinFallLoop);
+        m_newAnimationData.emplace_back(SpinFallSpring, "sn_spin_fall_spring", 1.0f, false, SpinFallLoop);
+        m_newAnimationData.emplace_back(SpinFallLoop, "sn_jump_d_loop", 1.0f, true, nullptr);
+    
+        // Set animations to loop
+        WRITE_MEMORY(0x127779C, uint8_t, 0x1D); // UpReelEnd
+        WRITE_MEMORY(0x1276B84, uint8_t, 0x1D); // JumpBoard
+        WRITE_MEMORY(0x1276BEB, uint8_t, 0x1D); // JumpBoardRev
+        WRITE_MEMORY(0x1276C4D, uint8_t, 0x1D); // JumpBoardSpecialL
+        WRITE_MEMORY(0x1276CB9, uint8_t, 0x1D); // JumpBoardSpecialR
+        WRITE_MEMORY(0x1276D20, uint8_t, 0x1D); // DashRingL
+        WRITE_MEMORY(0x1276D87, uint8_t, 0x1D); // DashRingR
     }
 
     if (!m_newAnimationData.empty())
