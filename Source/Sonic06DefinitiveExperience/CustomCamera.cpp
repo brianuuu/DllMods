@@ -22,9 +22,15 @@ bool IsLoadingScreen()
     return (*hudCount)[2] > 0;
 }
 
+float const c_pitchMin = -20.0f * DEG_TO_RAD;
+float const c_pitchMax = 60.0f * DEG_TO_RAD;
 float const c_pitchDefault = 6.0f * DEG_TO_RAD;
-float const c_pitchCorrection = 10.0f * DEG_TO_RAD;
-float const c_pitchCorrectionMachSpeed = 15.0f * DEG_TO_RAD;
+float const c_pitchCorrection = 2.0f * DEG_TO_RAD;
+float const c_pitchCorrectionMachSpeed = c_pitchCorrection + 5.0f * DEG_TO_RAD;
+float const c_pitchDistanceUp = 20.0f * DEG_TO_RAD;
+float const c_pitchDistanceUpScale = 1.2f;
+float const c_pitchDistanceDown = 1.0f * DEG_TO_RAD;
+float const c_pitchDistanceDownScale = 0.03f;
 float const c_cameraRotateRate = 100.0f * DEG_TO_RAD;
 float const c_cameraLerpRate = 10.0f;
 float const c_cameraToPlayerDistFixed = 6.0f;
@@ -59,6 +65,8 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     Eigen::Vector3f playerPosition;
     Eigen::Quaternionf playerRotation;
     Common::GetPlayerTransform(playerPosition, playerRotation);
+    playerPosition += playerRotation * Eigen::Vector3f(0, c_cameraTargetOffset, 0);
+
     Eigen::Vector3f playerVelocity;
     Common::GetPlayerVelocity(playerVelocity);
     CSonicStateFlags* flags = Common::GetSonicStateFlags();
@@ -67,18 +75,6 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     float dt = Application::getDeltaTime();
     bool isReset = padState->IsTapped(Sonic::EKeyState::eKeyState_LeftTrigger);
 
-    // Calculate current target camera distance
-    float playerSpeed = playerVelocity.norm();
-    float speedDistAdd = (c_cameraToPlayerDistMax - c_cameraToPlayerDistMin) * playerSpeed / 20.0f;
-    float cameraToPlayerDist = min(c_cameraToPlayerDistMax, c_cameraToPlayerDistMin + speedDistAdd);
-    bool distOverride = flags->KeepRunning || Common::IsPlayerOnBoard();
-    if (distOverride)
-    {
-        cameraToPlayerDist = c_cameraToPlayerDistFixed;
-    }
-    targetCameraToPlayerDist += (cameraToPlayerDist - targetCameraToPlayerDist) * c_cameraLerpRate * dt;
-    ClampFloat(targetCameraToPlayerDist, distOverride ? c_cameraToPlayerDistFixed : c_cameraToPlayerDistMin, c_cameraToPlayerDistMax);
-
     // Calculate current pitch correction
     float pitchCorrection = flags->KeepRunning ? c_pitchCorrectionMachSpeed : c_pitchCorrection;
     targetPitchCorrection += (pitchCorrection - targetPitchCorrection) * c_cameraLerpRate * dt;
@@ -86,15 +82,15 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     {
         targetPitchCorrection = c_pitchCorrection;
     }
-    float const pitchMin = -25.0f * DEG_TO_RAD - targetPitchCorrection;
-    float const pitchMax = 60.0f * DEG_TO_RAD - targetPitchCorrection;
+    float const pitchMin = c_pitchMin - targetPitchCorrection;
+    float const pitchMax = c_pitchMax - targetPitchCorrection;
 
     // Get currect camera direction from player
     if (!m_usedCustomCameraLastFrame)
     {
         cameraPosCached = *pCameraPos;
     }
-    *pCameraTarget = playerPosition + playerRotation * Eigen::Vector3f(0, c_cameraTargetOffset, 0);
+    *pCameraTarget = playerPosition;
     if (!Common::IsPlayerInGrounded())
     {
         cameraPosCached += Eigen::Vector3f::UnitY() * playerVelocity.y() * (playerVelocity.y() > 0.0f ? c_cameraInAirVelocitySensitivePositive : c_cameraInAirVelocitySensitiveNegative) * dt;
@@ -145,7 +141,34 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     {
         pitch -= targetPitchCorrection;
     }
+    targetPitch += (pitch + targetPitchCorrection - targetPitch) * c_cameraLerpRate * dt;
 
+    // Calculate current target camera distance
+    float playerSpeed = playerVelocity.norm();
+    float speedDistAdd = (c_cameraToPlayerDistMax - c_cameraToPlayerDistMin) * playerSpeed / 20.0f;
+    float cameraToPlayerDist = c_cameraToPlayerDistMin + speedDistAdd;
+    ClampFloat(cameraToPlayerDist, c_cameraToPlayerDistMin, c_cameraToPlayerDistMax);
+
+    // Override distance when auto run or on board
+    if (flags->KeepRunning || Common::IsPlayerOnBoard())
+    {
+        cameraToPlayerDist = c_cameraToPlayerDistFixed;
+    }
+
+    // Scale camera distance base on pitch
+    if (targetPitch > c_pitchDistanceUp)
+    {
+        cameraToPlayerDist *= 1.0f + (c_pitchDistanceUpScale - 1.0f) * (targetPitch - c_pitchDistanceUp);
+    }
+    else if (targetPitch < c_pitchDistanceDown && Common::IsPlayerInGrounded() && !Common::IsPlayerGrinding())
+    {
+        cameraToPlayerDist *= pow(1.0f + (1.0f - c_pitchDistanceDownScale) * (targetPitch - c_pitchDistanceDown), 2.0f);
+        cameraToPlayerDist = max(2.5f, cameraToPlayerDist);
+    }
+
+    // Interpolate target camera distance
+    targetCameraToPlayerDist += (cameraToPlayerDist - targetCameraToPlayerDist) * c_cameraLerpRate * dt;
+    
     // Pitch before correction
     Eigen::Quaternionf rotationPitch(0, 0, 0, 1);
     rotationPitch = Eigen::AngleAxisf(90.0f * DEG_TO_RAD - pitch, pitchAxis);
@@ -153,8 +176,6 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     cameraPosCached = playerPosition + dir * targetCameraToPlayerDist;
 
     // Apply pitch correction
-    pitch += targetPitchCorrection;
-    targetPitch += (pitch - targetPitch) * c_cameraLerpRate * dt;
     Eigen::Quaternionf rotationPitchAdd(0, 0, 0, 1);
     rotationPitchAdd = Eigen::AngleAxisf(90.0f * DEG_TO_RAD - targetPitch, pitchAxis);
     dir = rotationPitchAdd * playerUpAxis;
