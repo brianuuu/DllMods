@@ -42,10 +42,55 @@ void __declspec(naked) addBoostFromChaosEnergy()
 		pop		edi
 		pop		ecx
 
+		// Change sound effect
+		mov		eax, [esp + 8h] // This is pushed in the stack
+		cmp		dword ptr [eax + 11Ch], 0
+		je		jump
+		mov		eax, 4002073 // TODO: cue ID for LightCore
+		jmp		[addBoostFromChaosEnergyReturnAddress]
+
 		// original function
 		jump:
-		mov		eax, 4002073 // cue ID
+		mov		eax, 4002073 // cue ID for ChaosDrive
 		jmp		[addBoostFromChaosEnergyReturnAddress]
+	}
+}
+
+uint32_t setChaosEnergyAmountAndTypeReturnAddress = 0x112509D;
+void __declspec(naked) setChaosEnergyAmountAndType()
+{
+	__asm
+	{
+		// Set amount
+		xor		edx, edx
+		mov		dx, word ptr [edi + 10h]
+		mov		[esi + 110h], edx
+
+		// Set type
+		mov		dx, word ptr [edi + 12h]
+		mov		[esi + 11Ch], edx
+
+		jmp		[setChaosEnergyAmountAndTypeReturnAddress]
+	}
+}
+
+uint32_t swapChaosEnergyEffectReturnAddress = 0x1124367;
+const char* volatile const lightcoreEffectName = "ef_if_hud_yh1_lightcore";
+void __declspec(naked) swapChaosEnergyEffect()
+{
+	__asm
+	{
+		mov		ecx, [esi]
+		mov		ecx, [ecx + 11Ch]
+		test	cl, cl
+		jz		jump
+
+		push	lightcoreEffectName
+		jmp		[swapChaosEnergyEffectReturnAddress]
+
+		jump:
+		push	[0x1613B98] // ef_if_hud_yh1_boostenergy
+		jmp		[swapChaosEnergyEffectReturnAddress]
 	}
 }
 
@@ -84,6 +129,12 @@ void ChaosEnergy::applyPatches()
 		// Give 3 chaos energy for board trick jump
 		WRITE_MEMORY(0x11A12E4, uint8_t, 3);
 
+		// Set amount of ChaosDrive/LightCore to spawn from enemy
+		WRITE_JUMP(0x1125094, setChaosEnergyAmountAndType);
+
+		// Swap between Chaos Drive and Light Core particle effect
+		WRITE_JUMP(0x1124362, swapChaosEnergyEffect);
+
 		// Change number of chaos energy spawn from enemies
 		WRITE_JUMP(0xBE05E9, getEnemyChaosEnergyAmount);
 	}
@@ -100,7 +151,12 @@ uint32_t __fastcall ChaosEnergy::getEnemyChaosEnergyAmountImpl(uint32_t* pEnemy)
 		return pEnemy[104] ? 1 : 2;
 	}
 	case 0x016FB1FC: return 3; // CEnemyELauncher
-	case 0x016F95CC: return 2; // CEnemyCrawler
+
+	// For Iblis monsters, add 0x00010000 to notify it to use lightcore
+	case 0x016F95CC: return 2 + 0x00010000; // CEnemyCrawler
+	case 0x016F8C54: return 1 + 0x00010000; // CEnemyTaker
+	case 0x016FAD14: return 1 + 0x00010000; // CEnemyBiter
+
 	default: return 1;
 	}
 }
