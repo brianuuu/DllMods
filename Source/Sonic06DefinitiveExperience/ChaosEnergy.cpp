@@ -11,7 +11,7 @@ HOOK(void, __fastcall, ChaosEnergy_MsgGetHudPosition, 0x1096790, void* This, voi
 		Eigen::Quaternionf sonicRotation;
 		if (Common::GetPlayerTransform(sonicPosition, sonicRotation))
 		{
-			sonicPosition.y() += 0.5f; // half Sonic's height
+			sonicPosition += sonicRotation * (Eigen::Vector3f::UnitY() * 0.5f); // half Sonic's height
 			message->m_position = sonicPosition;
 			return;
 		}
@@ -29,7 +29,7 @@ void __declspec(naked) addBoostFromChaosEnergy()
 	{
 		// Check Sonic context just in case
 		mov		esi, PLAYER_CONTEXT
-		cmp		[esi], 0
+		cmp		dword ptr [esi], 0
 		je		jump
 
 		// Award Sonic 5 boost
@@ -68,7 +68,7 @@ void ChaosEnergy::applyPatches()
 
 	if (Configuration::m_physics)
 	{
-		// Don't boost rewards, handle them ourselves
+		// Don't give boost rewards, handle them ourselves
 		WRITE_JUMP(0xE1827B, (void*)0xE182E0); // MsgDamageSuccess
 		WRITE_MEMORY(0x11A128F, uint8_t, 0x83, 0xC4, 0x04, 0x90, 0x90); // Board trick jump
 
