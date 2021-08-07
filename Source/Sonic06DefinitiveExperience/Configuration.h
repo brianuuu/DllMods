@@ -30,6 +30,7 @@ public:
     static bool m_physics;
     static bool m_characterMoveset;
     static bool m_xButtonAction;
+    static bool m_noTrick;
 
     static RunResultType m_run;
     static vector<string> m_runStages;

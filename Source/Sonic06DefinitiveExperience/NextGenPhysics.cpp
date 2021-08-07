@@ -55,7 +55,7 @@ HOOK(char, __stdcall, CSonicStateGrounded, 0xDFF660, int* a1, bool a2)
     return originalCSonicStateGrounded(a1, a2);
 }
 
-bool pendingFallAnimation = false;
+uint8_t pendingFallAnimation = 0;
 HOOK(int, __fastcall, CSonicStateFallBegin, 0x1118FB0, void* This)
 {
     alignas(16) MsgGetAnimationInfo message {};
@@ -63,6 +63,7 @@ HOOK(int, __fastcall, CSonicStateFallBegin, 0x1118FB0, void* This)
     //printf("Animation = %s\n", message.m_name);
 
     if (message.IsAnimation("UpReelEnd") ||
+        message.IsAnimation("TrickPrepare") ||
         message.IsAnimation("LookBack") ||
         message.IsAnimation("DashRingL") ||
         message.IsAnimation("DashRingR") ||
@@ -73,7 +74,7 @@ HOOK(int, __fastcall, CSonicStateFallBegin, 0x1118FB0, void* This)
         message.IsAnimation("JumpBoardSpecialR"))
     {
         // Delay transition to SpinFall until we start falling
-        pendingFallAnimation = true;
+        pendingFallAnimation = message.IsAnimation("TrickPrepare") ? 2 : 1;
         WRITE_JUMP(0x111911F, (void*)0x1119188);
     }
     else
@@ -87,8 +88,25 @@ HOOK(int, __fastcall, CSonicStateFallBegin, 0x1118FB0, void* This)
 
 HOOK(bool, __fastcall, CSonicStateFallAdvance, 0x1118C50, void* This)
 {
-    if (pendingFallAnimation)
+    switch (pendingFallAnimation)
     {
+    case 2:
+    {
+        // Trick animation
+        alignas(16) MsgGetAnimationInfo message {};
+        Common::SonicContextGetAnimationInfo(message);
+
+        if (message.m_frame >= 92.0f)
+        {
+            Common::SonicContextChangeAnimation("Fall");
+            pendingFallAnimation = false;
+        }
+
+        break;
+    }
+    case 1:
+    {
+        // Other animations
         Eigen::Vector3f playerVelocity;
         Common::GetPlayerVelocity(playerVelocity);
         float const vSpeed = playerVelocity.y();
@@ -101,6 +119,10 @@ HOOK(bool, __fastcall, CSonicStateFallAdvance, 0x1118C50, void* This)
             Common::SonicContextChangeAnimation(hSpeed <= 5.0f ? AnimationSetPatcher::SpinFallSpring : AnimationSetPatcher::SpinFall);
             pendingFallAnimation = false;
         }
+
+        break;
+    }
+    default: break;
     }
 
     return originalCSonicStateFallAdvance(This);
@@ -519,6 +541,27 @@ void __declspec(naked) loseAllRings()
     }
 }
 
+uint32_t noTrickRainbowRingReturnAddress = 0xE6D417;
+void __declspec(naked) noTrickRainbowRing()
+{
+    __asm
+    {
+        // Copied from dash ring case 8
+        mov     eax, [ebx]
+        mov     edx, [eax + 11Ch]
+        push    1
+        push    1
+        push    ecx
+        lea     ecx, [esp + 0ACh - 64h]
+        fstp    [esp]
+        push    ecx
+        mov     ecx, ebx
+        call    edx
+
+        jmp     [noTrickRainbowRingReturnAddress]
+    }
+}
+
 void NextGenPhysics::applyPatches()
 {
     // TODO: No trick rainbow ring but keep the animation?
@@ -537,6 +580,17 @@ void NextGenPhysics::applyPatches()
     {
         WRITE_MEMORY(0x1254E04, int, -1);
         WRITE_MEMORY(0x1254F23, int, -1);
+    }
+
+    // Disable trick system
+    if (Configuration::m_noTrick)
+    {
+        // No trick rainbow ring, but keep rainbow ring animation
+        WRITE_MEMORY(0xE6D3E8, uint32_t, 0x15F8CC4); // TrickPrepare
+        WRITE_JUMP(0xE6D3FB, noTrickRainbowRing);
+
+        // Make trick ramp use JumpBaord animation
+        WRITE_MEMORY(0x1014866, uint32_t, ImpulseType::JumpBoard);
     }
 
     // Do SpinFall animation when Sonic starts to fall
@@ -910,7 +964,7 @@ bool __fastcall NextGenPhysics::applySpindashImpulse(void* context)
     Eigen::Vector3f playerVelocity;
     if (!Common::GetPlayerVelocity(playerVelocity)) return false;
 
-    MsgAddImpulse message;
+    MsgApplyImpulse message;
     message.m_position = playerPosition;
     message.m_impulse = playerRotation * Eigen::Vector3f::UnitZ();
     message.m_impulseType = ImpulseType::None;
@@ -931,7 +985,7 @@ bool __fastcall NextGenPhysics::applySpindashImpulse(void* context)
         message.m_impulse *= hSpeed;
     }
 
-    Common::ApplyPlayerAddImpulse(message);
+    Common::ApplyPlayerApplyImpulse(message);
 
     return true;
 }

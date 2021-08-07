@@ -92,7 +92,7 @@ enum ImpulseType : uint32_t
 	BoardJumpAdlibTrickC
 };
 
-struct MsgAddImpulse
+struct MsgApplyImpulse
 {
 	INSERT_PADDING(0x10);
 	Eigen::Vector3f m_position;
@@ -511,12 +511,12 @@ inline void PlaySoundStatic(SharedPtrTypeless& soundHandle, uint32_t cueID)
     }
 }
 
-inline void ApplyPlayerAddImpulse(MsgAddImpulse const& message)
+inline void ApplyPlayerApplyImpulse(MsgApplyImpulse const& message)
 {
 	FUNCTION_PTR(void, __thiscall, processPlayerMsgAddImpulse, 0xE6CFA0, void* This, void* message);
-	alignas(16) MsgAddImpulse msgAddImpulse = message;
+	alignas(16) MsgApplyImpulse msgApplyImpulse = message;
 	void* player = *(void**)((uint32_t)*PLAYER_CONTEXT + 0x110);
-	processPlayerMsgAddImpulse(player, &msgAddImpulse);
+	processPlayerMsgAddImpulse(player, &msgApplyImpulse);
 }
 
 inline void ApplyObjectPhysicsPosition(void* pObject, Eigen::Vector3f const& pos)

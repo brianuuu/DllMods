@@ -7,6 +7,7 @@ Configuration::LanguageType Configuration::m_language = Configuration::LanguageT
 bool Configuration::m_physics = false;
 bool Configuration::m_characterMoveset = false;
 bool Configuration::m_xButtonAction = false;
+bool Configuration::m_noTrick = false;
 
 Configuration::RunResultType Configuration::m_run = Configuration::RunResultType::Disable;
 vector<string> Configuration::m_runStages = {};
@@ -25,6 +26,7 @@ bool Configuration::load(const std::string& rootPath)
     m_physics = reader.GetBoolean("Main", "bPhysics", false);
     m_characterMoveset = reader.GetBoolean("Main", "bCharacterMoveset", false);
     m_xButtonAction = reader.GetBoolean("Main", "bXAction", false);
+    m_noTrick = reader.GetBoolean("Main", "bNoTrick", false);
 
     // Get running goal custom stage list
     string runStages = reader.Get("Main", "sRunStages", "");
