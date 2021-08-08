@@ -1089,7 +1089,7 @@ bool NextGenPhysics::bActionHandlerImpl()
         return false;
     }
     bool moving = playerVelocity.norm() > 0.2f;
-    bool canUseSpindash = !moving || Configuration::m_adventureSpindash;
+    bool canUseSpindash = !moving || Configuration::m_rapidSpindash;
 
     bool bDown, bPressed, bReleased;
     NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);

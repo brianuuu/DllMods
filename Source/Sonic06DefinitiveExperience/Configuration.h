@@ -40,7 +40,7 @@ public:
     static bool m_noTrick;
 
     // Sonic
-    static bool m_adventureSpindash;
+    static bool m_rapidSpindash;
     static RunResultType m_run;
     static vector<string> m_runStages;
 
