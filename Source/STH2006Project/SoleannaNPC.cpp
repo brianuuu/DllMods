@@ -38,15 +38,15 @@ HOOK(void, __fastcall, SoleannaNPC_CSonicUpdate, 0xE6BF20, void* This, void* Edx
 				 // Teleport out of view
 				pathFollowData.m_enabled = false;
 				printf("[SoleannaNPC] Paused %s following due to out of range\n", pathFollowData.m_pPathData->m_name.c_str());
-				Common::applyObjectPhysicsPosition(pObject, Eigen::Vector3f(0, 5000, 0));
+				Common::ApplyObjectPhysicsPosition(pObject, Eigen::Vector3f(0, 5000, 0));
 			}
 			continue;
 		}
 
 		// Traverse oath
 		PathManager::followAdvance(pathFollowData, *dt);
-		Common::applyObjectPhysicsPosition(pObject, pathFollowData.m_position);
-		Common::applyObjectPhysicsRotation(pObject, pathFollowData.m_rotation);
+		Common::ApplyObjectPhysicsPosition(pObject, pathFollowData.m_position);
+		Common::ApplyObjectPhysicsRotation(pObject, pathFollowData.m_rotation);
 	}
 }
 

@@ -37,6 +37,14 @@ enum SonicCollision : uint32_t
 	TypeRagdollEnemyAttack	= 0x1E61BA4,
 };
 
+struct MatrixNodeSingleElementNode
+{
+	INSERT_PADDING(0x60);
+	Eigen::Matrix4f local;
+	Eigen::Matrix4f world;
+	INSERT_PADDING(0x60);
+};
+
 struct MsgGetHudPosition
 {
     INSERT_PADDING(0x10);
@@ -345,6 +353,24 @@ inline bool IsPlayerInGrounded()
 	// sub_E6ACA0 MsgGetGroundInfo
 	if (!*PLAYER_CONTEXT) return false;
 	return *(bool*)((uint32_t)*PLAYER_CONTEXT + 0x440);
+}
+
+inline bool CheckPlayerNodeExist(const Hedgehog::Base::CSharedString& name)
+{
+	void* context = *PLAYER_CONTEXT;
+	if (context)
+	{
+		void* player = *(void**)((char*)context + 0x110);
+		if (player)
+		{
+			boost::shared_ptr<MatrixNodeSingleElementNode> node;
+			FUNCTION_PTR(void, __thiscall, GetNode, 0x700B70, void* This, boost::shared_ptr<MatrixNodeSingleElementNode> & node, const Hedgehog::Base::CSharedString & name);
+			GetNode(*(void**)((char*)player + 0x234), node, name);
+			return (node ? true : false);
+		}
+	}
+
+	return false;
 }
 
 inline bool CheckCurrentStage(char const* stageID)

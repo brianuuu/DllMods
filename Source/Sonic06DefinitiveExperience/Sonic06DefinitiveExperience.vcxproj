@@ -212,7 +212,6 @@
     <ClInclude Include="bbWriter.h" />
     <ClInclude Include="CustomCamera.h" />
     <ClInclude Include="ChaosEnergy.h" />
-    <ClInclude Include="Common.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="Itembox.h" />
     <ClInclude Include="Navigation.h" />
@@ -221,7 +220,6 @@
     <ClInclude Include="RailPhysics.h" />
     <ClInclude Include="RankQuote.h" />
     <ClInclude Include="RankRunAnimation.h" />
-    <ClInclude Include="StateManager.h" />
     <ClInclude Include="SuperSonic.h" />
     <ClInclude Include="tinyxml2.h" />
     <ClInclude Include="VoiceOver.h" />

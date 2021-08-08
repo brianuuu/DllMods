@@ -1,4 +1,5 @@
 #include "Configuration.h"
+#include "Application.h"
 #include "EnemyTrigger.h"
 #include "Navigation.h"
 #include "Omochao.h"
@@ -24,6 +25,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     }
 
     // -------------Patches--------------
+    // General application patches
+    Application::applyPatches();
+
     // Enable enemy event and triggers
     EnemyTrigger::applyPatches();
 
