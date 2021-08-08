@@ -1,7 +1,7 @@
 #include "ChaosEnergy.h"
 #include "Configuration.h"
 
-static float const c_chaosEnergyReward = 5.0f;
+float const c_chaosEnergyReward = 5.0f;
 
 HOOK(void, __fastcall, ChaosEnergy_MsgGetHudPosition, 0x1096790, void* This, void* Edx, MsgGetHudPosition* message)
 {
@@ -56,6 +56,18 @@ void __declspec(naked) addBoostFromChaosEnergy()
 	}
 }
 
+uint32_t getEnemyChaosEnergyAmountReturnAddress = 0xBE05EF;
+void __declspec(naked) getEnemyChaosEnergyAmount()
+{
+	__asm
+	{
+		mov		ecx, esi
+		call	ChaosEnergy::getEnemyChaosEnergyAmountImpl
+		mov		ecx, eax
+		jmp		[getEnemyChaosEnergyAmountReturnAddress]
+	}
+}
+
 uint32_t setChaosEnergyAmountAndTypeReturnAddress = 0x112509D;
 void __declspec(naked) setChaosEnergyAmountAndType()
 {
@@ -94,22 +106,19 @@ void __declspec(naked) swapChaosEnergyEffect()
 	}
 }
 
-uint32_t getEnemyChaosEnergyAmountReturnAddress = 0xBE05EF;
-void __declspec(naked) getEnemyChaosEnergyAmount()
-{
-	__asm
-	{
-		mov		ecx, esi
-		call	ChaosEnergy::getEnemyChaosEnergyAmountImpl
-		mov		ecx, eax
-		jmp		[getEnemyChaosEnergyAmountReturnAddress]
-	}
-}
-
 void ChaosEnergy::applyPatches()
 {
 	// Make Chaos Energy goes to Sonic
 	INSTALL_HOOK(ChaosEnergy_MsgGetHudPosition);
+
+	// Change number of chaos energy spawn from enemies
+	WRITE_JUMP(0xBE05E9, getEnemyChaosEnergyAmount);
+
+	// Set amount of ChaosDrive/LightCore to spawn from enemy
+	WRITE_JUMP(0x1125094, setChaosEnergyAmountAndType);
+
+	// Swap between Chaos Drive and Light Core particle effect
+	WRITE_JUMP(0x1124362, swapChaosEnergyEffect);
 
 	if (Configuration::m_physics)
 	{
@@ -128,35 +137,50 @@ void ChaosEnergy::applyPatches()
 
 		// Give 3 chaos energy for board trick jump
 		WRITE_MEMORY(0x11A12E4, uint8_t, 3);
-
-		// Set amount of ChaosDrive/LightCore to spawn from enemy
-		WRITE_JUMP(0x1125094, setChaosEnergyAmountAndType);
-
-		// Swap between Chaos Drive and Light Core particle effect
-		WRITE_JUMP(0x1124362, swapChaosEnergyEffect);
-
-		// Change number of chaos energy spawn from enemies
-		WRITE_JUMP(0xBE05E9, getEnemyChaosEnergyAmount);
 	}
 }
 
 uint32_t __fastcall ChaosEnergy::getEnemyChaosEnergyAmountImpl(uint32_t* pEnemy)
 {
-	//printf("0x%08X\n", pEnemy[0]);
-	switch (pEnemy[0])
+	// Default Generations enemy award
+	uint32_t amount = 5;
+
+	if (Configuration::m_physics)
 	{
-	case 0x016F7C9C: // CEnemyEggRobo
-	{
-		// CEnemyEggRobo[104] == 1 -> missile
-		return pEnemy[104] ? 1 : 2;
+		//printf("0x%08X\n", pEnemy[0]);
+		switch (pEnemy[0])
+		{
+			case 0x016F7C9C: // CEnemyEggRobo
+			{
+				// CEnemyEggRobo[104] == 1 -> missile
+				amount = pEnemy[104] ? 1 : 2;
+				break;
+			}
+			case 0x016FB1FC: // CEnemyELauncher
+			{
+				amount = 3;
+				break;
+			}
+			case 0x016F95CC: // CEnemyCrawler
+			{
+				amount = 2;
+				break;
+			}
+			default:
+			{
+				amount = 1;
+				break;
+			}
+		}
 	}
-	case 0x016FB1FC: return 3; // CEnemyELauncher
 
 	// For Iblis monsters, add 0x00010000 to notify it to use lightcore
-	case 0x016F95CC: return 2 + 0x00010000; // CEnemyCrawler
-	case 0x016F8C54: return 1 + 0x00010000; // CEnemyTaker
-	case 0x016FAD14: return 1 + 0x00010000; // CEnemyBiter
-
-	default: return 1;
+	if (pEnemy[0] == 0x016F95CC ||  // CEnemyCrawler
+		pEnemy[0] == 0x016F8C54 ||  // CEnemyTaker
+		pEnemy[0] == 0x016FAD14)	// CEnemyBiter
+	{
+		amount += 0x00010000;
 	}
+
+	return amount;
 }
