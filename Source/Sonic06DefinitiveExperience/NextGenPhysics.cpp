@@ -588,6 +588,9 @@ void NextGenPhysics::applyPatches()
     // Always disable jump ball sfx
     WRITE_MEMORY(0x11BCC7E, int, -1);
 
+    // Always disable lightdash voice
+    WRITE_MEMORY(0x1231964, uint8_t, 0xEB);
+
     // Maintain down speed when homing attack finished (for 06 physics)
     INSTALL_HOOK(CSonicStateHomingAttackBegin);
     INSTALL_HOOK(CSonicStateHomingAttackEnd);
@@ -743,9 +746,9 @@ void NextGenPhysics::applyPatches()
         }
         else
         {
-            // Prevent stopping other voice with low priority
-            WRITE_MEMORY(0x1252740, int, -1);
-            WRITE_MEMORY(0x1252732, uint8_t, 0);
+            // Don't play voice for Japanese Sonic
+            WRITE_NOP(0x1252731, 2);
+            WRITE_JUMP(0x1252737, (void*)0x125277F);
         }
 
         // Enable sweep kick attack collision immediately
