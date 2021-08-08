@@ -9,6 +9,11 @@ bool Configuration::m_characterMoveset = false;
 bool Configuration::m_xButtonAction = false;
 bool Configuration::m_noTrick = false;
 
+bool Configuration::m_camera = false;
+bool Configuration::m_cameraInvertX = false;
+bool Configuration::m_cameraInvertY = false;
+
+bool Configuration::m_adventureSpindash = false;
 Configuration::RunResultType Configuration::m_run = Configuration::RunResultType::Disable;
 vector<string> Configuration::m_runStages = {};
 
@@ -20,13 +25,23 @@ bool Configuration::load(const std::string& rootPath)
         return false;
     }
 
+    // --------------General--------------
     m_model = (ModelType)reader.GetInteger("Main", "nModel", 0);
     m_language = (LanguageType)reader.GetInteger("Main", "nLanguage", 0);
 
+    // --------------Camera--------------
+    m_camera = reader.GetBoolean("Main", "bCamera", false);
+    m_cameraInvertX = reader.GetBoolean("Main", "bCameraInvertX", false);
+    m_cameraInvertY = reader.GetBoolean("Main", "bCameraInvertY", false);
+
+    // --------------Physics--------------
     m_physics = reader.GetBoolean("Main", "bPhysics", false);
     m_characterMoveset = reader.GetBoolean("Main", "bCharacterMoveset", false);
     m_xButtonAction = reader.GetBoolean("Main", "bXAction", false);
     m_noTrick = reader.GetBoolean("Main", "bNoTrick", false);
+
+    // --------------Sonic--------------
+    m_adventureSpindash = reader.GetBoolean("Main", "bAdventureSpindash", false);
 
     // Get running goal custom stage list
     string runStages = reader.Get("Main", "sRunStages", "");

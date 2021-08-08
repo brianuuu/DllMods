@@ -111,7 +111,8 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     //printf("%.3f, %.3f, %.3f\n", playerUpAxis.x(), playerUpAxis.y(), playerUpAxis.z());
         
     // Apply yaw
-    float const cameraYawAdd = Common::IsPlayerControlLocked() ? 0.0f : padState->RightStickHorizontal * c_cameraRotateRate * dt;
+    float const invertX = Configuration::m_cameraInvertX ? -1.0f : 1.0f;
+    float const cameraYawAdd = Common::IsPlayerControlLocked() ? 0.0f : padState->RightStickHorizontal * c_cameraRotateRate * dt * invertX;
     targetYawAdd += (cameraYawAdd - targetYawAdd) * c_cameraLerpRate * dt;
     Eigen::Quaternionf rotationYaw(0, 0, 0, 1);
     rotationYaw = Eigen::AngleAxisf(targetYawAdd, playerUpAxis);
@@ -131,7 +132,8 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     }
     else
     {
-        pitch += Common::IsPlayerControlLocked() ? 0.0f : -(padState->RightStickVertical) * c_cameraRotateRate * dt;
+        float const invertY = Configuration::m_cameraInvertY ? -1.0f : 1.0f;
+        pitch += Common::IsPlayerControlLocked() ? 0.0f : -(padState->RightStickVertical) * c_cameraRotateRate * dt * invertY;
     }
     ClampFloat(pitch, pitchMin, pitchMax);
     
@@ -207,17 +209,20 @@ HOOK(int, __fastcall, CustomCamera_MsgFinishPause, 0x010BC110, void* This, void*
 
 void CustomCamera::applyPatches()
 {
-    // Override BOOST_BEGIN_FOVY_TARGET
-    static float const BOOST_BEGIN_FOVY_TARGET = 75.0f;
-    WRITE_MEMORY(0x10E81FC, float*, &BOOST_BEGIN_FOVY_TARGET);
+    if (Configuration::m_camera)
+    {
+        // Override BOOST_BEGIN_FOVY_TARGET
+        static float const BOOST_BEGIN_FOVY_TARGET = 75.0f;
+        WRITE_MEMORY(0x10E81FC, float*, &BOOST_BEGIN_FOVY_TARGET);
 
-    // Override BOOST_LOOP_FOVY_TARGET
-    static float const BOOST_LOOP_FOVY_TARGET = 60.0f;
-    WRITE_MEMORY(0x10E7BA6, float*, &BOOST_LOOP_FOVY_TARGET);
+        // Override BOOST_LOOP_FOVY_TARGET
+        static float const BOOST_LOOP_FOVY_TARGET = 60.0f;
+        WRITE_MEMORY(0x10E7BA6, float*, &BOOST_LOOP_FOVY_TARGET);
 
-    INSTALL_HOOK(CPlayer3DNormalCameraAdvance);
-    INSTALL_HOOK(CustomCamera_MsgStartPause);
-    INSTALL_HOOK(CustomCamera_MsgFinishPause);
+        INSTALL_HOOK(CPlayer3DNormalCameraAdvance);
+        INSTALL_HOOK(CustomCamera_MsgStartPause);
+        INSTALL_HOOK(CustomCamera_MsgFinishPause);
+    }
 
     if (Configuration::m_physics)
     {

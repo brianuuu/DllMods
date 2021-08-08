@@ -1089,6 +1089,7 @@ bool NextGenPhysics::bActionHandlerImpl()
         return false;
     }
     bool moving = playerVelocity.norm() > 0.2f;
+    bool canUseSpindash = !moving || Configuration::m_adventureSpindash;
 
     bool bDown, bPressed, bReleased;
     NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
@@ -1096,7 +1097,7 @@ bool NextGenPhysics::bActionHandlerImpl()
     if (bDown)
     {
         // Standing still and held B for a while (Spin Dash)
-        if (!moving && NextGenPhysics::m_bHeldTimer > c_squatKickPressMaxTime)
+        if (canUseSpindash && NextGenPhysics::m_bHeldTimer > c_squatKickPressMaxTime)
         {
             if (Configuration::m_model == Configuration::ModelType::Sonic)
             {
