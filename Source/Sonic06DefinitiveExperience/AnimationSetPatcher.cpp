@@ -98,6 +98,10 @@ void AnimationSetPatcher::applyPatches()
     // Trick animation for Super Form
     WRITE_STRING(0x15D58F4, "ssn_trick_jump");
 
+    // Change Super Form dashring to use spring jump animation
+    WRITE_MEMORY(0x1293D60, uint32_t, 0x15D5D8C); // DashRingL
+    WRITE_MEMORY(0x1293DA7, uint32_t, 0x15D5D8C); // DashRingR
+
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
         // Running goal

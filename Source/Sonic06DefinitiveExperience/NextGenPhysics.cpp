@@ -55,20 +55,27 @@ HOOK(char, __stdcall, CSonicStateGrounded, 0xDFF660, int* a1, bool a2)
     return originalCSonicStateGrounded(a1, a2);
 }
 
-HOOK(void, __fastcall, CPlayerSpeedStateSpecialJumpAdvance, 0x11DE240, void* This)
+HOOK(void, __fastcall, NextGenPhysics_MsgApplyImpulse, 0xE6CFA0, void* This, void* Edx, MsgApplyImpulse* message)
 {
-    if (!Common::IsPlayerSuper())
+    // Fix trick start animation
+    WRITE_MEMORY(0xE6D3E8, uint32_t, 0x15F8CC4); // TrickPrepare
+
+    if (Common::IsPlayerSuper())
     {
-        // Transition to Fall immediately without checking down speed for CPlayerSpeedStateSpecialJump
-        WRITE_JUMP(0x11DE320, (void*)0x11DE344);
+        // Fix Super Form JumpBoard animation
+        WRITE_MEMORY(0xE6D1C2, uint32_t, 0x15F8A04); // JumpBoard
+        WRITE_MEMORY(0xE6D23F, uint32_t, 0x15F8A04); // JumpBoardSpecialL
+        WRITE_MEMORY(0xE6D209, uint32_t, 0x15F8A04); // JumpBoardSpecialR
     }
     else
     {
         // Original code
-        WRITE_MEMORY(0x11DE320, uint8_t, 0x8D, 0x44, 0x24, 0x10, 0x8B);
+        WRITE_MEMORY(0xE6D1C2, uint32_t, 0x15F89C0); // JumpBoard
+        WRITE_MEMORY(0xE6D23F, uint32_t, 0x15F89DC); // JumpBoardSpecialL
+        WRITE_MEMORY(0xE6D209, uint32_t, 0x15F89F0); // JumpBoardSpecialR
     }
 
-    originalCPlayerSpeedStateSpecialJumpAdvance(This);
+    originalNextGenPhysics_MsgApplyImpulse(This, Edx, message);
 }
 
 uint8_t pendingFallAnimation = 0;
@@ -79,8 +86,7 @@ HOOK(int, __fastcall, CSonicStateFallBegin, 0x1118FB0, void* This)
     //printf("Animation = %s\n", message.m_name);
 
     if (message.IsAnimation("TrickPrepare") || 
-        !Common::IsPlayerSuper() &&
-        (message.IsAnimation("UpReelEnd") ||
+        message.IsAnimation("UpReelEnd") ||
         message.IsAnimation("LookBack") ||
         message.IsAnimation("DashRingL") ||
         message.IsAnimation("DashRingR") ||
@@ -88,7 +94,7 @@ HOOK(int, __fastcall, CSonicStateFallBegin, 0x1118FB0, void* This)
         message.IsAnimation("JumpBoard") ||
         message.IsAnimation("JumpBoardRev") ||
         message.IsAnimation("JumpBoardSpecialL") ||
-        message.IsAnimation("JumpBoardSpecialR")))
+        message.IsAnimation("JumpBoardSpecialR"))
     {
         // Delay transition to SpinFall until we start falling
         pendingFallAnimation = message.IsAnimation("TrickPrepare") ? 2 : 1;
@@ -130,9 +136,16 @@ HOOK(bool, __fastcall, CSonicStateFallAdvance, 0x1118C50, void* This)
         playerVelocity.y() = 0.0f;
         float const hSpeed = playerVelocity.norm();
 
-        if (vSpeed < 5.0f)
+        if (Common::IsPlayerSuper())
         {
-            //printf("hSpeed = %.3f\n", hSpeed);
+            if (vSpeed <= 0.0f)
+            {
+                Common::SonicContextChangeAnimation("Fall");
+                pendingFallAnimation = false;
+            }
+        }
+        else if (vSpeed < 5.0f)
+        {
             Common::SonicContextChangeAnimation(hSpeed <= 5.0f ? AnimationSetPatcher::SpinFallSpring : AnimationSetPatcher::SpinFall);
             pendingFallAnimation = false;
         }
@@ -591,6 +604,9 @@ void NextGenPhysics::applyPatches()
     // Always disable lightdash voice
     WRITE_MEMORY(0x1231964, uint8_t, 0xEB);
 
+    // Fix Super Form's JumpBoard animation, and fix trick animation
+    INSTALL_HOOK(NextGenPhysics_MsgApplyImpulse);
+
     // Maintain down speed when homing attack finished (for 06 physics)
     INSTALL_HOOK(CSonicStateHomingAttackBegin);
     INSTALL_HOOK(CSonicStateHomingAttackEnd);
@@ -606,7 +622,6 @@ void NextGenPhysics::applyPatches()
     if (Configuration::m_noTrick)
     {
         // No trick rainbow ring, but keep rainbow ring animation
-        WRITE_MEMORY(0xE6D3E8, uint32_t, 0x15F8CC4); // TrickPrepare
         WRITE_JUMP(0xE6D3FB, noTrickRainbowRing);
 
         // Make trick ramp use JumpBaord animation
@@ -616,7 +631,8 @@ void NextGenPhysics::applyPatches()
     // Do SpinFall animation when Sonic starts to fall
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
-        INSTALL_HOOK(CPlayerSpeedStateSpecialJumpAdvance);
+        // Transition to Fall immediately without checking down speed for CPlayerSpeedStateSpecialJump
+        WRITE_JUMP(0x11DE320, (void*)0x11DE344);
 
         // Don't transition to FallLarge when speed < -15.0f
         WRITE_MEMORY(0x1118DE5, uint8_t, 0xEB);
