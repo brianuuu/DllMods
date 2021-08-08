@@ -160,7 +160,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     {
         cameraToPlayerDist *= 1.0f + (c_pitchDistanceUpScale - 1.0f) * (targetPitch - c_pitchDistanceUp);
     }
-    else if (targetPitch < c_pitchDistanceDown && Common::IsPlayerInGrounded() && !Common::IsPlayerGrinding())
+    else if (targetPitch < c_pitchDistanceDown && Common::IsPlayerInGrounded() && !Common::IsPlayerGrinding() && playerUpAxis.y() > 0.99f && playerSpeed < 30.0f)
     {
         cameraToPlayerDist *= pow(1.0f + (1.0f - c_pitchDistanceDownScale) * (targetPitch - c_pitchDistanceDown), 2.0f);
         cameraToPlayerDist = max(2.5f, cameraToPlayerDist);
