@@ -23,7 +23,7 @@ bool IsLoadingScreen()
 }
 
 float const c_pitchMin = -20.0f * DEG_TO_RAD;
-float const c_pitchMax = 60.0f * DEG_TO_RAD;
+float const c_pitchMax = 50.0f * DEG_TO_RAD;
 float const c_pitchDefault = 6.0f * DEG_TO_RAD;
 float const c_pitchCorrection = 2.0f * DEG_TO_RAD;
 float const c_pitchCorrectionMachSpeed = c_pitchCorrection + 5.0f * DEG_TO_RAD;
@@ -133,7 +133,8 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     else
     {
         float const invertY = Configuration::m_cameraInvertY ? -1.0f : 1.0f;
-        pitch += Common::IsPlayerControlLocked() ? 0.0f : -(padState->RightStickVertical) * c_cameraRotateRate * dt * invertY;
+        float const pitchAdd = Common::IsPlayerControlLocked() ? 0.0f : -(padState->RightStickVertical) * c_cameraRotateRate * dt * invertY;
+        pitch += pitchAdd * (pitchAdd > 0.0f ? 1.5f : 1.0f);
     }
     ClampFloat(pitch, pitchMin, pitchMax);
     
