@@ -55,6 +55,22 @@ HOOK(char, __stdcall, CSonicStateGrounded, 0xDFF660, int* a1, bool a2)
     return originalCSonicStateGrounded(a1, a2);
 }
 
+HOOK(void, __fastcall, CPlayerSpeedStateSpecialJumpAdvance, 0x11DE240, void* This)
+{
+    if (!Common::IsPlayerSuper())
+    {
+        // Transition to Fall immediately without checking down speed for CPlayerSpeedStateSpecialJump
+        WRITE_JUMP(0x11DE320, (void*)0x11DE344);
+    }
+    else
+    {
+        // Original code
+        WRITE_MEMORY(0x11DE320, uint8_t, 0x8D, 0x44, 0x24, 0x10, 0x8B);
+    }
+
+    originalCPlayerSpeedStateSpecialJumpAdvance(This);
+}
+
 uint8_t pendingFallAnimation = 0;
 HOOK(int, __fastcall, CSonicStateFallBegin, 0x1118FB0, void* This)
 {
@@ -62,8 +78,9 @@ HOOK(int, __fastcall, CSonicStateFallBegin, 0x1118FB0, void* This)
     Common::SonicContextGetAnimationInfo(message);
     //printf("Animation = %s\n", message.m_name);
 
-    if (message.IsAnimation("UpReelEnd") ||
-        message.IsAnimation("TrickPrepare") ||
+    if (message.IsAnimation("TrickPrepare") || 
+        !Common::IsPlayerSuper() &&
+        (message.IsAnimation("UpReelEnd") ||
         message.IsAnimation("LookBack") ||
         message.IsAnimation("DashRingL") ||
         message.IsAnimation("DashRingR") ||
@@ -71,7 +88,7 @@ HOOK(int, __fastcall, CSonicStateFallBegin, 0x1118FB0, void* This)
         message.IsAnimation("JumpBoard") ||
         message.IsAnimation("JumpBoardRev") ||
         message.IsAnimation("JumpBoardSpecialL") ||
-        message.IsAnimation("JumpBoardSpecialR"))
+        message.IsAnimation("JumpBoardSpecialR")))
     {
         // Delay transition to SpinFall until we start falling
         pendingFallAnimation = message.IsAnimation("TrickPrepare") ? 2 : 1;
@@ -596,8 +613,7 @@ void NextGenPhysics::applyPatches()
     // Do SpinFall animation when Sonic starts to fall
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
-        // Transition to Fall immediately without checking down speed for CPlayerSpeedStateSpecialJump
-        WRITE_JUMP(0x11DE320, (void*)0x11DE344);
+        INSTALL_HOOK(CPlayerSpeedStateSpecialJumpAdvance);
 
         // Don't transition to FallLarge when speed < -15.0f
         WRITE_MEMORY(0x1118DE5, uint8_t, 0xEB);

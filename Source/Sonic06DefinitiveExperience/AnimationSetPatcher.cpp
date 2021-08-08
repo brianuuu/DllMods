@@ -95,6 +95,9 @@ const char* volatile const AnimationSetPatcher::HomingAttackLoop = "HomingAttack
 
 void AnimationSetPatcher::applyPatches()
 {
+    // Trick animation for Super Form
+    WRITE_STRING(0x15D58F4, "ssn_trick_jump");
+
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
         // Running goal

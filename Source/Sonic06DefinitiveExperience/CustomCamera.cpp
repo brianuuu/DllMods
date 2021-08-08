@@ -211,13 +211,15 @@ void CustomCamera::applyPatches()
 {
     if (Configuration::m_camera)
     {
-        // Override BOOST_BEGIN_FOVY_TARGET
+        // Override BOOST_BEGIN_FOVY_TARGET and BOOST_FOVY_SPS_BEGIN
         static float const BOOST_BEGIN_FOVY_TARGET = 75.0f;
         WRITE_MEMORY(0x10E81FC, float*, &BOOST_BEGIN_FOVY_TARGET);
+        WRITE_MEMORY(0x10E81F2, float*, &BOOST_BEGIN_FOVY_TARGET);
 
-        // Override BOOST_LOOP_FOVY_TARGET
+        // Override BOOST_LOOP_FOVY_TARGET and BOOST_FOVY_SPS
         static float const BOOST_LOOP_FOVY_TARGET = 60.0f;
         WRITE_MEMORY(0x10E7BA6, float*, &BOOST_LOOP_FOVY_TARGET);
+        WRITE_MEMORY(0x10E7B9C, float*, &BOOST_LOOP_FOVY_TARGET);
 
         INSTALL_HOOK(CPlayer3DNormalCameraAdvance);
         INSTALL_HOOK(CustomCamera_MsgStartPause);
