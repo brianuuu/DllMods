@@ -592,6 +592,21 @@ void __declspec(naked) noTrickRainbowRing()
     }
 }
 
+uint32_t CObjPlaTramCarBoostButtonChangeSuccessAddress = 0xF368C4;
+uint32_t CObjPlaTramCarBoostButtonChangeReturnAddress = 0xF3691D;
+void __declspec(naked) CObjPlaTramCarBoostButtonChange()
+{
+    __asm
+    {
+        test    word ptr [esi], 0x8000
+        jz      jump
+        jmp     [CObjPlaTramCarBoostButtonChangeSuccessAddress]
+
+        jump:
+        jmp     [CObjPlaTramCarBoostButtonChangeReturnAddress]
+    }
+}
+
 void NextGenPhysics::applyPatches()
 {
     // Change character movement aniamtion speeds
@@ -691,8 +706,7 @@ void NextGenPhysics::applyPatches()
         WRITE_MEMORY(0x11A0DA8, uint32_t, 32);  // Speed external control
         WRITE_MEMORY(0x11BD057, uint32_t, 32);  // DivingDive start
         WRITE_MEMORY(0x124AF01, uint32_t, 32);  // DivingDive end
-
-        // TODO: TramRiding still using X to speed up
+        WRITE_JUMP(0xF368BF, CObjPlaTramCarBoostButtonChange); // PlaTramCar
 
         // Map drift to B-button
         WRITE_MEMORY(0xDF2DFF, uint32_t, 1);
