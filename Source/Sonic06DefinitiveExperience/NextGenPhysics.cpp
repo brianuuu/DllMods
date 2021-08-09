@@ -689,8 +689,10 @@ void NextGenPhysics::applyPatches()
         WRITE_MEMORY(0x11A0716, uint32_t, 32);  // Dummy Boost External
         WRITE_MEMORY(0x11A07D7, uint32_t, 32);  // Speed external control
         WRITE_MEMORY(0x11A0DA8, uint32_t, 32);  // Speed external control
-        //WRITE_MEMORY(0x11BD057, uint32_t, 32);  // DivingDive start
-        //WRITE_MEMORY(0x124AF01, uint32_t, 32);  // DivingDive end
+        WRITE_MEMORY(0x11BD057, uint32_t, 32);  // DivingDive start
+        WRITE_MEMORY(0x124AF01, uint32_t, 32);  // DivingDive end
+
+        // TODO: TramRiding still using X to speed up
 
         // Map drift to B-button
         WRITE_MEMORY(0xDF2DFF, uint32_t, 1);

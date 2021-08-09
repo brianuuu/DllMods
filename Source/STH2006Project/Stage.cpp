@@ -62,7 +62,7 @@ HOOK(bool, __fastcall, Stage_CSonicStateFallAdvance, 0x1118C50, void* This)
         Stage::m_wallJumpTime -= Application::getDeltaTime();
         if (Stage::m_wallJumpTime <= 0.0f)
         {
-            Common::SonicContextChangeAnimation("Fall");
+            Common::SonicContextChangeAnimation("FallFast");
         }
     }
 
