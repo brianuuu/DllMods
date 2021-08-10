@@ -1014,10 +1014,11 @@ bool __fastcall NextGenPhysics::applySpindashImpulse(void* context)
     Eigen::Vector3f playerVelocity;
     if (!Common::GetPlayerVelocity(playerVelocity)) return false;
 
-    MsgApplyImpulse message;
+    alignas(16) MsgApplyImpulse message {};
     message.m_position = playerPosition;
     message.m_impulse = playerRotation * Eigen::Vector3f::UnitZ();
     message.m_impulseType = ImpulseType::None;
+    message.m_outOfControl = 0.0f;
     message.m_notRelative = true;
     message.m_snapPosition = false;
     message.m_pathInterpolate = false;
