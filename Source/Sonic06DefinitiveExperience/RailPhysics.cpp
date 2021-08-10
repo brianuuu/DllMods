@@ -429,7 +429,7 @@ void RailPhysics::setHomingTargetPos(Eigen::Vector3f pos)
 {
     if (m_pHomingTargetObj && m_pHomingTargetCEventCollision)
     {
-        alignas(16) MsgSetPosition msgSetPosition;
+        alignas(16) MsgSetPosition msgSetPosition {};
         msgSetPosition.m_position = pos;
         processGameObjectMsgSetPosition(m_pHomingTargetObj, &msgSetPosition);
 

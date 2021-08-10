@@ -548,7 +548,7 @@ inline void ApplyPlayerApplyImpulse(MsgApplyImpulse const& message)
 inline void ApplyObjectPhysicsPosition(void* pObject, Eigen::Vector3f const& pos)
 {
 	FUNCTION_PTR(void*, __thiscall, processObjectMsgSetPosition, 0xEA2130, void* This, void* message);
-	alignas(16) MsgSetPosition msgSetPosition;
+	alignas(16) MsgSetPosition msgSetPosition {};
 	msgSetPosition.m_position = pos;
 	processObjectMsgSetPosition(pObject, &msgSetPosition);
 }
@@ -556,7 +556,7 @@ inline void ApplyObjectPhysicsPosition(void* pObject, Eigen::Vector3f const& pos
 inline void ApplyObjectPhysicsRotation(void* pObject, Eigen::Quaternionf const& rot)
 {
 	FUNCTION_PTR(void*, __thiscall, processObjectMsgSetRotation, 0xEA20D0, void* This, void* message);
-	alignas(16) MsgSetRotation msgSetRotation;
+	alignas(16) MsgSetRotation msgSetRotation {};
 	msgSetRotation.m_rotation = rot;
 	processObjectMsgSetRotation(pObject, &msgSetRotation);
 }
