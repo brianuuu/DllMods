@@ -102,6 +102,10 @@ void AnimationSetPatcher::applyPatches()
     WRITE_MEMORY(0x1293D60, uint32_t, 0x15D5D8C); // DashRingL
     WRITE_MEMORY(0x1293DA7, uint32_t, 0x15D5D8C); // DashRingR
 
+    // Set animations to loop
+    WRITE_MEMORY(0x1276D20, uint8_t, 0x1D); // DashRingL
+    WRITE_MEMORY(0x1276D87, uint8_t, 0x1D); // DashRingR
+
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
         // Running goal
@@ -119,22 +123,19 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationData.emplace_back(SpinFall, "sn_spin_fall", 1.0f, false, SpinFallLoop);
         m_newAnimationData.emplace_back(SpinFallSpring, "sn_spin_fall_spring", 1.0f, false, SpinFallLoop);
         m_newAnimationData.emplace_back(SpinFallLoop, "sn_jump_d_loop", 1.0f, true, nullptr);
-    
+
         // Set animations to loop
         WRITE_MEMORY(0x127779C, uint8_t, 0x1D); // UpReelEnd
         WRITE_MEMORY(0x1276B84, uint8_t, 0x1D); // JumpBoard
         WRITE_MEMORY(0x1276BEB, uint8_t, 0x1D); // JumpBoardRev
         WRITE_MEMORY(0x1276C4D, uint8_t, 0x1D); // JumpBoardSpecialL
         WRITE_MEMORY(0x1276CB9, uint8_t, 0x1D); // JumpBoardSpecialR
-        WRITE_MEMORY(0x1276D20, uint8_t, 0x1D); // DashRingL
-        WRITE_MEMORY(0x1276D87, uint8_t, 0x1D); // DashRingR
     }
     
     if (Configuration::m_model == Configuration::ModelType::SonicElise)
     {
         // Use unique animation for homing attack
         m_newAnimationData.emplace_back(HomingAttackLoop, "sn_homing_loop", 1.0f, true, nullptr);
-        WRITE_MEMORY(0x1232056, char*, HomingAttackLoop);
     }
 
     if (!m_newAnimationData.empty())

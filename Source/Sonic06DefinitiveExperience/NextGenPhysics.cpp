@@ -175,6 +175,16 @@ HOOK(int, __fastcall, CSonicStateHomingAttackBegin, 0x1232040, void* This)
         //printf("Down speed = %.3f\n", NextGenPhysics::m_homingDownSpeed);
     }
 
+    // Use unique animation for homing attack for Elise
+    if (Configuration::m_model == Configuration::ModelType::SonicElise && !Common::IsPlayerSuper())
+    {
+        WRITE_MEMORY(0x1232056, char*, AnimationSetPatcher::HomingAttackLoop);
+    }
+    else
+    {
+        WRITE_MEMORY(0x1232056, uint32_t, 0x15F84E8); // JumpBall
+    }
+
     // For Sonic's bounce bracelet
     NextGenPhysics::m_bounced = false;
 
