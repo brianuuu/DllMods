@@ -110,7 +110,7 @@ struct MsgApplyImpulse
 	float m_outOfControl;
 	INSERT_PADDING(0x4);
 	ImpulseType m_impulseType;
-	float m_unknown60; // related to m_outOfControl
+	float m_keepVelocityTime;
 	bool m_notRelative; // if false, add impulse direction relative to Sonic
 	bool m_snapPosition; // snap Sonic to m_position
 	INSERT_PADDING(0x3);
