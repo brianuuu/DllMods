@@ -1149,12 +1149,13 @@ bool NextGenPhysics::bActionHandlerImpl()
     {
         return false;
     }
+
+    CSonicStateFlags* flags = Common::GetSonicStateFlags();
     bool moving = playerVelocity.norm() > 0.2f;
-    bool canUseSpindash = !moving || Configuration::m_rapidSpindash;
+    bool canUseSpindash = !moving || (Configuration::m_rapidSpindash && !flags->KeepRunning);
 
     bool bDown, bPressed, bReleased;
     NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
-    CSonicStateFlags* flags = Common::GetSonicStateFlags();
     if (bDown)
     {
         // Standing still and held B for a while (Spin Dash)
@@ -1185,7 +1186,7 @@ bool NextGenPhysics::bActionHandlerImpl()
                     return true;
                 }
             }
-            else if (moving && NextGenPhysics::m_bHeldTimer > c_squatKickPressMaxTime && !flags->KeepRunning)
+            else if (moving && !flags->KeepRunning && NextGenPhysics::m_bHeldTimer > c_squatKickPressMaxTime)
             {
                 // Sonic is moving and released B (Anti-Gravity)
                 StateManager::ChangeState(StateAction::Sliding, *PLAYER_CONTEXT);
