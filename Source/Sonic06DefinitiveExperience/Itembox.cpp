@@ -47,7 +47,18 @@ HOOK(void, __fastcall, SuperRingMsgHitEventCollision, 0x11F2F10, void* This, voi
 HOOK(void, __fastcall, ClassicItemBoxMsgGetItemType, 0xE6D7D0, void* This, void* Edx, void* a2)
 {
 	// This function also plays for Modern 1up
-	VoiceOver::playItemboxVoice();
+	switch (*(uint32_t*)((uint32_t)a2 + 16))
+	{
+	case 5: // Board
+	case 11:
+	case 12:
+	case 13: // Power stomp
+	case 14:
+		break;
+	default:
+		VoiceOver::playItemboxVoice();
+		break;
+	}
 	originalClassicItemBoxMsgGetItemType(This, Edx, a2);
 }
 
