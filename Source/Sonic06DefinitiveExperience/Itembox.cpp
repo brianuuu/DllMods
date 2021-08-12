@@ -54,6 +54,7 @@ HOOK(void, __fastcall, ClassicItemBoxMsgGetItemType, 0xE6D7D0, void* This, void*
 	case 12:
 	case 13: // Power stomp
 	case 14:
+	case 19:
 		break;
 	default:
 		VoiceOver::playItemboxVoice();
