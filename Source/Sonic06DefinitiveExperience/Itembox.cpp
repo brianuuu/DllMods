@@ -50,6 +50,8 @@ HOOK(void, __fastcall, ClassicItemBoxMsgGetItemType, 0xE6D7D0, void* This, void*
 	switch (*(uint32_t*)((uint32_t)a2 + 16))
 	{
 	case 5: // Board
+	case 6: // Rocket Wisp
+	case 7: // Spike Wisp
 	case 11:
 	case 12:
 	case 13: // Power stomp
