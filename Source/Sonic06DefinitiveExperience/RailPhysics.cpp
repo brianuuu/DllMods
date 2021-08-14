@@ -282,7 +282,8 @@ void RailPhysics::applyPatches()
     WRITE_MEMORY(0x123260D, uint8_t, 0xEB);
 
     // Play GrindSwitch spark a bit earlier
-    WRITE_MEMORY(0x1704628, double, 24.0);
+    static double const grindSwitchSparkTime = 24.0;
+    WRITE_MEMORY(0x1232682, double*, &grindSwitchSparkTime);
 
     // Play normal rail sfx on board grind
     WRITE_MEMORY(0xE4FC78, uint8_t, 0xEB);
