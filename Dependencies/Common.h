@@ -14,6 +14,10 @@ CSonicContext** const pSuperSonicContext = (CSonicContext**)0x1E5E310;
 uint32_t const CStringConstructor = 0x6621A0;
 uint32_t const CStringDestructor = 0x661550;
 
+static void* const pCGlitterCreate = (void*)0xE73890;
+static void* const pCGlitterEnd = (void*)0xE72650;
+static void* const pCGlitterKill = (void*)0xE72570;
+
 enum SonicCollision : uint32_t
 {
 	TypeNoAttack			= 0x1E61B5C,
@@ -308,6 +312,53 @@ inline bool IsStringEndsWith(std::string const& value, std::string const& ending
 {
     if (ending.size() > value.size()) return false;
     return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+}
+
+static void* fCGlitterCreate
+(
+	void* pContext,
+	SharedPtrTypeless& handle,
+	void* pMatrixTransformNode,
+	Hedgehog::Base::CSharedString const* name,
+	uint32_t flag
+)
+{
+	__asm
+	{
+		push    flag
+		push    name
+		push    pMatrixTransformNode
+		mov     eax, pContext
+		mov     esi, handle
+		call	[pCGlitterCreate]
+	}
+}
+
+static void fCGlitterEnd
+(
+	void* pContext,
+	SharedPtrTypeless& handle,
+	bool instantStop
+)
+{
+	__asm
+	{
+		mov     eax, [handle]
+		mov     ebx, [eax + 4]
+		push    ebx
+		mov     ebx, [eax]
+		push    ebx
+		mov     eax, pContext
+		cmp     instantStop, 0
+		jnz     jump
+		call	[pCGlitterEnd]
+		jmp     end
+
+		jump:
+		call	[pCGlitterKill]
+
+		end:
+	}
 }
 
 inline CSonicStateFlags* GetSonicStateFlags()
