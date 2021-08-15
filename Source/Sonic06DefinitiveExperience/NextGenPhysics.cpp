@@ -769,6 +769,11 @@ void NextGenPhysics::applyPatches()
         // Change jumpball to hit enemy as if you're squat kicking (TypeSonicSquatKick)
         WRITE_MEMORY(0x11BCC43, uint32_t, SonicCollision::TypeSonicSquatKick); // jumpball start
         WRITE_MEMORY(0x11BCBB2, uint32_t, SonicCollision::TypeSonicSquatKick); // jumpball end
+    
+        // Set to custom bounce pfx from 06
+        WRITE_STRING(0x15E90AC, "ef_ch_sng_bound");
+        WRITE_STRING(0x15E90C4, "ef_ch_sng_bound_strong");
+        WRITE_STRING(0x15E93F4, "ef_ch_sps_bound");
     }
 
     //-------------------------------------------------------
