@@ -18,6 +18,7 @@ class Itembox
 public:
 	static void applyPatches();
 	static void playItemboxSfx();
+	static void __fastcall playItemboxPfx(void* This);
 	static tinyxml2::XMLError getInjectStr(char const* pData, uint32_t size, std::string& injectStr);
 };
 

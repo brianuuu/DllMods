@@ -87,14 +87,17 @@ void __declspec(naked) LoadItemboxLockAsmHook()
 }
 
 // Have to use ASM to prevent double playing sfx
-uint32_t sub_D5FD10 = 0xD5FD10;
-uint32_t objItemPlaySfxReturnAddress = 0xFFF9AF;
+uint32_t sub_D5D940 = 0xD5D940;
+uint32_t objItemPlaySfxReturnAddress = 0xFFF9A8;
 void __declspec(naked) objItemPlaySfx()
 {
 	__asm
 	{
-		call	[sub_D5FD10]
+		mov     ecx, [esp + 14h]
+		call	Itembox::playItemboxPfx
 		call	Itembox::playItemboxSfx
+		mov     esi, [esp + 14h]
+		call	[sub_D5D940]
 		jmp		[objItemPlaySfxReturnAddress]
 	}
 }
@@ -104,12 +107,18 @@ void Itembox::applyPatches()
 	// Play itembox and voice sfx for 10ring and 1up
 	WRITE_MEMORY(0x11F2FE0, uint32_t, 4002032);
 	INSTALL_HOOK(SuperRingMsgHitEventCollision);
-	WRITE_JUMP(0xFFF9AA, objItemPlaySfx);
+	WRITE_JUMP(0xFFF99F, objItemPlaySfx);
 	INSTALL_HOOK(ClassicItemBoxMsgGetItemType);
 
 	// Set itembox radius
 	WRITE_MEMORY(0x11F3353, float*, &c_10ringRadius);
 	WRITE_MEMORY(0xFFF9E8, float*, &c_1upRadius);
+
+	// Disable ef_ch_sns_yh1_ringget on 10ring
+	WRITE_STRING(0x166E4CC, "");
+
+	// Disable ef_ch_sng_yh1_1up after getting 1up
+	WRITE_STRING(0x15E90DC, "");
 
 	// Load itembox lock-on object physics
 	WRITE_JUMP(0xD45FA5, LoadItemboxLockAsmHook);
@@ -123,6 +132,11 @@ void Itembox::playItemboxSfx()
 {
 	static SharedPtrTypeless soundHandle;
 	Common::SonicContextPlaySound(soundHandle, 4002032, 0);
+}
+
+void __fastcall Itembox::playItemboxPfx(void* This)
+{
+	Common::ObjectCGlitterPlayerOneShot(This, "ef_ch_sns_yh1_1upget_s");
 }
 
 tinyxml2::XMLError Itembox::getInjectStr(char const* pData, uint32_t size, std::string& injectStr)
