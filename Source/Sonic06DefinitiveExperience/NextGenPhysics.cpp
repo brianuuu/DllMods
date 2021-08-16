@@ -32,6 +32,12 @@ float const c_spindashSpeed = 30.0f;
 
 float NextGenPhysics::m_bHeldTimer = 0.0f;
 
+static char const* ef_ch_sng_bound = "ef_ch_sng_bound";
+static char const* ef_ch_sps_bound = "ef_ch_sps_bound";
+static char const* ef_ch_sng_bound_down = "ef_ch_sng_bound_down";
+static char const* ef_ch_sps_bound_down = "ef_ch_sps_bound_down";
+static char const* ef_ch_sng_bound_strong = "ef_ch_sng_bound_strong";
+
 HOOK(void, __stdcall, CSonicRotationAdvance, 0xE310A0, void* a1, float* targetDir, float turnRate1, float turnRateMultiplier, bool noLockDirection, float turnRate2)
 {
     if (noLockDirection && !Common::IsPlayerOnBoard())
@@ -207,14 +213,32 @@ HOOK(int*, __fastcall, CSonicStateHomingAttackEnd, 0x1231F80, void* This)
 
 HOOK(char*, __fastcall, CSonicStateJumpBallBegin, 0x11BCBE0, void* This)
 {
-    if (!NextGenPhysics::m_bounced)
+    if (Configuration::m_physics)
     {
-        // Disable jumpball collision
-        WRITE_MEMORY(0x11BCC4B, uint8_t, 0x71);
+        if (!NextGenPhysics::m_bounced)
+        {
+            // Disable jumpball collision
+            WRITE_MEMORY(0x11BCC4B, uint8_t, 0x71);
+        }
+        else
+        {
+            WRITE_MEMORY(0x11BCC4B, uint8_t, 0xC1);
+        }
     }
-    else
+
+    if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
-        WRITE_MEMORY(0x11BCC4B, uint8_t, 0xC1);
+        if (!NextGenPhysics::m_bounced)
+        {
+            WRITE_MEMORY(0x11BCDA7, uint32_t, 0x1E61D6C);
+            WRITE_MEMORY(0x11BCCFC, uint32_t, 0x1E61D00); // Super
+        }
+        else
+        {
+            // Play bound_down pfx
+            WRITE_MEMORY(0x11BCDA7, char**, &ef_ch_sng_bound_down);
+            WRITE_MEMORY(0x11BCCFC, char**, &ef_ch_sps_bound_down); // Super
+        }
     }
 
     return originalCSonicStateJumpBallBegin(This);
@@ -289,8 +313,13 @@ HOOK(int*, __fastcall, CSonicStateSquatKickEnd, 0x12527B0, void* This)
 }
 
 static SharedPtrTypeless spinDashSoundHandle;
+static SharedPtrTypeless spinDashPfxHandle;
 HOOK(int*, __fastcall, CSonicStateSquatBegin, 0x1230A30, void* This)
 {
+    // Play spindash pfx
+    void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
+    Common::fCGlitterCreate(*PLAYER_CONTEXT, spinDashPfxHandle, matrixNode, "ef_ch_sng_spincharge", 1);
+
     // Play spindash charge sfx
     Common::SonicContextPlaySound(spinDashSoundHandle, 2002042, 1);
     return originalCSonicStateSquatBegin(This);
@@ -309,6 +338,9 @@ HOOK(void, __fastcall, CSonicStateSquatAdvance, 0x1230B60, void* This)
 
 HOOK(int*, __fastcall, CSonicStateSquatEnd, 0x12309A0, void* This)
 {
+    // Stop spindash pfx
+    Common::fCGlitterEnd(*PLAYER_CONTEXT, spinDashPfxHandle, true);
+
     spinDashSoundHandle.reset();
     if (NextGenPhysics::m_isSpindash)
     {
@@ -635,6 +667,9 @@ void NextGenPhysics::applyPatches()
     INSTALL_HOOK(CSonicStateHomingAttackBegin);
     INSTALL_HOOK(CSonicStateHomingAttackEnd);
 
+    // Disable jumpball collision, play pfx for Sonic
+    INSTALL_HOOK(CSonicStateJumpBallBegin);
+
     // Always disable stomp voice and sfx for Sonic
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
@@ -676,7 +711,6 @@ void NextGenPhysics::applyPatches()
         WRITE_JUMP(0x123243C, noAirDashOutOfControl);
 
         // Disable jumpball collision
-        INSTALL_HOOK(CSonicStateJumpBallBegin);
         WRITE_MEMORY(0x1118FFA, uint8_t, 0xC2, 0xC5); // Fall state
 
         // Set rings to 0 when getting damaged
@@ -771,9 +805,15 @@ void NextGenPhysics::applyPatches()
         WRITE_MEMORY(0x11BCBB2, uint32_t, SonicCollision::TypeSonicSquatKick); // jumpball end
     
         // Set to custom bounce pfx from 06
-        WRITE_STRING(0x15E90AC, "ef_ch_sng_bound");
-        WRITE_STRING(0x15E90C4, "ef_ch_sng_bound_strong");
-        WRITE_STRING(0x15E93F4, "ef_ch_sps_bound");
+        WRITE_MEMORY(0x1249C32, char**, &ef_ch_sng_bound);
+        WRITE_MEMORY(0x1254E7B, uint8_t, 0x30);
+        WRITE_MEMORY(0x1254E9A, char**, &ef_ch_sng_bound_down);
+        WRITE_MEMORY(0x1249B39, char**, &ef_ch_sng_bound_strong);
+        WRITE_MEMORY(0x1249C19, char**, &ef_ch_sps_bound);
+        WRITE_MEMORY(0x1254E57, uint8_t, 0x30);
+        WRITE_MEMORY(0x1254E73, char**, &ef_ch_sps_bound_down);
+
+        // Kill stomping pfx immediately
     }
 
     //-------------------------------------------------------

@@ -319,7 +319,7 @@ static void* fCGlitterCreate
 	void* pContext,
 	SharedPtrTypeless& handle,
 	void* pMatrixTransformNode,
-	Hedgehog::Base::CSharedString const* name,
+	Hedgehog::Base::CSharedString const& name,
 	uint32_t flag
 )
 {
