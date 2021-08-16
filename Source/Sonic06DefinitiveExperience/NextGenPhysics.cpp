@@ -32,11 +32,12 @@ float const c_spindashSpeed = 30.0f;
 
 float NextGenPhysics::m_bHeldTimer = 0.0f;
 
-static char const* ef_ch_sng_bound = "ef_ch_sng_bound";
-static char const* ef_ch_sps_bound = "ef_ch_sps_bound";
-static char const* ef_ch_sng_bound_down = "ef_ch_sng_bound_down";
-static char const* ef_ch_sps_bound_down = "ef_ch_sps_bound_down";
-static char const* ef_ch_sng_bound_strong = "ef_ch_sng_bound_strong";
+char const* ef_ch_sng_bound = "ef_ch_sng_bound";
+char const* ef_ch_sps_bound = "ef_ch_sps_bound";
+char const* ef_ch_sng_bound_down = "ef_ch_sng_bound_down";
+char const* ef_ch_sps_bound_down = "ef_ch_sps_bound_down";
+char const* ef_ch_sng_bound_strong = "ef_ch_sng_bound_strong";
+char const* ef_ch_sng_spindash = "ef_ch_sng_spindash";
 
 HOOK(void, __stdcall, CSonicRotationAdvance, 0xE310A0, void* a1, float* targetDir, float turnRate1, float turnRateMultiplier, bool noLockDirection, float turnRate2)
 {
@@ -339,7 +340,7 @@ HOOK(void, __fastcall, CSonicStateSquatAdvance, 0x1230B60, void* This)
 HOOK(int*, __fastcall, CSonicStateSquatEnd, 0x12309A0, void* This)
 {
     // Stop spindash pfx
-    Common::fCGlitterEnd(*PLAYER_CONTEXT, spinDashPfxHandle, true);
+    Common::fCGlitterEnd(*PLAYER_CONTEXT, spinDashPfxHandle, false);
 
     spinDashSoundHandle.reset();
     if (NextGenPhysics::m_isSpindash)
@@ -363,6 +364,11 @@ HOOK(int, __fastcall, CSonicStateSlidingBegin, 0x11D7110, void* This)
         // Disable sliding sfx and voice
         WRITE_MEMORY(0x11D722C, int, -1);
         WRITE_MEMORY(0x11D72DC, int, -1);
+
+        // Use spindash pfx
+        WRITE_MEMORY(0x11D6A59, uint8_t, 0x30);
+        WRITE_MEMORY(0x11D6A0A, char**, &ef_ch_sng_spindash);
+        WRITE_MEMORY(0x11D6A80, char**, &ef_ch_sng_spindash);
     }
     else
     {
@@ -374,6 +380,11 @@ HOOK(int, __fastcall, CSonicStateSlidingBegin, 0x11D7110, void* This)
         // Sliding sfx and voice
         WRITE_MEMORY(0x11D722C, uint32_t, 2002032);
         WRITE_MEMORY(0x11D72DC, uint32_t, 3002016);
+
+        // Original sliding pfx
+        WRITE_MEMORY(0x11D6A59, uint8_t, 0x18);
+        WRITE_MEMORY(0x11D6A0A, uint32_t, 0x1E61E00);
+        WRITE_MEMORY(0x11D6A80, uint32_t, 0x1E61DA8);
 
         NextGenPhysics::m_isSliding = true;
     }
@@ -879,6 +890,13 @@ void NextGenPhysics::applyPatches()
         WRITE_JUMP(0x11D989B, slidingHorizontalTargetVel2D);
         WRITE_JUMP(0x11D98A7, slidingHorizontalTargetVel2D);
         WRITE_JUMP(0x11D9532, slidingHorizontalTargetVel3D);
+
+        // Disable sliding pfx
+        WRITE_MEMORY(0x15E91B4, uint8_t, 0x00);
+        WRITE_MEMORY(0x15E91CC, uint8_t, 0x00);
+
+        // Do not use sliding fail pfx
+        WRITE_NOP(0x11D6A6D, 2);
     }
 
     //-------------------------------------------------------
