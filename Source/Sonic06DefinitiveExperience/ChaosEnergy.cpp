@@ -46,12 +46,12 @@ void __declspec(naked) addBoostFromChaosEnergy()
 		mov		eax, [esp + 8h] // This is pushed in the stack
 		cmp		dword ptr [eax + 11Ch], 0
 		je		jump
-		mov		eax, 4002073 // TODO: cue ID for LightCore
+		mov		eax, 4002086 // cue ID for Light Core
 		jmp		[addBoostFromChaosEnergyReturnAddress]
 
 		// original function
 		jump:
-		mov		eax, 4002073 // cue ID for ChaosDrive
+		mov		eax, 4002087 // cue ID for Chaos Drive
 		jmp		[addBoostFromChaosEnergyReturnAddress]
 	}
 }
