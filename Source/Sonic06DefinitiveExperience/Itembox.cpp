@@ -1,5 +1,4 @@
 #include "Itembox.h"
-#include "VoiceOver.h"
 
 float const c_10ringRadius = 0.57f;
 float const c_1upRadius = 0.70f;
@@ -36,33 +35,6 @@ HOOK(uint32_t*, __fastcall, ReadXmlData, 0xCE5FC0, uint32_t size, char* pData, v
 	}
     
 	return originalReadXmlData(size, pData, a3, a4);
-}
-
-HOOK(void, __fastcall, SuperRingMsgHitEventCollision, 0x11F2F10, void* This, void* Edx, void* a2)
-{
-	VoiceOver::playItemboxVoice();
-	originalSuperRingMsgHitEventCollision(This, Edx, a2);
-}
-
-HOOK(void, __fastcall, ClassicItemBoxMsgGetItemType, 0xE6D7D0, void* This, void* Edx, void* a2)
-{
-	// This function also plays for Modern 1up
-	switch (*(uint32_t*)((uint32_t)a2 + 16))
-	{
-	case 5: // Board
-	case 6: // Rocket Wisp
-	case 7: // Spike Wisp
-	case 11:
-	case 12:
-	case 13: // Power stomp
-	case 14:
-	case 19:
-		break;
-	default:
-		VoiceOver::playItemboxVoice();
-		break;
-	}
-	originalClassicItemBoxMsgGetItemType(This, Edx, a2);
 }
 
 const char* volatile const ObjectProductionItemboxLock = "ObjectProductionItemboxLock.phy.xml";
@@ -106,9 +78,7 @@ void Itembox::applyPatches()
 {
 	// Play itembox and voice sfx for 10ring and 1up
 	WRITE_MEMORY(0x11F2FE0, uint32_t, 4002032);
-	INSTALL_HOOK(SuperRingMsgHitEventCollision);
 	WRITE_JUMP(0xFFF99F, objItemPlaySfx);
-	INSTALL_HOOK(ClassicItemBoxMsgGetItemType);
 
 	// Set itembox radius
 	WRITE_MEMORY(0x11F3353, float*, &c_10ringRadius);

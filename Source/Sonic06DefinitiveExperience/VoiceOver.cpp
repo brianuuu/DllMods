@@ -20,6 +20,33 @@ HOOK(int32_t*, __fastcall, VoiceOver_CSonicStateHomingAttackAfterBegin, 0x111830
 	return originalVoiceOver_CSonicStateHomingAttackAfterBegin(This);
 }
 
+HOOK(void, __fastcall, VoiceOver_SuperRingMsgHitEventCollision, 0x11F2F10, void* This, void* Edx, void* a2)
+{
+	VoiceOver::playItemboxVoice();
+	originalVoiceOver_SuperRingMsgHitEventCollision(This, Edx, a2);
+}
+
+HOOK(void, __fastcall, VoiceOver_ClassicItemBoxMsgGetItemType, 0xE6D7D0, void* This, void* Edx, void* a2)
+{
+	// This function also plays for Modern 1up
+	switch (*(uint32_t*)((uint32_t)a2 + 16))
+	{
+	case 5: // Board
+	case 6: // Rocket Wisp
+	case 7: // Spike Wisp
+	case 11:
+	case 12:
+	case 13: // Power stomp
+	case 14:
+	case 19:
+		break;
+	default:
+		VoiceOver::playItemboxVoice();
+		break;
+	}
+	originalVoiceOver_ClassicItemBoxMsgGetItemType(This, Edx, a2);
+}
+
 // Play rainbow ring voice
 uint32_t objRainbowRingVoiceReturnAddress = 0x115A8F2;
 void __declspec(naked) objRainbowRingVoice()
@@ -57,6 +84,10 @@ void VoiceOver::applyPatches()
 
 	// Add jump voices to walljump
 	INSTALL_HOOK(VoiceOver_CSonicStateWallJumpBegin);
+
+	// Play itembox voices
+	INSTALL_HOOK(VoiceOver_SuperRingMsgHitEventCollision);
+	INSTALL_HOOK(VoiceOver_ClassicItemBoxMsgGetItemType);
 }
 
 void VoiceOver::playJumpVoice()
