@@ -48,22 +48,34 @@ void __declspec(naked) addBoostFromChaosEnergy()
 	}
 }
 
-uint32_t setChaosEnergySfxReturnAddress = 0x112459F;
-void __declspec(naked) setChaosEnergySfx()
+uint32_t setChaosEnergySfxPfxReturnAddress = 0x112459F;
+void __declspec(naked) setChaosEnergySfxPfx()
 {
 	__asm
 	{
 		// Change sound effect
 		mov		eax, [esp + 8h] // This is pushed in the stack
 		cmp		dword ptr [eax + 11Ch], 0
+		push	ebx
+		push	ecx
 		je		jump
-		mov		eax, 4002086 // cue ID for Light Core
-		jmp		[setChaosEnergySfxReturnAddress]
 
-		// original function
+		// LightCore
+		mov		ecx, 1
+		call	ChaosEnergy::playChaosEnergyPfx
+		pop		ecx
+		pop		ebx
+		mov		eax, 4002086
+		jmp		[setChaosEnergySfxPfxReturnAddress]
+
+		// Chaos Drive
 		jump:
-		mov		eax, 4002087 // cue ID for Chaos Drive
-		jmp		[setChaosEnergySfxReturnAddress]
+		mov		ecx, 0
+		call	ChaosEnergy::playChaosEnergyPfx
+		pop		ecx
+		pop		ebx
+		mov		eax, 4002087 
+		jmp		[setChaosEnergySfxPfxReturnAddress]
 	}
 }
 
@@ -149,8 +161,8 @@ void ChaosEnergy::applyPatches()
 	// Swap between ChaosDrive and LightCore particle effect
 	WRITE_JUMP(0x1124362, swapChaosEnergyEffect);
 
-	// Use correct ChaosDrive/LightCore sfx
-	WRITE_JUMP(0x112459A, setChaosEnergySfx);
+	// Use correct ChaosDrive/LightCore sfx and pfx
+	WRITE_JUMP(0x112459A, setChaosEnergySfxPfx);
 
 	if (Configuration::m_physics)
 	{
@@ -198,4 +210,11 @@ uint32_t __fastcall ChaosEnergy::getEnemyChaosEnergyTypeImpl(uint32_t* pEnemy, u
 	}
 
 	return amount;
+}
+
+void __fastcall ChaosEnergy::playChaosEnergyPfx(bool isLightcore)
+{
+	static SharedPtrTypeless pfxHandle;
+	void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
+	Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle, matrixNode, isLightcore ? "ef_if_hud_yh1_lightcore_get" : "ef_if_hud_yh1_boostenergy_get" , 1);
 }
