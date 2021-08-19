@@ -37,6 +37,75 @@ HOOK(uint32_t*, __fastcall, ReadXmlData, 0xCE5FC0, uint32_t size, char* pData, v
 	return originalReadXmlData(size, pData, a3, a4);
 }
 
+HOOK(void, __fastcall, ItemMsgHitEventCollision, 0xFFF810, uint32_t* This, void* Edx, void* message)
+{
+	switch (This[71])
+	{
+	default: WRITE_MEMORY(0xFFF82F, uint32_t, 2) break; // 1up
+	case 1:  WRITE_MEMORY(0xFFF82F, uint32_t, 4) break; // invincibility
+	case 2:  WRITE_MEMORY(0xFFF82F, uint32_t, 0) break; // shield
+	case 3:  WRITE_MEMORY(0xFFF82F, uint32_t, 8) break; // fire shield
+	case 4:  WRITE_MEMORY(0xFFF82F, uint32_t, 3) break; // speed shoes
+	case 5:  WRITE_MEMORY(0xFFF82F, uint32_t, 20) break; // gauge up
+	case 6:  WRITE_MEMORY(0xFFF82F, uint32_t, 21) break; // 5 ring
+	case 7:  WRITE_MEMORY(0xFFF82F, uint32_t, 22) break; // 10 ring
+	case 8:  WRITE_MEMORY(0xFFF82F, uint32_t, 23) break; // 20 ring
+	}
+
+	originalItemMsgHitEventCollision(This, Edx, message);
+}
+
+struct MsgTakeObject
+{
+	INSERT_PADDING(0x10);
+	uint32_t m_type;
+};
+
+HOOK(void, __fastcall, Itembox_MsgTakeObject, 0xE6DEC0, void* This, void* Edx, MsgTakeObject* message)
+{
+	// Set CPlayerSpeedStatePluginRingCountUp amount
+	switch (message->m_type)
+	{
+	case 21: WRITE_MEMORY(0xE40DDF, uint32_t, 5); break;
+	default: WRITE_MEMORY(0xE40DDF, uint32_t, 10); break;
+	case 23: WRITE_MEMORY(0xE40DDF, uint32_t, 20); break;
+	}
+
+	if (message->m_type > 20)
+	{
+		message->m_type = 1;
+	}
+
+	originalItembox_MsgTakeObject(This, Edx, message);
+}
+
+HOOK(void, __fastcall, Itembox_MsgGetItemType, 0xE6D7D0, void* This, void* Edx, void* a2)
+{
+	uint32_t type = *(uint32_t*)((uint32_t)a2 + 16);
+	if (type == 20)
+	{
+		// Gauge up
+		float const maxBoost = (Common::GetPlayerSkill() & 0x8) ? 200.0f : 100.0f;
+		float* currentBoost = Common::GetPlayerBoost();
+		if (*currentBoost < maxBoost)
+		{
+			*currentBoost = maxBoost;
+		}
+	}
+	else if (type >= 21 && type <= 23)
+	{
+		// 5,10,20 ring
+		MsgTakeObject msgTakeObject = {};
+		msgTakeObject.m_type = type;
+
+		FUNCTION_PTR(void, __thiscall, processMsgTakeObject, 0xE6DEC0, void* This, void* pMessage);
+		void* player = *(void**)((uint32_t)*PLAYER_CONTEXT + 0x110);
+		processMsgTakeObject(player, &msgTakeObject);
+	}
+
+	originalItembox_MsgGetItemType(This, Edx, a2);
+}
+
 const char* volatile const ObjectProductionItemboxLock = "ObjectProductionItemboxLock.phy.xml";
 uint32_t LoadItemboxLockAsmHookReturnAddress = 0xD45FAA;
 uint32_t sub_EA0450 = 0xEA0450;
@@ -90,12 +159,42 @@ void Itembox::applyPatches()
 	// Disable ef_ch_sng_yh1_1up after getting 1up
 	WRITE_STRING(0x15E90DC, "");
 
+	// Disable ef_ob_com_yh1_1up effect on 1up
+	WRITE_JUMP(0xFFFA5E, (void*)0xFFFB15);
+
 	// Load itembox lock-on object physics
 	WRITE_JUMP(0xD45FA5, LoadItemboxLockAsmHook);
 
 	// Inject lock-on object
 	INSTALL_HOOK(ParseSetdata);
 	INSTALL_HOOK(ReadXmlData);
+
+	//---------------------------------------
+	// Inject new types to Item
+	//---------------------------------------
+	// Changes item model and effect
+	static char const* itemNames[] = 
+	{ 
+		"cmn_obj_oneup_HD", 
+		"cmn_obj_muteki_HD", // invincibility
+		"cmn_obj_shield_HD",
+		"cmn_obj_baria_HD",  // fire shield
+		"cmn_obj_speed_HD",
+		"cmn_obj_gaugeup_HD",
+		"cmn_obj_5ring_HD",
+		"cmn_obj_10ring_HD",
+		"cmn_obj_20ring_HD"
+	};
+	WRITE_MEMORY(0xFFF566, char**, itemNames);
+	INSTALL_HOOK(ItemMsgHitEventCollision);
+	INSTALL_HOOK(Itembox_MsgGetItemType);
+	INSTALL_HOOK(Itembox_MsgTakeObject);
+
+	// Force all item to use cmn_obj_oneup_HD skl and anm
+	WRITE_NOP(0xFFF414, 6);
+	WRITE_NOP(0xFFF593, 6);
+	WRITE_MEMORY(0xFFF5D6, uint8_t, 0xB8, 0x3C, 0x46, 0x66, 0x01, 0x90, 0x90);
+	WRITE_MEMORY(0xFFF62A, uint8_t, 0xB8, 0x3C, 0x46, 0x66, 0x01, 0x90, 0x90);
 }
 
 void Itembox::playItemboxSfx()
