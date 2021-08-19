@@ -89,6 +89,9 @@ void Itembox::applyPatches()
 
 	// Disable ef_ch_sng_yh1_1up after getting 1up
 	WRITE_STRING(0x15E90DC, "");
+	
+	// Disable ef_ob_com_yh1_1up effect on 1up
+	WRITE_JUMP(0xFFFA5E, (void*)0xFFFB15);
 
 	// Load itembox lock-on object physics
 	WRITE_JUMP(0xD45FA5, LoadItemboxLockAsmHook);

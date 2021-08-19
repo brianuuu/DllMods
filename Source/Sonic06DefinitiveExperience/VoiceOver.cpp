@@ -26,7 +26,7 @@ HOOK(void, __fastcall, VoiceOver_SuperRingMsgHitEventCollision, 0x11F2F10, void*
 	originalVoiceOver_SuperRingMsgHitEventCollision(This, Edx, a2);
 }
 
-HOOK(void, __fastcall, VoiceOver_ClassicItemBoxMsgGetItemType, 0xE6D7D0, void* This, void* Edx, void* a2)
+HOOK(void, __fastcall, VoiceOver_MsgGetItemType, 0xE6D7D0, void* This, void* Edx, void* a2)
 {
 	// This function also plays for Modern 1up
 	switch (*(uint32_t*)((uint32_t)a2 + 16))
@@ -44,7 +44,7 @@ HOOK(void, __fastcall, VoiceOver_ClassicItemBoxMsgGetItemType, 0xE6D7D0, void* T
 		VoiceOver::playItemboxVoice();
 		break;
 	}
-	originalVoiceOver_ClassicItemBoxMsgGetItemType(This, Edx, a2);
+	originalVoiceOver_MsgGetItemType(This, Edx, a2);
 }
 
 // Play rainbow ring voice
@@ -87,7 +87,7 @@ void VoiceOver::applyPatches()
 
 	// Play itembox voices
 	INSTALL_HOOK(VoiceOver_SuperRingMsgHitEventCollision);
-	INSTALL_HOOK(VoiceOver_ClassicItemBoxMsgGetItemType);
+	INSTALL_HOOK(VoiceOver_MsgGetItemType);
 }
 
 void VoiceOver::playJumpVoice()
