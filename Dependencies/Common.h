@@ -445,6 +445,24 @@ inline bool CheckCurrentStage(char const* stageID)
     return strcmp(currentStageID, stageID) == 0;
 }
 
+inline uint32_t GetPlayerSkill()
+{
+	if (!*PLAYER_CONTEXT) return 0;
+	return *(uint32_t*)((uint32_t)*PLAYER_CONTEXT + 0x1A8);
+}
+
+inline uint32_t* GetPlayerRingCount()
+{
+	if (!*PLAYER_CONTEXT) return 0;
+	return (uint32_t*)((uint32_t)*PLAYER_CONTEXT + 0x5B8);
+}
+
+inline float* GetPlayerBoost()
+{
+	if (!*PLAYER_CONTEXT) return 0;
+	return (float*)((uint32_t)*PLAYER_CONTEXT + 0x5BC);
+}
+
 inline bool GetPlayerTransform(Eigen::Vector3f& position, Eigen::Quaternionf& rotation)
 {
     if (!*PLAYER_CONTEXT) return false;
