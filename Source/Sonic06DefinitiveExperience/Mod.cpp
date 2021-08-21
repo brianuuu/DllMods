@@ -84,4 +84,11 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     WRITE_MEMORY(0xDF2380, uint16_t, 0xA4E9);
     WRITE_MEMORY(0xDF2382, uint8_t, 0x0);
     WRITE_NOP(0xDF2385, 1);
+
+    // Patch "Longer Blue Trail" by "N69 & Nekit"
+    WRITE_MEMORY(0xE5FB17, uint16_t, 0x9090);
+    WRITE_MEMORY(0xE5FB19, uint16_t, 0x9090);
+    WRITE_MEMORY(0xE5FB1B, uint16_t, 0x9090);
+    WRITE_MEMORY(0xE5FE10, uint8_t, 0x48);
+    WRITE_MEMORY(0xE5FE70, uint8_t, 0x48);
 }
