@@ -171,6 +171,7 @@ HOOK(int, __fastcall, CSonicStateStompingBegin, 0x1254CA0, void* This)
     return originalCSonicStateStompingBegin(This);
 }
 
+SharedPtrTypeless homingPfxHandle;
 HOOK(int, __fastcall, CSonicStateHomingAttackBegin, 0x1232040, void* This)
 {
     // Remember down speed just before homing attack
@@ -192,6 +193,10 @@ HOOK(int, __fastcall, CSonicStateHomingAttackBegin, 0x1232040, void* This)
         WRITE_MEMORY(0x1232056, uint32_t, 0x15F84E8); // JumpBall
     }
 
+    // Play homing attack pfx
+    void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
+    Common::fCGlitterCreate(*PLAYER_CONTEXT, homingPfxHandle, matrixNode, "ef_ch_sng_homing", 1);
+
     // For Sonic's bounce bracelet
     NextGenPhysics::m_bounced = false;
 
@@ -208,6 +213,9 @@ HOOK(int*, __fastcall, CSonicStateHomingAttackEnd, 0x1231F80, void* This)
         playerVelocity.y() += NextGenPhysics::m_homingDownSpeed - c_homingDownSpeedAdd;
         Common::SetPlayerVelocity(playerVelocity);
     }
+
+    // Kill homing pfx
+    Common::fCGlitterEnd(*PLAYER_CONTEXT, homingPfxHandle, false);
 
     return originalCSonicStateHomingAttackEnd(This);
 }
@@ -313,8 +321,8 @@ HOOK(int*, __fastcall, CSonicStateSquatKickEnd, 0x12527B0, void* This)
     return originalCSonicStateSquatKickEnd(This);
 }
 
-static SharedPtrTypeless spinDashSoundHandle;
-static SharedPtrTypeless spinDashPfxHandle;
+SharedPtrTypeless spinDashSoundHandle;
+SharedPtrTypeless spinDashPfxHandle;
 HOOK(int*, __fastcall, CSonicStateSquatBegin, 0x1230A30, void* This)
 {
     // Play spindash pfx
@@ -369,6 +377,9 @@ HOOK(int, __fastcall, CSonicStateSlidingBegin, 0x11D7110, void* This)
         WRITE_MEMORY(0x11D6A59, uint8_t, 0x30);
         WRITE_MEMORY(0x11D6A0A, char**, &ef_ch_sng_spindash);
         WRITE_MEMORY(0x11D6A80, char**, &ef_ch_sng_spindash);
+
+        // Play trail effect
+        Common::SonicContextRequestLocusEffect();
     }
     else
     {
@@ -890,10 +901,6 @@ void NextGenPhysics::applyPatches()
         WRITE_JUMP(0x11D989B, slidingHorizontalTargetVel2D);
         WRITE_JUMP(0x11D98A7, slidingHorizontalTargetVel2D);
         WRITE_JUMP(0x11D9532, slidingHorizontalTargetVel3D);
-
-        // Disable sliding pfx
-        WRITE_MEMORY(0x15E91B4, uint8_t, 0x00);
-        WRITE_MEMORY(0x15E91CC, uint8_t, 0x00);
 
         // Do not use sliding fail pfx
         WRITE_NOP(0x11D6A6D, 2);

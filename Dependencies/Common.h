@@ -611,6 +611,28 @@ inline void SonicContextGetAnimationInfo(MsgGetAnimationInfo& message)
 	CSonicSpeedProcMsgGetAnimationInfo(player, &message);
 }
 
+inline void SonicContextRequestLocusEffect()
+{
+	// Note: This doesn't work at result screen, use PlaySoundStatic instead
+	void* pSonicContext = *PLAYER_CONTEXT;
+	if (!pSonicContext) return;
+
+	// 1 seems to not stop? Force it to be 0
+	WRITE_MEMORY(0xE178E5, uint32_t, 0);
+
+	struct MsgRequestLocusEffect
+	{
+		INSERT_PADDING(0x10);
+		uint32_t flag;
+	};
+	MsgRequestLocusEffect message {};
+	message.flag = 0;
+
+	FUNCTION_PTR(int, __thiscall, processMsgRequestLocusEffect, 0xE178D0, void* This, void* pMessage);
+	void* player = *(void**)((uint32_t)*PLAYER_CONTEXT + 0x110);
+	processMsgRequestLocusEffect(player, &message);
+}
+
 inline void PlaySoundStatic(SharedPtrTypeless& soundHandle, uint32_t cueID)
 {
     uint32_t* syncObject = *(uint32_t**)0x1E79044;
