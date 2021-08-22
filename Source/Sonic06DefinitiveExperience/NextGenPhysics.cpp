@@ -253,6 +253,7 @@ HOOK(char*, __fastcall, CSonicStateJumpBallBegin, 0x11BCBE0, void* This)
     return originalCSonicStateJumpBallBegin(This);
 }
 
+SharedPtrTypeless squatKickPfxHandle;
 HOOK(int*, __fastcall, CSonicStateSquatKickBegin, 0x12526D0, void* This)
 {
     // Don't allow direction change for squat kick
@@ -274,9 +275,11 @@ HOOK(int*, __fastcall, CSonicStateSquatKickBegin, 0x12526D0, void* This)
         NextGenPhysics::m_squatKickSpeed = playerVelocity.norm();
     }
 
-    // Play squat kick sfx
+    // Play squat kick sfx and pfx
     static SharedPtrTypeless soundHandle;
     Common::SonicContextPlaySound(soundHandle, 80041021, 1);
+    void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x10);
+    Common::fCGlitterCreate(*PLAYER_CONTEXT, squatKickPfxHandle, matrixNode, "ef_ch_sng_yh1_squatkick", 1);
 
     NextGenPhysics::m_isSquatKick = true;
     return originalCSonicStateSquatKickBegin(This);
@@ -316,6 +319,9 @@ HOOK(int*, __fastcall, CSonicStateSquatKickEnd, 0x12527B0, void* This)
 {
     // Unlock direction change for sliding/spindash
     WRITE_MEMORY(0x11D944A, uint8_t, 1);
+
+    // Stop squat kick pfx
+    Common::fCGlitterEnd(*PLAYER_CONTEXT, squatKickPfxHandle, false);
 
     NextGenPhysics::m_isSquatKick = false;
     return originalCSonicStateSquatKickEnd(This);
