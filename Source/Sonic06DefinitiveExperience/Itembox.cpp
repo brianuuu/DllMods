@@ -96,6 +96,9 @@ void Itembox::applyPatches()
 	// Load itembox lock-on object physics
 	WRITE_JUMP(0xD45FA5, LoadItemboxLockAsmHook);
 
+	// Disable Item always facing screen
+	WRITE_NOP(0xFFF4E3, 3);
+
 	// Inject lock-on object
 	INSTALL_HOOK(ParseSetdata);
 	INSTALL_HOOK(ReadXmlData);
