@@ -337,13 +337,13 @@ static void* fCGlitterCreate
 static void fCGlitterEnd
 (
 	void* pContext,
-	SharedPtrTypeless& handle,
+	SharedPtrTypeless handle,
 	bool instantStop
 )
 {
 	__asm
 	{
-		mov     eax, [handle]
+		lea     eax, [handle]
 		mov     ebx, [eax + 4]
 		push    ebx
 		mov     ebx, [eax]
