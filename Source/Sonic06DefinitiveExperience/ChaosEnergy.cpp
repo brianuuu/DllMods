@@ -164,6 +164,12 @@ void ChaosEnergy::applyPatches()
 	// Use correct ChaosDrive/LightCore sfx and pfx
 	WRITE_JUMP(0x112459A, setChaosEnergySfxPfx);
 
+	// Spawn chaos energy base on currect trick level (visual only)
+	WRITE_MEMORY(0x16D1970, uint32_t, 1, 1, 2, 3);
+
+	// Give 3 chaos energy for board trick jump (visual only)
+	WRITE_MEMORY(0x11A12E4, uint8_t, 3);
+
 	if (Configuration::m_physics)
 	{
 		// Change number of chaos energy spawn from enemies
@@ -178,12 +184,19 @@ void ChaosEnergy::applyPatches()
 
 		// Award 5 boost when chaos energy reach Sonic
 		WRITE_JUMP(0x1124594, addBoostFromChaosEnergy);
+	}
+	else
+	{
+		// Make all spawn 1 chaos energy but multiply add boost by 5
+		WRITE_MEMORY(0xBDF7F2, uint32_t, 1); // enemy
+		WRITE_MEMORY(0xC8E0D0, uint32_t, 1); // CObjEnergyMeteor
 
-		// Spawn chaos energy base on currect trick level
-		WRITE_MEMORY(0x16D1970, uint32_t, 1, 1, 2, 3);
+		static float const ChaosEnergyRecoveryRate1 = 0.15f; // Enemy
+		WRITE_MEMORY(0xD96724, float*, &ChaosEnergyRecoveryRate1);
 
-		// Give 3 chaos energy for board trick jump
-		WRITE_MEMORY(0x11A12E4, uint8_t, 3);
+		static float const ChaosEnergyRecoveryRate3 = 0.1f; // EnemyBonus
+		WRITE_MEMORY(0xD96736, float*, &ChaosEnergyRecoveryRate3);
+		WRITE_MEMORY(0xE60C94, float*, &ChaosEnergyRecoveryRate3);
 	}
 }
 
