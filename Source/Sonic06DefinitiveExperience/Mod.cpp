@@ -91,4 +91,8 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     WRITE_MEMORY(0xE5FB1B, uint16_t, 0x9090);
     WRITE_MEMORY(0xE5FE10, uint8_t, 0x48);
     WRITE_MEMORY(0xE5FE70, uint8_t, 0x48);
+
+    // Patch "Disable Spin Dash on Dash Panels" by "Hyper"
+    WRITE_MEMORY(0xE0AC1C, uint8_t, 0xE9, 0x27, 0x01, 0x00, 0x00);
+    WRITE_MEMORY(0xE0C734, uint8_t, 0xE9, 0x27, 0x01, 0x00, 0x00);
 }
