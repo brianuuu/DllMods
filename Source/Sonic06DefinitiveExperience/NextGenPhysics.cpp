@@ -1264,10 +1264,17 @@ bool NextGenPhysics::bActionHandlerImpl()
             }
             else if (moving && !flags->KeepRunning && NextGenPhysics::m_bHeldTimer > c_squatKickPressMaxTime)
             {
-                // Sonic is moving and released B (Anti-Gravity)
-                StateManager::ChangeState(StateAction::Sliding, *PLAYER_CONTEXT);
-                NextGenPhysics::m_bHeldTimer = 0.0f;
-                return true;
+                if (Configuration::m_model == Configuration::ModelType::Sonic && Configuration::m_rapidSpindash)
+                {
+                    // Disable anti-gravity if rapid spindash is enabled
+                }
+                else
+                {
+                    // Moving and released B (Anti-Gravity)
+                    StateManager::ChangeState(StateAction::Sliding, *PLAYER_CONTEXT);
+                    NextGenPhysics::m_bHeldTimer = 0.0f;
+                    return true;
+                }
             }
         }
 
