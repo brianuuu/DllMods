@@ -314,6 +314,22 @@ inline bool IsStringEndsWith(std::string const& value, std::string const& ending
     return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 }
 
+inline uint32_t GetMultiLevelAddress(uint32_t initAddress, std::vector<uint32_t> offsets)
+{
+	uint32_t address = *(uint32_t*)initAddress;
+	for (uint32_t i = 0; i < offsets.size(); i++)
+	{
+		uint32_t const& offset = offsets[i];
+		address += offset;
+
+		if (i < offsets.size() - 1)
+		{
+			address = *(uint32_t*)address;
+		}
+	}
+	return address;
+}
+
 static void* fCGlitterCreate
 (
 	void* pContext,
