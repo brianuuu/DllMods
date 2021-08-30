@@ -66,4 +66,15 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     WRITE_MEMORY(0x11D7090, uint32_t, 0x1E61B90); // slide end
     WRITE_MEMORY(0x11BCC43, uint32_t, 0x1E61B90); // jumpball start
     WRITE_MEMORY(0x11BCBB2, uint32_t, 0x1E61B90); // jumpball end
+
+    // Patch "All Levels Display Names Even If Not Unlocked" by "Muzzarino & brianuuu" (Demo 5 only)
+    WRITE_MEMORY(0xD58A93, uint8_t, 0xEB, 0x41, 0xEB, 0x3F)
+
+    // Disable character switch and camera zoom in HUB World (TODO: remove UI)
+    WRITE_JUMP(0xD31697, (void*)0xD316BE);
+    WRITE_MEMORY(0xD317A5, uint8_t, 0xEB);
+
+    // Disable using RB/LB to teleport to stages (TODO: remove UI)
+    WRITE_MEMORY(0x1081068, uint8_t, 0xEB);
+    WRITE_MEMORY(0x1081090, uint8_t, 0xE9, 0xB7, 0x00, 0x00, 0x00, 0x90);
 }
