@@ -170,6 +170,16 @@ void ChaosEnergy::applyPatches()
 	// Give 3 chaos energy for board trick jump (visual only)
 	WRITE_MEMORY(0x11A12E4, uint8_t, 3);
 
+	// Set absorb time to 1.2s
+	static float ChaosEnergyParam[] =
+	{
+		5.0f,	// UpHeight
+		0.3f,	// UpTime
+		1.2f	// AbsorbTime
+	};
+	WRITE_MEMORY(0xC8EF3D, float*, ChaosEnergyParam);
+	WRITE_MEMORY(0x11244A6, float*, ChaosEnergyParam);
+
 	if (Configuration::m_physics)
 	{
 		// Change number of chaos energy spawn from enemies
