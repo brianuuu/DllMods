@@ -8,14 +8,13 @@ float const c_funcTurnRateMultiplier = PI_F * 10.0f;
 float NextGenPhysics::m_homingDownSpeed = 0.0f;
 float const c_homingDownSpeedAdd = 15.0f;
 
-bool NextGenPhysics::m_isBrakeFlip = false;
-
-bool NextGenPhysics::m_isStomping = false;
 bool NextGenPhysics::m_bounced = false;
+bool NextGenPhysics::m_isStomping = false;
 float const c_bouncePower = 18.0f;
 float const c_bouncePowerBig = 23.0f;
 
 bool NextGenPhysics::m_isSquatKick = false;
+bool NextGenPhysics::m_isBrakeFlip = false;
 Eigen::Vector3f NextGenPhysics::m_brakeFlipDir(0, 0, 1);
 float NextGenPhysics::m_squatKickSpeed = 0.0f;
 float const c_squatKickPressMaxTime = 0.3f;
