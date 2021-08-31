@@ -18,5 +18,8 @@ public:
 	static std::map<void*, PathFollowData> m_NPCs;
 	static std::set<void*> m_pObjectsMapA;
 	static std::set<void*> m_pObjectsMapB;
+
+	// The Box
+	static std::map<void*, float> m_pBoxes;
 };
 

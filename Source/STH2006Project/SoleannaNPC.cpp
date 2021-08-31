@@ -1,10 +1,12 @@
 #include "SoleannaNPC.h"
+#include "Application.h"
 
 PathDataCollection SoleannaNPC::m_pathsMapA;
 PathDataCollection SoleannaNPC::m_pathsMapB;
 std::map<void*, PathFollowData> SoleannaNPC::m_NPCs;
 std::set<void*> SoleannaNPC::m_pObjectsMapA;
 std::set<void*> SoleannaNPC::m_pObjectsMapB;
+std::map<void*, float> SoleannaNPC::m_pBoxes;
 
 HOOK(void, __fastcall, SoleannaNPC_CSonicUpdate, 0xE6BF20, void* This, void* Edx, float* dt)
 {
@@ -48,6 +50,60 @@ HOOK(void, __fastcall, SoleannaNPC_CSonicUpdate, 0xE6BF20, void* This, void* Edx
 		Common::ApplyObjectPhysicsPosition(pObject, pathFollowData.m_position);
 		Common::ApplyObjectPhysicsRotation(pObject, pathFollowData.m_rotation);
 	}
+
+	// Acclerate boxes through gravity
+	for (auto& iter : SoleannaNPC::m_pBoxes)
+	{
+		void* pObject = iter.first;
+		float& upSpeed = iter.second;
+
+		float* pPos = (float*)(((uint32_t*)pObject)[46] + 0x70);
+		Eigen::Vector3f pos(pPos[0], pPos[1], pPos[2]);
+
+		float const minY = -7.0785f;
+		float const gravity = -5.0f;
+		float const dt = Application::getDeltaTime();
+
+		pos.y() += upSpeed * dt + 0.5f * gravity * dt * dt;
+		printf("upspeed = %.4f\n", upSpeed);
+		if (pos.y() > minY)
+		{
+			upSpeed += gravity * dt;
+			upSpeed = min(upSpeed, 40.0f);
+		}
+		else
+		{
+			pos.y() = minY;
+		}
+		Common::ApplyObjectPhysicsPosition(pObject, pos);
+	}
+}
+
+HOOK(int*, __fastcall, SoleannaNPC_CSonicStateSquatKickBegin, 0x12526D0, void* This)
+{
+	if (!SoleannaNPC::m_pBoxes.empty())
+	{
+		Eigen::Vector3f playerPosition;
+		Eigen::Quaternionf playerRotation;
+		if (Common::GetPlayerTransform(playerPosition, playerRotation))
+		{
+			for (auto& iter : SoleannaNPC::m_pBoxes)
+			{
+				void* pObject = iter.first;
+				float& upSpeed = iter.second;
+
+				float* pPos = (float*)(((uint32_t*)pObject)[46] + 0x70);
+				if (playerPosition.y() >= pPos[1] + 1.8f && playerPosition.y() <= pPos[1] + 2.2f &&
+					playerPosition.x() >= pPos[0] - 1.0f && playerPosition.x() <= pPos[0] + 1.0f &&
+					playerPosition.z() >= pPos[2] - 1.0f && playerPosition.z() <= pPos[2] + 1.0f)
+				{
+					upSpeed = 6.0f;
+				}
+			}
+		}
+	}
+
+	return originalSoleannaNPC_CSonicStateSquatKickBegin(This);
 }
 
 HOOK(int, __fastcall, SoleannaNPC_CGameObject3DDestruction, 0xD5D790, void* This)
@@ -55,6 +111,12 @@ HOOK(int, __fastcall, SoleannaNPC_CGameObject3DDestruction, 0xD5D790, void* This
 	SoleannaNPC::m_pObjectsMapA.erase(This);
 	SoleannaNPC::m_pObjectsMapB.erase(This);
 	SoleannaNPC::m_NPCs.erase(This);
+
+	if (SoleannaNPC::m_pBoxes.count(This))
+	{
+		SoleannaNPC::m_pBoxes.erase(This);
+		printf("[The Box] Removed object 0x%08x\n", (uint32_t)This);
+	}
 
     return originalSoleannaNPC_CGameObject3DDestruction(This);
 }
@@ -66,7 +128,12 @@ HOOK(void, __fastcall, SoleannaNPC_MsgNotifyObjectEvent, 0xEA4F50, void* This, v
 
 	if (Common::CheckCurrentStage("pam000"))
 	{
-		if (*pEvent >= 101 && *pEvent <= 160)
+		if (*pEvent == 50 && !SoleannaNPC::m_pBoxes.count(This))
+		{
+			SoleannaNPC::m_pBoxes[This] = 0.0f;
+			printf("[The Box] Added box 0x%08x\n", (uint32_t)This);
+		}
+		else if (*pEvent >= 101 && *pEvent <= 160)
 		{
 			// Event 101-120 -> ID 0-19
 			// Event 121-140 -> ID 0-19 start at 1/3 of spline
@@ -135,6 +202,7 @@ void SoleannaNPC::applyPatches()
 		INSTALL_HOOK(SoleannaNPC_CSonicUpdate);
 		INSTALL_HOOK(SoleannaNPC_CGameObject3DDestruction);
 		INSTALL_HOOK(SoleannaNPC_MsgNotifyObjectEvent);
+		INSTALL_HOOK(SoleannaNPC_CSonicStateSquatKickBegin);
 	}
 	else
 	{
