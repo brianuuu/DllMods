@@ -180,6 +180,17 @@ void ChaosEnergy::applyPatches()
 	WRITE_MEMORY(0xC8EF3D, float*, ChaosEnergyParam);
 	WRITE_MEMORY(0x11244A6, float*, ChaosEnergyParam);
 
+	// Make all spawn 1 chaos energy but multiply add boost by 5
+	WRITE_MEMORY(0xBDF7F2, uint32_t, 1); // enemy
+	WRITE_MEMORY(0xC8E0D0, uint32_t, 1); // CObjEnergyMeteor
+
+	static float const ChaosEnergyRecoveryRate1 = 0.15f; // Enemy (0.03 default)
+	WRITE_MEMORY(0xD96724, float*, &ChaosEnergyRecoveryRate1);
+
+	static float const ChaosEnergyRecoveryRate3 = 0.1f; // EnemyBonus (0.02 default)
+	WRITE_MEMORY(0xD96736, float*, &ChaosEnergyRecoveryRate3);
+	WRITE_MEMORY(0xE60C94, float*, &ChaosEnergyRecoveryRate3);
+
 	if (Configuration::m_physics)
 	{
 		// Change number of chaos energy spawn from enemies
@@ -194,19 +205,6 @@ void ChaosEnergy::applyPatches()
 
 		// Award 5 boost when chaos energy reach Sonic
 		WRITE_JUMP(0x1124594, addBoostFromChaosEnergy);
-	}
-	else
-	{
-		// Make all spawn 1 chaos energy but multiply add boost by 5
-		WRITE_MEMORY(0xBDF7F2, uint32_t, 1); // enemy
-		WRITE_MEMORY(0xC8E0D0, uint32_t, 1); // CObjEnergyMeteor
-
-		static float const ChaosEnergyRecoveryRate1 = 0.15f; // Enemy
-		WRITE_MEMORY(0xD96724, float*, &ChaosEnergyRecoveryRate1);
-
-		static float const ChaosEnergyRecoveryRate3 = 0.1f; // EnemyBonus
-		WRITE_MEMORY(0xD96736, float*, &ChaosEnergyRecoveryRate3);
-		WRITE_MEMORY(0xE60C94, float*, &ChaosEnergyRecoveryRate3);
 	}
 }
 
