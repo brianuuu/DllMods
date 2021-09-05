@@ -91,7 +91,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
         cameraPosCached = *pCameraPos;
     }
     *pCameraTarget = playerPosition;
-    if (!Common::IsPlayerInGrounded())
+    if (!Common::IsPlayerGrounded())
     {
         cameraPosCached += Eigen::Vector3f::UnitY() * playerVelocity.y() * (playerVelocity.y() > 0.0f ? c_cameraInAirVelocitySensitivePositive : c_cameraInAirVelocitySensitiveNegative) * dt;
     }
@@ -102,7 +102,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     }
     
     // Get and smooth current player rotation
-    targetPlayerRotation = targetPlayerRotation.slerp(c_cameraRotateRate * dt, Common::IsPlayerInGrounded() ? playerRotation : Eigen::Quaternionf(1, 0, 0, 0));
+    targetPlayerRotation = targetPlayerRotation.slerp(c_cameraRotateRate * dt, Common::IsPlayerGrounded() ? playerRotation : Eigen::Quaternionf(1, 0, 0, 0));
     if (IsLoadingScreen())
     {
         targetPlayerRotation = Eigen::Quaternionf(1, 0, 0, 0);
@@ -163,7 +163,12 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     {
         cameraToPlayerDist *= 1.0f + (c_pitchDistanceUpScale - 1.0f) * (targetPitch - c_pitchDistanceUp);
     }
-    else if (targetPitch < c_pitchDistanceDown && Common::IsPlayerInGrounded() && !Common::IsPlayerGrinding() && playerUpAxis.y() > 0.99f && playerSpeed < 30.0f)
+    else if (targetPitch < c_pitchDistanceDown && 
+        Common::IsPlayerGrounded() && 
+        !Common::IsPlayerGrinding() && 
+        !flags->OnNoWallWalkGround &&
+        playerUpAxis.y() > 0.99f && 
+        playerSpeed < 30.0f)
     {
         cameraToPlayerDist *= pow(1.0f + (1.0f - c_pitchDistanceDownScale) * (targetPitch - c_pitchDistanceDown), 2.0f);
         cameraToPlayerDist = max(2.5f, cameraToPlayerDist);

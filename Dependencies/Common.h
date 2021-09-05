@@ -437,7 +437,7 @@ inline bool IsPlayerGrinding()
 	return *(uint32_t*)((uint32_t)*PLAYER_CONTEXT + 0x11F0) != 0;
 }
 
-inline bool IsPlayerInGrounded()
+inline bool IsPlayerGrounded()
 {
 	// sub_E6ACA0 MsgGetGroundInfo
 	if (!*PLAYER_CONTEXT) return false;
