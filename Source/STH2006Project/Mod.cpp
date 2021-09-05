@@ -3,7 +3,7 @@
 #include "EnemyTrigger.h"
 #include "Navigation.h"
 #include "Omochao.h"
-#include "ExpToSonic.h"
+#include "ChaosEnergy.h"
 #include "ArchiveTreePatcher.h"
 #include "Itembox.h"
 #include "Stage.h"
@@ -37,8 +37,8 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     // Character specific dialogs
     Omochao::applyPatches();
 
-    // Make Chaos Energy goes to Sonic (mainly for hub worlds since boost HUD is offscreen)
-    ExpToSonic::applyPatches();
+    // Changes how Chaos Enemgy awards boost
+    ChaosEnergy::applyPatches();
 
     // Allow 1up and 10ring to be locked-on
     ArchiveTreePatcher::applyPatches();

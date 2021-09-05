@@ -178,10 +178,10 @@
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="ArchiveTreePatcher.cpp" />
+    <ClCompile Include="ChaosEnergy.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="EnemyTrigger.cpp" />
-    <ClCompile Include="ExpToSonic.cpp" />
     <ClCompile Include="Itembox.cpp" />
     <ClCompile Include="Mod.cpp" />
     <ClCompile Include="Navigation.cpp" />
@@ -204,9 +204,9 @@
   <ItemGroup>
     <ClInclude Include="Application.h" />
     <ClInclude Include="ArchiveTreePatcher.h" />
+    <ClInclude Include="ChaosEnergy.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="EnemyTrigger.h" />
-    <ClInclude Include="ExpToSonic.h" />
     <ClInclude Include="Itembox.h" />
     <ClInclude Include="Navigation.h" />
     <ClInclude Include="Omochao.h" />
