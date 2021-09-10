@@ -45,7 +45,7 @@ float targetPitchCorrection = c_pitchCorrection;
 float targetCameraToPlayerDist = 0.0f;
 bool m_wasPaused = false;
 bool m_usedCustomCamera = false;
-bool m_usedCustomCameraLastFrame = false;
+int m_usedCustomCameraLastFrame = false;
 Eigen::Vector3f cameraPosCached(0, 0, 0);
 Eigen::Quaternionf targetPlayerRotation(1, 0, 0, 0);
 HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
@@ -80,7 +80,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     targetPitchCorrection += (pitchCorrection - targetPitchCorrection) * c_cameraLerpRate * dt;
     if (!m_usedCustomCameraLastFrame)
     {
-        targetPitchCorrection = c_pitchCorrection;
+        targetPitchCorrection = pitchCorrection;
     }
     float const pitchMin = c_pitchMin - targetPitchCorrection;
     float const pitchMax = c_pitchMax - targetPitchCorrection;
@@ -244,7 +244,14 @@ void CustomCamera::advance()
 {
     if (!m_wasPaused)
     {
-        m_usedCustomCameraLastFrame = m_usedCustomCamera;
+        if (m_usedCustomCamera)
+        {
+            m_usedCustomCameraLastFrame = 2;
+        }
+        else if (m_usedCustomCameraLastFrame > 0)
+        {
+            m_usedCustomCameraLastFrame--;
+        }
     }
     m_usedCustomCamera = false;
 }
