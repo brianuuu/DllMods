@@ -42,7 +42,7 @@ float const c_cameraInAirVelocitySensitiveNegative = 0.2f;
 float targetYawAdd = 0.0f;
 float targetPitch = 0.0f;
 float targetPitchCorrection = c_pitchCorrection;
-float targetCameraToPlayerDist = 0.0f;
+float targetCameraToPlayerDist = c_cameraToPlayerDistMin;
 bool m_wasPaused = false;
 bool m_usedCustomCamera = false;
 int m_usedCustomCameraLastFrame = false;
@@ -145,6 +145,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
         pitch -= targetPitchCorrection;
     }
     targetPitch += (pitch + targetPitchCorrection - targetPitch) * c_cameraLerpRate * dt;
+    ClampFloat(targetPitch, c_pitchMin, c_pitchMax);
 
     // Calculate current target camera distance
     float playerSpeed = playerVelocity.norm();
@@ -176,7 +177,8 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
 
     // Interpolate target camera distance
     targetCameraToPlayerDist += (cameraToPlayerDist - targetCameraToPlayerDist) * c_cameraLerpRate * dt;
-    
+    ClampFloat(targetCameraToPlayerDist, 2.0f, 30.0f);
+
     // Pitch before correction
     Eigen::Quaternionf rotationPitch(0, 0, 0, 1);
     rotationPitch = Eigen::AngleAxisf(90.0f * DEG_TO_RAD - pitch, pitchAxis);
