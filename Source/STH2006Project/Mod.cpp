@@ -21,8 +21,10 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     
     if (!Configuration::load(dir))
     {
-        MessageBox(NULL, L"Failed to parse Config.ini", NULL, MB_ICONERROR);
+        MessageBox(NULL, L"Failed to parse mod.ini", NULL, MB_ICONERROR);
     }
+
+    Common::TestModPriority(modInfo->CurrentMod->Name, "Sonic 06 Definitive Experience", true);
 
     // -------------Patches--------------
     // General application patches
@@ -77,4 +79,26 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     // Disable using RB/LB to teleport to stages (TODO: remove UI)
     WRITE_MEMORY(0x1081068, uint8_t, 0xEB);
     WRITE_MEMORY(0x1081090, uint8_t, 0xE9, 0xB7, 0x00, 0x00, 0x00, 0x90);
+}
+
+extern "C" __declspec(dllexport) void PostInit()
+{
+    /*for (auto s06deIter = modInfo->ModList->begin(); s06deIter != modInfo->ModList->end(); s06deIter++)
+    {
+        if (strcmp((*s06deIter)->Name, "Sonic 06 Definitive Experience") == 0)
+        {
+            auto currentIter = std::find(modInfo->ModList->begin(), modInfo->ModList->end(), modInfo->CurrentMod);
+            if (s06deIter > currentIter)
+            {
+                MessageBox(nullptr, TEXT("Sonic 06 Definitive Experience detected, please put it higher priority than this mod."), TEXT("STH2006 Project"), MB_ICONERROR);
+                exit(-1);
+            }
+        }
+    }*/
+
+    if (GetModuleHandle(TEXT("GenerationsD3D9Ex.dll")) == nullptr)
+    {
+        MessageBox(nullptr, TEXT("This mod requires the latest version of 'Direct3D 9 Ex' enabled."), TEXT("STH2006 Project"), MB_ICONERROR);
+        exit(-1);
+    }
 }

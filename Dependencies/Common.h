@@ -690,4 +690,84 @@ inline void ApplyObjectPhysicsRotation(void* pObject, Eigen::Quaternionf const& 
 	processObjectMsgSetRotation(pObject, &msgSetRotation);
 }
 
+inline bool IsFileExist(std::string const& file)
+{
+	struct stat buffer;
+	return stat(file.c_str(), &buffer) == 0;
+}
+
+inline void TestModPriority(std::string const& currentModName, std::string const& testModName, bool higherPriority)
+{
+	printf("currentModName = %s, testModName = %s\n", currentModName.c_str(), testModName.c_str());
+
+	char buffer[MAX_PATH];
+	GetModuleFileNameA(NULL, buffer, MAX_PATH);
+	std::string exePath(buffer);
+	std::string cpkRedirConfig = exePath.substr(0, exePath.find_last_of("\\")) + "\\cpkredir.ini";
+
+	if (!Common::IsFileExist(cpkRedirConfig))
+	{
+		printf("%s not exist.\n", cpkRedirConfig.c_str());
+		return;
+	}
+
+	INIReader reader(cpkRedirConfig);
+	std::string modsDatabase = reader.Get("CPKREDIR", "ModsDbIni", "mods\\ModsDB.ini");
+
+	if (!Common::IsFileExist(modsDatabase))
+	{
+		printf("%s not exist.\n", modsDatabase.c_str());
+		return;
+	}
+
+	int currentModIndex = -1;
+	int testModIndex = -1;
+
+	INIReader modsDatabaseReader(modsDatabase);
+	int count = modsDatabaseReader.GetInteger("Main", "ActiveModCount", 0);
+	for (int i = 0; i < count; i++)
+	{
+		std::string guid = modsDatabaseReader.Get("Main", "ActiveMod" + std::to_string(i), "");
+		std::string config = modsDatabaseReader.Get("Mods", guid, "");
+
+		if (!config.empty() && Common::IsFileExist(config))
+		{
+			INIReader configReader(config);
+			std::string name = configReader.Get("Desc", "Title", "");
+			printf("Mod #%d: %s\n", i, name.c_str());
+
+			if (name == currentModName)
+			{
+				currentModIndex = i;
+			}
+			else if (name == testModName)
+			{
+				testModIndex = i;
+			}
+		}
+	}
+
+	if (currentModIndex != -1 && testModIndex != -1)
+	{
+		bool success = true;
+		if (higherPriority)
+		{
+			success = (testModIndex < currentModIndex);
+		}
+		else
+		{
+			success = (testModIndex > currentModIndex);
+		}
+
+		if (!success)
+		{
+			std::string errorMsg = testModName + " detected, please put it " + (higherPriority ? "higher" : "lower") + " priority than (" + (higherPriority ? "above" : "below") + ") this mod.";
+			std::wstring stemp = std::wstring(errorMsg.begin(), errorMsg.end());
+			std::wstring stemp2 = std::wstring(currentModName.begin(), currentModName.end());
+			MessageBox(nullptr, stemp.c_str(), stemp2.c_str(), MB_ICONERROR);
+			exit(-1);
+		}
+	}
+}
+
 } // namespace Common
