@@ -198,6 +198,10 @@ void Itembox::applyPatches()
 	WRITE_NOP(0xFFF593, 6);
 	WRITE_MEMORY(0xFFF5D6, uint8_t, 0xB8, 0x3C, 0x46, 0x66, 0x01, 0x90, 0x90);
 	WRITE_MEMORY(0xFFF62A, uint8_t, 0xB8, 0x3C, 0x46, 0x66, 0x01, 0x90, 0x90);
+
+	// Prevent Disable Lives code conflict
+	WRITE_MEMORY(0xFFF5D7, char*, itemNames[0]);
+	WRITE_MEMORY(0xFFF62B, char*, itemNames[0]);
 }
 
 void Itembox::playItemboxSfx()
