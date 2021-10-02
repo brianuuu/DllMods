@@ -23,6 +23,7 @@ bool slidingEndWasSliding = false;
 bool NextGenPhysics::m_isSpindash = false;
 bool NextGenPhysics::m_isSliding = false;
 float NextGenPhysics::m_slidingTime = 0.0f;
+float NextGenPhysics::m_slidingSpeed = 0.0f;
 float const c_slidingTime = 3.0f;
 float const c_slidingSpeedMin = 10.0f;
 float const c_slidingSpeedMax = 16.0f;
@@ -403,6 +404,15 @@ HOOK(int, __fastcall, CSonicStateSlidingBegin, 0x11D7110, void* This)
         WRITE_MEMORY(0x11D6A80, uint32_t, 0x1E61DA8);
 
         NextGenPhysics::m_isSliding = true;
+
+        // Get current sliding speed
+        Eigen::Vector3f playerVelocity(0,0,0);
+        if (Common::GetPlayerVelocity(playerVelocity))
+        {
+            NextGenPhysics::m_slidingSpeed = playerVelocity.norm();
+            NextGenPhysics::m_slidingSpeed = max(NextGenPhysics::m_slidingSpeed, c_slidingSpeedMin);
+            NextGenPhysics::m_slidingSpeed = min(NextGenPhysics::m_slidingSpeed, c_slidingSpeedMax);
+        }
     }
 
     NextGenPhysics::m_slidingTime = NextGenPhysics::m_isSpindash ? c_spindashTime : c_slidingTime;
@@ -1096,9 +1106,6 @@ bool __fastcall NextGenPhysics::applySpindashImpulse(void* context)
     Eigen::Quaternionf playerRotation;
     if (!Common::GetPlayerTransform(playerPosition, playerRotation)) return false;
 
-    Eigen::Vector3f playerVelocity;
-    if (!Common::GetPlayerVelocity(playerVelocity)) return false;
-
     alignas(16) MsgApplyImpulse message {};
     message.m_position = playerPosition;
     message.m_impulse = playerRotation * Eigen::Vector3f::UnitZ();
@@ -1115,10 +1122,7 @@ bool __fastcall NextGenPhysics::applySpindashImpulse(void* context)
     }
     else
     {
-        float hSpeed = playerVelocity.norm();
-        hSpeed = max(hSpeed, c_slidingSpeedMin);
-        hSpeed = min(hSpeed, c_slidingSpeedMax);
-        message.m_impulse *= hSpeed;
+        message.m_impulse *= NextGenPhysics::m_slidingSpeed;
     }
 
     Common::ApplyPlayerApplyImpulse(message);
@@ -1132,16 +1136,6 @@ bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context)
     Eigen::Quaternionf playerRotation;
     if (!Common::GetPlayerTransform(playerPosition, playerRotation)) return false;
     Eigen::Vector3f playerDir = playerRotation * Eigen::Vector3f::UnitZ();
-
-    Eigen::Vector3f playerVelocity;
-    if (Common::IsPlayerIn2D())
-    {
-        Common::GetPlayerTargetVelocity(playerVelocity);
-    }
-    else
-    {
-        Common::GetPlayerVelocity(playerVelocity);
-    }
 
     // If not moving, don't update brake flip direction
     if (m_isBrakeFlip || (m_isSquatKick && m_squatKickSpeed == 0.0f))
@@ -1182,10 +1176,7 @@ bool __fastcall NextGenPhysics::applySlidingHorizontalTargetVel(void* context)
             return false;
         }
 
-        float hSpeed = playerVelocity.norm();
-        hSpeed = max(hSpeed, c_slidingSpeedMin);
-        hSpeed = min(hSpeed, c_slidingSpeedMax);
-        playerDir *= hSpeed;
+        playerDir *= m_slidingSpeed;
     }
 
     // For 2D we have to override the actual velocity (+0x290)
