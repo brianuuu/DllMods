@@ -615,12 +615,13 @@ void __declspec(naked) startSpindash()
         mov     byte ptr[ebx + 5E8h], 1
         mov     [ebx + 5E9h], al
 
+        // Set spindash state
+        mov     NextGenPhysics::m_isSpindash, 1
+
         // Give Sonic the initial nudge
         mov     ecx, ebx
         call    NextGenPhysics::applySpindashImpulse
 
-        // Set spindash state
-        mov     NextGenPhysics::m_isSpindash, 1
         jmp     [startSpindashReturnAddress]
     }
 }
@@ -849,8 +850,6 @@ void NextGenPhysics::applyPatches()
         WRITE_MEMORY(0x1249C19, char**, &ef_ch_sps_bound);
         WRITE_MEMORY(0x1254E57, uint8_t, 0x30);
         WRITE_MEMORY(0x1254E73, char**, &ef_ch_sps_bound_down);
-
-        // Kill stomping pfx immediately
     }
 
     //-------------------------------------------------------
