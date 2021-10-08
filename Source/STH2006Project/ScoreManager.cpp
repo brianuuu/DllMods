@@ -7,6 +7,15 @@ bool ScoreManager::m_internalSystem = false;
 bool ScoreManager::m_externalHUD = false;
 std::string ScoreManager::m_scoreFormat = "%01d";
 
+#define MAX_SAVED_OBJECT 10
+std::deque<uint32_t*> ScoreManager::m_savedObjects;
+
+HOOK(int, __fastcall, ScoreManager_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
+{
+	ScoreManager::reset();
+	return originalScoreManager_MsgRestartStage(This, Edx, message);
+}
+
 HOOK(int*, __fastcall, ScoreManager_GameplayManagerInit, 0xD00F70, void* This, void* Edx, int* a2)
 {
 	static char const* scoreHUD = "ui_gameplay_score";
@@ -199,6 +208,9 @@ void ScoreManager::applyPatches()
 	printf("[ScoreManager] STH2006 score system enabled\n");
 	m_enabled = true;
 
+	// Reset stage
+	INSTALL_HOOK(ScoreManager_MsgRestartStage);
+
 	// Common score hooks
 	INSTALL_HOOK(ScoreManager_GetItem);
 	INSTALL_HOOK(ScoreManager_GetRing);
@@ -277,14 +289,23 @@ void ScoreManager::overrideScoreTable(std::string const& iniFile)
 	}
 }
 
+void ScoreManager::reset()
+{
+	printf("[ScoreSystem] RESTARTED!\n");
+	m_savedObjects.clear();
+
+	if (m_internalSystem)
+	{
+		// TODO:
+	}
+}
+
 void ScoreManager::addScore(ScoreType type, uint32_t* This)
 {
-	// TODO: clear the list when score gets reset to 0
 	// Prevent same object and add score multiple times
-	static std::deque<uint32_t*> savedObjects;
 	if (This)
 	{
-		for (uint32_t const* object : savedObjects)
+		for (uint32_t const* object : m_savedObjects)
 		{
 			if (This == object)
 			{
@@ -293,10 +314,10 @@ void ScoreManager::addScore(ScoreType type, uint32_t* This)
 			}
 		}
 
-		savedObjects.push_back(This);
-		if (savedObjects.size() > 10)
+		m_savedObjects.push_back(This);
+		if (m_savedObjects.size() > MAX_SAVED_OBJECT)
 		{
-			savedObjects.pop_front();
+			m_savedObjects.pop_front();
 		}
 	}
 

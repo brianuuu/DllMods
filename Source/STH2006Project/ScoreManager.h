@@ -52,6 +52,7 @@ public:
 	static void applyPatches_InternalSystem();
 	static void overrideScoreTable(std::string const& iniFile);
 
+	static void reset();
 	static void __fastcall addScore(ScoreType type, uint32_t* This = nullptr);
 
 	// Members
@@ -59,5 +60,6 @@ public:
 	static bool m_internalSystem;
 	static bool m_externalHUD;
 	static std::string m_scoreFormat;
+	static std::deque<uint32_t*> m_savedObjects;
 };
 
