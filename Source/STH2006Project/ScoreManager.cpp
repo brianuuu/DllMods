@@ -156,16 +156,16 @@ void __declspec(naked) ScoreManager_GetRainbow()
 	}
 }
 
-HOOK(bool, __fastcall, ScoreManager_EnemyGunner, 0xBAA2F0, uint32_t* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyGunner, 0xBAA2F0, uint32_t* This, void* Edx, void* message)
 {
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
-	return originalScoreManager_EnemyGunner(This, Edx, message);
+	originalScoreManager_EnemyGunner(This, Edx, message);
 }
 
-HOOK(int*, __fastcall, ScoreManager_EnemyStingerLancer, 0xBB01B0, uint32_t* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyStingerLancer, 0xBB01B0, uint32_t* This, void* Edx, void* message)
 {
 	ScoreManager::addScore(This[104] ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, This);
-	return originalScoreManager_EnemyStingerLancer(This, Edx, message);
+	originalScoreManager_EnemyStingerLancer(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyBuster, 0xB82900, uint32_t* This, void* Edx, void* message)
@@ -180,10 +180,10 @@ HOOK(void, __fastcall, ScoreManager_EnemyFlyer, 0xBA6450, uint32_t* This, void* 
 	originalScoreManager_EnemyFlyer(This, Edx, message);
 }
 
-HOOK(int*, __fastcall, ScoreManager_EnemySearcherHunter, 0xBDC110, uint32_t* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemySearcherHunter, 0xBDC110, uint32_t* This, void* Edx, void* message)
 {
 	ScoreManager::addScore(*(bool*)((uint32_t)This + 0x17C) ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, This);
-	return originalScoreManager_EnemySearcherHunter(This, Edx, message);
+	originalScoreManager_EnemySearcherHunter(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyLiner, 0xBC7440, uint32_t* This, void* Edx, void* message)
