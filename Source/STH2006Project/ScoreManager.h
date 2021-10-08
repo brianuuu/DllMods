@@ -6,9 +6,9 @@
 
 #pragma once
 
-enum ScoreType
+enum ScoreType : uint32_t
 {
-	ST_INVALID,
+	ST_INVALID = 0,
 
 	ST_ring,
 	ST_5ring,
@@ -21,6 +21,8 @@ enum ScoreType
 	ST_enemyMedium,
 	ST_enemyLarge,
 	ST_enemyStealth,
+
+	ST_COUNT
 };
 
 class ScoreManager
@@ -31,7 +33,7 @@ public:
 	static void applyPatches_InternalSystem();
 	static void overrideScoreTable(std::string const& iniFile);
 
-	static void addScore(ScoreType type);
+	static void __fastcall addScore(ScoreType type);
 
 	// Members
 	static bool m_enabled;

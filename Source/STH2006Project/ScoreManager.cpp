@@ -50,6 +50,12 @@ HOOK(void, __fastcall, ScoreManager_GetItem, 0xFFF810, uint32_t* This, void* Edx
 	originalScoreManager_GetItem(This, Edx, message);
 }
 
+HOOK(void, __fastcall, ScoreManager_GetRing, 0x10534B0, uint32_t* This, void* Edx, void* message)
+{
+	ScoreManager::addScore(ScoreType::ST_ring);
+	originalScoreManager_GetRing(This, Edx, message);
+}
+
 HOOK(void, __fastcall, ScoreManager_GetSuperRing, 0x11F2F10, uint32_t* This, void* Edx, void* message)
 {
 	ScoreManager::addScore(ScoreType::ST_10ring);
@@ -58,9 +64,34 @@ HOOK(void, __fastcall, ScoreManager_GetSuperRing, 0x11F2F10, uint32_t* This, voi
 
 HOOK(void, __stdcall, ScoreManager_GetPhysics, 0xEA49B0, uint32_t This, int a2, void* a3, bool a4)
 {
-	static std::set<std::string> filterList =
+	static std::vector<std::string> filterList =
 	{
-		// TODO:
+		"sfx",
+		"cmn_cage",
+		"cmn_switch",
+		"cmn_itembox",
+		"cmn_bombbox_big",
+		"lock_dummy",
+
+		"en_e", // this will prevent fake enemy _col to be counted
+		"enm_eggchaser",
+
+		"wvo_obj_tn1_bridge",
+		"wvo_obj_cliffB",
+		"wvo_obj_net",
+		"wvo_door",
+
+		"wap_alert",
+
+		"kdv_mapA_bridge01",
+		"kdv_obj_Tower",
+		"kdv_obj_brickwall", // this doesn't give score in 06 lol
+		"kdv_obj_stairs",
+		"kdv_obj_scaffold",
+		"kdv_door",
+
+		"aqa_obj_magnet",
+		"aqa_obj_sphere",
 	};
 
 	// Check if it's a breakable object
@@ -68,20 +99,48 @@ HOOK(void, __stdcall, ScoreManager_GetPhysics, 0xEA49B0, uint32_t This, int a2, 
 	{
 		if (!a4 || *(uint32_t*)(This + 0x108) == 1)
 		{
-			std::string name((char*)(This + 0x130));
+			std::string name(*(char**)(This + 0x130));
 			int fakeEnemyType = ChaosEnergy::getFakeEnemyType(name);
 			if (fakeEnemyType)
 			{
 				ScoreManager::addScore(fakeEnemyType == 1 ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium);
 			}
-			else if (!filterList.count(name))
+			else
 			{
-				ScoreManager::addScore(ScoreType::ST_physics);
+				bool filtered = false;
+				for (std::string const& filter : filterList)
+				{
+					if (name.find(filter) != std::string::npos)
+					{
+						filtered = true;
+						break;
+					}
+				}
+
+				if (!filtered)
+				{
+					ScoreManager::addScore(ScoreType::ST_physics);
+				}
 			}
 		}
 	}
 
 	originalScoreManager_GetPhysics(This, a2, a3, a4);
+}
+
+uint32_t ScoreManager_GetRainbowReturnAddress = 0x115A8FC;
+void __declspec(naked) ScoreManager_GetRainbow()
+{
+	__asm
+	{
+		push	esi
+		mov		ecx, ST_rainbow
+		call	ScoreManager::addScore
+		pop		esi
+
+		mov     eax, [esi + 0BCh]
+		jmp		[ScoreManager_GetRainbowReturnAddress]
+	}
 }
 
 void ScoreManager::applyPatches()
@@ -96,8 +155,10 @@ void ScoreManager::applyPatches()
 
 	// Common score hooks
 	INSTALL_HOOK(ScoreManager_GetItem);
+	INSTALL_HOOK(ScoreManager_GetRing);
 	INSTALL_HOOK(ScoreManager_GetSuperRing);
 	INSTALL_HOOK(ScoreManager_GetPhysics);
+	WRITE_JUMP(0x115A8F6, ScoreManager_GetRainbow);
 
 	if (m_internalSystem)
 	{

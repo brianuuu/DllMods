@@ -172,18 +172,32 @@ void __fastcall ChaosEnergy::playChaosEnergyPfx(bool isLightcore)
 int ChaosEnergy::getFakeEnemyType(std::string const& name)
 {
 	// Return if provided object physics name is one of the fake enemies
+
+	static std::vector<std::string> fakeMediumEnemyList =
+	{
+		"en_eLancer",
+		"en_eBuster",
+		"en_eArmor",
+		"en_eSweeper", // stealth
+		"en_eChaser",
+		"en_eCommander",
+	};
+
+	// all fake enemy must have "en_e" and "_col" in their name
+	if (name.find("en_e") != std::string::npos && name.find("_col") != std::string::npos)
+	{
+		// Type medium enemies
+		for (std::string const& enemy : fakeMediumEnemyList)
+		{
+			if (name.find(enemy) != std::string::npos)
+			{
+				return 2;
+			}
+		}
 	
-	static std::set<std::string> fakeSmallEnemyList =
-	{
-		// TODO:
-	};
+		// Other fake enemies, all type small
+		return 1;
+	}
 
-	static std::set<std::string> fakeMediumEnemyList =
-	{
-		// TODO:
-	};
-
-	if (fakeSmallEnemyList.count(name)) return 1;
-	if (fakeMediumEnemyList.count(name)) return 2;
 	return 0;
 }
