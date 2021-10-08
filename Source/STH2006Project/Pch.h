@@ -35,3 +35,4 @@
 #include <DebugDrawText.h>
 
 #include <Common.h>
+#include <ScoreGenerationsAPI.h>

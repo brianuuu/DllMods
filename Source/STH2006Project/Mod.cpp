@@ -8,18 +8,21 @@
 #include "Itembox.h"
 #include "Stage.h"
 #include "SoleannaNPC.h"
+#include "ScoreManager.h"
+
+std::string modDir;
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
-    std::string dir = modInfo->CurrentMod->Path;
+    modDir = modInfo->CurrentMod->Path;
 
-    size_t pos = dir.find_last_of("\\/");
+    size_t pos = modDir.find_last_of("\\/");
     if (pos != std::string::npos)
     {
-        dir.erase(pos + 1);
+        modDir.erase(pos + 1);
     }
     
-    if (!Configuration::load(dir))
+    if (!Configuration::load(modDir))
     {
         MessageBox(NULL, L"Failed to parse mod.ini", NULL, MB_ICONERROR);
     }
@@ -41,6 +44,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     // Changes how Chaos Enemgy awards boost
     ChaosEnergy::applyPatches();
+
+    // Internal score system (must install before ArchiveTreePatcher)
+    ScoreManager::applyPatches();
 
     // Allow 1up and 10ring to be locked-on
     ArchiveTreePatcher::applyPatches();
@@ -101,4 +107,7 @@ extern "C" __declspec(dllexport) void PostInit()
         MessageBox(nullptr, TEXT("This mod requires the latest version of 'Direct3D 9 Ex' enabled."), TEXT("STH2006 Project"), MB_ICONERROR);
         exit(-1);
     }
+
+    // Override score to all 0s and implement them ourselves
+    ScoreManager::overrideScoreTable(modDir + "ScoreGenerations.ini");
 }

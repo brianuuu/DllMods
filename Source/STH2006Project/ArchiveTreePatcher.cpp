@@ -1,4 +1,6 @@
 #include "ArchiveTreePatcher.h"
+#include "Configuration.h"
+#include "ScoreManager.h"
 
 vector<ArchiveDependency> ArchiveTreePatcher::m_archiveDependencies = {};
 
@@ -60,5 +62,12 @@ void ArchiveTreePatcher::applyPatches()
 {
     m_archiveDependencies.push_back(ArchiveDependency("ItemboxLock", { "ActionCommon" }));
     m_archiveDependencies.push_back(ArchiveDependency("SystemCommonItemboxLock", { "SystemCommon" }));
+    
+    // Score system
+    if (ScoreManager::m_internalSystem && !ScoreManager::m_externalHUD)
+    {
+        m_archiveDependencies.push_back(ArchiveDependency("ScoreHud", { "SonicActionCommonHud" }));
+    }
+    
     INSTALL_HOOK(ParseArchiveTree);
 }

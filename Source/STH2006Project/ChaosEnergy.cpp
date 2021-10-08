@@ -168,3 +168,22 @@ void __fastcall ChaosEnergy::playChaosEnergyPfx(bool isLightcore)
 	void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
 	Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle, matrixNode, isLightcore ? "ef_if_hud_yh1_lightcore_get" : "ef_if_hud_yh1_boostenergy_get" , 1);
 }
+
+int ChaosEnergy::getFakeEnemyType(std::string const& name)
+{
+	// Return if provided object physics name is one of the fake enemies
+	
+	static std::set<std::string> fakeSmallEnemyList =
+	{
+		// TODO:
+	};
+
+	static std::set<std::string> fakeMediumEnemyList =
+	{
+		// TODO:
+	};
+
+	if (fakeSmallEnemyList.count(name)) return 1;
+	if (fakeMediumEnemyList.count(name)) return 2;
+	return 0;
+}
