@@ -41,24 +41,24 @@ HOOK(void, __fastcall, ScoreManager_GetItem, 0xFFF810, uint32_t* This, void* Edx
 {
 	switch (This[71])
 	{
-	default: ScoreManager::addScore(ScoreType::ST_itembox); break; // 1up
-	case 6:  ScoreManager::addScore(ScoreType::ST_5ring); break; // 5 ring
-	case 7:  ScoreManager::addScore(ScoreType::ST_10ring); break; // 10 ring
-	case 8:	 ScoreManager::addScore(ScoreType::ST_20ring); break; // 20 ring
+	default: ScoreManager::addScore(ScoreType::ST_itembox, This); break; // 1up
+	case 6:  ScoreManager::addScore(ScoreType::ST_5ring, This); break; // 5 ring
+	case 7:  ScoreManager::addScore(ScoreType::ST_10ring, This); break; // 10 ring
+	case 8:	 ScoreManager::addScore(ScoreType::ST_20ring, This); break; // 20 ring
 	}
 
 	originalScoreManager_GetItem(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_GetRing, 0x10534B0, uint32_t* This, void* Edx, void* message)
+HOOK(int, __fastcall, ScoreManager_GetRing, 0x10534B0, uint32_t* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(ScoreType::ST_ring);
-	originalScoreManager_GetRing(This, Edx, message);
+	ScoreManager::addScore(ScoreType::ST_ring, This);
+	return originalScoreManager_GetRing(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_GetSuperRing, 0x11F2F10, uint32_t* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(ScoreType::ST_10ring);
+	ScoreManager::addScore(ScoreType::ST_10ring, This);
 	originalScoreManager_GetSuperRing(This, Edx, message);
 }
 
@@ -83,6 +83,9 @@ HOOK(void, __stdcall, ScoreManager_GetPhysics, 0xEA49B0, uint32_t This, int a2, 
 
 		"wap_alert",
 
+		"rct_obj_door",
+		"rct_obj_horn",
+
 		"kdv_mapA_bridge01",
 		"kdv_obj_Tower",
 		"kdv_obj_brickwall", // this doesn't give score in 06 lol
@@ -103,7 +106,7 @@ HOOK(void, __stdcall, ScoreManager_GetPhysics, 0xEA49B0, uint32_t This, int a2, 
 			int fakeEnemyType = ChaosEnergy::getFakeEnemyType(name);
 			if (fakeEnemyType)
 			{
-				ScoreManager::addScore(fakeEnemyType == 1 ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium);
+				ScoreManager::addScore(fakeEnemyType == 1 ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, (uint32_t*)This);
 			}
 			else
 			{
@@ -119,7 +122,7 @@ HOOK(void, __stdcall, ScoreManager_GetPhysics, 0xEA49B0, uint32_t This, int a2, 
 
 				if (!filtered)
 				{
-					ScoreManager::addScore(ScoreType::ST_physics);
+					ScoreManager::addScore(ScoreType::ST_physics, (uint32_t*)This);
 				}
 			}
 		}
@@ -135,12 +138,55 @@ void __declspec(naked) ScoreManager_GetRainbow()
 	{
 		push	esi
 		mov		ecx, ST_rainbow
+		mov		edx, 0
 		call	ScoreManager::addScore
 		pop		esi
 
 		mov     eax, [esi + 0BCh]
 		jmp		[ScoreManager_GetRainbowReturnAddress]
 	}
+}
+
+HOOK(bool, __fastcall, ScoreManager_EnemyGunner, 0xBAA2F0, uint32_t* This, void* Edx, void* message)
+{
+	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
+	return originalScoreManager_EnemyGunner(This, Edx, message);
+}
+
+HOOK(int*, __fastcall, ScoreManager_EnemyStingerLancer, 0xBB01B0, uint32_t* This, void* Edx, void* message)
+{
+	ScoreManager::addScore(This[104] ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, This);
+	return originalScoreManager_EnemyStingerLancer(This, Edx, message);
+}
+
+HOOK(void, __fastcall, ScoreManager_EnemyBuster, 0xB82900, uint32_t* This, void* Edx, void* message)
+{
+	ScoreManager::addScore(ScoreType::ST_enemyMedium, This);
+	originalScoreManager_EnemyBuster(This, Edx, message);
+}
+
+HOOK(void, __fastcall, ScoreManager_EnemyFlyer, 0xBA6450, uint32_t* This, void* Edx, void* message)
+{
+	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
+	originalScoreManager_EnemyFlyer(This, Edx, message);
+}
+
+HOOK(int*, __fastcall, ScoreManager_EnemySearcherHunter, 0xBDC110, uint32_t* This, void* Edx, void* message)
+{
+	ScoreManager::addScore(*(bool*)((uint32_t)This + 0x17C) ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, This);
+	return originalScoreManager_EnemySearcherHunter(This, Edx, message);
+}
+
+HOOK(int, __fastcall, ScoreManager_EnemyLiner, 0xBC7440, uint32_t* This, void* Edx, void* message)
+{
+	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
+	return originalScoreManager_EnemyLiner(This, Edx, message);
+}
+
+HOOK(int, __fastcall, ScoreManager_EnemyBomber, 0xBCB9A0, uint32_t* This, void* Edx, void* message)
+{
+	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
+	return originalScoreManager_EnemyBomber(This, Edx, message);
 }
 
 void ScoreManager::applyPatches()
@@ -159,6 +205,15 @@ void ScoreManager::applyPatches()
 	INSTALL_HOOK(ScoreManager_GetSuperRing);
 	INSTALL_HOOK(ScoreManager_GetPhysics);
 	WRITE_JUMP(0x115A8F6, ScoreManager_GetRainbow);
+
+	// Enemy score hooks
+	INSTALL_HOOK(ScoreManager_EnemyGunner);
+	INSTALL_HOOK(ScoreManager_EnemyStingerLancer);
+	INSTALL_HOOK(ScoreManager_EnemyBuster);
+	INSTALL_HOOK(ScoreManager_EnemyFlyer);
+	INSTALL_HOOK(ScoreManager_EnemySearcherHunter);
+	INSTALL_HOOK(ScoreManager_EnemyLiner);
+	INSTALL_HOOK(ScoreManager_EnemyBomber);
 
 	if (m_internalSystem)
 	{
@@ -222,8 +277,29 @@ void ScoreManager::overrideScoreTable(std::string const& iniFile)
 	}
 }
 
-void ScoreManager::addScore(ScoreType type)
+void ScoreManager::addScore(ScoreType type, uint32_t* This)
 {
+	// TODO: clear the list when score gets reset to 0
+	// Prevent same object and add score multiple times
+	static std::deque<uint32_t*> savedObjects;
+	if (This)
+	{
+		for (uint32_t const* object : savedObjects)
+		{
+			if (This == object)
+			{
+				printf("[ScoreSystem] WARNING: Duplicated score\n");
+				return;
+			}
+		}
+
+		savedObjects.push_back(This);
+		if (savedObjects.size() > 10)
+		{
+			savedObjects.pop_front();
+		}
+	}
+
 	int score = 0;
 	switch (type)
 	{
@@ -238,9 +314,10 @@ void ScoreManager::addScore(ScoreType type)
 	case ST_enemyMedium:	score = 300;	break;
 	case ST_enemyLarge:		score = 1000;	break;
 	case ST_enemyStealth:	score = 1500;	break;
-	default: break;
+	default: return;
 	}
 
+	printf("[ScoreSystem] Score +%d \tType: %s\n", score, GetScoreTypeName(type));
 	if (m_internalSystem)
 	{
 		// TODO:

@@ -15,6 +15,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <deque>
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
