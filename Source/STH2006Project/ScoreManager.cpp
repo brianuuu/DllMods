@@ -186,16 +186,40 @@ HOOK(int*, __fastcall, ScoreManager_EnemySearcherHunter, 0xBDC110, uint32_t* Thi
 	return originalScoreManager_EnemySearcherHunter(This, Edx, message);
 }
 
-HOOK(int, __fastcall, ScoreManager_EnemyLiner, 0xBC7440, uint32_t* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyLiner, 0xBC7440, uint32_t* This, void* Edx, void* message)
 {
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
-	return originalScoreManager_EnemyLiner(This, Edx, message);
+	originalScoreManager_EnemyLiner(This, Edx, message);
 }
 
-HOOK(int, __fastcall, ScoreManager_EnemyBomber, 0xBCB9A0, uint32_t* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyBomber, 0xBCB9A0, uint32_t* This, void* Edx, void* message)
 {
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
-	return originalScoreManager_EnemyBomber(This, Edx, message);
+	originalScoreManager_EnemyBomber(This, Edx, message);
+}
+
+HOOK(void, __fastcall, ScoreManager_EnemyRounder, 0xBCF5E0, uint32_t* This, void* Edx, void* message)
+{
+	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
+	originalScoreManager_EnemyRounder(This, Edx, message);
+}
+
+HOOK(void, __fastcall, ScoreManager_EnemyTaker, 0xBA3140, uint32_t* This, void* Edx, void* message)
+{
+	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
+	originalScoreManager_EnemyTaker(This, Edx, message);
+}
+
+HOOK(void, __fastcall, ScoreManager_EnemyBiter, 0xB86850, uint32_t* This, void* Edx, void* message)
+{
+	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
+	originalScoreManager_EnemyBiter(This, Edx, message);
+}
+
+HOOK(void, __fastcall, ScoreManager_EnemyCrawler, 0xB99B80, uint32_t* This, void* Edx, void* message)
+{
+	ScoreManager::addScore(ScoreType::ST_enemyMedium, This);
+	originalScoreManager_EnemyCrawler(This, Edx, message);
 }
 
 void ScoreManager::applyPatches()
@@ -226,6 +250,10 @@ void ScoreManager::applyPatches()
 	INSTALL_HOOK(ScoreManager_EnemySearcherHunter);
 	INSTALL_HOOK(ScoreManager_EnemyLiner);
 	INSTALL_HOOK(ScoreManager_EnemyBomber);
+	INSTALL_HOOK(ScoreManager_EnemyRounder);
+	INSTALL_HOOK(ScoreManager_EnemyTaker);
+	INSTALL_HOOK(ScoreManager_EnemyBiter);
+	INSTALL_HOOK(ScoreManager_EnemyCrawler);
 
 	if (m_internalSystem)
 	{
@@ -268,8 +296,6 @@ void ScoreManager::applyPatches_InternalSystem()
 	// Set score format
 	WRITE_MEMORY(0x1095D7D, char*, m_scoreFormat.c_str());
 
-	// TODO: Reset score to 0 at MsgRestartStage
-
 	// Enable CScoreManager in regular stages
 	INSTALL_HOOK(ScoreManager_GameplayManagerInit);
 }
@@ -296,12 +322,13 @@ void ScoreManager::reset()
 
 	if (m_internalSystem)
 	{
-		// TODO:
+		// TODO: Set and draw 0 score
 	}
 }
 
 void ScoreManager::addScore(ScoreType type, uint32_t* This)
 {
+	// TODO: Later spawned object can reuse object pointer
 	// Prevent same object and add score multiple times
 	if (This)
 	{
