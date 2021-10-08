@@ -302,6 +302,11 @@ struct CSonicStateFlags
 #define XMLCheckResult(a_eResult) if (a_eResult != tinyxml2::XML_SUCCESS) { printf("XMLParse Error: %i\n", a_eResult); return a_eResult; }
 #endif
 
+// Score Generations function
+#define LIB_FUNCTION(returnType, libraryName, procName, ...) \
+    typedef returnType _##procName(__VA_ARGS__); \
+    _##procName* procName = (_##procName*)GetProcAddress(GetModuleHandle(TEXT(libraryName)), #procName);
+
 using SharedPtrTypeless = boost::shared_ptr<void>;
 typedef void* __fastcall CSonicSpeedContextPlaySound(void*, void*, SharedPtrTypeless&, uint32_t cueId, uint32_t);
 
@@ -466,6 +471,12 @@ inline bool CheckCurrentStage(char const* stageID)
 {
     char const* currentStageID = (char*)0x01E774D4;
     return strcmp(currentStageID, stageID) == 0;
+}
+
+inline uint32_t GetCurrentStageID()
+{
+	uint32_t stageIDAddress = GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x80, 0x0 });
+	return *(uint32_t*)stageIDAddress;
 }
 
 inline uint32_t GetPlayerSkill()
@@ -696,10 +707,8 @@ inline bool IsFileExist(std::string const& file)
 	return stat(file.c_str(), &buffer) == 0;
 }
 
-inline void TestModPriority(std::string const& currentModName, std::string const& testModName, bool higherPriority)
+inline void GetModIniList(std::vector<std::string>& modIniList)
 {
-	printf("currentModName = %s, testModName = %s\n", currentModName.c_str(), testModName.c_str());
-
 	char buffer[MAX_PATH];
 	GetModuleFileNameA(NULL, buffer, MAX_PATH);
 	std::string exePath(buffer);
@@ -720,30 +729,58 @@ inline void TestModPriority(std::string const& currentModName, std::string const
 		return;
 	}
 
-	int currentModIndex = -1;
-	int testModIndex = -1;
-
 	INIReader modsDatabaseReader(modsDatabase);
 	int count = modsDatabaseReader.GetInteger("Main", "ActiveModCount", 0);
 	for (int i = 0; i < count; i++)
 	{
 		std::string guid = modsDatabaseReader.Get("Main", "ActiveMod" + std::to_string(i), "");
 		std::string config = modsDatabaseReader.Get("Mods", guid, "");
-
 		if (!config.empty() && Common::IsFileExist(config))
 		{
-			INIReader configReader(config);
-			std::string name = configReader.Get("Desc", "Title", "");
-			printf("Mod #%d: %s\n", i, name.c_str());
+			modIniList.push_back(config);
+		}
+	}
+}
 
-			if (name == currentModName)
-			{
-				currentModIndex = i;
-			}
-			else if (name == testModName)
-			{
-				testModIndex = i;
-			}
+inline bool IsModEnabled(std::string const& testModName)
+{
+	std::vector<std::string> modIniList;
+	GetModIniList(modIniList);
+	for (size_t i = 0; i < modIniList.size(); i++)
+	{
+		std::string const& config = modIniList[i];
+		INIReader configReader(config);
+		std::string name = configReader.Get("Desc", "Title", "");
+		if (name == testModName)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+inline bool TestModPriority(std::string const& currentModName, std::string const& testModName, bool higherPriority)
+{
+	printf("currentModName = %s, testModName = %s\n", currentModName.c_str(), testModName.c_str());
+
+	int currentModIndex = -1;
+	int testModIndex = -1;
+
+	std::vector<std::string> modIniList;
+	GetModIniList(modIniList);
+	for (size_t i = 0; i < modIniList.size(); i++)
+	{
+		std::string const& config = modIniList[i];
+		INIReader configReader(config);
+		std::string name = configReader.Get("Desc", "Title", "");
+		if (name == currentModName)
+		{
+			currentModIndex = i;
+		}
+		else if (name == testModName)
+		{
+			testModIndex = i;
 		}
 	}
 
@@ -767,7 +804,12 @@ inline void TestModPriority(std::string const& currentModName, std::string const
 			MessageBox(nullptr, stemp.c_str(), stemp2.c_str(), MB_ICONERROR);
 			exit(-1);
 		}
+
+		return success;
 	}
+
+	// Mod not found
+	return false;
 }
 
 } // namespace Common
