@@ -98,11 +98,11 @@ DAMAGE_EVENT_ASM(EnemyCopSpeeder, 0xBBA6CF, 0xBBA530);
 #define ENEMY_COP_SPEEDER_ASM __asm test bl, bl __asm jz jumpSuccess
 DAMAGE_EXPLODE_ASM(EnemyCopSpeeder, 0xBBA59D, 0xBBA68A, ENEMY_COP_SPEEDER_ASM, __asm nop);
 
-DAMAGE_EVENT_ASM(EnemyMotora, 0xBC736F, 0x5FA2E0);
+DAMAGE_EVENT_ASM(EnemyMotora, 0xBC736F, 0xBC7440);
 #define ENEMY_MOTORA_ASM __asm test esi, esi __asm jnz jumpSuccess
 DAMAGE_EXPLODE_ASM(EnemyMotora, 0xBC74AA, 0xBC753C, ENEMY_MOTORA_ASM, __asm nop);
 
-DAMAGE_EVENT_ASM(EnemyGanigani, 0xBCB8EF, 0x5FA2E0);
+DAMAGE_EVENT_ASM(EnemyGanigani, 0xBCB8EF, 0xBCB9A0);
 #define ENEMY_GANIGANI_ASM __asm test esi, esi __asm jnz jumpSuccess
 DAMAGE_EXPLODE_ASM(EnemyGanigani, 0xBCBA10, 0xBCBA9A, ENEMY_GANIGANI_ASM, __asm nop);
 
