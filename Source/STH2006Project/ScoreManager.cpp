@@ -367,15 +367,15 @@ void ScoreManager::setExternalIni(std::string const& modDir, bool reset)
 
 				content += "\n";
 			}
+			in.close();
 		}
-		in.close();
 
 		std::ofstream out(externIniPath);
 		if (out)
 		{
 			out << content;
+			out.close();
 		}
-		out.close();
 	}
 }
 
