@@ -312,15 +312,15 @@ void ScoreManager::applyPostInit(std::string const& modDir)
 
 	if (m_internalSystem)
 	{
+		// Reset extern .dll in mod.ini
+		setExternalIni(modDir, true);
+
 		// We shouldn't have loaded ScoreGenerations.dll
 		if (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr)
 		{
 			MessageBox(NULL, L"An error occured when initializing internal score system!", L"STH2006 Project", MB_ICONERROR);
 			exit(-1);
 		}
-
-		// Reset extern .dll in mod.ini
-		setExternalIni(modDir, true);
 	}
 	else
 	{
