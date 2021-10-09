@@ -47,10 +47,11 @@ inline char const* GetScoreTypeName(ScoreType type)
 class ScoreManager
 {
 public:
-	static void applyPatches();
+	static void applyPatches(std::string const& modDir);
 	static void applyPatches_ScoreGensSystem();
-	static void applyPatches_InternalSystem();
-	static void overrideScoreTable(std::string const& iniFile);
+	static void applyPatches_InternalSystem(std::string const& modDir);
+	static void applyPostInit(std::string const& modDir);
+	static void setExternalIni(std::string const& modDir, bool reset);
 
 	static void reset();
 	static void __fastcall addScore(ScoreType type, uint32_t* This = nullptr);

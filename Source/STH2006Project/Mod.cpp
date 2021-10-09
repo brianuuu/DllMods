@@ -46,7 +46,7 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     ChaosEnergy::applyPatches();
 
     // Internal score system (must install before ArchiveTreePatcher)
-    ScoreManager::applyPatches();
+    ScoreManager::applyPatches(modDir);
 
     // Allow 1up and 10ring to be locked-on
     ArchiveTreePatcher::applyPatches();
@@ -89,19 +89,6 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
 extern "C" __declspec(dllexport) void PostInit()
 {
-    /*for (auto s06deIter = modInfo->ModList->begin(); s06deIter != modInfo->ModList->end(); s06deIter++)
-    {
-        if (strcmp((*s06deIter)->Name, "Sonic 06 Definitive Experience") == 0)
-        {
-            auto currentIter = std::find(modInfo->ModList->begin(), modInfo->ModList->end(), modInfo->CurrentMod);
-            if (s06deIter > currentIter)
-            {
-                MessageBox(nullptr, TEXT("Sonic 06 Definitive Experience detected, please put it higher priority than this mod."), TEXT("STH2006 Project"), MB_ICONERROR);
-                exit(-1);
-            }
-        }
-    }*/
-
     if (GetModuleHandle(TEXT("GenerationsD3D9Ex.dll")) == nullptr)
     {
         MessageBox(nullptr, TEXT("This mod requires the latest version of 'Direct3D 9 Ex' enabled."), TEXT("STH2006 Project"), MB_ICONERROR);
@@ -109,5 +96,5 @@ extern "C" __declspec(dllexport) void PostInit()
     }
 
     // Override score to all 0s and implement them ourselves
-    ScoreManager::overrideScoreTable(modDir + "ScoreGenerations.ini");
+    ScoreManager::applyPostInit(modDir);
 }

@@ -220,11 +220,19 @@ HOOK(void, __fastcall, ScoreManager_EnemyCrawler, 0xB99B80, uint32_t* This, void
 	originalScoreManager_EnemyCrawler(This, Edx, message);
 }
 
-void ScoreManager::applyPatches()
+std::string externIniPath;
+void ScoreManager::applyPatches(std::string const& modDir)
 {
-	if (!Common::IsModEnabled("Score Generations") && !m_internalSystem)
+	// Must enable Score Generations, whether for internal score system or not
+	if (!Common::IsModEnabled("Score Generations", &externIniPath))
 	{
 		return;
+	}
+
+	// TODO: Ensure Score Generations is loaded LATER/higher priority than this mod (currently impossible with 06 HUD)
+	if (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr)
+	{
+		
 	}
 
 	printf("[ScoreManager] STH2006 score system enabled\n");
@@ -255,7 +263,7 @@ void ScoreManager::applyPatches()
 
 	if (m_internalSystem)
 	{
-		applyPatches_InternalSystem();
+		applyPatches_InternalSystem(modDir);
 	}
 	else
 	{
@@ -268,9 +276,10 @@ void ScoreManager::applyPatches_ScoreGensSystem()
 	
 }
 
-void ScoreManager::applyPatches_InternalSystem()
+void ScoreManager::applyPatches_InternalSystem(std::string const& modDir)
 {
-	// TODO: disable extern
+	// Disable extern .dll in mod.ini
+	setExternalIni(modDir, false);
 
 	std::vector<std::string> modIniList;
 	Common::GetModIniList(modIniList);
@@ -297,18 +306,75 @@ void ScoreManager::applyPatches_InternalSystem()
 	INSTALL_HOOK(ScoreManager_GameplayManagerInit);
 }
 
-void ScoreManager::overrideScoreTable(std::string const& iniFile)
+void ScoreManager::applyPostInit(std::string const& modDir)
 {
-	if (!m_enabled || m_internalSystem) return;
+	if (!m_enabled) return;
 
-	if (!Common::IsFileExist(iniFile))
+	if (m_internalSystem)
 	{
-		MessageBox(NULL, L"Failed to parse ScoreGenerations.ini", L"STH2006 Project", MB_ICONERROR);
+		// We shouldn't have loaded ScoreGenerations.dll
+		if (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr)
+		{
+			MessageBox(NULL, L"An error occured when initializing internal score system!", L"STH2006 Project", MB_ICONERROR);
+			exit(-1);
+		}
+
+		// Reset extern .dll in mod.ini
+		setExternalIni(modDir, true);
 	}
 	else
 	{
-		printf("[ScoreManager] Forcing STH2006 Project score table...\n");
-		ScoreGenerationsAPI::ForceConfiguration(iniFile.c_str());
+		std::string iniFile = modDir + "ScoreGenerations.ini";
+		if (!Common::IsFileExist(iniFile))
+		{
+			MessageBox(NULL, L"Failed to parse ScoreGenerations.ini", L"STH2006 Project", MB_ICONERROR);
+		}
+		else
+		{
+			printf("[ScoreManager] Forcing STH2006 Project score table...\n");
+			ScoreGenerationsAPI::ForceConfiguration(iniFile.c_str());
+		}
+	}
+}
+
+void ScoreManager::setExternalIni(std::string const& modDir, bool reset)
+{
+	if (Common::IsFileExist(externIniPath))
+	{
+		std::string content;
+		std::ifstream in(externIniPath);
+		if (in)
+		{
+			std::string line;
+			while (getline(in, line))
+			{
+				if (line.find("DLLFile") != std::string::npos)
+				{
+					if (reset)
+					{
+						content += "DLLFile=\"ScoreGenerations.dll\"";
+					}
+					else
+					{
+						content += "DLLFile=\"" + modDir + "STH2006ProjectExtra.dll\"";
+					}
+				}
+				else
+				{
+					content += line;
+				}
+
+				content += "\n";
+			}
+		}
+		in.close();
+
+		std::ofstream out(externIniPath);
+		if (out)
+		{
+			out << content;
+		}
+		out.close();
 	}
 }
 

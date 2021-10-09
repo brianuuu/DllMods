@@ -742,7 +742,7 @@ inline void GetModIniList(std::vector<std::string>& modIniList)
 	}
 }
 
-inline bool IsModEnabled(std::string const& testModName)
+inline bool IsModEnabled(std::string const& testModName, std::string* o_iniPath = nullptr)
 {
 	std::vector<std::string> modIniList;
 	GetModIniList(modIniList);
@@ -753,6 +753,11 @@ inline bool IsModEnabled(std::string const& testModName)
 		std::string name = configReader.Get("Desc", "Title", "");
 		if (name == testModName)
 		{
+			if (o_iniPath)
+			{
+				*o_iniPath = config;
+			}
+
 			return true;
 		}
 	}
