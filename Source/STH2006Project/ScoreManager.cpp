@@ -356,7 +356,8 @@ void ScoreManager::setExternalIni(std::string const& modDir, bool reset)
 					}
 					else
 					{
-						content += "DLLFile=\"" + modDir + "STH2006ProjectExtra.dll\"";
+						// Absolute path doesn't work, so we have to use relative...
+						content += "DLLFile=\"..\\" + modDir.substr(modDir.find_last_of("\\/", modDir.size() - 2) + 1) + "STH2006ProjectExtra.dll\"";
 					}
 				}
 				else
