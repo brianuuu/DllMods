@@ -5,12 +5,49 @@
 bool ScoreManager::m_enabled = false;
 bool ScoreManager::m_internalSystem = false;
 bool ScoreManager::m_externalHUD = false;
-std::string ScoreManager::m_scoreFormat = "%01d";
+uint32_t ScoreManager::m_scoreLimit = 999999;
+std::string ScoreManager::m_scoreFormat = "%06d";
+CScoreManager* ScoreManager::m_pCScoreManager = nullptr;
+bool ScoreManager::m_updateScoreHUD = false;
 std::unordered_set<uint64_t> ScoreManager::m_savedObjects;
 
+// MsgRestartStage for CScoreManager
+HOOK(void, __fastcall, CScoreManager_MsgRestartStage, 0xCF7F10, uint32_t* This, void* Edx, void* message)
+{
+	originalCScoreManager_MsgRestartStage(This, Edx, message);
+
+	// Grab ptr here and reset HUD
+	ScoreManager::m_pCScoreManager = (CScoreManager*)This;
+	ScoreManager::m_updateScoreHUD = true;
+}
+
+HOOK(uint32_t*, __fastcall, CScoreManager_Destructor, 0x588AF0, uint32_t* This, void* Edx, bool a2)
+{
+	ScoreManager::m_pCScoreManager = nullptr;
+	return originalCScoreManager_Destructor(This, Edx, a2);
+}
+
+FUNCTION_PTR(void, __thiscall, processMsgSetPinballHud, 0x1095D40, void* This, MsgSetPinballHud const& message);
+HOOK(void, __fastcall, CScoreManager_CHudSonicStageUpdate, 0x1098A50, void* This, void* Edx, float* dt)
+{
+	if (ScoreManager::m_pCScoreManager && ScoreManager::m_updateScoreHUD)
+	{
+		alignas(16) MsgSetPinballHud message{};
+		message.m_flag = 1;
+		message.m_score = ScoreManager::m_pCScoreManager->m_score;
+		processMsgSetPinballHud(This, message);
+
+		ScoreManager::m_updateScoreHUD = false;
+	}
+
+	originalCScoreManager_CHudSonicStageUpdate(This, Edx, dt);
+}
+
+// MsgRestartStage for Sonic
 HOOK(int, __fastcall, ScoreManager_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
 {
-	ScoreManager::reset();
+	printf("[ScoreSystem] RESTARTED!\n");
+	ScoreManager::m_savedObjects.clear();
 	return originalScoreManager_MsgRestartStage(This, Edx, message);
 }
 
@@ -293,6 +330,7 @@ void ScoreManager::applyPatches_InternalSystem(std::string const& modDir)
 			if (configReader.GetBoolean("Developer", "customXNCP", false))
 			{
 				m_externalHUD = true;
+				m_scoreLimit = configReader.GetInteger("Behaviour", "scoreLimit", 999999);
 				m_scoreFormat = configReader.Get("Appearance", "scoreFormat", "%01d");
 				break;
 			}
@@ -304,6 +342,11 @@ void ScoreManager::applyPatches_InternalSystem(std::string const& modDir)
 
 	// Enable CScoreManager in regular stages
 	INSTALL_HOOK(ScoreManager_GameplayManagerInit);
+
+	// CScoreManager score handling
+	INSTALL_HOOK(CScoreManager_MsgRestartStage);
+	INSTALL_HOOK(CScoreManager_Destructor);
+	INSTALL_HOOK(CScoreManager_CHudSonicStageUpdate);
 }
 
 void ScoreManager::applyPostInit(std::string const& modDir)
@@ -379,17 +422,6 @@ void ScoreManager::setExternalIni(std::string const& modDir, bool reset)
 	}
 }
 
-void ScoreManager::reset()
-{
-	printf("[ScoreSystem] RESTARTED!\n");
-	m_savedObjects.clear();
-
-	if (m_internalSystem)
-	{
-		// TODO: Set and draw 0 score
-	}
-}
-
 void ScoreManager::addScore(ScoreType type, uint32_t* This)
 {
 	// Prevent same object and add score multiple times
@@ -426,7 +458,11 @@ void ScoreManager::addScore(ScoreType type, uint32_t* This)
 	printf("[ScoreSystem] Score +%d \tType: %s\n", score, GetScoreTypeName(type));
 	if (m_internalSystem)
 	{
-		// TODO:
+		if (m_pCScoreManager)
+		{
+			m_pCScoreManager->m_score = min(m_pCScoreManager->m_score + score, 999999);
+			m_updateScoreHUD = true;
+		}
 	}
 	else
 	{

@@ -44,6 +44,21 @@ inline char const* GetScoreTypeName(ScoreType type)
 	}
 }
 
+struct MsgSetPinballHud
+{
+	INSERT_PADDING(0x10);
+	uint32_t m_flag;
+	uint32_t m_score;
+	INSERT_PADDING(0x8);
+};
+
+struct CScoreManager
+{
+	INSERT_PADDING(0xA8);
+	uint32_t m_score;
+
+};
+
 class ScoreManager
 {
 public:
@@ -53,14 +68,16 @@ public:
 	static void applyPostInit(std::string const& modDir);
 	static void setExternalIni(std::string const& modDir, bool reset);
 
-	static void reset();
 	static void __fastcall addScore(ScoreType type, uint32_t* This = nullptr);
 
 	// Members
 	static bool m_enabled;
 	static bool m_internalSystem;
 	static bool m_externalHUD;
+	static uint32_t m_scoreLimit;
 	static std::string m_scoreFormat;
+	static CScoreManager* m_pCScoreManager;
+	static bool m_updateScoreHUD;
 	static std::unordered_set<uint64_t> m_savedObjects;
 };
 
