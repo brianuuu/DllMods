@@ -67,7 +67,10 @@ public:
 inline void ScoreGenerationsAPI::AddScore(int scoreToReward)
 {
 	if (GetInstance()->API_AddScore == nullptr)
+	{
+		printf("[ScoreGenerationsAPI] API doesn't exist\n");
 		return;
+	}
 
 	GetInstance()->API_AddScore(scoreToReward);
 }
@@ -75,7 +78,10 @@ inline void ScoreGenerationsAPI::AddScore(int scoreToReward)
 inline void ScoreGenerationsAPI::SetScore(int score)
 {
 	if (GetInstance()->API_SetScore == nullptr)
+	{
+		printf("[ScoreGenerationsAPI] API doesn't exist\n");
 		return;
+	}
 
 	GetInstance()->API_SetScore(score);
 }
@@ -83,7 +89,10 @@ inline void ScoreGenerationsAPI::SetScore(int score)
 inline int ScoreGenerationsAPI::GetScore()
 {
 	if (GetInstance()->API_GetScore == nullptr)
+	{
+		printf("[ScoreGenerationsAPI] API doesn't exist\n");
 		return -1;
+	}
 
 	return GetInstance()->API_GetScore();
 }
@@ -91,7 +100,10 @@ inline int ScoreGenerationsAPI::GetScore()
 inline void ScoreGenerationsAPI::ForceConfiguration(const char* path)
 {
 	if (GetInstance()->API_ForceConfiguration == nullptr)
+	{
+		printf("[ScoreGenerationsAPI] API doesn't exist\n");
 		return;
+	}
 
 	GetInstance()->API_ForceConfiguration(path);
 }

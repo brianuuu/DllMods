@@ -6,9 +6,7 @@ bool ScoreManager::m_enabled = false;
 bool ScoreManager::m_internalSystem = false;
 bool ScoreManager::m_externalHUD = false;
 std::string ScoreManager::m_scoreFormat = "%01d";
-
-#define MAX_SAVED_OBJECT 10
-std::deque<uint32_t*> ScoreManager::m_savedObjects;
+std::unordered_set<uint64_t> ScoreManager::m_savedObjects;
 
 HOOK(int, __fastcall, ScoreManager_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
 {
@@ -263,7 +261,6 @@ void ScoreManager::applyPatches()
 	{
 		applyPatches_ScoreGensSystem();
 	}
-
 }
 
 void ScoreManager::applyPatches_ScoreGensSystem()
@@ -328,24 +325,18 @@ void ScoreManager::reset()
 
 void ScoreManager::addScore(ScoreType type, uint32_t* This)
 {
-	// TODO: Later spawned object can reuse object pointer
 	// Prevent same object and add score multiple times
 	if (This)
 	{
-		for (uint32_t const* object : m_savedObjects)
+		// Combine this ptr with matrix node transform ptr
+		uint64_t key = (uint64_t)This + ((uint64_t)This[46] << 32);
+		if (m_savedObjects.count(key))
 		{
-			if (This == object)
-			{
-				printf("[ScoreSystem] WARNING: Duplicated score\n");
-				return;
-			}
+			printf("[ScoreSystem] WARNING: Duplicated score\n");
+			return;
 		}
 
-		m_savedObjects.push_back(This);
-		if (m_savedObjects.size() > MAX_SAVED_OBJECT)
-		{
-			m_savedObjects.pop_front();
-		}
+		m_savedObjects.insert(key);
 	}
 
 	int score = 0;

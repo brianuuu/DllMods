@@ -40,7 +40,7 @@ inline char const* GetScoreTypeName(ScoreType type)
 	case ST_enemyMedium:	return "Enemy (Medium)";
 	case ST_enemyLarge:		return "Enemy (Large)";
 	case ST_enemyStealth:	return "Enemy (Stealth)";
-	default: break;
+	default:				return "";
 	}
 }
 
@@ -60,6 +60,6 @@ public:
 	static bool m_internalSystem;
 	static bool m_externalHUD;
 	static std::string m_scoreFormat;
-	static std::deque<uint32_t*> m_savedObjects;
+	static std::unordered_set<uint64_t> m_savedObjects;
 };
 

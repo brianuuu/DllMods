@@ -15,7 +15,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
-#include <deque>
+#include <unordered_set>
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
