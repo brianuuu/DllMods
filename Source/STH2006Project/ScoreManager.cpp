@@ -9,7 +9,7 @@ uint32_t ScoreManager::m_scoreLimit = 999999;
 std::string ScoreManager::m_scoreFormat = "%06d";
 CScoreManager* ScoreManager::m_pCScoreManager = nullptr;
 bool ScoreManager::m_updateScoreHUD = false;
-std::unordered_set<uint64_t> ScoreManager::m_savedObjects;
+std::unordered_set<uint32_t*> ScoreManager::m_savedObjects;
 
 // MsgRestartStage for CScoreManager
 HOOK(void, __fastcall, CScoreManager_MsgRestartStage, 0xCF7F10, uint32_t* This, void* Edx, void* message)
@@ -257,6 +257,16 @@ HOOK(void, __fastcall, ScoreManager_EnemyCrawler, 0xB99B80, uint32_t* This, void
 	originalScoreManager_EnemyCrawler(This, Edx, message);
 }
 
+HOOK(int, __fastcall, ScoreManager_CGameObject3DDestruction, 0xD5D790, uint32_t* This)
+{
+	/*if (ScoreManager::m_savedObjects.count(This))
+	{
+		printf("[ScoreManager] Object desstructed\n");
+	}*/
+	ScoreManager::m_savedObjects.erase(This);
+	return originalScoreManager_CGameObject3DDestruction(This);
+}
+
 std::string externIniPath;
 void ScoreManager::applyPatches(std::string const& modDir)
 {
@@ -277,6 +287,9 @@ void ScoreManager::applyPatches(std::string const& modDir)
 
 	// Reset stage
 	INSTALL_HOOK(ScoreManager_MsgRestartStage);
+
+	// Remove from list when object is destructed
+	INSTALL_HOOK(ScoreManager_CGameObject3DDestruction);
 
 	// Common score hooks
 	INSTALL_HOOK(ScoreManager_GetItem);
@@ -424,18 +437,16 @@ void ScoreManager::setExternalIni(std::string const& modDir, bool reset)
 
 void ScoreManager::addScore(ScoreType type, uint32_t* This)
 {
-	// Prevent same object and add score multiple times
+	// Prevent same object to add score multiple times
 	if (This)
 	{
-		// Combine this ptr with matrix node transform ptr
-		uint64_t key = (uint64_t)This + ((uint64_t)This[46] << 32);
-		if (m_savedObjects.count(key))
+		if (m_savedObjects.count(This))
 		{
 			printf("[ScoreSystem] WARNING: Duplicated score\n");
 			return;
 		}
 
-		m_savedObjects.insert(key);
+		m_savedObjects.insert(This);
 	}
 
 	int score = 0;

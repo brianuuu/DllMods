@@ -78,6 +78,6 @@ public:
 	static std::string m_scoreFormat;
 	static CScoreManager* m_pCScoreManager;
 	static bool m_updateScoreHUD;
-	static std::unordered_set<uint64_t> m_savedObjects;
+	static std::unordered_set<uint32_t*> m_savedObjects;
 };
 
