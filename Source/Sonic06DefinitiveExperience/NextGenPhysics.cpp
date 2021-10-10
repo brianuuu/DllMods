@@ -641,16 +641,6 @@ void __declspec(naked) CSonicStateSlidingEnd()
     }
 }
 
-uint32_t loseAllRingsReturnAddress = 0xE6621E;
-void __declspec(naked) loseAllRings()
-{
-    __asm
-    {
-        mov     dword ptr [edi + 5B8h], 0
-        jmp     [loseAllRingsReturnAddress]
-    }
-}
-
 uint32_t noTrickRainbowRingReturnAddress = 0xE6D417;
 void __declspec(naked) noTrickRainbowRing()
 {
@@ -751,8 +741,9 @@ void NextGenPhysics::applyPatches()
         // Disable jumpball collision
         WRITE_MEMORY(0x1118FFA, uint8_t, 0xC2, 0xC5); // Fall state
 
-        // Set rings to 0 when getting damaged
-        WRITE_JUMP(0xE66218, loseAllRings);
+        // Drop all rings when getting damaged
+        WRITE_MEMORY(0xE6628E, uint8_t, 0xEB);
+        WRITE_MEMORY(0xE6CCDE, uint8_t, 0xEB);
     }
 
     // Change all actions to X button, change boost to R2
