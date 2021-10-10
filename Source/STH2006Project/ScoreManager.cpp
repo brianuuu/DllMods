@@ -3,14 +3,16 @@
 #include "ChaosEnergy.h"
 
 bool ScoreManager::m_enabled = false;
-bool ScoreManager::m_internalSystem = false;
+bool ScoreManager::m_internalSystem = true;
+uint32_t ScoreManager::m_rainbowRingChain = 0;
+std::unordered_set<uint32_t*> ScoreManager::m_savedObjects;
+
 bool ScoreManager::m_externalHUD = false;
 uint32_t ScoreManager::m_scoreLimit = 999999;
 std::string ScoreManager::m_scoreFormat = "%06d";
 CScoreManager* ScoreManager::m_pCScoreManager = nullptr;
 bool ScoreManager::m_updateScoreHUD = false;
-uint32_t ScoreManager::m_rainbowRingChain = 0;
-std::unordered_set<uint32_t*> ScoreManager::m_savedObjects;
+float ScoreManager::m_currentTime = 0.0f;
 
 // MsgRestartStage for CScoreManager
 HOOK(void, __fastcall, CScoreManager_MsgRestartStage, 0xCF7F10, uint32_t* This, void* Edx, void* message)
@@ -31,6 +33,7 @@ HOOK(uint32_t*, __fastcall, CScoreManager_Destructor, 0x588AF0, uint32_t* This, 
 FUNCTION_PTR(void, __thiscall, processMsgSetPinballHud, 0x1095D40, void* This, MsgSetPinballHud const& message);
 HOOK(void, __fastcall, CScoreManager_CHudSonicStageUpdate, 0x1098A50, void* This, void* Edx, float* dt)
 {
+	// Update score HUD
 	if (ScoreManager::m_pCScoreManager && ScoreManager::m_updateScoreHUD)
 	{
 		alignas(16) MsgSetPinballHud message{};
@@ -41,15 +44,28 @@ HOOK(void, __fastcall, CScoreManager_CHudSonicStageUpdate, 0x1098A50, void* This
 		ScoreManager::m_updateScoreHUD = false;
 	}
 
+	// Get current time
+	ScoreManager::m_currentTime = *(float*)Common::GetMultiLevelAddress((uint32_t)This + 0xA4, { 0x0, 0x8, 0x184 });
+
 	originalCScoreManager_CHudSonicStageUpdate(This, Edx, dt);
 }
 
 // MsgRestartStage for Sonic
 HOOK(int, __fastcall, ScoreManager_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
 {
-	printf("[ScoreSystem] RESTARTED!\n");
+	printf("[ScoreManager] RESTARTED!\n");
 	ScoreManager::m_savedObjects.clear();
 	return originalScoreManager_MsgRestartStage(This, Edx, message);
+}
+
+uint32_t ScoreManager_CalculateResultReturnAddress = 0xD5A191;
+void __declspec(naked) ScoreManager_CalculateResult()
+{
+	__asm
+	{
+		call	ScoreManager::calculateResultData
+		jmp		[ScoreManager_CalculateResultReturnAddress]
+	}
 }
 
 HOOK(int*, __fastcall, ScoreManager_GameplayManagerInit, 0xD00F70, void* This, void* Edx, int* a2)
@@ -58,7 +74,7 @@ HOOK(int*, __fastcall, ScoreManager_GameplayManagerInit, 0xD00F70, void* This, v
 	static char const* defaultHUD = (char*)0x0168E328;
 
 	uint32_t stageID = Common::GetCurrentStageID();
-	if (stageID <= 17 ||	// 0 main stages
+	if (stageID <= 17 ||	// All main stages
 		stageID == 18)		// Casino Night (unused but that's original code)
 	{
 		// Enable CScoreManager
@@ -70,6 +86,9 @@ HOOK(int*, __fastcall, ScoreManager_GameplayManagerInit, 0xD00F70, void* This, v
 		{
 			WRITE_MEMORY(0x109D669, char*, scoreHUD);
 		}
+
+		// Hook result custom result calculation
+		WRITE_JUMP(0xD5A18C, ScoreManager_CalculateResult);
 	}
 	else
 	{
@@ -77,6 +96,7 @@ HOOK(int*, __fastcall, ScoreManager_GameplayManagerInit, 0xD00F70, void* This, v
 		WRITE_MEMORY(0xD017A7, uint8_t, 0x12);
 		WRITE_MEMORY(0x109C1DA, uint8_t, 0x74, 0x78);
 		WRITE_MEMORY(0x109D669, char*, defaultHUD);
+		WRITE_MEMORY(0xD5A18C, uint8_t, 0xE8, 0x1F, 0x9C, 0x35, 0x00);
 	}
 
 	return originalScoreManager_GameplayManagerInit(This, Edx, a2);
@@ -391,7 +411,7 @@ void ScoreManager::applyPostInit(std::string const& modDir)
 		// We shouldn't have loaded ScoreGenerations.dll
 		if (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr)
 		{
-			MessageBox(NULL, L"An error occured when initializing internal score system!", L"STH2006 Project", MB_ICONERROR);
+			MessageBox(NULL, L"An error occured when initializing internal score system, STH2006Project.dll was not loaded before ScoreGenerations.dll!", L"STH2006 Project", MB_ICONERROR);
 			exit(-1);
 		}
 	}
@@ -459,7 +479,7 @@ void ScoreManager::addScore(ScoreType type, uint32_t* This)
 	{
 		if (m_savedObjects.count(This))
 		{
-			printf("[ScoreSystem] WARNING: Duplicated score\n");
+			printf("[ScoreManager] WARNING: Duplicated score\n");
 			return;
 		}
 
@@ -487,7 +507,7 @@ void ScoreManager::addScore(ScoreType type, uint32_t* This)
 	default: return;
 	}
 
-	printf("[ScoreSystem] Score +%d \tType: %s\n", score, GetScoreTypeName(type));
+	printf("[ScoreManager] Score +%d \tType: %s\n", score, GetScoreTypeName(type));
 	if (m_internalSystem)
 	{
 		if (m_pCScoreManager)
@@ -500,4 +520,134 @@ void ScoreManager::addScore(ScoreType type, uint32_t* This)
 	{
 		ScoreGenerationsAPI::AddScore(score);
 	}
+}
+
+ResultData* ScoreManager::calculateResultData()
+{
+	// Default score table for regular stages
+	ScoreTable scoreTable{ 50000, 45000, 25000, 5000 };
+
+	int timeBonusBase = 0;
+	int timeBonusRate = 40;
+
+	// Get base score and timebonus rate
+	uint32_t stageID = Common::GetCurrentStageID();
+	switch (stageID)
+	{
+	case 1:		timeBonusBase = 47000;	break; // Wave Ocean
+	case 3:		timeBonusBase = 43000;	break; // Dusty Desert
+	case 5:		timeBonusBase = 50000;	break; // White Acropolis
+	case 7:		timeBonusBase = 47000;	break; // Crisis City
+	case 9:		timeBonusBase = 50000;	break; // Flame Core
+	case 11:	timeBonusBase = 45000;	break; // Radical Train
+	case 13:	timeBonusBase = 46000;	break; // Tropical Jungle
+	case 15:	timeBonusBase = 31000;	break; // Kingdom Valley
+	case 17:	timeBonusBase = 23000;	break; // Aquatic Base
+	case 0:		timeBonusBase = 10000;	break; // TODO: Prelude Stage
+	default:	break;
+	}
+
+	// TODO: Overwrite rank table on special stages (boss stages, missions etc.)
+	switch (stageID)
+	{
+	default: break;
+	}
+
+	// Calculate final score
+	static ResultData data;
+	int timeBonus = max(timeBonusBase - (int)floorf(ScoreManager::m_currentTime) * timeBonusRate, 0 );
+	int ringBonus = *Common::GetPlayerRingCount() * 100;
+	data.m_score = m_pCScoreManager->m_score + timeBonus + ringBonus;
+
+	// Get current rank and score to next rank (if applicable)
+	if (data.m_score > scoreTable.m_scoreS)
+	{
+		data.m_rank = RankType::RT_S;
+		data.m_nextRankScore = 0;
+	}
+	else if (data.m_score > scoreTable.m_scoreA)
+	{
+		data.m_rank = RankType::RT_A;
+		data.m_nextRankScore = scoreTable.m_scoreS - data.m_score;
+	}
+	else if (data.m_score > scoreTable.m_scoreB)
+	{
+		data.m_rank = RankType::RT_B;
+		data.m_nextRankScore = scoreTable.m_scoreA - data.m_score;
+	}
+	else if (data.m_score > scoreTable.m_scoreC)
+	{
+		data.m_rank = RankType::RT_C;
+		data.m_nextRankScore = scoreTable.m_scoreB - data.m_score;
+	}
+	else
+	{
+		data.m_rank = RankType::RT_D;
+		data.m_nextRankScore = scoreTable.m_scoreC - data.m_score;
+	}
+	data.m_perfectRank = data.m_rank;
+
+	// Get the prop of "base score + time bonus" and "total score" (since we only have 2 bars)
+	data.m_timeProp = getScoreProp(scoreTable, m_pCScoreManager->m_score + timeBonus);
+	data.m_totalProp = getScoreProp(scoreTable, data.m_score);
+
+	printf
+	(
+		"[ScoreManager] Calculating result data:\n"
+		"Time: %02d:%02d.%03d\n"
+		"Rings: %d\n"
+		"Rank: %s\n"
+		"Score: %d\n"
+		"Time Bonus Base = %d\n"
+		"Time Bonus = %d\n"
+		"Ring Bonus = %d\n"
+		"Final Score = %d\n"
+		"Time Prop = %.4f\n"
+		"Total Prop = %.4f\n"
+		, (int)m_currentTime / 60
+		, (int)m_currentTime % 60
+		, (int)(m_currentTime * 1000.0f) % 1000
+		, *Common::GetPlayerRingCount()
+		, data.m_rank == RankType::RT_S ? "S" 
+		: (data.m_rank == RankType::RT_A ? "A" 
+		: (data.m_rank == RankType::RT_B ? "B" 
+		: (data.m_rank == RankType::RT_C ? "C" : "D")))
+		, m_pCScoreManager->m_score
+		, timeBonusBase
+		, timeBonus
+		, ringBonus
+		, data.m_score
+		, data.m_timeProp
+		, data.m_totalProp
+	);
+	
+	return &data;
+}
+
+float ScoreManager::getScoreProp(ScoreTable const& scoreTable, int score)
+{
+	if (score > scoreTable.m_scoreA)
+	{
+		return 1.0f + getPropBetween(scoreTable.m_scoreA, scoreTable.m_scoreS, score) * 0.3333f;
+	}
+	else if (score > scoreTable.m_scoreB)
+	{
+		return 0.6667f + getPropBetween(scoreTable.m_scoreB, scoreTable.m_scoreA, score) * 0.3333f;
+	}
+	else if (score > scoreTable.m_scoreC)
+	{
+		return 0.3333f + getPropBetween(scoreTable.m_scoreC, scoreTable.m_scoreB, score) * 0.3333f;
+	}
+	else
+	{
+		return getPropBetween(0, scoreTable.m_scoreC, score) * 0.3333f;
+	}
+}
+
+float ScoreManager::getPropBetween(int min, int max, int num)
+{
+	float minF = (float)min;
+	float maxF = (float)max;
+	float numF = (float)num;
+	return (numF - minF) / (maxF - minF);
 }
