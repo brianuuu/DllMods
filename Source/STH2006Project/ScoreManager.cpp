@@ -303,6 +303,19 @@ HOOK(int, __fastcall, ScoreManager_CGameObject3DDestruction, 0xD5D790, uint32_t*
 	return originalScoreManager_CGameObject3DDestruction(This);
 }
 
+uint32_t ScoreManager_NextRankScoreReturnAddress = 0x10B6037;
+void __declspec(naked) ScoreManager_NextRankScore()
+{
+	__asm
+	{
+		sub		esp, 14h
+		push	esi
+		push	ecx
+		lea		ecx, [esp + 14h - 8h]
+		jmp		[ScoreManager_NextRankScoreReturnAddress]
+	}
+}
+
 std::string externIniPath;
 void ScoreManager::applyPatches(std::string const& modDir)
 {
@@ -397,6 +410,11 @@ void ScoreManager::applyPatches_InternalSystem(std::string const& modDir)
 	INSTALL_HOOK(CScoreManager_MsgRestartStage);
 	INSTALL_HOOK(CScoreManager_Destructor);
 	INSTALL_HOOK(CScoreManager_CHudSonicStageUpdate);
+	
+	// Hijack next rank time as next rank score
+	WRITE_STRING(0x16940F4, "%06d");
+	WRITE_JUMP(0x10B5FF6, ScoreManager_NextRankScore);
+	WRITE_MEMORY(0x10B6044, uint8_t, 0xC);
 }
 
 void ScoreManager::applyPostInit(std::string const& modDir)
@@ -594,28 +612,31 @@ ResultData* ScoreManager::calculateResultData()
 	printf
 	(
 		"[ScoreManager] Calculating result data:\n"
-		"Time: %02d:%02d.%03d\n"
+		"Time: %02d:%02d.%03d (%.3f)\n"
 		"Rings: %d\n"
 		"Rank: %s\n"
-		"Score: %d\n"
-		"Time Bonus Base = %d\n"
-		"Time Bonus = %d\n"
-		"Ring Bonus = %d\n"
-		"Final Score = %d\n"
-		"Time Prop = %.4f\n"
-		"Total Prop = %.4f\n"
+		"Base Score = \t%d\n"
+		"Time Bonus = \t%d (%d - %d * %d)\n"
+		"Ring Bonus = \t%d (%d * 100)\n"
+		"Final Score = \t%d\n"
+		"Time Prop = \t%.4f\n"
+		"Total Prop = \t%.4f\n"
 		, (int)m_currentTime / 60
 		, (int)m_currentTime % 60
 		, (int)(m_currentTime * 1000.0f) % 1000
+		, m_currentTime
 		, *Common::GetPlayerRingCount()
 		, data.m_rank == RankType::RT_S ? "S" 
 		: (data.m_rank == RankType::RT_A ? "A" 
 		: (data.m_rank == RankType::RT_B ? "B" 
 		: (data.m_rank == RankType::RT_C ? "C" : "D")))
 		, m_pCScoreManager->m_score
-		, timeBonusBase
 		, timeBonus
+		, timeBonusBase
+		, (int)floorf(m_currentTime)
+		, timeBonusRate
 		, ringBonus
+		, *Common::GetPlayerRingCount()
 		, data.m_score
 		, data.m_timeProp
 		, data.m_totalProp
