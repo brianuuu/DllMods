@@ -9,6 +9,7 @@ uint32_t ScoreManager::m_scoreLimit = 999999;
 std::string ScoreManager::m_scoreFormat = "%06d";
 CScoreManager* ScoreManager::m_pCScoreManager = nullptr;
 bool ScoreManager::m_updateScoreHUD = false;
+uint32_t ScoreManager::m_rainbowRingChain = 0;
 std::unordered_set<uint32_t*> ScoreManager::m_savedObjects;
 
 // MsgRestartStage for CScoreManager
@@ -183,12 +184,27 @@ void __declspec(naked) ScoreManager_GetRainbow()
 		push	esi
 		mov		ecx, ST_rainbow
 		mov		edx, 0
+
+		// Change to different rainbow ring chain score
+		add		ecx, ScoreManager::m_rainbowRingChain // 0-4
+		cmp		ScoreManager::m_rainbowRingChain, 4
+		je		jump
+		add		ScoreManager::m_rainbowRingChain, 1
+
+		jump:
 		call	ScoreManager::addScore
 		pop		esi
 
 		mov     eax, [esi + 0BCh]
 		jmp		[ScoreManager_GetRainbowReturnAddress]
 	}
+}
+
+HOOK(char, __stdcall, ScoreManager_CSonicStateGrounded, 0xDFF660, int* a1, bool a2)
+{
+	// Reset rainbow ring chain level
+	ScoreManager::m_rainbowRingChain = 0;
+	return originalScoreManager_CSonicStateGrounded(a1, a2);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyGunner, 0xBAA2F0, uint32_t* This, void* Edx, void* message)
@@ -297,6 +313,7 @@ void ScoreManager::applyPatches(std::string const& modDir)
 	INSTALL_HOOK(ScoreManager_GetSuperRing);
 	INSTALL_HOOK(ScoreManager_GetPhysics);
 	WRITE_JUMP(0x115A8F6, ScoreManager_GetRainbow);
+	INSTALL_HOOK(ScoreManager_CSonicStateGrounded);
 
 	// Enemy score hooks
 	INSTALL_HOOK(ScoreManager_EnemyGunner);
@@ -457,6 +474,10 @@ void ScoreManager::addScore(ScoreType type, uint32_t* This)
 	case ST_10ring:			score = 100;	break;
 	case ST_20ring:			score = 200;	break;
 	case ST_rainbow:		score = 1000;	break;
+	case ST_rainbow2:		score = 1600;	break;
+	case ST_rainbow3:		score = 2000;	break;
+	case ST_rainbow4:		score = 3400;	break;
+	case ST_rainbow5:		score = 4000;	break;
 	case ST_physics:		score = 20;		break;
 	case ST_itembox:		score = 200;	break;
 	case ST_enemySmall:		score = 100;	break;

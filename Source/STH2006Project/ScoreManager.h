@@ -15,6 +15,10 @@ enum ScoreType : uint32_t
 	ST_10ring,
 	ST_20ring,
 	ST_rainbow,
+	ST_rainbow2,
+	ST_rainbow3,
+	ST_rainbow4,
+	ST_rainbow5,
 	ST_physics,
 	ST_itembox,
 	ST_enemySmall,
@@ -34,6 +38,10 @@ inline char const* GetScoreTypeName(ScoreType type)
 	case ST_10ring:			return "10 Ring";
 	case ST_20ring:			return "20 Ring";
 	case ST_rainbow:		return "Rainbow Ring";
+	case ST_rainbow2:		return "Rainbow Ring Lv2";
+	case ST_rainbow3:		return "Rainbow Ring Lv3";
+	case ST_rainbow4:		return "Rainbow Ring Lv4";
+	case ST_rainbow5:		return "Rainbow Ring Lv5";
 	case ST_physics:		return "Physics";
 	case ST_itembox:		return "Itembox";
 	case ST_enemySmall:		return "Enemy (Small)";
@@ -78,6 +86,7 @@ public:
 	static std::string m_scoreFormat;
 	static CScoreManager* m_pCScoreManager;
 	static bool m_updateScoreHUD;
+	static uint32_t m_rainbowRingChain;
 	static std::unordered_set<uint32_t*> m_savedObjects;
 };
 
