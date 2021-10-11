@@ -308,12 +308,24 @@ void __declspec(naked) ScoreManager_NextRankScore()
 {
 	__asm
 	{
+		// Don't display for S rank
+		mov     eax, [edi + 208h]
+		cmp		eax, RT_S
+		jne		jump
+		retn	4
+
+		jump:
 		sub		esp, 14h
 		push	esi
 		push	ecx
 		lea		ecx, [esp + 14h - 8h]
 		jmp		[ScoreManager_NextRankScoreReturnAddress]
 	}
+}
+
+HOOK(bool, __cdecl, ScoreManager_IsPerfectBonus, 0x10B8A90)
+{
+	return false;
 }
 
 std::string externIniPath;
@@ -415,6 +427,10 @@ void ScoreManager::applyPatches_InternalSystem(std::string const& modDir)
 	WRITE_STRING(0x16940F4, "%06d");
 	WRITE_JUMP(0x10B5FF6, ScoreManager_NextRankScore);
 	WRITE_MEMORY(0x10B6044, uint8_t, 0xC);
+	WRITE_MEMORY(0x10B60AF, uint8_t, 0xEB);
+
+	// Disable perfect bonus
+	INSTALL_HOOK(ScoreManager_IsPerfectBonus);
 }
 
 void ScoreManager::applyPostInit(std::string const& modDir)
