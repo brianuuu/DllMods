@@ -1,8 +1,22 @@
 #include "AnimationSetPatcher.h"
 #include "Configuration.h"
 
-std::vector<NewAnimationData> AnimationSetPatcher::m_newAnimationData;
+HOOK(bool, __fastcall, CAnimationControlSingle_Debug, 0x6D84F0, uint32_t** This, void* Edx, float a2, int a3)
+{
+    std::string name((char*)(This[58][2]));
+    if (name.find("sn_") != string::npos)
+    {
+        printf("%s\n", name.c_str());
+    }
+    return originalCAnimationControlSingle_Debug(This, Edx, a2, a3);
+}
 
+HOOK(int*, __fastcall, CSonic_AnimationBlending, 0xE14A90, void* This, void* Edx, int a2, float a3)
+{
+    return nullptr;
+}
+
+std::vector<NewAnimationData> AnimationSetPatcher::m_newAnimationData;
 HOOK(void*, __cdecl, InitializeSonicAnimationList, 0x1272490)
 {
     void* pResult = originalInitializeSonicAnimationList();
@@ -95,6 +109,21 @@ const char* volatile const AnimationSetPatcher::HomingAttackLoop = "HomingAttack
 
 void AnimationSetPatcher::applyPatches()
 {
+    // DEBUG!!!
+    //INSTALL_HOOK(CAnimationControlSingle_Debug);
+
+    // Disable using blending animations since they cause crash
+    INSTALL_HOOK(CSonic_AnimationBlending);
+    WRITE_MEMORY(0x1274A6D, uint32_t, 0x15E7670); // sn_plate_v_l
+    WRITE_MEMORY(0x1274AD4, uint32_t, 0x15E7670); // sn_plate_v_l
+    WRITE_MEMORY(0x1274B3B, uint32_t, 0x15E7670); // sn_plate_v_r
+    WRITE_MEMORY(0x1274BA2, uint32_t, 0x15E7670); // sn_plate_v_r
+    WRITE_MEMORY(0x1274C09, uint32_t, 0x15E7670); // sn_plate_h
+    WRITE_MEMORY(0x1274C70, uint32_t, 0x15E7670); // sn_plate_h
+    WRITE_MEMORY(0x1278EFA, uint32_t, 0x15E7670); // sn_needle_blow_loop
+    WRITE_MEMORY(0x1278F66, uint32_t, 0x15E7670); // sn_direct_l
+    WRITE_MEMORY(0x1278FCD, uint32_t, 0x15E7670); // sn_direct_r
+
     // Trick animation for Super Form
     WRITE_STRING(0x15D58F4, "ssn_trick_jump");
 
