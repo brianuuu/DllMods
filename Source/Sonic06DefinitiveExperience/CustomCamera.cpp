@@ -2,19 +2,6 @@
 #include "Application.h"
 #include "Configuration.h"
 
-float WrapFloat(float number, float bounds)
-{
-    if (number > bounds) number -= bounds;
-    if (number < 0) number += bounds;
-    return number;
-}
-
-void ClampFloat(float& number, float min, float max)
-{
-    if (number < min) number = min;
-    if (number > max) number = max;
-}
-
 bool IsLoadingScreen()
 {
     uint32_t** hudCount = (uint32_t**)0x1E66B40;
@@ -136,7 +123,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
         float const pitchAdd = Common::IsPlayerControlLocked() ? 0.0f : -(padState->RightStickVertical) * c_cameraRotateRate * dt * invertY;
         pitch += pitchAdd * (pitchAdd > 0.0f ? 1.5f : 1.0f);
     }
-    ClampFloat(pitch, pitchMin, pitchMax);
+    Common::ClampFloat(pitch, pitchMin, pitchMax);
     
     // Counteract pitch correction if we didn't do it last frame
     // Yes, it's very hacky I know, not the best solution since it might still move a little after pausing
@@ -145,13 +132,13 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
         pitch -= targetPitchCorrection;
     }
     targetPitch += (pitch + targetPitchCorrection - targetPitch) * c_cameraLerpRate * dt;
-    ClampFloat(targetPitch, c_pitchMin, c_pitchMax);
+    Common::ClampFloat(targetPitch, c_pitchMin, c_pitchMax);
 
     // Calculate current target camera distance
     float playerSpeed = playerVelocity.norm();
     float speedDistAdd = (c_cameraToPlayerDistMax - c_cameraToPlayerDistMin) * playerSpeed / 20.0f;
     float cameraToPlayerDist = c_cameraToPlayerDistMin + speedDistAdd;
-    ClampFloat(cameraToPlayerDist, c_cameraToPlayerDistMin, c_cameraToPlayerDistMax);
+    Common::ClampFloat(cameraToPlayerDist, c_cameraToPlayerDistMin, c_cameraToPlayerDistMax);
 
     // Override distance when auto run or on board
     if (flags->KeepRunning || Common::IsPlayerOnBoard())
@@ -177,7 +164,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
 
     // Interpolate target camera distance
     targetCameraToPlayerDist += (cameraToPlayerDist - targetCameraToPlayerDist) * c_cameraLerpRate * dt;
-    ClampFloat(targetCameraToPlayerDist, 2.0f, 30.0f);
+    Common::ClampFloat(targetCameraToPlayerDist, 2.0f, 30.0f);
 
     // Pitch before correction
     Eigen::Quaternionf rotationPitch(0, 0, 0, 1);

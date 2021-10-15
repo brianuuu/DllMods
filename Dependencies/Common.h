@@ -313,6 +313,19 @@ typedef void* __fastcall CSonicSpeedContextPlaySound(void*, void*, SharedPtrType
 namespace Common
 {
 
+inline float WrapFloat(float number, float bounds)
+{
+    if (number > bounds) number -= bounds;
+    if (number < 0) number += bounds;
+    return number;
+}
+
+inline void ClampFloat(float& number, float min, float max)
+{
+    if (number < min) number = min;
+    if (number > max) number = max;
+}
+
 inline bool IsStringEndsWith(std::string const& value, std::string const& ending)
 {
     if (ending.size() > value.size()) return false;
