@@ -302,11 +302,6 @@ struct CSonicStateFlags
 #define XMLCheckResult(a_eResult) if (a_eResult != tinyxml2::XML_SUCCESS) { printf("XMLParse Error: %i\n", a_eResult); return a_eResult; }
 #endif
 
-// Score Generations function
-#define LIB_FUNCTION(returnType, libraryName, procName, ...) \
-    typedef returnType _##procName(__VA_ARGS__); \
-    _##procName* procName = (_##procName*)GetProcAddress(GetModuleHandle(TEXT(libraryName)), #procName);
-
 using SharedPtrTypeless = boost::shared_ptr<void>;
 typedef void* __fastcall CSonicSpeedContextPlaySound(void*, void*, SharedPtrTypeless&, uint32_t cueId, uint32_t);
 
