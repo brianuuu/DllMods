@@ -271,7 +271,7 @@ SharedPtrTypeless squatKickPfxHandle;
 HOOK(int*, __fastcall, CSonicStateSquatKickBegin, 0x12526D0, void* This)
 {
     // Don't allow direction change for squat kick
-    WRITE_MEMORY(0x11D944A, uint8_t, 0);
+    WRITE_MEMORY(0x11D943D, uint8_t, 0xEB);
 
     // Get initial brake flip direction
     Eigen::Vector3f playerPosition;
@@ -332,7 +332,7 @@ HOOK(void, __fastcall, CSonicStateSquatKickAdvance, 0x1252810, void* This)
 HOOK(int*, __fastcall, CSonicStateSquatKickEnd, 0x12527B0, void* This)
 {
     // Unlock direction change for sliding/spindash
-    WRITE_MEMORY(0x11D944A, uint8_t, 1);
+    WRITE_MEMORY(0x11D943D, uint8_t, 0x74);
 
     // Stop squat kick pfx
     Common::fCGlitterEnd(*PLAYER_CONTEXT, squatKickPfxHandle, false);
