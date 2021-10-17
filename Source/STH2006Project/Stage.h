@@ -14,5 +14,7 @@ public:
 	static bool m_wallJumpStart;
 	static float m_wallJumpTime;
 	static void __fastcall getIsWallJumpImpl(float* outOfControl);
+
+	static bool m_waterRunning;
 };
 

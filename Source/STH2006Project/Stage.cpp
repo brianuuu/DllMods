@@ -93,6 +93,93 @@ void __declspec(naked) getIsWallJump()
     }
 }
 
+bool Stage::m_waterRunning = false; 
+static SharedPtrTypeless waterSoundHandle;
+HOOK(char, __stdcall, Stage_CSonicStateGrounded, 0xDFF660, int* a1, bool a2)
+{
+    if (Common::CheckCurrentStage("ghz200"))
+    {
+        alignas(16) MsgGetAnimationInfo message {};
+        Common::SonicContextGetAnimationInfo(message);
+
+        CSonicStateFlags* flags = Common::GetSonicStateFlags();
+        if (flags->KeepRunning && flags->OnWater)
+        {
+            // Initial start, play sfx
+            if (!Stage::m_waterRunning)
+            {
+                Common::SonicContextPlaySound(waterSoundHandle, 2002059, 1);
+            }
+
+            // Change animation
+            Stage::m_waterRunning = true;
+            if (!message.IsAnimation("Sliding"))
+            {
+                Common::SonicContextChangeAnimation("Sliding");
+            }
+        }
+        else
+        {
+            // Auto-run finished
+            Stage::m_waterRunning = false;
+            waterSoundHandle.reset();
+            if (message.IsAnimation("Sliding"))
+            {
+                Common::SonicContextChangeAnimation("Walk");
+            }
+        }
+    }
+
+    return originalStage_CSonicStateGrounded(a1, a2);
+}
+
+uint32_t playWaterPfxSuccessAddress = 0x11DD1B9;
+uint32_t playWaterPfxReturnAddress = 0x11DD240;
+void __declspec(naked) playWaterPfx()
+{
+    __asm
+    {
+        mov     edx, [ecx + 4]
+
+        // check boost
+        cmp     byte ptr[edx + 10h], 0
+        jnz     jump
+
+        // check auto-run
+        cmp     byte ptr[edx + 2Dh], 0
+        jnz     jump
+
+        jmp     [playWaterPfxReturnAddress]
+
+        jump:
+        jmp     [playWaterPfxSuccessAddress]
+    }
+}
+
+HOOK(void, __stdcall, Stage_SonicChangeAnimation, 0xCDFC80, void* a1, int a2, const hh::base::CSharedString& name)
+{
+    if (Stage::m_waterRunning)
+    {
+        // if still water running, do not use walk animation (boost)
+        if (strcmp(name.m_pStr, "Walk") == 0)
+        {
+            originalStage_SonicChangeAnimation(a1, a2, "Sliding");
+            return;
+        }
+
+        alignas(16) MsgGetAnimationInfo message {};
+        Common::SonicContextGetAnimationInfo(message);
+
+        if (message.IsAnimation("Sliding"))
+        {
+            Stage::m_waterRunning = false;
+            waterSoundHandle.reset();
+        }
+    }
+
+    originalStage_SonicChangeAnimation(a1, a2, name);
+}
+
 void Stage::applyPatches()
 {
     // Play robe sfx in Kingdom Valley
@@ -105,6 +192,11 @@ void Stage::applyPatches()
     WRITE_JUMP(0xE6D5AA, getIsWallJump);
     INSTALL_HOOK(Stage_CSonicStateFallAdvance);
     INSTALL_HOOK(Stage_CSonicStateFallEnd);
+
+    // Do slide animation on water running in Wave Ocean
+    INSTALL_HOOK(Stage_CSonicStateGrounded);
+    INSTALL_HOOK(Stage_SonicChangeAnimation);
+    WRITE_JUMP(0x11DD1AC, playWaterPfx);
 }
 
 void __fastcall Stage::getIsWallJumpImpl(float* outOfControl)
