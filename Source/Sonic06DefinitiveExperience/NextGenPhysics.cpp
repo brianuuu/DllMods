@@ -42,7 +42,7 @@ char const* ef_ch_sng_spindash = "ef_ch_sng_spindash";
 HOOK(void, __stdcall, CSonicRotationAdvance, 0xE310A0, void* a1, float* targetDir, float turnRate1, float turnRateMultiplier, bool noLockDirection, float turnRate2)
 {
     CSonicStateFlags* flags = Common::GetSonicStateFlags();
-    if (flags->KeepRunning)
+    if (flags->KeepRunning || flags->Boost)
     {
         // In auto-run section, reduce turning rate so player can tap joystick and not get flinged
         Eigen::Vector3f playerVelocity;
@@ -51,7 +51,7 @@ HOOK(void, __stdcall, CSonicRotationAdvance, 0xE310A0, void* a1, float* targetDi
         // 100 turn rate at speed 60, 90 turn rate at speed 85
         float speed = playerVelocity.norm();
         float turnRate = 0.4f * (85.0f - speed) + 90.0f;
-        Common::ClampFloat(turnRate, 80.0f, 100.0f);
+        Common::ClampFloat(turnRate, 80.0f, flags->KeepRunning ? 100.0f : 110.0f);
 
         originalCSonicRotationAdvance(a1, targetDir, turnRate, c_funcTurnRateMultiplier * 0.5f, noLockDirection, turnRate);
     }
