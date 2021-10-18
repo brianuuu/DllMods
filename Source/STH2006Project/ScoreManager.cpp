@@ -129,7 +129,7 @@ HOOK(void, __fastcall, ScoreManager_GetSuperRing, 0x11F2F10, uint32_t* This, voi
 
 HOOK(void, __stdcall, ScoreManager_GetPhysics, 0xEA49B0, uint32_t This, int a2, void* a3, bool a4)
 {
-	static std::vector<std::string> filterList =
+	static std::vector<std::string> const filterList =
 	{
 		"sfx",
 		"cmn_cage",

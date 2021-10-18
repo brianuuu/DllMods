@@ -685,6 +685,29 @@ inline void PlaySoundStatic(SharedPtrTypeless& soundHandle, uint32_t cueID)
     }
 }
 
+inline void SpawnBoostParticle(uint32_t** This, Eigen::Vector3f const& pos, int amount)
+{
+	if (amount <= 0) return;
+
+	struct BoostParticleData
+	{
+		Eigen::Vector3f m_pos;
+		float m_unknown0xC = 1.0f;
+		int m_amount = 0;
+		float m_unknown0x14 = 1.0f;
+		float m_unknown0x18 = 0.0f;
+	};
+
+	FUNCTION_PTR(void, __cdecl, fpSpawnBoostParticle, 0x1125210, uint32_t* pCGameService, uint32_t* pCWorld, BoostParticleData* pData);
+	alignas(16) BoostParticleData data = {};
+	data.m_pos = pos;
+	data.m_amount = amount;
+	uint32_t CWorld = (This[41][1] + 0x7C);
+	uint32_t* pCWorld = &CWorld;
+	uint32_t* pCGameService = (uint32_t*)This[41][0];
+	fpSpawnBoostParticle(pCGameService, pCWorld, &data);
+}
+
 inline void ApplyPlayerApplyImpulse(MsgApplyImpulse const& message)
 {
 	FUNCTION_PTR(void, __thiscall, processPlayerMsgAddImpulse, 0xE6CFA0, void* This, void* message);

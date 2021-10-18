@@ -18,6 +18,26 @@ HOOK(void, __fastcall, ChaosEnergy_MsgGetHudPosition, 0x1096790, void* This, voi
 	originalChaosEnergy_MsgGetHudPosition(This, Edx, message);
 }
 
+HOOK(void, __stdcall, ChaosEnergy_PhysicsReward, 0xEA49B0, uint32_t This, int a2, void* a3, bool a4)
+{
+	// Check if it's a breakable object
+	if (!*(bool*)(This + 0x120))
+	{
+		if (!a4 || *(uint32_t*)(This + 0x108) == 1)
+		{
+			std::string name(*(char**)(This + 0x130));
+			int fakeEnemyType = ChaosEnergy::getFakeEnemyType(name);
+			if (fakeEnemyType)
+			{
+				float* pos = (float*)((*(uint32_t*)(This + 0xB8)) + 0x70);
+				Common::SpawnBoostParticle((uint32_t**)This, Eigen::Vector3f(pos[0], pos[1], pos[2]), fakeEnemyType);
+			}
+		}
+	}
+
+	originalChaosEnergy_PhysicsReward(This, a2, a3, a4);
+}
+
 uint32_t setChaosEnergySfxPfxReturnAddress = 0x112459F;
 void __declspec(naked) setChaosEnergySfxPfx()
 {
@@ -147,6 +167,9 @@ void ChaosEnergy::applyPatches()
 	static float const ChaosEnergyRecoveryRate3 = 0.1f; // EnemyBonus (0.02 default)
 	WRITE_MEMORY(0xD96736, float*, &ChaosEnergyRecoveryRate3);
 	WRITE_MEMORY(0xE60C94, float*, &ChaosEnergyRecoveryRate3);
+
+	// Spawn Chaos Energy on fake enemy object physics
+	INSTALL_HOOK(ChaosEnergy_PhysicsReward);
 }
 
 uint32_t __fastcall ChaosEnergy::getEnemyChaosEnergyTypeImpl(uint32_t* pEnemy, uint32_t amount)
@@ -173,19 +196,38 @@ int ChaosEnergy::getFakeEnemyType(std::string const& name)
 {
 	// Return if provided object physics name is one of the fake enemies
 
-	static std::vector<std::string> fakeMediumEnemyList =
+	static std::vector<std::string> const fakeBigEnemyList =
+	{
+		"en_eBuster",
+	};
+
+	static std::vector<std::string> const fakeMediumEnemyList =
 	{
 		"en_eLancer",
-		"en_eBuster",
 		"en_eArmor",
 		"en_eSweeper", // stealth
 		"en_eChaser",
 		"en_eCommander",
 	};
 
+	// Special case for Egg Chaser exploding
+	if (name.find("enm_eggchaser") != std::string::npos)
+	{
+		return 1;
+	}
+
 	// all fake enemy must have "en_e" and "_col" in their name
 	if (name.find("en_e") != std::string::npos && name.find("_col") != std::string::npos)
 	{
+		// Type big enemies
+		for (std::string const& enemy : fakeBigEnemyList)
+		{
+			if (name.find(enemy) != std::string::npos)
+			{
+				return 3;
+			}
+		}
+
 		// Type medium enemies
 		for (std::string const& enemy : fakeMediumEnemyList)
 		{
