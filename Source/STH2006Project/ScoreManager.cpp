@@ -1,6 +1,7 @@
 #include "ScoreManager.h"
 #include "Configuration.h"
 #include "ChaosEnergy.h"
+#include "Application.h"
 
 bool ScoreManager::m_enabled = false;
 bool ScoreManager::m_internalSystem = true;
@@ -295,10 +296,6 @@ HOOK(void, __fastcall, ScoreManager_EnemyCrawler, 0xB99B80, uint32_t* This, void
 
 HOOK(int, __fastcall, ScoreManager_CGameObject3DDestruction, 0xD5D790, uint32_t* This)
 {
-	/*if (ScoreManager::m_savedObjects.count(This))
-	{
-		printf("[ScoreManager] Object desstructed\n");
-	}*/
 	ScoreManager::m_savedObjects.erase(This);
 	return originalScoreManager_CGameObject3DDestruction(This);
 }
@@ -329,7 +326,7 @@ HOOK(bool, __cdecl, ScoreManager_IsPerfectBonus, 0x10B8A90)
 }
 
 std::string externIniPath;
-void ScoreManager::applyPatches(std::string const& modDir)
+void ScoreManager::applyPatches()
 {
 	// Must enable Score Generations, whether for internal score system or not
 	if (!Common::IsModEnabled("Score Generations", &externIniPath))
@@ -375,7 +372,7 @@ void ScoreManager::applyPatches(std::string const& modDir)
 
 	if (m_internalSystem)
 	{
-		applyPatches_InternalSystem(modDir);
+		applyPatches_InternalSystem();
 	}
 	else
 	{
@@ -388,10 +385,10 @@ void ScoreManager::applyPatches_ScoreGensSystem()
 	
 }
 
-void ScoreManager::applyPatches_InternalSystem(std::string const& modDir)
+void ScoreManager::applyPatches_InternalSystem()
 {
 	// Disable extern .dll in mod.ini
-	setExternalIni(modDir, false);
+	setExternalIni(false);
 
 	std::vector<std::string> modIniList;
 	Common::GetModIniList(modIniList);
@@ -433,14 +430,14 @@ void ScoreManager::applyPatches_InternalSystem(std::string const& modDir)
 	INSTALL_HOOK(ScoreManager_IsPerfectBonus);
 }
 
-void ScoreManager::applyPostInit(std::string const& modDir)
+void ScoreManager::applyPostInit()
 {
 	if (!m_enabled) return;
 
 	if (m_internalSystem)
 	{
 		// Reset extern .dll in mod.ini
-		setExternalIni(modDir, true);
+		setExternalIni(true);
 
 		// We shouldn't have loaded ScoreGenerations.dll
 		if (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr)
@@ -451,7 +448,7 @@ void ScoreManager::applyPostInit(std::string const& modDir)
 	}
 	else
 	{
-		std::string iniFile = modDir + "ScoreGenerations.ini";
+		std::string iniFile = Application::getModDirString() + "ScoreGenerations.ini";
 		if (!Common::IsFileExist(iniFile))
 		{
 			MessageBox(NULL, L"Failed to parse ScoreGenerations.ini", L"STH2006 Project", MB_ICONERROR);
@@ -464,7 +461,7 @@ void ScoreManager::applyPostInit(std::string const& modDir)
 	}
 }
 
-void ScoreManager::setExternalIni(std::string const& modDir, bool reset)
+void ScoreManager::setExternalIni(bool reset)
 {
 	if (Common::IsFileExist(externIniPath))
 	{
@@ -484,6 +481,7 @@ void ScoreManager::setExternalIni(std::string const& modDir, bool reset)
 					else
 					{
 						// Absolute path doesn't work, so we have to use relative...
+						std::string const modDir = Application::getModDirString();
 						content += "DLLFile=\"..\\" + modDir.substr(modDir.find_last_of("\\/", modDir.size() - 2) + 1) + "STH2006ProjectExtra.dll\"";
 					}
 				}

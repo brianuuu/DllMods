@@ -97,11 +97,11 @@ struct CScoreManager
 class ScoreManager
 {
 public:
-	static void applyPatches(std::string const& modDir);
+	static void applyPatches();
 	static void applyPatches_ScoreGensSystem();
-	static void applyPatches_InternalSystem(std::string const& modDir);
-	static void applyPostInit(std::string const& modDir);
-	static void setExternalIni(std::string const& modDir, bool reset);
+	static void applyPatches_InternalSystem();
+	static void applyPostInit();
+	static void setExternalIni(bool reset);
 
 	static void __fastcall addScore(ScoreType type, uint32_t* This = nullptr);
 	static ResultData* calculateResultData();

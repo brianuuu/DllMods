@@ -10,17 +10,15 @@
 #include "SoleannaNPC.h"
 #include "ScoreManager.h"
 
-std::string modDir;
-
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
-    modDir = modInfo->CurrentMod->Path;
-
+    std::string modDir = modInfo->CurrentMod->Path;
     size_t pos = modDir.find_last_of("\\/");
     if (pos != std::string::npos)
     {
         modDir.erase(pos + 1);
     }
+    Application::setModDir(modDir);
     
     if (!Configuration::load(modDir))
     {
@@ -46,7 +44,7 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     ChaosEnergy::applyPatches();
 
     // Internal score system (must install before ArchiveTreePatcher)
-    ScoreManager::applyPatches(modDir);
+    ScoreManager::applyPatches();
 
     // Allow 1up and 10ring to be locked-on
     ArchiveTreePatcher::applyPatches();
@@ -96,5 +94,5 @@ extern "C" __declspec(dllexport) void PostInit()
     }
 
     // Override score to all 0s and implement them ourselves
-    ScoreManager::applyPostInit(modDir);
+    ScoreManager::applyPostInit();
 }
