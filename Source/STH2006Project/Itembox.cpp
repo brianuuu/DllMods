@@ -218,6 +218,11 @@ void Itembox::applyPatches()
 	INSTALL_HOOK(Itembox_MsgGetItemType);
 	INSTALL_HOOK(Itembox_MsgTakeObject);
 
+	// Make CPlayerSpeedStatePluginRingCountUp get all rings immediately
+	WRITE_NOP(0xE4155E, 2);
+	WRITE_NOP(0xE415C8, 2);
+	WRITE_MEMORY(0xE4157A, int, -1);
+
 	// Force all item to use cmn_obj_oneup_HD skl and anm
 	WRITE_NOP(0xFFF414, 6);
 	WRITE_NOP(0xFFF593, 6);
