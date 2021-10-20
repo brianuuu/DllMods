@@ -16,6 +16,7 @@
 #include <fstream>
 #include <iomanip>
 #include <unordered_set>
+#include <deque>
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
@@ -23,6 +24,12 @@
 #include <Eigen/Geometry>
 
 #include "tinyxml2.h"
+
+// ImGui
+#include <imgui.h>
+#include <imgui_impl_dx9.h>
+#include <imgui_impl_win32.h>
+#include <DDSTextureLoader9.h>
 
 // LostCodeLoader
 #include <LostCodeLoader.h>

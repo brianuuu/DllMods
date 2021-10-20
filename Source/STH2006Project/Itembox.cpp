@@ -1,7 +1,10 @@
 #include "Itembox.h"
+#include "UIContext.h"
+#include "Application.h"
 
 float const c_10ringRadius = 0.57f;
 float const c_1upRadius = 0.70f;
+std::deque<ItemboxGUI> Itembox::m_guiData;
 
 std::string m_setdataLayer;
 HOOK(bool, __stdcall, ParseSetdata, 0xEB5050, void* a1, char** pFileName, void* a3, void* a4, uint8_t a5, uint8_t a6)
@@ -39,18 +42,27 @@ HOOK(uint32_t*, __fastcall, ReadXmlData, 0xCE5FC0, uint32_t size, char* pData, v
 
 HOOK(void, __fastcall, ItemMsgHitEventCollision, 0xFFF810, uint32_t* This, void* Edx, void* message)
 {
+	uint32_t type = 0;
+	ItemboxType enumType = IT_COUNT;
+
 	switch (This[71])
 	{
-	default: WRITE_MEMORY(0xFFF82F, uint32_t, 2) break; // 1up
-	case 1:  WRITE_MEMORY(0xFFF82F, uint32_t, 4) break; // invincibility
-	case 2:  WRITE_MEMORY(0xFFF82F, uint32_t, 0) break; // shield
-	case 3:  WRITE_MEMORY(0xFFF82F, uint32_t, 8) break; // fire shield
-	case 4:  WRITE_MEMORY(0xFFF82F, uint32_t, 3) break; // speed shoes
-	case 5:  WRITE_MEMORY(0xFFF82F, uint32_t, 20) break; // gauge up
-	case 6:  WRITE_MEMORY(0xFFF82F, uint32_t, 21) break; // 5 ring
-	case 7:  WRITE_MEMORY(0xFFF82F, uint32_t, 22) break; // 10 ring
-	case 8:  WRITE_MEMORY(0xFFF82F, uint32_t, 23) break; // 20 ring
+	default:	type = 2;	enumType = IT_1up;		break; // 1up
+	case 1:		type = 4;	enumType = IT_invin;	break; // invincibility
+	case 2:		type = 0;	enumType = IT_shield;	break; // shield
+	case 3:		type = 8;	enumType = IT_fire;		break; // fire shield
+	case 4:		type = 3;	enumType = IT_speed;	break; // speed shoes
+	case 5:		type = 20;	enumType = IT_gauge;	break; // gauge up
+	case 6:		type = 21;	enumType = IT_5ring;	break; // 5 ring
+	case 7:		type = 22;	enumType = IT_10ring;	break; // 10 ring
+	case 8:		type = 23;	enumType = IT_20ring;	break; // 20 ring
 	}
+
+	// Modify what passes to MsgGetItemType
+	WRITE_MEMORY(0xFFF82F, uint32_t, type);
+
+	// Draw ImGui
+	Itembox::addItemToGui(enumType);
 
 	originalItemMsgHitEventCollision(This, Edx, message);
 }
@@ -104,6 +116,19 @@ HOOK(void, __fastcall, Itembox_MsgGetItemType, 0xE6D7D0, void* This, void* Edx, 
 	}
 
 	originalItembox_MsgGetItemType(This, Edx, a2);
+}
+
+float m_hudDeltaTime = 0.0f;
+HOOK(void, __fastcall, Itembox_CHudSonicStageUpdate, 0x1098A50, void* This, void* Edx, float* dt)
+{
+	m_hudDeltaTime = *dt;
+	originalItembox_CHudSonicStageUpdate(This, Edx, dt);
+}
+
+HOOK(void, __fastcall, Itembox_GetSuperRing, 0x11F2F10, uint32_t* This, void* Edx, void* message)
+{
+	Itembox::addItemToGui(ItemboxType::IT_10ring);
+	originalItembox_GetSuperRing(This, Edx, message);
 }
 
 const char* volatile const ObjectProductionItemboxLock = "ObjectProductionItemboxLock.phy.xml";
@@ -202,6 +227,10 @@ void Itembox::applyPatches()
 	// Prevent Disable Lives code conflict
 	WRITE_MEMORY(0xFFF5D7, char*, itemNames[0]);
 	WRITE_MEMORY(0xFFF62B, char*, itemNames[0]);
+
+	// Draw GUI
+	INSTALL_HOOK(Itembox_CHudSonicStageUpdate);
+	INSTALL_HOOK(Itembox_GetSuperRing);
 }
 
 void Itembox::playItemboxSfx()
@@ -225,6 +254,12 @@ tinyxml2::XMLError Itembox::getInjectStr(char const* pData, uint32_t size, std::
 
 	tinyxml2::XMLNode* pRoot = pathXml.FirstChildElement("SetObject");
 	if (pRoot == nullptr) return tinyxml2::XML_ERROR_FILE_READ_ERROR;
+
+	struct PositionStr
+	{
+		std::string x, y, z;
+	};
+	typedef std::map<uint32_t, PositionStr> ItemboxData;
 
 	std::set<uint32_t> setObjectIDs;
 	ItemboxData itemboxData;
@@ -303,4 +338,88 @@ tinyxml2::XMLError Itembox::getInjectStr(char const* pData, uint32_t size, std::
 	}
 
 	return tinyxml2::XML_SUCCESS;
+}
+
+void Itembox::addItemToGui(ItemboxType type)
+{
+	if (type >= ItemboxType::IT_COUNT) return;
+
+	// Initialize GUI data
+	m_guiData.push_front(ItemboxGUI(type));
+	UIContext::loadTextureFromFile((Application::getModDirWString() + L"Assets\\" + getItemboxTextureName(type)).c_str(), &m_guiData.front().m_texture);
+
+	// Only allow 5 to display at max
+	if (m_guiData.size() > 5)
+	{
+		m_guiData.pop_back();
+	}
+}
+
+void Itembox::draw()
+{
+	// At loading screen, clear all
+	if ((*(uint32_t**)0x1E66B40)[2] > 0)
+	{
+		m_guiData.clear();
+		return;
+	}
+
+	// Remove frames that has timed out
+	while (!m_guiData.empty() && m_guiData.back().m_frame > 200.0f)
+	{
+		m_guiData.pop_back();
+	}
+
+	static bool visible = true;
+	constexpr ImGuiWindowFlags flags 
+		= ImGuiWindowFlags_NoTitleBar
+		| ImGuiWindowFlags_NoMove
+		| ImGuiWindowFlags_NoCollapse
+		| ImGuiWindowFlags_AlwaysAutoResize
+		| ImGuiWindowFlags_NoFocusOnAppearing
+		| ImGuiWindowFlags_NoDecoration
+		| ImGuiWindowFlags_NoBackground;
+
+	// 0-8: zoom in
+	// 9: zoom to size
+	// 10-200: stay
+	for (int i = m_guiData.size() - 1; i >= 0; i--)
+	{
+		ItemboxGUI& data = m_guiData[i];
+
+		if (data.m_frame > 0.0f && data.m_texture)
+		{
+			ImGui::Begin((std::string("Itembox") + std::to_string(i)).c_str(), &visible, flags);
+
+			float sizeX = *BACKBUFFER_WIDTH * 128.0f / 1280.0f;
+			float sizeY = *BACKBUFFER_HEIGHT * 128.0f / 720.0f;
+			if (data.m_frame <= 8.0f)
+			{
+				float scale = data.m_frame / 8.0f * 1.12f;
+				sizeX *= scale;
+				sizeY *= scale;
+			}
+			else if (data.m_frame < 10.0f)
+			{
+				float scale = ((10.0f - data.m_frame) * 0.12f) + 1.0f;
+				sizeX *= scale;
+				sizeY *= scale;
+			}
+
+			float targetPos = 0.5f - (0.091f * i); // TODO: flip for gens HUD
+			data.m_pos += (targetPos - data.m_pos) * 0.15f * m_hudDeltaTime * 60.0f;
+			float posX = floorf(*BACKBUFFER_WIDTH * data.m_pos - sizeX * 0.5f - 8.0f);
+			float posY = floorf(*BACKBUFFER_HEIGHT * 0.847f - sizeX * 0.5f - 8.0f);
+			ImGui::SetWindowFocus();
+			ImGui::SetWindowPos(ImVec2(posX, posY));
+			ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
+			ImGui::Image(data.m_texture, ImVec2(sizeX, sizeY));
+
+			ImGui::End();
+		}
+
+		data.m_frame += m_hudDeltaTime * 60.0f;
+	}
+
+	m_hudDeltaTime = 0.0f;
 }

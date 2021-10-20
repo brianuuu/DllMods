@@ -11,6 +11,9 @@ CSonicContext** const pModernSonicContext = (CSonicContext**)0x1E5E2F8;
 CSonicContext** const pClassicSonicContext = (CSonicContext**)0x1E5E304;
 CSonicContext** const pSuperSonicContext = (CSonicContext**)0x1E5E310;
 
+uint32_t* const BACKBUFFER_WIDTH = (uint32_t*)0x1DFDDDC;
+uint32_t* const BACKBUFFER_HEIGHT = (uint32_t*)0x1DFDDE0;
+
 uint32_t const CStringConstructor = 0x6621A0;
 uint32_t const CStringDestructor = 0x661550;
 

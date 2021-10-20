@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="Application.cpp" />
+    <ClCompile Include="ArchiveTreePatcher.cpp" />
+    <ClCompile Include="ChaosEnergy.cpp" />
+    <ClCompile Include="Configuration.cpp" />
+    <ClCompile Include="DllMain.cpp" />
+    <ClCompile Include="EnemyTrigger.cpp" />
+    <ClCompile Include="Itembox.cpp" />
+    <ClCompile Include="Mod.cpp" />
+    <ClCompile Include="Navigation.cpp" />
+    <ClCompile Include="Omochao.cpp" />
+    <ClCompile Include="PathManager.cpp" />
+    <ClCompile Include="Pch.cpp" />
+    <ClCompile Include="ScoreManager.cpp" />
+    <ClCompile Include="SoleannaNPC.cpp" />
+    <ClCompile Include="Stage.cpp" />
+    <ClCompile Include="tinyxml2.cpp" />
+    <ClCompile Include="..\..\Dependencies\imgui\imgui.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Dependencies\imgui\imgui_demo.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Dependencies\imgui\imgui_draw.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Dependencies\imgui\imgui_impl_dx9.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Dependencies\imgui\imgui_impl_win32.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Dependencies\imgui\imgui_widgets.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Dependencies\DDSTextureLoader\DDSTextureLoader9.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Application.h" />
+    <ClInclude Include="ArchiveTreePatcher.h" />
+    <ClInclude Include="ChaosEnergy.h" />
+    <ClInclude Include="Configuration.h" />
+    <ClInclude Include="EnemyTrigger.h" />
+    <ClInclude Include="Itembox.h" />
+    <ClInclude Include="Navigation.h" />
+    <ClInclude Include="Omochao.h" />
+    <ClInclude Include="PathManager.h" />
+    <ClInclude Include="Pch.h" />
+    <ClInclude Include="ScoreManager.h" />
+    <ClInclude Include="SoleannaNPC.h" />
+    <ClInclude Include="Stage.h" />
+    <ClInclude Include="tinyxml2.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="imgui">
+      <UniqueIdentifier>{bac37829-acdd-4f2d-b945-8b16d201d56b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

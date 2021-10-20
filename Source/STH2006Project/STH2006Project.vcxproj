@@ -97,7 +97,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>Pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>..\..\Dependencies;..\..\Dependencies\Detours\include;..\..\Dependencies\Loaders;..\..\Include\BlueBlur;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\Dependencies;..\..\Dependencies\Detours\include;..\..\Dependencies\Loaders;..\..\Include\BlueBlur;..\..\Dependencies\imgui;..\..\Dependencies\DDSTextureLoader;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>Pch.h</ForcedIncludeFiles>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -138,7 +138,7 @@
       <PrecompiledHeaderFile>Pch.h</PrecompiledHeaderFile>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
-      <AdditionalIncludeDirectories>..\..\Dependencies;..\..\Dependencies\Detours\include;..\..\Dependencies\Loaders;..\..\Include\BlueBlur;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\Dependencies;..\..\Dependencies\Detours\include;..\..\Dependencies\Loaders;..\..\Include\BlueBlur;..\..\Dependencies\imgui;..\..\Dependencies\DDSTextureLoader;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>Pch.h</ForcedIncludeFiles>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -176,12 +176,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Dependencies\DDSTextureLoader\DDSTextureLoader9.cpp" />
+    <ClCompile Include="..\..\Dependencies\imgui\imgui.cpp" />
+    <ClCompile Include="..\..\Dependencies\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\..\Dependencies\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\..\Dependencies\imgui\imgui_impl_dx9.cpp" />
+    <ClCompile Include="..\..\Dependencies\imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="..\..\Dependencies\imgui\imgui_widgets.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="ArchiveTreePatcher.cpp" />
     <ClCompile Include="ChaosEnergy.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="EnemyTrigger.cpp" />
+    <ClCompile Include="UIContext.cpp" />
     <ClCompile Include="Itembox.cpp" />
     <ClCompile Include="Mod.cpp" />
     <ClCompile Include="Navigation.cpp" />
@@ -200,6 +208,7 @@
     <ClCompile Include="ScoreManager.cpp" />
     <ClCompile Include="SoleannaNPC.cpp" />
     <ClCompile Include="Stage.cpp" />
+    <ClCompile Include="SynchronizedObject.cpp" />
     <ClCompile Include="tinyxml2.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -208,6 +217,7 @@
     <ClInclude Include="ChaosEnergy.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="EnemyTrigger.h" />
+    <ClInclude Include="UIContext.h" />
     <ClInclude Include="Itembox.h" />
     <ClInclude Include="Navigation.h" />
     <ClInclude Include="Omochao.h" />
@@ -216,6 +226,7 @@
     <ClInclude Include="ScoreManager.h" />
     <ClInclude Include="SoleannaNPC.h" />
     <ClInclude Include="Stage.h" />
+    <ClInclude Include="SynchronizedObject.h" />
     <ClInclude Include="tinyxml2.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
