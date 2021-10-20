@@ -2,6 +2,7 @@
 #include "Configuration.h"
 #include "ChaosEnergy.h"
 #include "Application.h"
+#include "UIContext.h"
 
 bool ScoreManager::m_enabled = false;
 bool ScoreManager::m_internalSystem = true;
@@ -14,6 +15,11 @@ std::string ScoreManager::m_scoreFormat = "%06d";
 CScoreManager* ScoreManager::m_pCScoreManager = nullptr;
 bool ScoreManager::m_updateScoreHUD = false;
 float ScoreManager::m_currentTime = 0.0f;
+
+uint32_t ScoreManager::m_bonus = 0;
+float ScoreManager::m_bonusTimer = 0.0f;
+float ScoreManager::m_bonusDrawTimer = 0.0f;
+PDIRECT3DTEXTURE9 ScoreManager::m_bonusTexture = nullptr;
 
 // MsgRestartStage for CScoreManager
 HOOK(void, __fastcall, CScoreManager_MsgRestartStage, 0xCF7F10, uint32_t* This, void* Edx, void* message)
@@ -47,6 +53,23 @@ HOOK(void, __fastcall, CScoreManager_CHudSonicStageUpdate, 0x1098A50, void* This
 
 	// Get current time
 	ScoreManager::m_currentTime = *(float*)Common::GetMultiLevelAddress((uint32_t)This + 0xA4, { 0x0, 0x8, 0x184 });
+	
+	// Bonus timer
+	ScoreManager::m_bonusTimer = max(0.0f, ScoreManager::m_bonusTimer - *dt);
+	ScoreManager::m_bonusDrawTimer = max(0.0f, ScoreManager::m_bonusDrawTimer - *dt);
+	if (ScoreManager::m_bonusTimer == 0.0f)
+	{
+		ScoreManager::m_bonus = 0;
+		ScoreManager::m_rainbowRingChain = 0;
+	}
+	if (ScoreManager::m_bonusDrawTimer == 0.0f)
+	{
+		if (ScoreManager::m_bonusTexture)
+		{
+			ScoreManager::m_bonusTexture->Release();
+			ScoreManager::m_bonusTexture = nullptr;
+		}
+	}
 
 	originalCScoreManager_CHudSonicStageUpdate(This, Edx, dt);
 }
@@ -221,13 +244,6 @@ void __declspec(naked) ScoreManager_GetRainbow()
 	}
 }
 
-HOOK(char, __stdcall, ScoreManager_CSonicStateGrounded, 0xDFF660, int* a1, bool a2)
-{
-	// Reset rainbow ring chain level
-	ScoreManager::m_rainbowRingChain = 0;
-	return originalScoreManager_CSonicStateGrounded(a1, a2);
-}
-
 HOOK(void, __fastcall, ScoreManager_EnemyGunner, 0xBAA2F0, uint32_t* This, void* Edx, void* message)
 {
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
@@ -355,7 +371,6 @@ void ScoreManager::applyPatches()
 	INSTALL_HOOK(ScoreManager_GetSuperRing);
 	INSTALL_HOOK(ScoreManager_GetPhysics);
 	WRITE_JUMP(0x115A8F6, ScoreManager_GetRainbow);
-	INSTALL_HOOK(ScoreManager_CSonicStateGrounded);
 
 	// Enemy score hooks
 	INSTALL_HOOK(ScoreManager_EnemyGunner);
@@ -539,6 +554,13 @@ void ScoreManager::addScore(ScoreType type, uint32_t* This)
 	default: return;
 	}
 
+	// Add to stacked bonus and notify draw GUI
+	if (type >= ST_rainbow && type <= ST_rainbow5)
+	{
+		m_bonus += score;
+		notifyDraw(BonusCommentType::BCT_Great);
+	}
+
 	printf("[ScoreManager] Score +%d \tType: %s\n", score, GetScoreTypeName(type));
 	if (m_internalSystem)
 	{
@@ -685,4 +707,77 @@ float ScoreManager::getPropBetween(int min, int max, int num)
 	float maxF = (float)max;
 	float numF = (float)num;
 	return (numF - minF) / (maxF - minF);
+}
+
+void ScoreManager::notifyDraw(BonusCommentType type)
+{
+	// Always clear texture first
+	if (m_bonusTexture)
+	{
+		m_bonusTexture->Release();
+		m_bonusTexture = nullptr;
+	}
+
+	// Only draw comment if there not already one
+	if (m_bonusDrawTimer == 0.0f)
+	{
+		UIContext::loadTextureFromFile((Application::getModDirWString() + L"Assets\\" + getBonusCommentTextureName(type)).c_str(), &m_bonusTexture);
+	}
+
+	m_bonusTimer = 10.0f;
+	m_bonusDrawTimer = 4.0f;
+}
+
+void ScoreManager::draw()
+{
+	// At loading screen, clear all
+	if ((*(uint32_t**)0x1E66B40)[2] > 0)
+	{
+		m_bonus = 0;
+		m_bonusTimer = 0.0f;
+		m_bonusDrawTimer = 0.0f;
+		return;
+	}
+
+	static bool visible = true;
+	constexpr ImGuiWindowFlags flags
+		= ImGuiWindowFlags_NoTitleBar
+		| ImGuiWindowFlags_NoMove
+		| ImGuiWindowFlags_NoCollapse
+		| ImGuiWindowFlags_AlwaysAutoResize
+		| ImGuiWindowFlags_NoFocusOnAppearing
+		| ImGuiWindowFlags_NoDecoration
+		| ImGuiWindowFlags_NoBackground;
+
+	if (m_bonus > 0 && m_bonusDrawTimer > 0)
+	{
+		ImGui::Begin("Bonus", &visible, flags);
+		{
+			std::string const bonusStr = std::to_string(m_bonus);
+			ImVec2 size = ImGui::CalcTextSize(bonusStr.c_str());
+			ImGui::Text(bonusStr.c_str());
+			ImGui::SetWindowPos(ImVec2((float)*BACKBUFFER_WIDTH * 0.8f - size.x / 2, (float)*BACKBUFFER_HEIGHT * 0.295f - size.y / 2));
+		}
+		ImGui::End();
+
+		if (m_bonusTexture)
+		{
+			ImGui::Begin("BonusComment", &visible, flags);
+			{
+				float sizeX = *BACKBUFFER_WIDTH * 300.0f / 1280.0f;
+				float sizeY = *BACKBUFFER_HEIGHT * 50.0f / 720.0f;
+				float posX = 0.645f;
+				float posY = 0.347f;
+				if (m_bonusDrawTimer > 3.9f)
+				{
+					posX = 1.0f - (1.0f - posX) * ((4.0f - m_bonusDrawTimer) / 0.1f);
+				}
+
+				ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * posX, *BACKBUFFER_HEIGHT * posY));
+				ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
+				ImGui::Image(m_bonusTexture, ImVec2(sizeX, sizeY));
+			}
+			ImGui::End();
+		}
+	}
 }

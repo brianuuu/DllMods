@@ -91,8 +91,24 @@ struct CScoreManager
 {
 	INSERT_PADDING(0xA8);
 	uint32_t m_score;
-
 };
+
+enum BonusCommentType : uint32_t
+{
+	BCT_Great = 0,
+	BCT_Radical,
+	BCT_NoDraw
+};
+
+inline const wchar_t* getBonusCommentTextureName(BonusCommentType type)
+{
+	switch (type)
+	{
+	case BCT_Great:		return L"Bonus_Great.dds";
+	case BCT_Radical:	return L"Bonus_Radical.dds";
+	default: 			return L"";
+	}
+}
 
 class ScoreManager
 {
@@ -107,6 +123,13 @@ public:
 	static ResultData* calculateResultData();
 	static float getScoreProp(ScoreTable const& scoreTable, int score);
 	static float getPropBetween(int min, int max, int num);
+
+	static uint32_t m_bonus;
+	static float m_bonusTimer;
+	static float m_bonusDrawTimer;
+	static PDIRECT3DTEXTURE9 m_bonusTexture;
+	static void notifyDraw(BonusCommentType type);
+	static void draw();
 
 	// Common members
 	static bool m_enabled;
