@@ -739,19 +739,10 @@ void ScoreManager::draw()
 		return;
 	}
 
-	static bool visible = true;
-	constexpr ImGuiWindowFlags flags
-		= ImGuiWindowFlags_NoTitleBar
-		| ImGuiWindowFlags_NoMove
-		| ImGuiWindowFlags_NoCollapse
-		| ImGuiWindowFlags_AlwaysAutoResize
-		| ImGuiWindowFlags_NoFocusOnAppearing
-		| ImGuiWindowFlags_NoDecoration
-		| ImGuiWindowFlags_NoBackground;
-
 	if (m_bonus > 0 && m_bonusDrawTimer > 0)
 	{
-		ImGui::Begin("Bonus", &visible, flags);
+		static bool visible = true;
+		ImGui::Begin("Bonus", &visible, UIContext::m_hudFlags);
 		{
 			std::string const bonusStr = std::to_string(m_bonus);
 			ImVec2 size = ImGui::CalcTextSize(bonusStr.c_str());
@@ -762,7 +753,7 @@ void ScoreManager::draw()
 
 		if (m_bonusTexture)
 		{
-			ImGui::Begin("BonusComment", &visible, flags);
+			ImGui::Begin("BonusComment", &visible, UIContext::m_hudFlags);
 			{
 				float sizeX = *BACKBUFFER_WIDTH * 300.0f / 1280.0f;
 				float sizeY = *BACKBUFFER_HEIGHT * 50.0f / 720.0f;

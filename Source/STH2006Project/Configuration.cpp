@@ -1,5 +1,7 @@
 #include "Configuration.h"
 
+bool Configuration::m_using06HUD = false;
+
 bool Configuration::load(const std::string& rootPath)
 {
     const INIReader reader(rootPath + "mod.ini");

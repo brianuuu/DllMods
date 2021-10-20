@@ -97,7 +97,7 @@ extern "C" __declspec(dllexport) void PostInit()
 
     if (GetModuleHandle(TEXT("Sonic06HUD.dll")) != nullptr)
     {
-        Itembox::setUsing06HUD(true);
+        Configuration::m_using06HUD = true;
     }
 
     // Override score to all 0s and implement them ourselves
@@ -151,4 +151,7 @@ extern "C" __declspec(dllexport) void OnFrame()
     }
 
     UIContext::update();
+
+    // Reset HUD dt
+    Application::setHudDeltaTime(0);
 }

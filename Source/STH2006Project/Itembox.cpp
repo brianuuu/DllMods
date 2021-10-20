@@ -1,11 +1,11 @@
 #include "Itembox.h"
 #include "UIContext.h"
 #include "Application.h"
+#include "Configuration.h"
 
 float const c_10ringRadius = 0.57f;
 float const c_1upRadius = 0.70f;
 
-bool Itembox::m_using06HUD = false;
 std::deque<ItemboxGUI> Itembox::m_guiData;
 
 std::string m_setdataLayer;
@@ -120,13 +120,6 @@ HOOK(void, __fastcall, Itembox_MsgGetItemType, 0xE6D7D0, void* This, void* Edx, 
 	originalItembox_MsgGetItemType(This, Edx, a2);
 }
 
-float m_hudDeltaTime = 0.0f;
-HOOK(void, __fastcall, Itembox_CHudSonicStageUpdate, 0x1098A50, void* This, void* Edx, float* dt)
-{
-	m_hudDeltaTime = *dt;
-	originalItembox_CHudSonicStageUpdate(This, Edx, dt);
-}
-
 HOOK(void, __fastcall, Itembox_GetSuperRing, 0x11F2F10, uint32_t* This, void* Edx, void* message)
 {
 	Itembox::addItemToGui(ItemboxType::IT_10ring);
@@ -236,7 +229,6 @@ void Itembox::applyPatches()
 	WRITE_MEMORY(0xFFF62B, char*, itemNames[0]);
 
 	// Draw GUI
-	INSTALL_HOOK(Itembox_CHudSonicStageUpdate);
 	INSTALL_HOOK(Itembox_GetSuperRing);
 }
 
@@ -377,16 +369,6 @@ void Itembox::draw()
 		m_guiData.pop_back();
 	}
 
-	static bool visible = true;
-	constexpr ImGuiWindowFlags flags 
-		= ImGuiWindowFlags_NoTitleBar
-		| ImGuiWindowFlags_NoMove
-		| ImGuiWindowFlags_NoCollapse
-		| ImGuiWindowFlags_AlwaysAutoResize
-		| ImGuiWindowFlags_NoFocusOnAppearing
-		| ImGuiWindowFlags_NoDecoration
-		| ImGuiWindowFlags_NoBackground;
-
 	// 0-8: zoom in
 	// 9: zoom to size
 	// 10-200: stay
@@ -396,7 +378,8 @@ void Itembox::draw()
 
 		if (data.m_frame > 0.0f && data.m_texture)
 		{
-			ImGui::Begin((std::string("Itembox") + std::to_string(i)).c_str(), &visible, flags);
+			static bool visible = true;
+			ImGui::Begin((std::string("Itembox") + std::to_string(i)).c_str(), &visible, UIContext::m_hudFlags);
 
 			float sizeX = *BACKBUFFER_WIDTH * 128.0f / 1280.0f;
 			float sizeY = *BACKBUFFER_HEIGHT * 128.0f / 720.0f;
@@ -413,8 +396,8 @@ void Itembox::draw()
 				sizeY *= scale;
 			}
 
-			float targetPos = 0.5f - (0.091f * i) * (m_using06HUD ? 1.0f : -1.0f);
-			data.m_pos += (targetPos - data.m_pos) * 0.15f * m_hudDeltaTime * 60.0f;
+			float targetPos = 0.5f - (0.091f * i) * (Configuration::m_using06HUD ? 1.0f : -1.0f);
+			data.m_pos += (targetPos - data.m_pos) * 0.15f * Application::getHudDeltaTime() * 60.0f;
 			float posX = floorf(*BACKBUFFER_WIDTH * data.m_pos - sizeX * 0.5f - 8.0f);
 			float posY = floorf(*BACKBUFFER_HEIGHT * 0.847f - sizeX * 0.5f - 8.0f);
 			ImGui::SetWindowFocus();
@@ -425,8 +408,6 @@ void Itembox::draw()
 			ImGui::End();
 		}
 
-		data.m_frame += m_hudDeltaTime * 60.0f;
+		data.m_frame += Application::getHudDeltaTime() * 60.0f;
 	}
-
-	m_hudDeltaTime = 0.0f;
 }

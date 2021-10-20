@@ -19,4 +19,13 @@ public:
     static LRESULT wndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
     static bool loadTextureFromFile(const wchar_t* filename, PDIRECT3DTEXTURE9* out_texture, int* out_width = nullptr, int* out_height = nullptr);
+
+    static constexpr ImGuiWindowFlags m_hudFlags
+        = ImGuiWindowFlags_NoTitleBar
+        | ImGuiWindowFlags_NoMove
+        | ImGuiWindowFlags_NoCollapse
+        | ImGuiWindowFlags_AlwaysAutoResize
+        | ImGuiWindowFlags_NoFocusOnAppearing
+        | ImGuiWindowFlags_NoDecoration
+        | ImGuiWindowFlags_NoBackground;
 };

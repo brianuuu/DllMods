@@ -4,6 +4,7 @@ class Application
 private:
 	static std::string m_modDir;
 	static float m_deltaTime;
+	static float m_hudDeltaTime;
 
 public:
 	static void applyPatches();
@@ -11,6 +12,8 @@ public:
 	// Delta time
 	static void setDeltaTime(float dt) { m_deltaTime = dt; }
 	static float getDeltaTime() { return m_deltaTime; }
+	static void setHudDeltaTime(float dt) { m_hudDeltaTime = dt; }
+	static float getHudDeltaTime() { return m_hudDeltaTime; }
 
 	// Mod direction (include last '/')
 	static void setModDir(std::string const& dir) { m_modDir = dir; }
