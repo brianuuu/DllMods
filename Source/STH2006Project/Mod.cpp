@@ -95,6 +95,11 @@ extern "C" __declspec(dllexport) void PostInit()
         exit(-1);
     }
 
+    if (GetModuleHandle(TEXT("Sonic06HUD.dll")) != nullptr)
+    {
+        Itembox::setUsing06HUD(true);
+    }
+
     // Override score to all 0s and implement them ourselves
     ScoreManager::applyPostInit();
 }

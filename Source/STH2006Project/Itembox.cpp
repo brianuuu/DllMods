@@ -4,6 +4,8 @@
 
 float const c_10ringRadius = 0.57f;
 float const c_1upRadius = 0.70f;
+
+bool Itembox::m_using06HUD = false;
 std::deque<ItemboxGUI> Itembox::m_guiData;
 
 std::string m_setdataLayer;
@@ -411,7 +413,7 @@ void Itembox::draw()
 				sizeY *= scale;
 			}
 
-			float targetPos = 0.5f - (0.091f * i); // TODO: flip for gens HUD
+			float targetPos = 0.5f - (0.091f * i) * (m_using06HUD ? 1.0f : -1.0f);
 			data.m_pos += (targetPos - data.m_pos) * 0.15f * m_hudDeltaTime * 60.0f;
 			float posX = floorf(*BACKBUFFER_WIDTH * data.m_pos - sizeX * 0.5f - 8.0f);
 			float posY = floorf(*BACKBUFFER_HEIGHT * 0.847f - sizeX * 0.5f - 8.0f);

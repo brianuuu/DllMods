@@ -71,7 +71,9 @@ public:
 	static tinyxml2::XMLError getInjectStr(char const* pData, uint32_t size, std::string& injectStr);
 
 	// ImGui
+	static bool m_using06HUD;
 	static std::deque<ItemboxGUI> m_guiData;
+	static void setUsing06HUD(bool enabled) { m_using06HUD = enabled; }
 	static void addItemToGui(ItemboxType type);
 	static void draw();
 };
