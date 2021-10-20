@@ -2,6 +2,7 @@
 #include "Application.h"
 #include "Itembox.h"
 #include "ScoreManager.h"
+#include "Stage.h"
 
 HWND UIContext::window;
 IDirect3DDevice9* UIContext::device;
@@ -56,6 +57,7 @@ void UIContext::update()
         // Draw imgui here
         Itembox::draw();
         ScoreManager::draw();
+        Stage::draw();
     }
 
     ImGui::PopFont();
