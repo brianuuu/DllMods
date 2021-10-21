@@ -50,7 +50,6 @@ void __declspec(naked) addCaption()
 
         // caption
         mov     ecx, [eax]
-        mov     ecx, [ecx + 4]
         push    ecx
 
         // this (COmochao)
@@ -72,8 +71,36 @@ void Omochao::applyPatches()
 	INSTALL_HOOK(Omochao_MsgNotifyObjectEvent);
 
     // Caption subtitle
-    WRITE_JUMP(0x461402, addCaption);
-    WRITE_JUMP(0x11F8813, (void*)0x11F8979);
+    if (initFontDatabase())
+    {
+        WRITE_JUMP(0x461402, addCaption);
+        WRITE_JUMP(0x11F8813, (void*)0x11F8979);
+    }
+}
+
+std::map<uint32_t, wchar_t> Omochao::m_fontDatabase;
+bool Omochao::initFontDatabase()
+{
+    std::ifstream database(Application::getModDirWString() + L"Fonts\\FontDatabase.txt");
+    if (database.is_open())
+    {
+        std::stringstream ss;
+        ss << database.rdbuf();
+        database.close();
+
+        uint32_t key = 0x82;
+        std::wstring str = Common::multiByteToWideChar(ss.str().c_str());
+        for (wchar_t const& c : str)
+        {
+            m_fontDatabase[key] = c;
+            key++;
+        }
+
+        return true;
+    }
+    
+    MessageBox(nullptr, TEXT("Failed to load font database, reverting to in-game textbox."), TEXT("STH2006 Project"), MB_ICONWARNING);
+    return false;
 }
 
 void __cdecl Omochao::addCaptionImpl(uint32_t* owner, uint32_t* caption, float duration)
@@ -89,24 +116,48 @@ void __cdecl Omochao::addCaptionImpl(uint32_t* owner, uint32_t* caption, float d
 		m_captionData.clear();
 	}
 	m_captionData.m_owner = owner;
-	m_captionData.m_captions.push_back(Caption({ u8"こんにちは", duration }));
+
+    // Read caption and convert to string
+    uint32_t const length = (caption[2] - caption[1]) / 4;
+    uint32_t* captionList = (uint32_t*)caption[1];
+    wchar_t str[1024];
+    for (uint32_t i = 0; i < length; i++)
+    {
+        uint32_t const key = captionList[i];
+        if (m_fontDatabase.count(key))
+        {
+            str[i] = m_fontDatabase[key];
+        }
+        else if (key == 0)
+        {
+            str[i] = L'\n';
+        }
+        else
+        {
+            str[i] = L'?';
+        }
+    }
+    str[length] = L'\0';
+
+	m_captionData.m_captions.push_back(Caption({ Common::wideCharToMultiByte(str), duration }));
     m_captionData.m_bypassLoading = (*(uint32_t**)0x1E66B40)[2] > 0;
 }
 
 void CaptionData::init()
 {
+    std::wstring const dir = Application::getModDirWString();
     bool success = true;
-    success &= UIContext::loadTextureFromFile((Application::getModDirWString() + L"Assets\\Textbox.dds").c_str(), &m_textbox);
-    success &= UIContext::loadTextureFromFile((Application::getModDirWString() + L"Assets\\Button_A.dds").c_str(), &m_buttonA);
-    success &= UIContext::loadTextureFromFile((Application::getModDirWString() + L"Assets\\Button_B.dds").c_str(), &m_buttonB);
-    success &= UIContext::loadTextureFromFile((Application::getModDirWString() + L"Assets\\Button_X.dds").c_str(), &m_buttonX);
-    success &= UIContext::loadTextureFromFile((Application::getModDirWString() + L"Assets\\Button_Y.dds").c_str(), &m_buttonY);
-    success &= UIContext::loadTextureFromFile((Application::getModDirWString() + L"Assets\\Button_LB.dds").c_str(), &m_buttonLB);
-    success &= UIContext::loadTextureFromFile((Application::getModDirWString() + L"Assets\\Button_LT.dds").c_str(), &m_buttonLT);
-    success &= UIContext::loadTextureFromFile((Application::getModDirWString() + L"Assets\\Button_RB.dds").c_str(), &m_buttonRB);
-    success &= UIContext::loadTextureFromFile((Application::getModDirWString() + L"Assets\\Button_RT.dds").c_str(), &m_buttonRT);
-    success &= UIContext::loadTextureFromFile((Application::getModDirWString() + L"Assets\\Button_Start.dds").c_str(), &m_buttonStart);
-    success &= UIContext::loadTextureFromFile((Application::getModDirWString() + L"Assets\\Button_Back.dds").c_str(), &m_buttonBack);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox.dds").c_str(), &m_textbox);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_A.dds").c_str(), &m_buttonA);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_B.dds").c_str(), &m_buttonB);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_X.dds").c_str(), &m_buttonX);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_Y.dds").c_str(), &m_buttonY);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_LB.dds").c_str(), &m_buttonLB);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_LT.dds").c_str(), &m_buttonLT);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_RB.dds").c_str(), &m_buttonRB);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_RT.dds").c_str(), &m_buttonRT);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_Start.dds").c_str(), &m_buttonStart);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_Back.dds").c_str(), &m_buttonBack);
 
     if (!success)
     {
@@ -170,7 +221,7 @@ void Omochao::draw()
         ImGui::Begin("Caption", &visible, UIContext::m_hudFlags);
         {
             ImGui::SetWindowFocus();
-            ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.2023f, *BACKBUFFER_HEIGHT * (posY + 0.0431f)));
+            ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.2023f, *BACKBUFFER_HEIGHT * (posY + 0.0438f)));
             ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
             ImGui::Text(caption.m_caption.c_str());
         }

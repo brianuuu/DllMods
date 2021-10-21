@@ -851,4 +851,18 @@ inline bool TestModPriority(std::string const& currentModName, std::string const
 	return false;
 }
 
+inline std::string wideCharToMultiByte(LPCWSTR value)
+{
+	char multiByte[0x1000];
+	WideCharToMultiByte(CP_UTF8, 0, value, -1, multiByte, _countof(multiByte), 0, 0);
+	return std::string(multiByte);
+}
+
+inline std::wstring multiByteToWideChar(const char* value)
+{
+	WCHAR wideChar[0x1000];
+	MultiByteToWideChar(CP_UTF8, 0, value, -1, wideChar, _countof(wideChar));
+	return std::wstring(wideChar);
+}
+
 } // namespace Common

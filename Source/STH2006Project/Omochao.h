@@ -69,6 +69,9 @@ class Omochao
 public:
 	static void applyPatches();
 
+	static std::map<uint32_t, wchar_t> m_fontDatabase;
+	static bool initFontDatabase();
+
 	static CaptionData m_captionData;
 	static void __cdecl addCaptionImpl(uint32_t* owner, uint32_t* caption, float duration);
 	static void draw();
