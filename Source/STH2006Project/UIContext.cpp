@@ -3,10 +3,12 @@
 #include "Itembox.h"
 #include "ScoreManager.h"
 #include "Stage.h"
+#include "Omochao.h"
 
 HWND UIContext::window;
 IDirect3DDevice9* UIContext::device;
 ImFont* UIContext::font;
+ImFont* UIContext::fontSubtitle;
 
 bool UIContext::isInitialized()
 {
@@ -34,9 +36,28 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     const float fontSize = 43.0f * (float)*BACKBUFFER_WIDTH / 1920.0f;
     if ((font = io.Fonts->AddFontFromFileTTF((Application::getModDirString() + "Fonts\\FOT-NewRodin Pro EB.otf").c_str(), fontSize, nullptr, io.Fonts->GetGlyphRangesDefault())) == nullptr)
     {
-        printf("[UIContext] Failed to load FOT-NewRodin Pro EB.otf\n");
+        MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-NewRodin Pro EB.otf\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
         font = io.Fonts->AddFontDefault();
     }
+
+    const float fontSubtitleSize = 40.0f * (float)*BACKBUFFER_WIDTH / 1920.0f;
+    if ((fontSubtitle = io.Fonts->AddFontFromFileTTF((Application::getModDirString() + "Fonts\\FOT-RodinCattleyaPro-DB.otf").c_str(), fontSubtitleSize, nullptr, io.Fonts->GetGlyphRangesDefault())) == nullptr)
+    {
+        MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-RodinCattleyaPro-DB.otf\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
+        fontSubtitle = io.Fonts->AddFontDefault();
+    }
+
+    ImFontConfig fontConfig;
+    fontConfig.MergeMode = true;
+    if (io.Fonts->AddFontFromFileTTF((Application::getModDirString() + "Fonts\\FOT-RodinCattleyaPro-DB.otf").c_str(), fontSubtitleSize, &fontConfig, io.Fonts->GetGlyphRangesJapanese()) == nullptr)
+    {
+        MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-RodinCattleyaPro-DB.otf Japanese\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
+    }
+
+    io.Fonts->Build();
+
+    // Initial textures
+    Omochao::m_captionData.init();
 }
 
 void UIContext::update()
@@ -58,6 +79,10 @@ void UIContext::update()
         Itembox::draw();
         ScoreManager::draw();
         Stage::draw();
+
+        ImGui::PushFont(fontSubtitle);
+        Omochao::draw();
+        ImGui::PopFont();
     }
 
     ImGui::PopFont();

@@ -257,7 +257,7 @@ void Stage::draw()
             ImVec2 size = ImGui::CalcTextSize(m_lapTimeStr.c_str());
             ImGui::Text(m_lapTimeStr.c_str());
             ImGui::SetWindowFocus();
-            ImGui::SetWindowPos(ImVec2((float)*BACKBUFFER_WIDTH * 0.5f - size.x / 2, (float)*BACKBUFFER_HEIGHT * 0.882f - size.y / 2));
+            ImGui::SetWindowPos(ImVec2((float)*BACKBUFFER_WIDTH * 0.5f - size.x * 0.5f, (float)*BACKBUFFER_HEIGHT * 0.882f - size.y * 0.5f));
         }
         ImGui::End();
 
