@@ -257,10 +257,11 @@ void Omochao::draw()
                 alpha = 0.2f * frame2;
             }
 
+            alpha *= 0.9f;
             ImGui::SetWindowFocus();
             ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * posX, *BACKBUFFER_HEIGHT * posY));
             ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
-            ImGui::Image(m_captionData.m_textbox, ImVec2(sizeX, sizeY));
+            ImGui::Image(m_captionData.m_textbox, ImVec2(sizeX, sizeY), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, alpha));
         }
         ImGui::End();
 
