@@ -6,10 +6,6 @@
 
 bool ScoreManager::m_enabled = false;
 bool ScoreManager::m_internalSystem = true;
-uint32_t ScoreManager::m_rainbowRingChain = 0;
-float ScoreManager::m_rainbowRingChainTimer = 0.0f;
-uint32_t ScoreManager::m_enemyChain = 0;
-float ScoreManager::m_enemyChainTimer = 0.0f;
 std::unordered_set<uint32_t*> ScoreManager::m_savedObjects;
 
 bool ScoreManager::m_externalHUD = false;
@@ -19,7 +15,11 @@ CScoreManager* ScoreManager::m_pCScoreManager = nullptr;
 bool ScoreManager::m_updateScoreHUD = false;
 float ScoreManager::m_currentTime = 0.0f;
 
+uint32_t ScoreManager::m_rainbowRingChain = 0;
+uint32_t ScoreManager::m_enemyChain = 0;
+
 uint32_t ScoreManager::m_bonus = 0;
+float ScoreManager::m_bonusTimer = 0.0f;
 float ScoreManager::m_bonusDrawTimer = 0.0f;
 PDIRECT3DTEXTURE9 ScoreManager::m_bonusTexture = nullptr;
 
@@ -57,15 +57,11 @@ HOOK(void, __fastcall, CScoreManager_CHudSonicStageUpdate, 0x1098A50, void* This
 	ScoreManager::m_currentTime = *(float*)Common::GetMultiLevelAddress((uint32_t)This + 0xA4, { 0x0, 0x8, 0x184 });
 	
 	// Bonus timer
-	ScoreManager::m_rainbowRingChainTimer = max(0.0f, ScoreManager::m_rainbowRingChainTimer - *dt);
-	if (ScoreManager::m_rainbowRingChainTimer == 0.0f)
+	ScoreManager::m_bonusTimer = max(0.0f, ScoreManager::m_bonusTimer - *dt);
+	if (ScoreManager::m_bonusTimer == 0.0f)
 	{
+		ScoreManager::m_bonus = 0;
 		ScoreManager::m_rainbowRingChain = 0;
-	}
-
-	ScoreManager::m_enemyChainTimer = max(0.0f, ScoreManager::m_enemyChainTimer - *dt);
-	if (ScoreManager::m_enemyChainTimer == 0.0f)
-	{
 		ScoreManager::m_enemyChain = 0;
 	}
 
@@ -555,19 +551,11 @@ void ScoreManager::addScore(ScoreType type, uint32_t* This)
 	if (type == ST_rainbow)
 	{
 		// Resets enemy bonus
-		if (m_enemyChainTimer > 0)
+		if (m_enemyChain > 0)
 		{
 			m_bonus = 0;
 			m_enemyChain = 0;
-			m_enemyChainTimer = 0.0;
 		}
-
-		// Reset rainbow ring bonus if timeout
-		if (m_rainbowRingChainTimer == 0.0f)
-		{
-			m_bonus = 0;
-		}
-		m_rainbowRingChainTimer = 10.0f;
 
 		m_bonus += score;
 		notifyDraw(BonusCommentType::BCT_Great);
@@ -748,6 +736,7 @@ void ScoreManager::notifyDraw(BonusCommentType type)
 		UIContext::loadTextureFromFile((Application::getModDirWString() + L"Assets\\" + getBonusCommentTextureName(type)).c_str(), &m_bonusTexture);
 	}
 
+	m_bonusTimer = 10.0f;
 	m_bonusDrawTimer = 4.0f;
 }
 
@@ -759,9 +748,7 @@ void ScoreManager::draw()
 		m_bonus = 0;
 		m_bonusDrawTimer = 0.0f;
 		m_rainbowRingChain = 0;
-		m_rainbowRingChainTimer = 0.0f;
 		m_enemyChain = 0;
-		m_enemyChainTimer = 0.0f;
 		return;
 	}
 

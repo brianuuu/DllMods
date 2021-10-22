@@ -118,15 +118,14 @@ public:
 
 	// Rainbow ring bonus
 	static uint32_t m_rainbowRingChain;
-	static float m_rainbowRingChainTimer;
 	static uint32_t calculateRainbowRingChainBonus();
 
 	// Enemy bonus
 	static uint32_t m_enemyChain;
-	static float m_enemyChainTimer;
 
 	// Bonus GUI
 	static uint32_t m_bonus;
+	static float m_bonusTimer;
 	static float m_bonusDrawTimer;
 	static PDIRECT3DTEXTURE9 m_bonusTexture;
 	static void notifyDraw(BonusCommentType type);
