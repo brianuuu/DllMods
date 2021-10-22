@@ -53,6 +53,14 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     {
         MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-RodinCattleyaPro-DB.otf Japanese\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
     }
+    ImWchar const missingGlyphs[] =
+    {
+        0x2026, 0x4FFA, 0x79E4, 0x7A9F,
+    };
+    if (io.Fonts->AddFontFromFileTTF((Application::getModDirString() + "Fonts\\FOT-RodinCattleyaPro-DB.otf").c_str(), fontSubtitleSize, &fontConfig, missingGlyphs) == nullptr)
+    {
+        MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-RodinCattleyaPro-DB.otf Japanese\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
+    }
 
     io.Fonts->Build();
 
