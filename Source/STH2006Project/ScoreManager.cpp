@@ -7,6 +7,9 @@
 bool ScoreManager::m_enabled = false;
 bool ScoreManager::m_internalSystem = true;
 uint32_t ScoreManager::m_rainbowRingChain = 0;
+float ScoreManager::m_rainbowRingChainTimer = 0.0f;
+uint32_t ScoreManager::m_enemyChain = 0;
+float ScoreManager::m_enemyChainTimer = 0.0f;
 std::unordered_set<uint32_t*> ScoreManager::m_savedObjects;
 
 bool ScoreManager::m_externalHUD = false;
@@ -17,7 +20,6 @@ bool ScoreManager::m_updateScoreHUD = false;
 float ScoreManager::m_currentTime = 0.0f;
 
 uint32_t ScoreManager::m_bonus = 0;
-float ScoreManager::m_bonusTimer = 0.0f;
 float ScoreManager::m_bonusDrawTimer = 0.0f;
 PDIRECT3DTEXTURE9 ScoreManager::m_bonusTexture = nullptr;
 
@@ -55,13 +57,19 @@ HOOK(void, __fastcall, CScoreManager_CHudSonicStageUpdate, 0x1098A50, void* This
 	ScoreManager::m_currentTime = *(float*)Common::GetMultiLevelAddress((uint32_t)This + 0xA4, { 0x0, 0x8, 0x184 });
 	
 	// Bonus timer
-	ScoreManager::m_bonusTimer = max(0.0f, ScoreManager::m_bonusTimer - *dt);
-	ScoreManager::m_bonusDrawTimer = max(0.0f, ScoreManager::m_bonusDrawTimer - *dt);
-	if (ScoreManager::m_bonusTimer == 0.0f)
+	ScoreManager::m_rainbowRingChainTimer = max(0.0f, ScoreManager::m_rainbowRingChainTimer - *dt);
+	if (ScoreManager::m_rainbowRingChainTimer == 0.0f)
 	{
-		ScoreManager::m_bonus = 0;
 		ScoreManager::m_rainbowRingChain = 0;
 	}
+
+	ScoreManager::m_enemyChainTimer = max(0.0f, ScoreManager::m_enemyChainTimer - *dt);
+	if (ScoreManager::m_enemyChainTimer == 0.0f)
+	{
+		ScoreManager::m_enemyChain = 0;
+	}
+
+	ScoreManager::m_bonusDrawTimer = max(0.0f, ScoreManager::m_bonusDrawTimer - *dt);
 	if (ScoreManager::m_bonusDrawTimer == 0.0f)
 	{
 		if (ScoreManager::m_bonusTexture)
@@ -228,14 +236,7 @@ void __declspec(naked) ScoreManager_GetRainbow()
 		push	esi
 		mov		ecx, ST_rainbow
 		mov		edx, 0
-
-		// Change to different rainbow ring chain score
-		add		ecx, ScoreManager::m_rainbowRingChain // 0-4
-		cmp		ScoreManager::m_rainbowRingChain, 4
-		je		jump
 		add		ScoreManager::m_rainbowRingChain, 1
-
-		jump:
 		call	ScoreManager::addScore
 		pop		esi
 
@@ -540,11 +541,7 @@ void ScoreManager::addScore(ScoreType type, uint32_t* This)
 	case ST_5ring:			score = 50;		break;
 	case ST_10ring:			score = 100;	break;
 	case ST_20ring:			score = 200;	break;
-	case ST_rainbow:		score = 1000;	break;
-	case ST_rainbow2:		score = 1600;	break;
-	case ST_rainbow3:		score = 2000;	break;
-	case ST_rainbow4:		score = 3400;	break;
-	case ST_rainbow5:		score = 4000;	break;
+	case ST_rainbow:		score = calculateRainbowRingChainBonus();	break;
 	case ST_physics:		score = 20;		break;
 	case ST_itembox:		score = 200;	break;
 	case ST_enemySmall:		score = 100;	break;
@@ -555,8 +552,23 @@ void ScoreManager::addScore(ScoreType type, uint32_t* This)
 	}
 
 	// Add to stacked bonus and notify draw GUI
-	if (type >= ST_rainbow && type <= ST_rainbow5)
+	if (type == ST_rainbow)
 	{
+		// Resets enemy bonus
+		if (m_enemyChainTimer > 0)
+		{
+			m_bonus = 0;
+			m_enemyChain = 0;
+			m_enemyChainTimer = 0.0;
+		}
+
+		// Reset rainbow ring bonus if timeout
+		if (m_rainbowRingChainTimer == 0.0f)
+		{
+			m_bonus = 0;
+		}
+		m_rainbowRingChainTimer = 10.0f;
+
 		m_bonus += score;
 		notifyDraw(BonusCommentType::BCT_Great);
 	}
@@ -573,6 +585,18 @@ void ScoreManager::addScore(ScoreType type, uint32_t* This)
 	else
 	{
 		ScoreGenerationsAPI::AddScore(score);
+	}
+}
+
+uint32_t ScoreManager::calculateRainbowRingChainBonus()
+{
+	switch (m_rainbowRingChain)
+	{
+	case 1: return 1000;
+	case 2: return 1600;
+	case 3: return 2000;
+	case 4: return 3400;
+	default: return 4000 + (m_rainbowRingChain - 5) * 600;
 	}
 }
 
@@ -724,7 +748,6 @@ void ScoreManager::notifyDraw(BonusCommentType type)
 		UIContext::loadTextureFromFile((Application::getModDirWString() + L"Assets\\" + getBonusCommentTextureName(type)).c_str(), &m_bonusTexture);
 	}
 
-	m_bonusTimer = 10.0f;
 	m_bonusDrawTimer = 4.0f;
 }
 
@@ -734,8 +757,11 @@ void ScoreManager::draw()
 	if ((*(uint32_t**)0x1E66B40)[2] > 0)
 	{
 		m_bonus = 0;
-		m_bonusTimer = 0.0f;
 		m_bonusDrawTimer = 0.0f;
+		m_rainbowRingChain = 0;
+		m_rainbowRingChainTimer = 0.0f;
+		m_enemyChain = 0;
+		m_enemyChainTimer = 0.0f;
 		return;
 	}
 
