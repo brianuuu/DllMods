@@ -4,11 +4,11 @@ enum CaptionButtonType : uint32_t
 {
 	CBT_A = 0,
 	CBT_B,
-	CBT_X,
 	CBT_Y,
+	CBT_X,
 	CBT_LB,
-	CBT_LT,
 	CBT_RB,
+	CBT_LT,
 	CBT_RT,
 	CBT_Start,
 	CBT_Back,
@@ -16,7 +16,8 @@ enum CaptionButtonType : uint32_t
 
 struct Caption
 {
-	std::string m_caption;
+	std::vector<std::string> m_captions;
+	std::map<uint32_t, CaptionButtonType> m_buttons;
 	float m_duration;
 };
 

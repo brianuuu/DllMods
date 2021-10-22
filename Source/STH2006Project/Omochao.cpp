@@ -117,29 +117,60 @@ void __cdecl Omochao::addCaptionImpl(uint32_t* owner, uint32_t* caption, float d
 	}
 	m_captionData.m_owner = owner;
 
+    Caption newCaption;
+    newCaption.m_duration = duration;
+
     // Read caption and convert to string
     uint32_t const length = (caption[2] - caption[1]) / 4;
     uint32_t* captionList = (uint32_t*)caption[1];
-    wchar_t str[1024];
+    std::wstring str;
     for (uint32_t i = 0; i < length; i++)
     {
         uint32_t const key = captionList[i];
-        if (m_fontDatabase.count(key))
+        if (key >= 0x64 && key <= 0x6D)
         {
-            str[i] = m_fontDatabase[key];
+            // Button at the beginning of a line, add dummy text
+            if (str.empty())
+            {
+                newCaption.m_captions.push_back("");
+            }
+            else
+            {
+                newCaption.m_captions.push_back(Common::wideCharToMultiByte(str.c_str()));
+                str.clear();
+            }
+            newCaption.m_buttons[newCaption.m_captions.size() - 1] = (CaptionButtonType)(key - 0x64);
+        }
+        else if (m_fontDatabase.count(key))
+        {
+            if (key == 0x82)
+            {
+                str += L"  ";
+            }
+            else
+            {
+                str += m_fontDatabase[key];
+            }
         }
         else if (key == 0)
         {
-            str[i] = L'\n';
+            str += L'\n';
+            newCaption.m_captions.push_back(Common::wideCharToMultiByte(str.c_str()));
+            str.clear();
         }
         else
         {
-            str[i] = L'?';
+            str += L'?';
         }
     }
-    str[length] = L'\0';
 
-	m_captionData.m_captions.push_back(Caption({ Common::wideCharToMultiByte(str), duration }));
+    // Push remaining text
+    if (!str.empty())
+    {
+        newCaption.m_captions.push_back(Common::wideCharToMultiByte(str.c_str()));
+    }
+
+	m_captionData.m_captions.push_back(newCaption);
     m_captionData.m_bypassLoading = (*(uint32_t**)0x1E66B40)[2] > 0;
 }
 
@@ -203,12 +234,12 @@ void Omochao::draw()
             if (frame1 < 5)
             {
                 posY += 0.03476f * (5 - frame1);
-                alpha = 0.2f * (5 - frame1);
+                alpha = 0.2f * frame1;
             }
             else if (frame2 < 5)
             {
                 posY += 0.03476f * (5 - frame2);
-                alpha = 0.2f * (5 - frame2);
+                alpha = 0.2f * frame2;
             }
 
             ImGui::SetWindowFocus();
@@ -221,9 +252,56 @@ void Omochao::draw()
         ImGui::Begin("Caption", &visible, UIContext::m_hudFlags);
         {
             ImGui::SetWindowFocus();
-            ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.2023f, *BACKBUFFER_HEIGHT * (posY + 0.0438f)));
+            ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.2023f, *BACKBUFFER_HEIGHT * (posY + 0.047f)));
             ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
-            ImGui::Text(caption.m_caption.c_str());
+            for (uint32_t i = 0; i < caption.m_captions.size(); i++)
+            {
+                std::string const& str = caption.m_captions[i];
+                ImGui::TextColored(ImVec4(1, 1, 1, alpha), str.c_str());
+                if (caption.m_buttons.count(i))
+                {
+                    float buttonSizeX = 28.0f;
+                    switch (caption.m_buttons[i])
+                    {
+                    case CBT_LB:
+                    case CBT_RB:
+                    case CBT_LT:
+                    case CBT_RT:
+                        buttonSizeX = 56.0f;
+                        break;
+                    }
+
+                    PDIRECT3DTEXTURE9 texture = nullptr;
+                    switch (caption.m_buttons[i])
+                    {
+                    case CBT_A:     texture = m_captionData.m_buttonA;      break;
+                    case CBT_B:     texture = m_captionData.m_buttonB;      break;
+                    case CBT_Y:     texture = m_captionData.m_buttonY;      break;
+                    case CBT_X:     texture = m_captionData.m_buttonX;      break;
+                    case CBT_LB:    texture = m_captionData.m_buttonLB;     break;
+                    case CBT_RB:    texture = m_captionData.m_buttonRB;     break;
+                    case CBT_LT:    texture = m_captionData.m_buttonLT;     break;
+                    case CBT_RT:    texture = m_captionData.m_buttonRT;     break;
+                    case CBT_Start: texture = m_captionData.m_buttonStart;  break;
+                    case CBT_Back:  texture = m_captionData.m_buttonBack;   break;
+                    }
+
+                    ImGui::SameLine();
+                    if (texture)
+                    {
+                        ImGui::Image(texture, ImVec2(*BACKBUFFER_WIDTH * buttonSizeX / 1280.0f, *BACKBUFFER_HEIGHT * 28.0f / 720.0f));
+                    }
+                }
+
+                if (str.back() == '\n')
+                {
+                    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + *BACKBUFFER_HEIGHT * 0.01f);
+                }
+                else
+                {
+                    ImGui::SameLine();
+                }
+            }
         }
         ImGui::End();
 
