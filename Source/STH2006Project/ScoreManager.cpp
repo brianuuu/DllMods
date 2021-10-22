@@ -17,6 +17,8 @@ float ScoreManager::m_currentTime = 0.0f;
 
 uint32_t ScoreManager::m_rainbowRingChain = 0;
 uint32_t ScoreManager::m_enemyChain = 0;
+uint32_t ScoreManager::m_enemyCount = 0;
+float ScoreManager::m_enemyChainTimer = 0.0f;
 
 uint32_t ScoreManager::m_bonus = 0;
 float ScoreManager::m_bonusTimer = 0.0f;
@@ -63,6 +65,20 @@ HOOK(void, __fastcall, CScoreManager_CHudSonicStageUpdate, 0x1098A50, void* This
 		ScoreManager::m_bonus = 0;
 		ScoreManager::m_rainbowRingChain = 0;
 		ScoreManager::m_enemyChain = 0;
+	}
+
+	// Enemy timer for stacking the same bonus
+	ScoreManager::m_enemyChainTimer = max(0.0f, ScoreManager::m_enemyChainTimer - *dt);
+	if (ScoreManager::m_enemyChainTimer == 0.0f)
+	{
+		// Award the current bonus
+		if (ScoreManager::m_enemyCount >= 3)
+		{
+			ScoreManager::m_enemyChain++;
+			ScoreManager::addScore(ScoreType::ST_enemyBonus, nullptr);
+		}
+
+		ScoreManager::m_enemyCount = 0;
 	}
 
 	ScoreManager::m_bonusDrawTimer = max(0.0f, ScoreManager::m_bonusDrawTimer - *dt);
@@ -243,66 +259,77 @@ void __declspec(naked) ScoreManager_GetRainbow()
 
 HOOK(void, __fastcall, ScoreManager_EnemyGunner, 0xBAA2F0, uint32_t* This, void* Edx, void* message)
 {
+	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
 	originalScoreManager_EnemyGunner(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyStingerLancer, 0xBB01B0, uint32_t* This, void* Edx, void* message)
 {
+	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(This[104] ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, This);
 	originalScoreManager_EnemyStingerLancer(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyBuster, 0xB82900, uint32_t* This, void* Edx, void* message)
 {
+	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(ScoreType::ST_enemyMedium, This);
 	originalScoreManager_EnemyBuster(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyFlyer, 0xBA6450, uint32_t* This, void* Edx, void* message)
 {
+	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
 	originalScoreManager_EnemyFlyer(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemySearcherHunter, 0xBDC110, uint32_t* This, void* Edx, void* message)
 {
+	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(*(bool*)((uint32_t)This + 0x17C) ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, This);
 	originalScoreManager_EnemySearcherHunter(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyLiner, 0xBC7440, uint32_t* This, void* Edx, void* message)
 {
+	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
 	originalScoreManager_EnemyLiner(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyBomber, 0xBCB9A0, uint32_t* This, void* Edx, void* message)
 {
+	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
 	originalScoreManager_EnemyBomber(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyRounder, 0xBCF5E0, uint32_t* This, void* Edx, void* message)
 {
+	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
 	originalScoreManager_EnemyRounder(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyTaker, 0xBA3140, uint32_t* This, void* Edx, void* message)
 {
+	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
 	originalScoreManager_EnemyTaker(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyBiter, 0xB86850, uint32_t* This, void* Edx, void* message)
 {
+	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
 	originalScoreManager_EnemyBiter(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyCrawler, 0xB99B80, uint32_t* This, void* Edx, void* message)
 {
+	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(ScoreType::ST_enemyMedium, This);
 	originalScoreManager_EnemyCrawler(This, Edx, message);
 }
@@ -544,10 +571,11 @@ void ScoreManager::addScore(ScoreType type, uint32_t* This)
 	case ST_enemyMedium:	score = 300;	break;
 	case ST_enemyLarge:		score = 1000;	break;
 	case ST_enemyStealth:	score = 1500;	break;
+	case ST_enemyBonus:		score = calculateEnemyChainBonus();	break;
 	default: return;
 	}
 
-	// Add to stacked bonus and notify draw GUI
+	// Add to rainbow ring stack bonus and notify draw GUI
 	if (type == ST_rainbow)
 	{
 		// Resets enemy bonus
@@ -559,6 +587,20 @@ void ScoreManager::addScore(ScoreType type, uint32_t* This)
 
 		m_bonus += score;
 		notifyDraw(BonusCommentType::BCT_Great);
+	}
+
+	// Add to enemy stack bonus and notify draw GUI
+	if (type == ST_enemyBonus)
+	{
+		// Resets enemy bonus
+		if (m_rainbowRingChain > 0)
+		{
+			m_bonus = 0;
+			m_rainbowRingChain = 0;
+		}
+
+		m_bonus += score;
+		notifyDraw(BonusCommentType::BCT_Radical);
 	}
 
 	printf("[ScoreManager] Score +%d \tType: %s\n", score, GetScoreTypeName(type));
@@ -585,6 +627,40 @@ uint32_t ScoreManager::calculateRainbowRingChainBonus()
 	case 3: return 2000;
 	case 4: return 3400;
 	default: return 4000 + (m_rainbowRingChain - 5) * 600;
+	}
+}
+
+void ScoreManager::addEnemyChain(uint32_t* This, void* message)
+{
+	// Already counted this object
+	if (!This || m_savedObjects.count(This))
+	{
+		return;
+	}
+
+	// Must be MsgNotifyObjectEvent event 12
+	uint32_t* msg = (uint32_t*)message;
+	if (msg[0] != 0x016A9D98 || msg[4] != 12)
+	{
+		return;
+	}
+
+	// Add to the current enemy chain
+	m_enemyCount++;
+	m_enemyChainTimer = 0.2f;
+}
+
+uint32_t ScoreManager::calculateEnemyChainBonus()
+{
+	if (m_enemyCount < 3) return 0;
+
+	uint32_t baseScore = m_enemyCount * 500;
+	switch (m_enemyChain)
+	{
+	case 1: return baseScore - 900;
+	case 2: return baseScore - 300;
+	case 3: return baseScore + 100;
+	default: return baseScore + 1500 + (m_enemyChain - 4) * 600;
 	}
 }
 

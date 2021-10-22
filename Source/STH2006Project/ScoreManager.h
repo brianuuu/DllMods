@@ -21,6 +21,7 @@ enum ScoreType : uint32_t
 	ST_enemyMedium,
 	ST_enemyLarge,
 	ST_enemyStealth,
+	ST_enemyBonus,
 
 	ST_COUNT
 };
@@ -40,6 +41,7 @@ inline char const* GetScoreTypeName(ScoreType type)
 	case ST_enemyMedium:	return "Enemy (Medium)";
 	case ST_enemyLarge:		return "Enemy (Large)";
 	case ST_enemyStealth:	return "Enemy (Stealth)";
+	case ST_enemyBonus:		return "Enemy (Bonus)";
 	default:				return "";
 	}
 }
@@ -122,6 +124,10 @@ public:
 
 	// Enemy bonus
 	static uint32_t m_enemyChain;
+	static uint32_t m_enemyCount;
+	static float m_enemyChainTimer;
+	static void addEnemyChain(uint32_t* This, void* message);
+	static uint32_t calculateEnemyChainBonus();
 
 	// Bonus GUI
 	static uint32_t m_bonus;
