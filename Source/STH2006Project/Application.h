@@ -13,7 +13,7 @@ public:
 	static void setDeltaTime(float dt) { m_deltaTime = dt; }
 	static float getDeltaTime() { return m_deltaTime; }
 	static void setHudDeltaTime(float dt) { m_hudDeltaTime = dt; }
-	static float getHudDeltaTime() { return m_hudDeltaTime; }
+	static float getHudDeltaTime() { return m_hudDeltaTime == 0.0f ? 0.0f : m_deltaTime; }
 
 	// Mod direction (include last '/')
 	static void setModDir(std::string const& dir) { m_modDir = dir; }
