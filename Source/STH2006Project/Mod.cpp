@@ -98,6 +98,14 @@ extern "C" __declspec(dllexport) void PostInit()
     if (GetModuleHandle(TEXT("Sonic06HUD.dll")) != nullptr)
     {
         Configuration::m_using06HUD = true;
+
+        // Use the alt version of GameHint so it can do 3 lines
+        WRITE_STRING(0x1667AFC, "GameHint_C06");
+        WRITE_STRING(0x1667FB8, "GameHint_C06");
+        WRITE_STRING(0x16683FC, "GameHint_C06");
+        WRITE_STRING(0x1668AD0, "GameHint_C06");
+        WRITE_STRING(0x1668B60, "GameHint_C06");
+        WRITE_STRING(0x16AF744, "GameHint_C06");
     }
 
     // Override score to all 0s and implement them ourselves
