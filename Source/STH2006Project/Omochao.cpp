@@ -246,29 +246,28 @@ void Omochao::draw()
             // Fade in and out
             float frame1 = m_captionData.m_timer * 60.0f;
             float frame2 = (caption.m_duration - m_captionData.m_timer) * 60.0f;
-            if (frame1 < 5)
+            if (frame1 < 5.0f)
             {
-                posY += 0.03476f * (5 - frame1);
+                posY += 0.03476f * (5.0f - frame1);
                 alpha = 0.2f * frame1;
             }
-            else if (frame2 < 5)
+            else if (frame2 < 5.0f)
             {
-                posY += 0.03476f * (5 - frame2);
+                posY += 0.03476f * (5.0f - frame2);
                 alpha = 0.2f * frame2;
             }
 
             alpha *= 0.9f;
             ImGui::SetWindowFocus();
-            ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * posX, *BACKBUFFER_HEIGHT * posY));
-            ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
+            ImGui::SetWindowSize(ImVec2(sizeX, sizeY)); 
             ImGui::Image(m_captionData.m_textbox, ImVec2(sizeX, sizeY), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, alpha));
+            ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * posX, *BACKBUFFER_HEIGHT * posY));
         }
         ImGui::End();
 
         ImGui::Begin("Caption", &visible, UIContext::m_hudFlags);
         {
             ImGui::SetWindowFocus();
-            ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.2023f, *BACKBUFFER_HEIGHT * (posY + 0.047f)));
             ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
             for (uint32_t i = 0; i < caption.m_captions.size(); i++)
             {
@@ -318,6 +317,7 @@ void Omochao::draw()
                     ImGui::SameLine();
                 }
             }
+            ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.2023f, *BACKBUFFER_HEIGHT* (posY + 0.047f)));
         }
         ImGui::End();
 
