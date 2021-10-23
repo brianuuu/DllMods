@@ -380,31 +380,31 @@ void Itembox::draw()
 		{
 			static bool visible = true;
 			ImGui::Begin((std::string("Itembox") + std::to_string(i)).c_str(), &visible, UIContext::m_hudFlags);
-
-			float sizeX = *BACKBUFFER_WIDTH * 128.0f / 1280.0f;
-			float sizeY = *BACKBUFFER_HEIGHT * 128.0f / 720.0f;
-			if (data.m_frame <= 8.0f)
 			{
-				float scale = data.m_frame / 8.0f * 1.12f;
-				sizeX *= scale;
-				sizeY *= scale;
-			}
-			else if (data.m_frame < 10.0f)
-			{
-				float scale = ((10.0f - data.m_frame) * 0.12f) + 1.0f;
-				sizeX *= scale;
-				sizeY *= scale;
-			}
+				float sizeX = *BACKBUFFER_WIDTH * 192.0f / 1280.0f;
+				float sizeY = *BACKBUFFER_HEIGHT * 192.0f / 720.0f;
+				if (data.m_frame <= 8.0f)
+				{
+					float scale = data.m_frame / 8.0f * 1.12f;
+					sizeX *= scale;
+					sizeY *= scale;
+				}
+				else if (data.m_frame < 10.0f)
+				{
+					float scale = ((10.0f - data.m_frame) * 0.12f) + 1.0f;
+					sizeX *= scale;
+					sizeY *= scale;
+				}
 
-			float targetPos = 0.5f - (0.091f * i) * (Configuration::m_using06HUD ? 1.0f : -1.0f);
-			data.m_pos += (targetPos - data.m_pos) * 0.15f * Application::getHudDeltaTime() * 60.0f;
-			float posX = floorf(*BACKBUFFER_WIDTH * data.m_pos - sizeX * 0.5f - 8.0f);
-			float posY = floorf(*BACKBUFFER_HEIGHT * 0.847f - sizeX * 0.5f - 8.0f);
-			ImGui::SetWindowFocus();
-			ImGui::SetWindowPos(ImVec2(posX, posY));
-			ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
-			ImGui::Image(data.m_texture, ImVec2(sizeX, sizeY));
-
+				float targetPos = 0.5f - (0.091f * i) * (Configuration::m_using06HUD ? 1.0f : -1.0f);
+				data.m_pos += (targetPos - data.m_pos) * 0.15f * Application::getHudDeltaTime() * 60.0f;
+				float posX = floorf(*BACKBUFFER_WIDTH * data.m_pos - sizeX * 0.5f - 8.0f);
+				float posY = floorf(*BACKBUFFER_HEIGHT * 0.847f - sizeX * 0.5f - 8.0f);
+				ImGui::SetWindowFocus();
+				ImGui::SetWindowPos(ImVec2(posX, posY));
+				ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
+				ImGui::Image(data.m_texture, ImVec2(sizeX, sizeY));
+			}
 			ImGui::End();
 		}
 
