@@ -1225,38 +1225,40 @@ bool NextGenPhysics::bActionHandlerImpl()
     bool canUseSpindash = !moving || (Configuration::m_rapidSpindash && !flags->KeepRunning);
 
     bool bDown, bPressed, bReleased;
-    NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
+    getActionButtonStates(bDown, bPressed, bReleased);
     if (bDown)
     {
         // Standing still and held B for a while (Spin Dash)
-        if (canUseSpindash && NextGenPhysics::m_bHeldTimer > c_squatKickPressMaxTime)
+        if (canUseSpindash && m_bHeldTimer > c_squatKickPressMaxTime)
         {
             if (Configuration::m_model == Configuration::ModelType::Sonic)
             {
                 StateManager::ChangeState(StateAction::Squat, *PLAYER_CONTEXT);
-                NextGenPhysics::m_bHeldTimer = 0.0f;
+                m_bHeldTimer = 0.0f;
                 return true;
             }
         }
 
         // Remember how long we held B
-        NextGenPhysics::m_bHeldTimer += Application::getDeltaTime();
+        // NOTE: Apparently this code always runs at 60fps
+        // If 30fps this will run twice per frame!
+        m_bHeldTimer += 1.0f / 60.0f;
     }
     else
     {
         if (bReleased && !flags->OnWater)
         {
-            if (NextGenPhysics::m_bHeldTimer <= c_squatKickPressMaxTime)
+            if (m_bHeldTimer <= c_squatKickPressMaxTime)
             {
                 if (Configuration::m_model == Configuration::ModelType::Sonic)
                 {
                     // Release B without holding it for too long (Squat Kick)
                     StateManager::ChangeState(StateAction::SquatKick, *PLAYER_CONTEXT);
-                    NextGenPhysics::m_bHeldTimer = 0.0f;
+                    m_bHeldTimer = 0.0f;
                     return true;
                 }
             }
-            else if (moving && !flags->KeepRunning && NextGenPhysics::m_bHeldTimer > c_squatKickPressMaxTime)
+            else if (moving && !flags->KeepRunning && m_bHeldTimer > c_squatKickPressMaxTime)
             {
                 if (Configuration::m_model == Configuration::ModelType::Sonic && Configuration::m_rapidSpindash)
                 {
@@ -1266,13 +1268,13 @@ bool NextGenPhysics::bActionHandlerImpl()
                 {
                     // Moving and released B (Anti-Gravity)
                     StateManager::ChangeState(StateAction::Sliding, *PLAYER_CONTEXT);
-                    NextGenPhysics::m_bHeldTimer = 0.0f;
+                    m_bHeldTimer = 0.0f;
                     return true;
                 }
             }
         }
 
-        NextGenPhysics::m_bHeldTimer = 0.0f;
+        m_bHeldTimer = 0.0f;
     }
 
     return false;
