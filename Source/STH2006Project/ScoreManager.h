@@ -94,16 +94,6 @@ enum BonusCommentType : uint32_t
 	BCT_NoDraw
 };
 
-inline const wchar_t* getBonusCommentTextureName(BonusCommentType type)
-{
-	switch (type)
-	{
-	case BCT_Great:		return L"Bonus_Great.dds";
-	case BCT_Radical:	return L"Bonus_Radical.dds";
-	default: 			return L"";
-	}
-}
-
 class ScoreManager
 {
 public:
@@ -136,6 +126,16 @@ public:
 	static PDIRECT3DTEXTURE9 m_bonusTexture;
 	static void notifyDraw(BonusCommentType type);
 	static void draw();
+
+	// Textures
+	static bool initTextures();
+	static PDIRECT3DTEXTURE9 m_bonus_Great;
+	static PDIRECT3DTEXTURE9 m_bonus_Radical;
+	~ScoreManager()
+	{
+		if (m_bonus_Great)   m_bonus_Great->Release();
+		if (m_bonus_Radical) m_bonus_Radical->Release();
+	}
 
 	// Common members
 	static bool m_enabled;

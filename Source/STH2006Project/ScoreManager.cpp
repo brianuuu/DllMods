@@ -24,6 +24,8 @@ uint32_t ScoreManager::m_bonus = 0;
 float ScoreManager::m_bonusTimer = 0.0f;
 float ScoreManager::m_bonusDrawTimer = 0.0f;
 PDIRECT3DTEXTURE9 ScoreManager::m_bonusTexture = nullptr;
+PDIRECT3DTEXTURE9 ScoreManager::m_bonus_Great = nullptr;
+PDIRECT3DTEXTURE9 ScoreManager::m_bonus_Radical = nullptr;
 
 // MsgRestartStage for CScoreManager
 HOOK(void, __fastcall, CScoreManager_MsgRestartStage, 0xCF7F10, uint32_t* This, void* Edx, void* message)
@@ -84,11 +86,7 @@ HOOK(void, __fastcall, CScoreManager_CHudSonicStageUpdate, 0x1098A50, void* This
 	ScoreManager::m_bonusDrawTimer = max(0.0f, ScoreManager::m_bonusDrawTimer - *dt);
 	if (ScoreManager::m_bonusDrawTimer == 0.0f)
 	{
-		if (ScoreManager::m_bonusTexture)
-		{
-			ScoreManager::m_bonusTexture->Release();
-			ScoreManager::m_bonusTexture = nullptr;
-		}
+		ScoreManager::m_bonusTexture = nullptr;
 	}
 
 	originalCScoreManager_CHudSonicStageUpdate(This, Edx, dt);
@@ -374,10 +372,11 @@ void ScoreManager::applyPatches()
 		return;
 	}
 
-	// TODO: Ensure Score Generations is loaded LATER/higher priority than this mod (currently impossible with 06 HUD)
+	// TODO: Ensure Score Generations is loaded LATER/higher priority than this mod (awaiting for HMM dll load order update)
 	if (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr)
 	{
-		
+		MessageBox(NULL, L"'Score Generations' detected, please put it higher priority than 'STH2006 Project'!", L"STH2006 Project", MB_ICONERROR);
+		exit(-1);
 	}
 
 	printf("[ScoreManager] STH2006 score system enabled\n");
@@ -481,7 +480,7 @@ void ScoreManager::applyPostInit()
 		// We shouldn't have loaded ScoreGenerations.dll
 		if (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr)
 		{
-			MessageBox(NULL, L"An error occured when initializing internal score system, STH2006Project.dll was not loaded before ScoreGenerations.dll!", L"STH2006 Project", MB_ICONERROR);
+			MessageBox(NULL, L"An error occured when initializing internal score system, 'Score Generations' MUST be higher priority than 'STH2006 Project'!", L"STH2006 Project", MB_ICONERROR);
 			exit(-1);
 		}
 	}
@@ -592,7 +591,7 @@ void ScoreManager::addScore(ScoreType type, uint32_t* This)
 	// Add to enemy stack bonus and notify draw GUI
 	if (type == ST_enemyBonus)
 	{
-		// Resets enemy bonus
+		// Resets rainbow ring bonus
 		if (m_rainbowRingChain > 0)
 		{
 			m_bonus = 0;
@@ -802,24 +801,42 @@ void ScoreManager::notifyDraw(BonusCommentType type)
 	// Always clear texture first
 	if (m_bonusTexture)
 	{
-		m_bonusTexture->Release();
 		m_bonusTexture = nullptr;
 	}
 
 	// Only draw comment if there not already one
 	if (m_bonusDrawTimer == 0.0f)
 	{
-		UIContext::loadTextureFromFile((Application::getModDirWString() + L"Assets\\" + getBonusCommentTextureName(type)).c_str(), &m_bonusTexture);
+		switch (type)
+		{
+		case BCT_Great:		m_bonusTexture = m_bonus_Great;   break;
+		case BCT_Radical:	m_bonusTexture = m_bonus_Radical; break;
+		}
 	}
 
 	m_bonusTimer = 10.0f;
 	m_bonusDrawTimer = 4.0f;
 }
 
+bool ScoreManager::initTextures()
+{
+	std::wstring const dir = Application::getModDirWString();
+	bool success = true;
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Bonus_Great.dds").c_str(), &m_bonus_Great);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Bonus_Radical.dds").c_str(), &m_bonus_Radical);
+	
+	if (!success)
+	{
+		MessageBox(nullptr, TEXT("Failed to load assets for score bonus texts, they may not display correctly"), TEXT("STH2006 Project"), MB_ICONWARNING);
+	}
+
+	return success;
+}
+
 void ScoreManager::draw()
 {
 	// At loading screen, clear all
-	if ((*(uint32_t**)0x1E66B40)[2] > 0)
+	if (Common::IsAtLoadingScreen())
 	{
 		m_bonus = 0;
 		m_bonusDrawTimer = 0.0f;

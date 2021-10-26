@@ -243,7 +243,7 @@ void __fastcall Stage::getIsWallJumpImpl(float* outOfControl)
 void Stage::draw()
 {
     // At loading screen, clear all
-    if ((*(uint32_t**)0x1E66B40)[2] > 0)
+    if (Common::IsAtLoadingScreen())
     {
         m_checkpointTimer = 0.0f;
         return;

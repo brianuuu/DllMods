@@ -22,44 +22,17 @@ enum ItemboxType : uint32_t
 	IT_COUNT
 };
 
-inline const wchar_t* getItemboxTextureName(ItemboxType type)
-{
-	switch (type)
-	{
-	case IT_5ring:	 return L"Item_5ring.dds";
-	case IT_10ring:	 return L"Item_10ring.dds";
-	case IT_20ring:	 return L"Item_20ring.dds";
-	case IT_1up:	 return L"Item_1up.dds";
-	case IT_invin:	 return L"Item_invin.dds";
-	case IT_speed:	 return L"Item_speed.dds";
-	case IT_gauge:	 return L"Item_gauge.dds";
-	case IT_shield:	 return L"Item_shield.dds";
-	case IT_fire:	 return L"Item_fire.dds";
-	default: 		 return L"";
-	}
-}
-
 struct ItemboxGUI
 {
 	ItemboxType m_type;
 	float m_frame;
 	float m_pos;
-	PDIRECT3DTEXTURE9 m_texture;
 
 	ItemboxGUI(ItemboxType type)
 		: m_type(type)
 		, m_frame(0.0f)
 		, m_pos(0.5f)
-		, m_texture(nullptr)
 	{}
-
-	~ItemboxGUI()
-	{
-		if (m_texture)
-		{
-			m_texture->Release();
-		}
-	}
 };
 
 class Itembox
@@ -74,5 +47,29 @@ public:
 	static std::deque<ItemboxGUI> m_guiData;
 	static void addItemToGui(ItemboxType type);
 	static void draw();
+
+	// Textures
+	static bool initTextures();
+	static PDIRECT3DTEXTURE9 m_item_5ring;
+	static PDIRECT3DTEXTURE9 m_item_10ring;
+	static PDIRECT3DTEXTURE9 m_item_20ring;
+	static PDIRECT3DTEXTURE9 m_item_1up;
+	static PDIRECT3DTEXTURE9 m_item_invin;
+	static PDIRECT3DTEXTURE9 m_item_speed;
+	static PDIRECT3DTEXTURE9 m_item_gauge;
+	static PDIRECT3DTEXTURE9 m_item_shield;
+	static PDIRECT3DTEXTURE9 m_item_fire;
+	~Itembox()
+	{
+		if (m_item_5ring)  m_item_5ring->Release();
+		if (m_item_10ring) m_item_10ring->Release();
+		if (m_item_20ring) m_item_20ring->Release();
+		if (m_item_1up)	   m_item_1up->Release();
+		if (m_item_invin)  m_item_invin->Release();
+		if (m_item_speed)  m_item_speed->Release();
+		if (m_item_gauge)  m_item_gauge->Release();
+		if (m_item_shield) m_item_shield->Release();
+		if (m_item_fire)   m_item_fire->Release();
+	}
 };
 

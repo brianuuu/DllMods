@@ -7,6 +7,15 @@ float const c_10ringRadius = 0.57f;
 float const c_1upRadius = 0.70f;
 
 std::deque<ItemboxGUI> Itembox::m_guiData;
+PDIRECT3DTEXTURE9 Itembox::m_item_5ring = nullptr;
+PDIRECT3DTEXTURE9 Itembox::m_item_10ring = nullptr;
+PDIRECT3DTEXTURE9 Itembox::m_item_20ring = nullptr;
+PDIRECT3DTEXTURE9 Itembox::m_item_1up = nullptr;
+PDIRECT3DTEXTURE9 Itembox::m_item_invin = nullptr;
+PDIRECT3DTEXTURE9 Itembox::m_item_speed = nullptr;
+PDIRECT3DTEXTURE9 Itembox::m_item_gauge = nullptr;
+PDIRECT3DTEXTURE9 Itembox::m_item_shield = nullptr;
+PDIRECT3DTEXTURE9 Itembox::m_item_fire = nullptr;
 
 std::string m_setdataLayer;
 HOOK(bool, __stdcall, ParseSetdata, 0xEB5050, void* a1, char** pFileName, void* a3, void* a4, uint8_t a5, uint8_t a6)
@@ -345,8 +354,7 @@ void Itembox::addItemToGui(ItemboxType type)
 
 	// Initialize GUI data
 	m_guiData.push_front(ItemboxGUI(type));
-	UIContext::loadTextureFromFile((Application::getModDirWString() + L"Assets\\" + getItemboxTextureName(type)).c_str(), &m_guiData.front().m_texture);
-
+	
 	// Only allow 5 to display at max
 	if (m_guiData.size() > 5)
 	{
@@ -354,10 +362,32 @@ void Itembox::addItemToGui(ItemboxType type)
 	}
 }
 
+bool Itembox::initTextures()
+{
+	std::wstring const dir = Application::getModDirWString();
+	bool success = true;
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item_5ring.dds").c_str(), &m_item_5ring);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item_10ring.dds").c_str(), &m_item_10ring);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item_20ring.dds").c_str(), &m_item_20ring);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item_1up.dds").c_str(), &m_item_1up);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item_invin.dds").c_str(), &m_item_invin);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item_speed.dds").c_str(), &m_item_speed);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item_gauge.dds").c_str(), &m_item_gauge);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item_shield.dds").c_str(), &m_item_shield);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item_fire.dds").c_str(), &m_item_fire);
+
+	if (!success)
+	{
+		MessageBox(nullptr, TEXT("Failed to load assets for itembox icons, they may not display correctly"), TEXT("STH2006 Project"), MB_ICONWARNING);
+	}
+
+	return success;
+}
+
 void Itembox::draw()
 {
 	// At loading screen, clear all
-	if ((*(uint32_t**)0x1E66B40)[2] > 0)
+	if (Common::IsAtLoadingScreen())
 	{
 		m_guiData.clear();
 		return;
@@ -376,7 +406,21 @@ void Itembox::draw()
 	{
 		ItemboxGUI& data = m_guiData[i];
 
-		if (data.m_frame > 0.0f && data.m_texture)
+		PDIRECT3DTEXTURE9 texture = nullptr;
+		switch (data.m_type)
+		{
+		case IT_5ring:	 texture = m_item_5ring;  break;
+		case IT_10ring:	 texture = m_item_10ring; break;
+		case IT_20ring:	 texture = m_item_20ring; break;
+		case IT_1up:	 texture = m_item_1up;	  break;
+		case IT_invin:	 texture = m_item_invin;  break;
+		case IT_speed:	 texture = m_item_speed;  break;
+		case IT_gauge:	 texture = m_item_gauge;  break;
+		case IT_shield:	 texture = m_item_shield; break;
+		case IT_fire:	 texture = m_item_fire;	  break;
+		}
+
+		if (data.m_frame > 0.0f && texture)
 		{
 			static bool visible = true;
 			ImGui::Begin((std::string("Itembox") + std::to_string(i)).c_str(), &visible, UIContext::m_hudFlags);
@@ -403,7 +447,7 @@ void Itembox::draw()
 				ImGui::SetWindowFocus();
 				ImGui::SetWindowPos(ImVec2(posX, posY));
 				ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
-				ImGui::Image(data.m_texture, ImVec2(sizeX, sizeY));
+				ImGui::Image(texture, ImVec2(sizeX, sizeY));
 			}
 			ImGui::End();
 		}
