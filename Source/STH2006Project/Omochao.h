@@ -40,7 +40,7 @@ struct CaptionData
 	PDIRECT3DTEXTURE9 m_buttonStart;
 	PDIRECT3DTEXTURE9 m_buttonBack;
 
-	void init();
+	bool init();
 	void clear()
 	{
 		m_owner = nullptr;

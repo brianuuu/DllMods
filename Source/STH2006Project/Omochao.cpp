@@ -138,6 +138,12 @@ void __cdecl Omochao::addCaptionImpl(uint32_t* owner, uint32_t* caption, float d
     // Read caption and convert to string
     uint32_t const length = (caption[2] - caption[1]) / 4;
     uint32_t* captionList = (uint32_t*)caption[1];
+
+    // TODO:
+    bool usingSTH2006Project = true;
+    bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
+    bool adjustLineBreak = !usingSTH2006Project && !isJapanese;
+
     std::wstring str;
     for (uint32_t i = 0; i < length; i++)
     {
@@ -160,7 +166,17 @@ void __cdecl Omochao::addCaptionImpl(uint32_t* owner, uint32_t* caption, float d
         {
             if (key == 0x82)
             {
-                str += L"  ";
+                if (adjustLineBreak && str.size() > 52)
+                {
+                    // Do line break manually
+                    str += L'\n';
+                    newCaption.m_captions.push_back(Common::wideCharToMultiByte(str.c_str()));
+                    str.clear();
+                }
+                else
+                {
+                    str += L"  ";
+                }
             }
             else
             {
@@ -169,9 +185,20 @@ void __cdecl Omochao::addCaptionImpl(uint32_t* owner, uint32_t* caption, float d
         }
         else if (key == 0)
         {
-            str += L'\n';
-            newCaption.m_captions.push_back(Common::wideCharToMultiByte(str.c_str()));
-            str.clear();
+            if (adjustLineBreak)
+            {
+                // Don't do line break here
+                if (!str.empty() && str.back() != L' ')
+                {
+                    str += L"  ";
+                }
+            }
+            else
+            {
+                str += L'\n';
+                newCaption.m_captions.push_back(Common::wideCharToMultiByte(str.c_str()));
+                str.clear();
+            }
         }
         else
         {
@@ -189,7 +216,7 @@ void __cdecl Omochao::addCaptionImpl(uint32_t* owner, uint32_t* caption, float d
     m_captionData.m_bypassLoading = (*(uint32_t**)0x1E66B40)[2] > 0;
 }
 
-void CaptionData::init()
+bool CaptionData::init()
 {
     std::wstring const dir = Application::getModDirWString();
     bool success = true;
@@ -212,6 +239,8 @@ void CaptionData::init()
         WRITE_MEMORY(0x11F8813, uint8_t, 0x0F, 0x84, 0x60, 0x01, 0x00, 0x00);
         MessageBox(nullptr, TEXT("Failed to load assets for custom 06 textbox, reverting to in-game textbox."), TEXT("STH2006 Project"), MB_ICONWARNING);
     }
+
+    return success;
 }
 
 void Omochao::draw()
@@ -219,15 +248,15 @@ void Omochao::draw()
     if (m_captionData.m_bypassLoading)
     {
         // No longer at loading screen
-        if ((*(uint32_t**)0x1E66B40)[2] == 0)
+        if (!Common::IsAtLoadingScreen())
         {
             m_captionData.m_bypassLoading = false;
         }
     }
-    else if((*(uint32_t**)0x1E66B40)[2] > 0)
+    else if(Common::IsAtLoadingScreen())
     {
         // At loading screen, clear all
-        m_captionData.m_captions.clear();
+        m_captionData.clear();
         return;
     }
 
