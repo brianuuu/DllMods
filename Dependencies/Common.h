@@ -460,6 +460,11 @@ inline bool IsPlayerGrounded()
 	return *(bool*)((uint32_t)*PLAYER_CONTEXT + 0x440);
 }
 
+inline bool IsAtLoadingScreen()
+{
+	return (*(uint32_t**)0x1E66B40)[2] > 0;
+}
+
 inline bool CheckPlayerNodeExist(const Hedgehog::Base::CSharedString& name)
 {
 	void* context = *PLAYER_CONTEXT;
