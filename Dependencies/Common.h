@@ -462,7 +462,9 @@ inline bool IsPlayerGrounded()
 
 inline bool IsAtLoadingScreen()
 {
-	return (*(uint32_t**)0x1E66B40)[2] > 0;
+	uint32_t** hudCount = (uint32_t**)0x1E66B40;
+	if (!*hudCount) return false;
+	return (*hudCount)[2] > 0;
 }
 
 inline bool CheckPlayerNodeExist(const Hedgehog::Base::CSharedString& name)

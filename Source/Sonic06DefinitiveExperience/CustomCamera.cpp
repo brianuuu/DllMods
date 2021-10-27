@@ -2,13 +2,6 @@
 #include "Application.h"
 #include "Configuration.h"
 
-bool IsLoadingScreen()
-{
-    uint32_t** hudCount = (uint32_t**)0x1E66B40;
-    if (!*hudCount) return false;
-    return (*hudCount)[2] > 0;
-}
-
 float const c_pitchMin = -20.0f * DEG_TO_RAD;
 float const c_pitchMax = 50.0f * DEG_TO_RAD;
 float const c_pitchDefault = 6.0f * DEG_TO_RAD;
@@ -90,7 +83,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     
     // Get and smooth current player rotation
     targetPlayerRotation = targetPlayerRotation.slerp(c_cameraRotateRate * dt, Common::IsPlayerGrounded() ? playerRotation : Eigen::Quaternionf(1, 0, 0, 0));
-    if (IsLoadingScreen())
+    if (Common::IsAtLoadingScreen())
     {
         targetPlayerRotation = Eigen::Quaternionf(1, 0, 0, 0);
     }
