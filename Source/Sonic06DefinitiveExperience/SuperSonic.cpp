@@ -7,7 +7,7 @@ HOOK(void, __fastcall, SuperSonic_CSonicSetMaxSpeedBasis, 0xDFBCA0, int* This)
 
     if (*pModernSonicContext && Common::IsPlayerSuper())
     {
-        *Common::GetPlayerMaxSpeedBasis() = 70.0f;
+        *Common::GetPlayerMaxSpeed() = 70.0f;
     }
 }
 
