@@ -66,6 +66,16 @@ HOOK(void, __stdcall, CSonicRotationAdvance, 0xE310A0, void* a1, float* targetDi
     }
 }
 
+HOOK(void, __fastcall, NextGenPhysics_CSonicSetMaxSpeedBasis, 0xDFBCA0, int* This)
+{
+    originalNextGenPhysics_CSonicSetMaxSpeedBasis(This);
+
+    if (Common::IsPlayerOnBoard() && !Common::GetSonicStateFlags()->Boost)
+    {
+        *Common::GetPlayerMaxSpeed() = 26.0f;
+    }
+}
+
 HOOK(char, __stdcall, CSonicStateGrounded, 0xDFF660, int* a1, bool a2)
 {
     if (!NextGenPhysics::m_isStomping)
@@ -758,6 +768,9 @@ void NextGenPhysics::applyPatches()
         // Drop all rings when getting damaged
         WRITE_MEMORY(0xE6628E, uint8_t, 0xEB);
         WRITE_MEMORY(0xE6CCDE, uint8_t, 0xEB);
+
+        // Make board speed slightly faster
+        INSTALL_HOOK(NextGenPhysics_CSonicSetMaxSpeedBasis);
     }
 
     // Change all actions to X button, change boost to R2

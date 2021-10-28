@@ -532,6 +532,12 @@ inline float* GetPlayerBoost()
 	return (float*)((uint32_t)*PLAYER_CONTEXT + 0x5BC);
 }
 
+inline float* GetPlayerMaxSpeedBasis()
+{
+	if (!*PLAYER_CONTEXT) return 0;
+	return (float*)((uint32_t)*PLAYER_CONTEXT + 0x53C);
+}
+
 inline void SetPlayerAutoBoost(bool enabled)
 {
 	if (!*PLAYER_CONTEXT) return;

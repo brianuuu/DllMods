@@ -1,28 +1,13 @@
 #include "SuperSonic.h"
-
 #include "Configuration.h"
 
-uint32_t isSuperSonic = 0;
-void checkIsSuperSonic()
+HOOK(void, __fastcall, SuperSonic_CSonicSetMaxSpeedBasis, 0xDFBCA0, int* This)
 {
-    // Modern Sonic in super form
-    isSuperSonic = *pModernSonicContext && Common::IsPlayerSuper();
-}
+    originalSuperSonic_CSonicSetMaxSpeedBasis(This);
 
-uint32_t const SuperSonicSpeedASMReturnAddress = 0xDFE118;
-void __declspec(naked) SuperSonicSpeedASM()
-{
-    __asm
+    if (*pModernSonicContext && Common::IsPlayerSuper())
     {
-        movss   [esp + 0x04], xmm0 // This will be speed from Sonic.prm.xml
-        call    checkIsSuperSonic
-        cmp     isSuperSonic, 0
-        je      jump
-
-        mov     dword ptr [esp + 0x04], 0x428C0000 // 70.0
-
-        jump:
-        jmp     [SuperSonicSpeedASMReturnAddress]
+        *Common::GetPlayerMaxSpeedBasis() = 70.0f;
     }
 }
 
@@ -31,7 +16,7 @@ void SuperSonic::applyPatches()
     // Revert Super Sonic speed for 06 physics
     if (Configuration::m_physics)
     {
-        WRITE_JUMP(0xDFE112, SuperSonicSpeedASM);
+        INSTALL_HOOK(SuperSonic_CSonicSetMaxSpeedBasis);
         WRITE_NOP(0xDFE117, 1);
     }
 
