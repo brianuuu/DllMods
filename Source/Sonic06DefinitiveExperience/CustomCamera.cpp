@@ -42,6 +42,9 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     int result = originalCPlayer3DNormalCameraAdvance(This);
     if (!*PLAYER_CONTEXT) return result;
 
+    // Use default camera on quick step path
+    if (Common::IsPlayerInForwardPath()) return result;
+
     Eigen::Vector3f playerPosition;
     Eigen::Quaternionf playerRotation;
     Common::GetPlayerTransform(playerPosition, playerRotation);

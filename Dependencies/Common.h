@@ -431,11 +431,13 @@ inline bool IsPlayerControlLocked()
 
 inline bool IsPlayerSuper()
 {
+	if (!*PLAYER_CONTEXT) return false;
     return GetSonicStateFlags()->InvokeSuperSonic;
 }
 
 inline bool IsPlayerOnBoard()
 {
+	if (!*PLAYER_CONTEXT) return false;
 	return GetSonicStateFlags()->InvokeSkateBoard;
 }
 
@@ -444,6 +446,21 @@ inline bool IsPlayerIn2D()
 	// sub_E145A0 MsgIs2DMode
 	if (!*PLAYER_CONTEXT) return false;
 	return *(bool*)((uint32_t)*PLAYER_CONTEXT + 0x172);
+}
+
+inline bool IsPlayerInForwardPath()
+{
+	// sub_E145C0 MsgGetForwardPathInfo
+	if (!*PLAYER_CONTEXT) return false;
+	return *(uint32_t*)((uint32_t)*PLAYER_CONTEXT + 0x1278);
+}
+
+inline bool IsPlayerInDashPath()
+{
+	// sub_E14D30 MsgGetDashModeInfo
+	// Note: Dash path also applies to forward path
+	if (!*PLAYER_CONTEXT) return false;
+	return *(uint32_t*)((uint32_t)*PLAYER_CONTEXT + 0x128C) && !IsPlayerInForwardPath();
 }
 
 inline bool IsPlayerGrinding()
@@ -513,6 +530,12 @@ inline float* GetPlayerBoost()
 {
 	if (!*PLAYER_CONTEXT) return 0;
 	return (float*)((uint32_t)*PLAYER_CONTEXT + 0x5BC);
+}
+
+inline void SetPlayerAutoBoost(bool enabled)
+{
+	if (!*PLAYER_CONTEXT) return;
+	GetSonicStateFlags()->AutoBoost = enabled;
 }
 
 inline bool GetPlayerTransform(Eigen::Vector3f& position, Eigen::Quaternionf& rotation)
