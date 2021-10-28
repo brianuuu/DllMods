@@ -852,8 +852,8 @@ void ScoreManager::draw()
 		{
 			std::string const bonusStr = std::to_string(m_bonus);
 			ImVec2 size = ImGui::CalcTextSize(bonusStr.c_str());
-			ImGui::Text(bonusStr.c_str());
 			ImGui::SetWindowPos(ImVec2((float)*BACKBUFFER_WIDTH * 0.8f - size.x / 2, (float)*BACKBUFFER_HEIGHT * 0.295f - size.y / 2));
+			ImGui::Text(bonusStr.c_str());
 		}
 		ImGui::End();
 
