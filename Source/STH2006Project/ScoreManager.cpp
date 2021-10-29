@@ -166,7 +166,16 @@ HOOK(void, __fastcall, ScoreManager_GetItem, 0xFFF810, uint32_t* This, void* Edx
 
 HOOK(int, __fastcall, ScoreManager_GetRing, 0x10534B0, uint32_t* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(ScoreType::ST_ring, This);
+	uint32_t* owner = This;
+
+	// Allow collecting repeated rings in Silver boss
+	uint32_t stageID = Common::GetCurrentStageID();
+	if (stageID == 22 || stageID == 278)
+	{
+		owner = nullptr;
+	}
+
+	ScoreManager::addScore(ScoreType::ST_ring, owner);
 	return originalScoreManager_GetRing(This, Edx, message);
 }
 
@@ -716,8 +725,8 @@ ResultData* ScoreManager::calculateResultData()
 	case 13:	timeBonusBase = 46000;	break; // TODO: Tropical Jungle
 	case 15:	timeBonusBase = 31000;	break; // TODO: Kingdom Valley
 	case 17:	timeBonusBase = 23000;	break; // TODO: Aquatic Base
-	case 22:	timeBonusBase = 17000;	break; // Silver
-	case 278:	timeBonusBase = 14000;	break; // Silver Hard Mode
+	case 22:	timeBonusBase = 21000;	break; // Silver
+	case 278:	timeBonusBase = 22000;	break; // Silver Hard Mode
 	case 24:	timeBonusBase = 26500;	break; // TODO: Iblis
 	case 280:	timeBonusBase = 26500;	break; // TODO: Iblis Hard Mode
 	default:	break;
@@ -732,6 +741,7 @@ ResultData* ScoreManager::calculateResultData()
 	case 280:	// Iblis Hard Mode
 	{
 		scoreTable = ScoreTable{ 30000,27500,25000,5000 };
+		timeBonusRate = 80;
 		break;
 	}
 	default: break;
