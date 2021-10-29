@@ -116,8 +116,15 @@ HOOK(int*, __fastcall, ScoreManager_GameplayManagerInit, 0xD00F70, void* This, v
 	static char const* defaultHUD = (char*)0x0168E328;
 
 	uint32_t stageID = Common::GetCurrentStageID();
-	if (stageID <= 17 ||	// All main stages
-		stageID == 18)		// Casino Night (unused but that's original code)
+	if 
+	(
+		stageID <= 17 ||	// All main stages
+		stageID == 18 ||	// Casino Night (unused but that's original code)
+		stageID == 22 ||	// Silver
+		stageID == 278 ||	// Silver Hard Mode
+		stageID == 24 ||	// Iblis
+		stageID == 280 		// Iblis Hard Mode
+	)		
 	{
 		// Enable CScoreManager
 		WRITE_MEMORY(0xD017A7, uint8_t, (uint8_t)stageID);
@@ -360,7 +367,25 @@ void __declspec(naked) ScoreManager_NextRankScore()
 
 HOOK(bool, __cdecl, ScoreManager_IsPerfectBonus, 0x10B8A90)
 {
-	return false;
+	if (ScoreManager::m_pCScoreManager)
+	{
+		return false;
+	}
+
+	return originalScoreManager_IsPerfectBonus();
+}
+
+HOOK(bool, __fastcall, ScoreManager_CRivalSilverMsgDamage, 0xC89080, uint32_t* This, void* Edx, void* message)
+{
+	// TODO: Don't hide UI so we can show the score getting added
+	// Add score for Silver's final hit
+	uint32_t* pCSilver = (uint32_t*)This[104];
+	if ((pCSilver[81] & 0x100000) != 0)
+	{
+		ScoreManager::addScore(ScoreType::ST_boss, pCSilver);
+	}
+
+	return originalScoreManager_CRivalSilverMsgDamage(This, Edx, message);
 }
 
 std::string externIniPath;
@@ -416,6 +441,11 @@ void ScoreManager::applyPatches()
 	{
 		applyPatches_ScoreGensSystem();
 	}
+
+	// Silver boss
+	INSTALL_HOOK(ScoreManager_CRivalSilverMsgDamage);
+
+	// TODO: Iblis boss
 }
 
 void ScoreManager::applyPatches_ScoreGensSystem()
@@ -571,6 +601,7 @@ void ScoreManager::addScore(ScoreType type, uint32_t* This)
 	case ST_enemyLarge:		score = 1000;	break;
 	case ST_enemyStealth:	score = 1500;	break;
 	case ST_enemyBonus:		score = calculateEnemyChainBonus();	break;
+	case ST_boss:			score = 10000;	break;
 	default: return;
 	}
 
@@ -675,22 +706,34 @@ ResultData* ScoreManager::calculateResultData()
 	uint32_t stageID = Common::GetCurrentStageID();
 	switch (stageID)
 	{
-	case 1:		timeBonusBase = 47000;	break; // Wave Ocean
-	case 3:		timeBonusBase = 43000;	break; // Dusty Desert
-	case 5:		timeBonusBase = 50000;	break; // White Acropolis
-	case 7:		timeBonusBase = 47000;	break; // Crisis City
-	case 9:		timeBonusBase = 50000;	break; // Flame Core
-	case 11:	timeBonusBase = 45000;	break; // Radical Train
-	case 13:	timeBonusBase = 46000;	break; // Tropical Jungle
-	case 15:	timeBonusBase = 31000;	break; // Kingdom Valley
-	case 17:	timeBonusBase = 23000;	break; // Aquatic Base
 	case 0:		timeBonusBase = 10000;	break; // TODO: Prelude Stage
+	case 1:		timeBonusBase = 47000;	break; // TODO: Wave Ocean
+	case 3:		timeBonusBase = 43000;	break; // TODO: Dusty Desert
+	case 5:		timeBonusBase = 50000;	break; // TODO: White Acropolis
+	case 7:		timeBonusBase = 47000;	break; // TODO: Crisis City
+	case 9:		timeBonusBase = 50000;	break; // TODO: Flame Core
+	case 11:	timeBonusBase = 45000;	break; // TODO: Radical Train
+	case 13:	timeBonusBase = 46000;	break; // TODO: Tropical Jungle
+	case 15:	timeBonusBase = 31000;	break; // TODO: Kingdom Valley
+	case 17:	timeBonusBase = 23000;	break; // TODO: Aquatic Base
+	case 22:	timeBonusBase = 17000;	break; // Silver
+	case 278:	timeBonusBase = 14000;	break; // Silver Hard Mode
+	case 24:	timeBonusBase = 26500;	break; // TODO: Iblis
+	case 280:	timeBonusBase = 26500;	break; // TODO: Iblis Hard Mode
 	default:	break;
 	}
 
 	// TODO: Overwrite rank table on special stages (boss stages, missions etc.)
 	switch (stageID)
 	{
+	case 22:	// Silver
+	case 278:	// Silver Hard Mode
+	case 24:	// Iblis
+	case 280:	// Iblis Hard Mode
+	{
+		scoreTable = ScoreTable{ 30000,27500,25000,5000 };
+		break;
+	}
 	default: break;
 	}
 

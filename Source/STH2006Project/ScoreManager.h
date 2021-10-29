@@ -22,6 +22,7 @@ enum ScoreType : uint32_t
 	ST_enemyLarge,
 	ST_enemyStealth,
 	ST_enemyBonus,
+	ST_boss,
 
 	ST_COUNT
 };
@@ -42,6 +43,7 @@ inline char const* GetScoreTypeName(ScoreType type)
 	case ST_enemyLarge:		return "Enemy (Large)";
 	case ST_enemyStealth:	return "Enemy (Stealth)";
 	case ST_enemyBonus:		return "Enemy (Bonus)";
+	case ST_boss:			return "Boss";
 	default:				return "";
 	}
 }
