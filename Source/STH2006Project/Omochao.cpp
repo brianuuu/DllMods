@@ -66,6 +66,37 @@ void __declspec(naked) addCaption()
     }
 }
 
+uint32_t addCaption2ReturnAddress = 0x1155E86;
+void __declspec(naked) addCaption2()
+{
+    __asm
+    {
+        call    [sub_6B02B0]
+
+        push    eax
+        push    edx
+
+        // duration
+        mov     ecx, [esp + 0x1C + 0x8]
+        push    ecx
+
+        // caption
+        mov     ecx, [eax]
+        push    ecx
+
+        // this (COmochao)
+        push    ebx
+
+        call    Omochao::addCaptionImpl
+        add     esp, 0xC
+
+        pop     edx
+        pop     eax
+
+        jmp     [addCaption2ReturnAddress]
+    }
+}
+
 void Omochao::applyPatches()
 {
 	INSTALL_HOOK(Omochao_MsgNotifyObjectEvent);
@@ -74,6 +105,7 @@ void Omochao::applyPatches()
     if (initFontDatabase())
     {
         WRITE_JUMP(0x461402, addCaption);
+        WRITE_JUMP(0x1155E81, addCaption2);
         WRITE_JUMP(0x11F8813, (void*)0x11F8979);
     }
 }
