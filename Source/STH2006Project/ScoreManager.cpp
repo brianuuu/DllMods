@@ -453,6 +453,7 @@ void ScoreManager::applyPatches()
 
 	// Silver boss
 	INSTALL_HOOK(ScoreManager_CRivalSilverMsgDamage);
+	WRITE_MEMORY(0xC783DE, bool, true); // Don't hide HUD after defeating
 
 	// TODO: Iblis boss
 }
