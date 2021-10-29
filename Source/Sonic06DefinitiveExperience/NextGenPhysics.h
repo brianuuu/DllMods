@@ -5,6 +5,38 @@
 /*----------------------------------------------------------*/
 
 #pragma once
+
+struct NextGenAnimation
+{
+	// Note: All animations have 81 frames [0-80]
+	// playbackSpeed: how fast animation plays
+	// speedFactor: how much distance to play one loop, -1.0 to use constant playbackSpeed
+
+	float walk_playbackSpeed = 1.0f;
+	float walk_speedFactor = 1.35f;
+	float walkFast_playbackSpeed = 1.0f;
+	float walkFast_speedFactor = 2.0f;
+
+	float jog_playbackSpeed = 1.0f;
+	float jog_speedFactor = 3.3f;
+
+	float run_playbackSpeed = 1.0f;
+	float run_speedFactor = 9.0f;
+
+	float dash_playbackSpeed = 1.0f;
+	float dash_speedFactor = 12.0f;
+
+	float jet_playbackSpeed = 1.0f;
+	float jet_speedFactor = 13.0f;
+	float jetWall_playbackSpeed = 1.0f;
+	float jetWall_speedFactor = 20.0f;
+
+	float boost_playbackSpeed = 1.0f;
+	float boost_speedFactor = 13.0f;
+	float boostWall_playbackSpeed = 1.0f;
+	float boostWall_speedFactor = 20.0f;
+};
+
 class NextGenPhysics
 {
 public:
@@ -12,6 +44,7 @@ public:
 
 	// Common
 	static float m_homingDownSpeed;
+	static NextGenAnimation m_animationData;
 	static void applyCharacterAnimationSpeed();
 
 	// Stomping

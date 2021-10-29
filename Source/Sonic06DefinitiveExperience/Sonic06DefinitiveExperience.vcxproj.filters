@@ -20,6 +20,7 @@
     <ClCompile Include="VoiceOver.cpp" />
     <ClCompile Include="ChaosEnergy.cpp" />
     <ClCompile Include="CustomCamera.cpp" />
+    <ClCompile Include="NextGenSonic.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pch.h" />
@@ -39,5 +40,6 @@
     <ClInclude Include="VoiceOver.h" />
     <ClInclude Include="ChaosEnergy.h" />
     <ClInclude Include="CustomCamera.h" />
+    <ClInclude Include="NextGenSonic.h" />
   </ItemGroup>
 </Project>
