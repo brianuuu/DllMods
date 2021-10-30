@@ -582,10 +582,16 @@ bool NextGenSonic::bActionHandlerImpl()
     }
 
     CSonicStateFlags* flags = Common::GetSonicStateFlags();
+    if (flags->KeepRunning)
+    {
+        // Cannot use any action during auto run
+        return false;
+    }
+
     bool moving = playerVelocity.norm() > 0.2f;
     bool canUseSpindash = !moving || (Configuration::m_rapidSpindash && !flags->KeepRunning);
 
-    bool bDown, bPressed, bReleased;
+    bool bDown, bPressed, bReleased; 
     getActionButtonStates(bDown, bPressed, bReleased);
     if (bDown)
     {
