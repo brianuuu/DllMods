@@ -17,10 +17,6 @@ uint32_t* const BACKBUFFER_HEIGHT = (uint32_t*)0x1DFDDE0;
 uint32_t const CStringConstructor = 0x6621A0;
 uint32_t const CStringDestructor = 0x661550;
 
-static void* const pCGlitterCreate = (void*)0xE73890;
-static void* const pCGlitterEnd = (void*)0xE72650;
-static void* const pCGlitterKill = (void*)0xE72570;
-
 enum SonicCollision : uint32_t
 {
 	TypeNoAttack			= 0x1E61B5C,
@@ -355,6 +351,7 @@ static void* fCGlitterCreate
 	uint32_t flag
 )
 {
+	static void* const pCGlitterCreate = (void*)0xE73890;
 	__asm
 	{
 		push    flag
@@ -373,6 +370,8 @@ static void fCGlitterEnd
 	bool instantStop
 )
 {
+	static void* const pCGlitterEnd = (void*)0xE72650;
+	static void* const pCGlitterKill = (void*)0xE72570;
 	__asm
 	{
 		mov     eax, [handle]
@@ -398,6 +397,34 @@ static void fCGlitterEnd
 
 		end:
 	}
+}
+
+static float* fGetParameter
+(
+	uint32_t contestOffset,
+	uint32_t enumID
+)
+{
+	static void* const pGetParameter = (void*)0x53A9F0;
+	__asm
+	{
+		mov		eax, PLAYER_CONTEXT
+		mov		eax, [eax]
+		add		eax, contestOffset
+		mov		eax, [eax]
+
+		push	enumID
+		call	[pGetParameter]
+	}
+
+	/*
+	At sub_E03650
+	Look for -> sub_53AB10(v1, enumID)
+
+	offset: 
+	159 (Velocity)
+	636 (LightSpeedDash)
+	*/
 }
 
 inline void ObjectCGlitterPlayerOneShot(void* pObject, Hedgehog::Base::CSharedString const& name)
