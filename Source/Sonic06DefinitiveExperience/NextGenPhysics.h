@@ -42,34 +42,21 @@ class NextGenPhysics
 public:
 	static void applyPatches();
 
-	// Common
+	// Common 06 Physics
 	static float m_homingDownSpeed;
 	static NextGenAnimation m_animationData;
 	static void applyCharacterAnimationSpeed();
 
-	// Stomping
-	static bool m_bounced;
-	static bool m_isStomping;
-	static void bounceBraceletImpl();
-
-	// Squat Kick
-	static bool m_isSquatKick;
-	static bool m_isBrakeFlip;
-	static Eigen::Vector3f m_brakeFlipDir;
-	static float m_squatKickSpeed;
-
-	// Spindash/Sliding
-	static bool m_isSpindash;
-	static bool m_isSliding;
-	static float m_slidingTime;
-	static float m_slidingSpeed;
-	static bool __fastcall applySpindashImpulse(void* context);
-	static bool __fastcall applySlidingHorizontalTargetVel(void* context);
-
-	// Action
-	static float m_bHeldTimer;
-	static bool bActionHandlerImpl();
-	static void getActionButtonStates(bool& bDown, bool& bPressed, bool& bReleased);
-
+	static float const c_funcMaxTurnRate;
+	static float const c_funcTurnRateMultiplier;
+	static void applyCSonicRotationAdvance
+	(
+		void* This, 
+		float* targetDir, 
+		float turnRate1 = c_funcMaxTurnRate,
+		float turnRateMultiplier = c_funcTurnRateMultiplier,
+		bool noLockDirection = true, 
+		float turnRate2 = c_funcMaxTurnRate
+	);
 };
 
