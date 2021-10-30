@@ -48,9 +48,9 @@ HOOK(void, __fastcall, VoiceOver_MsgGetItemType, 0xE6D7D0, void* This, void* Edx
 }
 
 // Play rainbow ring voice
-uint32_t objRainbowRingVoiceReturnAddress = 0x115A8F2;
 void __declspec(naked) objRainbowRingVoice()
 {
+	static uint32_t returnAddress = 0x115A8F2;
 	__asm
 	{
 		push	esi
@@ -58,7 +58,7 @@ void __declspec(naked) objRainbowRingVoice()
 		pop		esi
 
 		mov     eax, [esi + 0B8h]
-		jmp		[objRainbowRingVoiceReturnAddress]
+		jmp		[returnAddress]
 	}
 }
 

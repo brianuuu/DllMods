@@ -21,9 +21,9 @@ void __cdecl getRankSfx()
     RankQuote::m_playRankVoice = false;
 }
 
-uint32_t asmChangeRankVoiceReturnAddress = 0x11D237E;
 void __declspec(naked) asmChangeRankVoice()
 {
+    static uint32_t returnAddress = 0x11D237E;
     __asm
     {
         // eax is used after jumping back
@@ -32,50 +32,50 @@ void __declspec(naked) asmChangeRankVoice()
         pop     eax
 
         push    RankQuote::m_rankSfxID
-        jmp     [asmChangeRankVoiceReturnAddress]
+        jmp     [returnAddress]
     }
 }
 
-uint32_t asmSkipRankPerfectReturnAddress = 0x10B8D4A;
 void __declspec(naked) asmSkipRankPerfect()
 {
+    static uint32_t returnAddress = 0x10B8D4A;
     __asm
     {
         mov     RankQuote::m_playRankVoice, 1  // enable voice
         push    [0x1693E80]         // offset aChangerank
 
-        jmp     [asmSkipRankPerfectReturnAddress]
+        jmp     [returnAddress]
     }
 }
 
-uint32_t asmSkipRankReturnAddress = 0x10B8DAD;
 void __declspec(naked) asmSkipRank()
 {
+    static uint32_t returnAddress = 0x10B8DAD;
     __asm
     {
         mov     RankQuote::m_playRankVoice, 1  // enable voice
         push    [0x1693E64]         // offset aRank_1
 
-        jmp     [asmSkipRankReturnAddress]
+        jmp     [returnAddress]
     }
 }
 
-uint32_t asmRankPerfectReturnAddress = 0x10B77AD;
 void __declspec(naked) asmRankPerfect()
 {
+    static uint32_t returnAddress = 0x10B77AD;
     __asm
     {
         mov     RankQuote::m_playRankVoice, 1  // enable voice
         push    [0x1693E80]         // offset aChangerank
 
-        jmp     [asmRankPerfectReturnAddress]
+        jmp     [returnAddress]
     }
 }
 
-uint32_t perfectBonusFunctionAddress = 0x10B8A90;
-uint32_t asmRankReturnAddress = 0x10B785B;
 void __declspec(naked) asmRank()
 {
+    static uint32_t perfectBonusFunctionAddress = 0x10B8A90;
+    static uint32_t returnAddress = 0x10B785B;
     __asm
     {
         // Only plays when there's NO pefect bonus
@@ -92,7 +92,7 @@ void __declspec(naked) asmRank()
 
         jump:
         push    [0x1693E64]         // offset aRank_1
-        jmp     [asmRankReturnAddress]
+        jmp     [returnAddress]
     }
 }
 

@@ -109,10 +109,10 @@ HOOK(int*, __fastcall, NextGenPhysics_CSonicStateHomingAttackEnd, 0x1231F80, voi
     return originalNextGenPhysics_CSonicStateHomingAttackEnd(This);
 }
 
-uint32_t noAirDashOutOfControlReturnAddress = 0x1232445;
-uint32_t noAirDashOutOfControlSkipAddress = 0x1232450;
 void __declspec(naked) noAirDashOutOfControl()
 {
+    static uint32_t returnAddress = 0x1232445;
+    static uint32_t skipAddress = 0x1232450;
     __asm
     {
         mov     byte ptr [ecx + 17h], 0
@@ -123,40 +123,40 @@ void __declspec(naked) noAirDashOutOfControl()
 
         // Air dash, skip out of control
         mov     [esi + 80h], 0
-        jmp     [noAirDashOutOfControlSkipAddress]
+        jmp     [skipAddress]
 
         // Out of control prep
         jump:
         push    ecx
         fstp    [esp]
         push    ebx
-        jmp     [noAirDashOutOfControlReturnAddress]
+        jmp     [returnAddress]
     }
 }
 
-uint32_t lightDashHigherPriorityReturnAddress = 0xDFDDD0;
-uint32_t lightDashHigherPrioritySuccessAddress = 0xDFDDED;
-uint32_t fpLightSpeedDash = 0xDFB3F0;
 void __declspec(naked) lightDashHigherPriority()
 {
+    static uint32_t returnAddress = 0xDFDDD0;
+    static uint32_t successAddress = 0xDFDDED;
+    static uint32_t fpLightSpeedDash = 0xDFB3F0;
     __asm
     {
         // Check light speed dash
         call    [fpLightSpeedDash]
         test    al, al
         jz      jump
-        jmp     [lightDashHigherPrioritySuccessAddress]
+        jmp     [successAddress]
 
         // Original check B-button actions
         jump:
         push    [0x15F55A4]
-        jmp     [lightDashHigherPriorityReturnAddress]
+        jmp     [returnAddress]
     }
 }
 
-uint32_t noTrickRainbowRingReturnAddress = 0xE6D417;
 void __declspec(naked) noTrickRainbowRing()
 {
+    static uint32_t returnAddress = 0xE6D417;
     __asm
     {
         // Copied from dash ring case 8
@@ -171,22 +171,22 @@ void __declspec(naked) noTrickRainbowRing()
         mov     ecx, ebx
         call    edx
 
-        jmp     [noTrickRainbowRingReturnAddress]
+        jmp     [returnAddress]
     }
 }
 
-uint32_t CObjPlaTramCarBoostButtonChangeSuccessAddress = 0xF368C4;
-uint32_t CObjPlaTramCarBoostButtonChangeReturnAddress = 0xF3691D;
 void __declspec(naked) CObjPlaTramCarBoostButtonChange()
 {
+    static uint32_t successAddress = 0xF368C4;
+    static uint32_t returnAddress = 0xF3691D;
     __asm
     {
         test    word ptr [esi], 0x8000
         jz      jump
-        jmp     [CObjPlaTramCarBoostButtonChangeSuccessAddress]
+        jmp     [successAddress]
 
         jump:
-        jmp     [CObjPlaTramCarBoostButtonChangeReturnAddress]
+        jmp     [returnAddress]
     }
 }
 

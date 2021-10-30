@@ -20,10 +20,10 @@ HOOK(void, __fastcall, ChaosEnergy_MsgGetHudPosition, 0x1096790, void* This, voi
 	originalChaosEnergy_MsgGetHudPosition(This, Edx, message);
 }
 
-uint32_t fpAddBoostToSonicContext = 0xE5D990;
-uint32_t addBoostFromChaosEnergyReturnAddress = 0x112459A;
 void __declspec(naked) addBoostFromChaosEnergy()
 {
+	static uint32_t fpAddBoostToSonicContext = 0xE5D990;
+	static uint32_t returnAddress = 0x112459A;
 	__asm
 	{
 		// Check Sonic context just in case
@@ -44,13 +44,13 @@ void __declspec(naked) addBoostFromChaosEnergy()
 		// original function
 		jump:
 		mov     ecx, [ecx + 0FCh]
-		jmp		[addBoostFromChaosEnergyReturnAddress]
+		jmp		[returnAddress]
 	}
 }
 
-uint32_t setChaosEnergySfxPfxReturnAddress = 0x112459F;
 void __declspec(naked) setChaosEnergySfxPfx()
 {
+	static uint32_t returnAddress = 0x112459F;
 	__asm
 	{
 		// Change sound effect
@@ -66,7 +66,7 @@ void __declspec(naked) setChaosEnergySfxPfx()
 		pop		ecx
 		pop		ebx
 		mov		eax, 4002086
-		jmp		[setChaosEnergySfxPfxReturnAddress]
+		jmp		[returnAddress]
 
 		// Chaos Drive
 		jump:
@@ -75,26 +75,26 @@ void __declspec(naked) setChaosEnergySfxPfx()
 		pop		ecx
 		pop		ebx
 		mov		eax, 4002087 
-		jmp		[setChaosEnergySfxPfxReturnAddress]
+		jmp		[returnAddress]
 	}
 }
 
 
-uint32_t getEnemyChaosEnergyAmountReturnAddress = 0xBE05EF;
 void __declspec(naked) getEnemyChaosEnergyAmount()
 {
+	static uint32_t returnAddress = 0xBE05EF;
 	__asm
 	{
 		mov		ecx, esi
 		call	ChaosEnergy::getEnemyChaosEnergyAmountImpl
 		mov		ecx, eax
-		jmp		[getEnemyChaosEnergyAmountReturnAddress]
+		jmp		[returnAddress]
 	}
 }
 
-uint32_t getEnemyChaosEnergyTypeReturnAddress = 0xBE05F7;
 void __declspec(naked) getEnemyChaosEnergyType()
 {
+	static uint32_t returnAddress = 0xBE05F7;
 	__asm
 	{
 		mov		edx, ecx
@@ -105,13 +105,13 @@ void __declspec(naked) getEnemyChaosEnergyType()
 		// original function
 		mov     edx, [esi]
 		mov     eax, [edx + 9Ch]
-		jmp		[getEnemyChaosEnergyTypeReturnAddress]
+		jmp		[returnAddress]
 	}
 }
 
-uint32_t setChaosEnergyAmountAndTypeReturnAddress = 0x112509D;
 void __declspec(naked) setChaosEnergyAmountAndType()
 {
+	static uint32_t returnAddress = 0x112509D;
 	__asm
 	{
 		// Set amount
@@ -123,14 +123,14 @@ void __declspec(naked) setChaosEnergyAmountAndType()
 		mov		dx, word ptr [edi + 12h]
 		mov		[esi + 11Ch], edx
 
-		jmp		[setChaosEnergyAmountAndTypeReturnAddress]
+		jmp		[returnAddress]
 	}
 }
 
-uint32_t swapChaosEnergyEffectReturnAddress = 0x1124367;
 const char* volatile const lightcoreEffectName = "ef_if_hud_yh1_lightcore";
 void __declspec(naked) swapChaosEnergyEffect()
 {
+	static uint32_t returnAddress = 0x1124367;
 	__asm
 	{
 		mov		ecx, [esi]
@@ -139,11 +139,11 @@ void __declspec(naked) swapChaosEnergyEffect()
 		jz		jump
 
 		push	lightcoreEffectName
-		jmp		[swapChaosEnergyEffectReturnAddress]
+		jmp		[returnAddress]
 
 		jump:
 		push	[0x1613B98] // ef_if_hud_yh1_boostenergy
-		jmp		[swapChaosEnergyEffectReturnAddress]
+		jmp		[returnAddress]
 	}
 }
 

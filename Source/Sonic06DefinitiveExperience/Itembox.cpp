@@ -38,10 +38,10 @@ HOOK(uint32_t*, __fastcall, ReadXmlData, 0xCE5FC0, uint32_t size, char* pData, v
 }
 
 const char* volatile const ObjectProductionItemboxLock = "ObjectProductionItemboxLock.phy.xml";
-uint32_t LoadItemboxLockAsmHookReturnAddress = 0xD45FAA;
-uint32_t sub_EA0450 = 0xEA0450;
 void __declspec(naked) LoadItemboxLockAsmHook()
 {
+	static uint32_t returnAddress = 0xD45FAA;
+	static uint32_t sub_EA0450 = 0xEA0450;
 	__asm
 	{
 		call	[CStringDestructor]
@@ -54,15 +54,15 @@ void __declspec(naked) LoadItemboxLockAsmHook()
 		call	[sub_EA0450]
 		lea     ecx, [esp + 0xC]
 		call	[CStringDestructor]
-		jmp		[LoadItemboxLockAsmHookReturnAddress]
+		jmp		[returnAddress]
 	}
 }
 
 // Have to use ASM to prevent double playing sfx
-uint32_t sub_D5D940 = 0xD5D940;
-uint32_t objItemPlaySfxReturnAddress = 0xFFF9A8;
 void __declspec(naked) objItemPlaySfx()
 {
+	static uint32_t returnAddress = 0xFFF9A8;
+	static uint32_t sub_D5D940 = 0xD5D940;
 	__asm
 	{
 		mov     ecx, [esp + 14h]
@@ -70,7 +70,7 @@ void __declspec(naked) objItemPlaySfx()
 		call	Itembox::playItemboxSfx
 		mov     esi, [esp + 14h]
 		call	[sub_D5D940]
-		jmp		[objItemPlaySfxReturnAddress]
+		jmp		[returnAddress]
 	}
 }
 

@@ -309,9 +309,9 @@ HOOK(void, __fastcall, NextGenSonic_CSonicStateSlidingAdvance, 0x11D69A0, void* 
     }
 }
 
-uint32_t NextGenSonic_CSonicStateSlidingEndReturnAddress = 0x11D702D;
 void __declspec(naked) NextGenSonic_CSonicStateSlidingEnd()
 {
+    static uint32_t returnAddress = 0x11D702D;
     __asm
     {
         // Original function
@@ -320,13 +320,13 @@ void __declspec(naked) NextGenSonic_CSonicStateSlidingEnd()
         // Set spindash/sliding state
         mov     NextGenSonic::m_isSliding, 0
         mov     NextGenSonic::m_isSpindash, 0
-        jmp     [NextGenSonic_CSonicStateSlidingEndReturnAddress]
+        jmp     [returnAddress]
     }
 }
 
-uint32_t NextGenSonic_slidingHorizontalTargetVel2DReturnAddress = 0x11D98AC;
 void __declspec(naked) NextGenSonic_slidingHorizontalTargetVel2D()
 {
+    static uint32_t returnAddress = 0x11D98AC;
     __asm
     {
         // Get overrided target velocity
@@ -336,13 +336,13 @@ void __declspec(naked) NextGenSonic_slidingHorizontalTargetVel2D()
         pop     esi
         pop     ebx
         mov     esp, ebp
-        jmp     [NextGenSonic_slidingHorizontalTargetVel2DReturnAddress]
+        jmp     [returnAddress]
     }
 }
 
-uint32_t NextGenSonic_slidingHorizontalTargetVel3DReturnAddress = 0x11D953E;
 void __declspec(naked) NextGenSonic_slidingHorizontalTargetVel3D()
 {
+    static uint32_t returnAddress = 0x11D953E;
     __asm
     {
         // Get overrided target velocity
@@ -356,7 +356,7 @@ void __declspec(naked) NextGenSonic_slidingHorizontalTargetVel3D()
         movaps  xmmword ptr[ebx + 2A0h], xmm0
 
         jump:
-        jmp     [NextGenSonic_slidingHorizontalTargetVel3DReturnAddress]
+        jmp     [returnAddress]
     }
 }
 
@@ -644,13 +644,13 @@ bool NextGenSonic::bActionHandlerImpl()
 //---------------------------------------------------
 // Bounce Bracelet
 //---------------------------------------------------
-uint32_t bounceBraceletASMImplReturnAddress = 0x1254B77;
 void __declspec(naked) bounceBraceletASMImpl()
 {
+    static uint32_t returnAddress = 0x1254B77;
     __asm
     {
         call    NextGenSonic::bounceBraceletImpl
-        jmp     [bounceBraceletASMImplReturnAddress]
+        jmp     [returnAddress]
     }
 }
 
@@ -685,9 +685,9 @@ void NextGenSonic::bounceBraceletImpl()
 //---------------------------------------------------
 // Spindashing
 //---------------------------------------------------
-uint32_t startSpindashReturnAddress = 0x1230C39;
 void __declspec(naked) startSpindash()
 {
+    static uint32_t returnAddress = 0x1230C39;
     __asm
     {
         // Original function
@@ -701,7 +701,7 @@ void __declspec(naked) startSpindash()
         mov     ecx, ebx
         call    NextGenSonic::applySpindashImpulse
 
-        jmp     [startSpindashReturnAddress]
+        jmp     [returnAddress]
     }
 }
 

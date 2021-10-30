@@ -167,23 +167,23 @@ HOOK(bool, __fastcall, CSonicStateGrindJumpShortBegin, 0x124A8C0, void* This)
     return result;
 }
 
-uint32_t getHomingTargetObjReturnAddress = 0xE91412;
-uint32_t sub_D5DBA0 = 0xD5DBA0;
 void __declspec(naked) getHomingTargetObj()
 {
+    static uint32_t returnAddress = 0xE91412;
+    static uint32_t sub_D5DBA0 = 0xD5DBA0;
     __asm
     {
         mov     RailPhysics::m_pHomingTargetObj, esi
         mov     RailPhysics::m_isGettingHomingTarget, 1
         call    [sub_D5DBA0]
-        jmp     [getHomingTargetObjReturnAddress]
+        jmp     [returnAddress]
     }
 }
 
-uint32_t createHomingTargetObjReturnAddress = 0x121EDB0;
-uint32_t createHomingTargetObjSkipAddress = 0x121EE56;
 void __declspec(naked) createHomingTargetObj()
 {
+    static uint32_t returnAddress = 0x121EDB0;
+    static uint32_t skipAddress = 0x121EE56;
     __asm
     {
         mov     esi, RailPhysics::m_pHomingTargetObj
@@ -191,19 +191,19 @@ void __declspec(naked) createHomingTargetObj()
         jnz     jump
 
         mov     esi, [ebx+0xAC]
-        jmp     [createHomingTargetObjReturnAddress]
+        jmp     [returnAddress]
 
         jump:
-        jmp     [createHomingTargetObjSkipAddress]
+        jmp     [skipAddress]
     }
 }
 
-uint32_t forceQueryHomingCollisionOriginalAddress = 0xE744C7;
-uint32_t forceQueryHomingCollisionReturnAddress = 0xE74529;
-uint32_t tempQueryList = 0;
-uint32_t* tempQueryListPtr = &tempQueryList;
 void __declspec(naked) forceQueryHomingCollision()
 {
+    static uint32_t originalAddress = 0xE744C7;
+    static uint32_t returnAddress = 0xE74529;
+    static uint32_t tempQueryList = 0;
+    static uint32_t* tempQueryListPtr = &tempQueryList;
     __asm
     {
         mov     [esp + 1Ch], eax
@@ -223,22 +223,22 @@ void __declspec(naked) forceQueryHomingCollision()
         mov     tempQueryList, edx
         mov     edx, tempQueryListPtr
         mov     [esp + 1Ch], edx
-        jmp     [forceQueryHomingCollisionReturnAddress]
+        jmp     [returnAddress]
 
         // Original function
         jump:
         mov     eax, [edi]
         cmp     eax, edi
-        jmp     [forceQueryHomingCollisionOriginalAddress]
+        jmp     [originalAddress]
     }
 }
 
-uint32_t allowJumpDuringGrindSwitchReturnAddress = 0x1232659;
-uint32_t allowJumpDuringGrindSwitchSuccessAddress = 0x12326D1;
-uint32_t sub_DFF060 = 0xDFF060; // GrindJumpShort function
-uint32_t sub_DFCC70 = 0xDFCC70; // GrindJumpSide function
 void __declspec(naked) allowJumpDuringGrindSwitch()
 {
+    static uint32_t returnAddress = 0x1232659;
+    static uint32_t successAddress = 0x12326D1;
+    static uint32_t sub_DFF060 = 0xDFF060; // GrindJumpShort function
+    static uint32_t sub_DFCC70 = 0xDFCC70; // GrindJumpSide function
     __asm
     {
         // Required pop to edi before returning
@@ -266,13 +266,13 @@ void __declspec(naked) allowJumpDuringGrindSwitch()
         // State changed
         success:
         pop     edi
-        jmp     [allowJumpDuringGrindSwitchSuccessAddress]
+        jmp     [successAddress]
 
         // Original function
         jump:
         pop     edi
         cmp     byte ptr [ebx + 68h], 0
-        jmp     [allowJumpDuringGrindSwitchReturnAddress]
+        jmp     [returnAddress]
     }
 }
 
