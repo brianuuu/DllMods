@@ -40,6 +40,19 @@ void NextGenPhysics::applyCSonicRotationAdvance(void* This, float* targetDir, fl
     originalNextGenSonic_CSonicRotationAdvance(This, targetDir, turnRate1, turnRateMultiplier, noLockDirection, turnRate2);
 }
 
+bool NextGenPhysics::checkUseLightSpeedDash()
+{
+    if (!*PLAYER_CONTEXT) return false;
+    if (*(uint32_t*)((uint32_t)*PLAYER_CONTEXT + 0x12BC))
+    {
+        *(uint32_t*)((uint32_t)*PLAYER_CONTEXT + 0x12C0) = 0;
+        StateManager::ChangeState(StateAction::LightSpeedDash, *PLAYER_CONTEXT);
+        return true;
+    }
+
+    return false;
+}
+
 HOOK(void, __fastcall, NextGenPhysics_CSonicSetMaxSpeedBasis, 0xDFBCA0, int* This)
 {
     originalNextGenPhysics_CSonicSetMaxSpeedBasis(This);

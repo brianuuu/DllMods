@@ -58,5 +58,7 @@ public:
 		bool noLockDirection = true, 
 		float turnRate2 = c_funcMaxTurnRate
 	);
+
+	static bool checkUseLightSpeedDash();
 };
 
