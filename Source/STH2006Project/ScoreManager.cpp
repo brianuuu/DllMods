@@ -100,13 +100,13 @@ HOOK(int, __fastcall, ScoreManager_MsgRestartStage, 0xE76810, uint32_t* This, vo
 	return originalScoreManager_MsgRestartStage(This, Edx, message);
 }
 
-uint32_t ScoreManager_CalculateResultReturnAddress = 0xD5A191;
 void __declspec(naked) ScoreManager_CalculateResult()
 {
+	static uint32_t returnAddress = 0xD5A191;
 	__asm
 	{
 		call	ScoreManager::calculateResultData
-		jmp		[ScoreManager_CalculateResultReturnAddress]
+		jmp		[returnAddress]
 	}
 }
 
@@ -254,9 +254,9 @@ HOOK(void, __stdcall, ScoreManager_GetPhysics, 0xEA49B0, uint32_t This, int a2, 
 	originalScoreManager_GetPhysics(This, a2, a3, a4);
 }
 
-uint32_t ScoreManager_GetRainbowReturnAddress = 0x115A8FC;
 void __declspec(naked) ScoreManager_GetRainbow()
 {
+	static uint32_t returnAddress = 0x115A8FC;
 	__asm
 	{
 		push	esi
@@ -267,7 +267,7 @@ void __declspec(naked) ScoreManager_GetRainbow()
 		pop		esi
 
 		mov     eax, [esi + 0BCh]
-		jmp		[ScoreManager_GetRainbowReturnAddress]
+		jmp		[returnAddress]
 	}
 }
 
@@ -354,9 +354,9 @@ HOOK(int, __fastcall, ScoreManager_CGameObject3DDestruction, 0xD5D790, uint32_t*
 	return originalScoreManager_CGameObject3DDestruction(This);
 }
 
-uint32_t ScoreManager_NextRankScoreReturnAddress = 0x10B6037;
 void __declspec(naked) ScoreManager_NextRankScore()
 {
+	static uint32_t returnAddress = 0x10B6037;
 	__asm
 	{
 		// Don't display for S rank
@@ -370,7 +370,7 @@ void __declspec(naked) ScoreManager_NextRankScore()
 		push	esi
 		push	ecx
 		lea		ecx, [esp + 14h - 8h]
-		jmp		[ScoreManager_NextRankScoreReturnAddress]
+		jmp		[returnAddress]
 	}
 }
 

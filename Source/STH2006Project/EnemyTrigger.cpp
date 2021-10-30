@@ -41,11 +41,11 @@ FUNCTION_PTR(void*, __stdcall, fpEventTrigger, 0xD5ED00, void* This, int Event);
     }
 
 #define DAMAGE_EXPLODE_ASM(enemyName, failAddress, successAddress, originalASM, successASM) \
-    uint32_t const enemyName##ExplodeFailAddress = failAddress; \
-    uint32_t const enemyName##ExplodeSuccessAddress = successAddress; \
     extern uint32_t enemyName##Damaging; \
     void __declspec(naked) enemyName##ExplodeASM() \
     { \
+        static uint32_t const enemyFailAddress = failAddress; \
+        static uint32_t const enemySuccessAddress = successAddress; \
         __asm \
         { \
             /*test explode*/ \
@@ -54,12 +54,12 @@ FUNCTION_PTR(void*, __stdcall, fpEventTrigger, 0xD5ED00, void* This, int Event);
             /*original function*/ \
             originalASM \
             __asm jump: \
-            __asm jmp     [enemyName##ExplodeFailAddress] \
+            __asm jmp     [enemyFailAddress] \
             /*success*/ \
             __asm jumpSuccess: \
             successASM \
             __asm mov     enemyName##Damaging, 0 \
-            __asm jmp     [enemyName##ExplodeSuccessAddress] \
+            __asm jmp     [enemySuccessAddress] \
         } \
     }
 
@@ -121,9 +121,9 @@ DAMAGE_EVENT_ASM(EnemyNal, 0xB9EA2F, 0xB9E8D0);
 #define ENEMY_NAL_ASM __asm test bl, bl __asm jnz jump __asm push esi __asm jmp jumpSuccess
 DAMAGE_EXPLODE_ASM(EnemyNal, 0xB9E9F8, 0xB9E9D9, ENEMY_NAL_ASM, __asm push esi);
 uint32_t const sub_4F8840 = 0x4F8840;
-uint32_t const EnemyNalExtraASMReturnAddress = 0xB9E98C;
 void __declspec(naked) EnemyNalExtraASM()
 {
+    static uint32_t const returnAddress = 0xB9E98C;
     __asm
     {
         cmp     EnemyNalDamaging, 1
@@ -132,15 +132,15 @@ void __declspec(naked) EnemyNalExtraASM()
         call    [sub_4F8840]
 
         jump:
-        jmp     [EnemyNalExtraASMReturnAddress]
+        jmp     [returnAddress]
     }
 }
 
 DAMAGE_EVENT_ASM(EnemyTaker, 0xBA326F, 0xBA3140);
 DAMAGE_EVENT_ASM(EnemyBiter, 0xB869CB, 0xB86850);
-uint32_t const EnemyBiterExtraASMReturnAddress = 0xB8692D;
 void __declspec(naked) EnemyBiterExtraASM()
 {
+    static uint32_t const returnAddress = 0xB8692D;
     __asm
     {
         cmp     EnemyBiterDamaging, 1
@@ -149,15 +149,15 @@ void __declspec(naked) EnemyBiterExtraASM()
         call    [sub_4F8840]
 
         jump:
-        jmp     [EnemyBiterExtraASMReturnAddress]
+        jmp     [returnAddress]
     }
 }
 
-uint32_t const sub_4F87B0 = 0x4F87B0;
-uint32_t const EnemySharedExtraASMReturnAddress = 0xBE0C01;
-uint32_t const EnemySharedExtraASMSuccessAddress = 0xBE0C47;
 void __declspec(naked) EnemySharedExtraASM()
 {
+    static uint32_t const sub_4F87B0 = 0x4F87B0;
+    static uint32_t const returnAddress = 0xBE0C01;
+    static uint32_t const successAddress = 0xBE0C47;
     __asm
     {
         /*test explode*/
@@ -171,36 +171,36 @@ void __declspec(naked) EnemySharedExtraASM()
         mov     ecx, [edi + 0x10]
         push    ecx
         call    [sub_4F87B0]
-        jmp     [EnemySharedExtraASMReturnAddress]
+        jmp     [returnAddress]
 
         /*success*/
         jumpEnemyTaker:
         add     esp, 0x10
         mov     EnemyTakerDamaging, 0
-        jmp     [EnemySharedExtraASMSuccessAddress]
+        jmp     [successAddress]
 
         jumpEnemyBiter:
         add     esp, 0x10
         mov     EnemyBiterDamaging, 0
-        jmp     [EnemySharedExtraASMSuccessAddress]
+        jmp     [successAddress]
     }
 }
 
 DAMAGE_EVENT_ASM(EnemySpinner, 0xBBDA4F, 0xBBD990);
-uint32_t const EnemySpinnerExtraASMReturnAddress = 0xBBD9A3;
-uint32_t const EnemySpinnerExtraASMSuccessAddress = 0xBBD9B9;
 void __declspec(naked) EnemySpinnerExtraASM()
 {
+    static uint32_t const returnAddress = 0xBBD9A3;
+    static uint32_t const successAddress = 0xBBD9B9;
     __asm
     {
         cmp     EnemySpinnerDamaging, 1
         je      jump
 
         cmp     byte ptr[esi + 239h], 0
-        jmp     [EnemySpinnerExtraASMReturnAddress]
+        jmp     [returnAddress]
 
         jump:
-        jmp     [EnemySpinnerExtraASMSuccessAddress]
+        jmp     [successAddress]
     }
 }
 
@@ -209,27 +209,27 @@ DAMAGE_EVENT_ASM(EnemyPawn, 0xB958EF, 0xB907E0);
 #define ENEMY_PAWN_ASM __asm call [sub_4F8840]
 #define ENEMY_PAWN_SUCCESS_ASM __asm add esp, 0x10
 DAMAGE_EXPLODE_ASM(EnemyPawn, 0xB935FB, 0xB93666, ENEMY_PAWN_ASM, ENEMY_PAWN_SUCCESS_ASM);
-uint32_t const EnemyPawnExtraASMReturnAddress = 0xB95A53;
-uint32_t const EnemyPawnExtraASMSuccessAddress = 0xB95AB1;
 void __declspec(naked) EnemyPawnExtraASM()
 {
+    static uint32_t const returnAddress = 0xB95A53;
+    static uint32_t const successAddress = 0xB95AB1;
     __asm
     {
         cmp     EnemyPawnDamaging, 1
         je      jump
 
         call    [sub_4F8840]
-        jmp     [EnemyPawnExtraASMReturnAddress]
+        jmp     [returnAddress]
 
         jump:
         add     esp, 0x10
-        jmp     [EnemyPawnExtraASMSuccessAddress]
+        jmp     [successAddress]
     }
 }
-uint32_t const EnemyPawnExtraASM2ReturnAddress = 0xB95B3A;
-uint32_t const EnemyPawnExtraASM2SuccessAddress = 0xB95CB5;
 void __declspec(naked) EnemyPawnExtraASM2()
 {
+    static uint32_t const returnAddress = 0xB95B3A;
+    static uint32_t const successAddress = 0xB95CB5;
     __asm
     {
         cmp     EnemyPawnDamaging, 1
@@ -241,16 +241,16 @@ void __declspec(naked) EnemyPawnExtraASM2()
         jnz     jumpSuccess
 
         jump:
-        jmp     [EnemyPawnExtraASM2ReturnAddress]
+        jmp     [returnAddress]
 
         jumpSuccess:
-        jmp     [EnemyPawnExtraASM2SuccessAddress]
+        jmp     [successAddress]
     }
 }
-uint32_t const EnemyPawnPLAExtraASMReturnAddress = 0xB8C602;
-uint32_t const EnemyPawnPLAExtraASMSuccessAddress = 0xB8C5EE;
 void __declspec(naked) EnemyPawnPLAExtraASM()
 {
+    static uint32_t const returnAddress = 0xB8C602;
+    static uint32_t const successAddress = 0xB8C5EE;
     __asm
     {
         // Test if event is "MsgNotifyObjectEvent"
@@ -262,11 +262,11 @@ void __declspec(naked) EnemyPawnPLAExtraASM()
         mov     eax, [esi + 0x10]
         cmp     eax, 0x0C
         jz      jump
-        jmp     [EnemyPawnPLAExtraASMSuccessAddress]
+        jmp     [successAddress]
         
         // force run damage
         jump:
-        jmp     [EnemyPawnPLAExtraASMReturnAddress]
+        jmp     [returnAddress]
     }
 }
 

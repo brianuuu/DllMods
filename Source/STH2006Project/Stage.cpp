@@ -78,9 +78,9 @@ HOOK(int, __fastcall, Stage_CSonicStateFallEnd, 0x1118F20, void* This)
     return originalStage_CSonicStateFallEnd(This);
 }
 
-uint32_t getIsWallJumpReturnAddress = 0xE6D5AF;
 void __declspec(naked) getIsWallJump()
 {
+    static uint32_t returnAddress = 0xE6D5AF;
     __asm
     {
         push    esi
@@ -91,7 +91,7 @@ void __declspec(naked) getIsWallJump()
         pop     esi
 
         push    [0x15F4FE8] // Walk
-        jmp     [getIsWallJumpReturnAddress]
+        jmp     [returnAddress]
     }
 }
 
@@ -135,10 +135,10 @@ HOOK(char, __stdcall, Stage_CSonicStateGrounded, 0xDFF660, int* a1, bool a2)
     return originalStage_CSonicStateGrounded(a1, a2);
 }
 
-uint32_t playWaterPfxSuccessAddress = 0x11DD1B9;
-uint32_t playWaterPfxReturnAddress = 0x11DD240;
 void __declspec(naked) playWaterPfx()
 {
+    static uint32_t successAddress = 0x11DD1B9;
+    static uint32_t returnAddress = 0x11DD240;
     __asm
     {
         mov     edx, [ecx + 4]
@@ -151,10 +151,10 @@ void __declspec(naked) playWaterPfx()
         cmp     byte ptr[edx + 2Dh], 0
         jnz     jump
 
-        jmp     [playWaterPfxReturnAddress]
+        jmp     [returnAddress]
 
         jump:
-        jmp     [playWaterPfxSuccessAddress]
+        jmp     [successAddress]
     }
 }
 

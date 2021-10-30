@@ -33,10 +33,10 @@ HOOK(int, __fastcall, Omochao_MsgNotifyObjectEvent, 0x114FB60, void* This, void*
 	return originalOmochao_MsgNotifyObjectEvent(This, Edx, a2);
 }
 
-uint32_t sub_6B02B0 = 0x6B02B0;
-uint32_t addCaptionReturnAddress = 0x461407;
 void __declspec(naked) addCaption()
 {
+    static uint32_t sub_6B02B0 = 0x6B02B0;
+    static uint32_t returnAddress = 0x461407;
     __asm
     {
         call    [sub_6B02B0]
@@ -62,13 +62,14 @@ void __declspec(naked) addCaption()
         pop     edx
         pop     eax
 
-        jmp     [addCaptionReturnAddress]
+        jmp     [returnAddress]
     }
 }
 
-uint32_t addCaption2ReturnAddress = 0x1155E86;
 void __declspec(naked) addCaption2()
 {
+    static uint32_t sub_6B02B0 = 0x6B02B0;
+    static uint32_t returnAddress = 0x1155E86;
     __asm
     {
         call    [sub_6B02B0]
@@ -93,7 +94,7 @@ void __declspec(naked) addCaption2()
         pop     edx
         pop     eax
 
-        jmp     [addCaption2ReturnAddress]
+        jmp     [returnAddress]
     }
 }
 
