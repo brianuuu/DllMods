@@ -189,6 +189,7 @@
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="EnemyTrigger.cpp" />
+    <ClCompile Include="ParamManager.cpp" />
     <ClCompile Include="UIContext.cpp" />
     <ClCompile Include="Itembox.cpp" />
     <ClCompile Include="Mod.cpp" />
@@ -217,6 +218,7 @@
     <ClInclude Include="ChaosEnergy.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="EnemyTrigger.h" />
+    <ClInclude Include="ParamManager.h" />
     <ClInclude Include="UIContext.h" />
     <ClInclude Include="Itembox.h" />
     <ClInclude Include="Navigation.h" />

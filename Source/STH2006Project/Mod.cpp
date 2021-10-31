@@ -11,6 +11,7 @@
 #include "ScoreManager.h"
 #include "UIContext.h"
 #include "SynchronizedObject.h"
+#include "ParamManager.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
@@ -57,6 +58,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     // Animate Soleanna NPCs
     SoleannaNPC::applyPatches();
+
+    // Get Param Data
+    ParamManager::applyPatches();
 
     // -------------Mandatory codes--------------
     // Patch "Red Rings Appear On New Game" by "brianuuu"

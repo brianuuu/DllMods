@@ -399,7 +399,7 @@ static void fCGlitterEnd
 	}
 }
 
-static float* fGetParameter
+static float fGetParameter
 (
 	uint32_t contestOffset,
 	uint32_t enumID
@@ -422,8 +422,8 @@ static float* fGetParameter
 	Look for -> sub_53AB10(v1, enumID)
 
 	offset: 
+	636 (Common)
 	159 (Velocity)
-	636 (LightSpeedDash)
 	*/
 }
 

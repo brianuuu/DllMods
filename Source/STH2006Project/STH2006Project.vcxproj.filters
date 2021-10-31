@@ -38,6 +38,9 @@
     <ClCompile Include="..\..\Dependencies\DDSTextureLoader\DDSTextureLoader9.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
+    <ClCompile Include="UIContext.cpp" />
+    <ClCompile Include="SynchronizedObject.cpp" />
+    <ClCompile Include="ParamManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
@@ -54,6 +57,9 @@
     <ClInclude Include="SoleannaNPC.h" />
     <ClInclude Include="Stage.h" />
     <ClInclude Include="tinyxml2.h" />
+    <ClInclude Include="UIContext.h" />
+    <ClInclude Include="SynchronizedObject.h" />
+    <ClInclude Include="ParamManager.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">

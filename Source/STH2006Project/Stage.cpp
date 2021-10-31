@@ -2,7 +2,11 @@
 #include "Application.h"
 #include "Configuration.h"
 #include "UIContext.h"
+#include "ParamManager.h"
 
+//---------------------------------------------------
+// Kingdom Valley sfx
+//---------------------------------------------------
 HOOK(int32_t*, __fastcall, Stage_MsgHitGrindPath, 0xE25680, void* This, void* Edx, uint32_t a2)
 {
     // If at Kingdom Valley, change sfx to wind
@@ -46,6 +50,9 @@ HOOK(int, __fastcall, Stage_CObjSpringSFX, 0x1038DA0, void* This)
     return originalStage_CObjSpringSFX(This);
 }
 
+//---------------------------------------------------
+// Wall Jump
+//---------------------------------------------------
 bool Stage::m_wallJumpStart = false;
 float Stage::m_wallJumpTime = 0.0f;
 float const c_wallJumpSpinTime = 0.6f;
@@ -95,6 +102,22 @@ void __declspec(naked) getIsWallJump()
     }
 }
 
+void __fastcall Stage::getIsWallJumpImpl(float* outOfControl)
+{
+    if (*outOfControl < 0.0f)
+    {
+        m_wallJumpStart = true;
+        *outOfControl = -*outOfControl;
+    }
+    else
+    {
+        m_wallJumpStart = false;
+    }
+}
+
+//---------------------------------------------------
+// Water Running
+//---------------------------------------------------
 bool Stage::m_waterRunning = false; 
 static SharedPtrTypeless waterSoundHandle;
 HOOK(char, __stdcall, Stage_CSonicStateGrounded, 0xDFF660, int* a1, bool a2)
@@ -182,6 +205,9 @@ HOOK(void, __stdcall, Stage_SonicChangeAnimation, 0xCDFC80, void* a1, int a2, co
     originalStage_SonicChangeAnimation(a1, a2, name);
 }
 
+//---------------------------------------------------
+// Checkpoint (TODO: move this to 06 HUD)
+//---------------------------------------------------
 std::string Stage::m_lapTimeStr;
 float Stage::m_checkpointTimer = 0.0f;
 HOOK(void, __fastcall, Stage_MsgNotifyLapTimeHud, 0x1097640, void* This, void* Edx, uint32_t a2)
@@ -205,6 +231,63 @@ HOOK(void, __fastcall, Stage_MsgNotifyLapTimeHud, 0x1097640, void* This, void* E
     originalStage_MsgNotifyLapTimeHud(This, Edx, a2);
 }
 
+//---------------------------------------------------
+// Object Physics dummy event
+//---------------------------------------------------
+ParamValue* LightSpeedDashStartCollisionFovy = nullptr;
+ParamValue* LightSpeedDashStartCollisionFar = nullptr;
+ParamValue* LightSpeedDashCollisionFovy = nullptr;
+ParamValue* LightSpeedDashCollisionFar = nullptr;
+ParamValue* LightSpeedDashMinVelocity = nullptr;
+ParamValue* LightSpeedDashMinVelocity3D = nullptr;
+ParamValue* LightSpeedDashMaxVelocity = nullptr;
+ParamValue* LightSpeedDashMaxVelocity3D = nullptr;
+HOOK(void, __fastcall, Stage_MsgNotifyObjectEvent, 0xEA4F50, void* This, void* Edx, uint32_t a2)
+{
+    uint32_t* pEvent = (uint32_t*)(a2 + 16);
+    uint32_t* pObject = (uint32_t*)This;
+
+    // Only use [1001-2000] events
+    if (*pEvent > 1000 && *pEvent <= 2000)
+    {
+        switch (*pEvent)
+        {
+        // Change light speed dash param
+        case 1001:
+        {
+            *LightSpeedDashStartCollisionFovy->m_funcData->m_pValue = 80.0f;
+            LightSpeedDashStartCollisionFovy->m_funcData->update();
+
+            *LightSpeedDashStartCollisionFar->m_funcData->m_pValue = 20.0f;
+            LightSpeedDashStartCollisionFar->m_funcData->update();
+
+            *LightSpeedDashCollisionFovy->m_funcData->m_pValue = 80.0f;
+            LightSpeedDashCollisionFovy->m_funcData->update();
+
+            *LightSpeedDashCollisionFar->m_funcData->m_pValue = 20.0f;
+            LightSpeedDashCollisionFar->m_funcData->update();
+
+            float speed = 80.0f;
+            if (Common::CheckCurrentStage("ghz200")) speed = 100.0f;
+            else if (Common::CheckCurrentStage("euc200")) speed = 65.0f;
+            *LightSpeedDashMinVelocity->m_funcData->m_pValue = speed;
+            LightSpeedDashMinVelocity->m_funcData->update();
+            *LightSpeedDashMinVelocity3D->m_funcData->m_pValue = speed;
+            LightSpeedDashMinVelocity3D->m_funcData->update();
+
+            *LightSpeedDashMaxVelocity->m_funcData->m_pValue = 100.0f;
+            LightSpeedDashMaxVelocity->m_funcData->update();
+            *LightSpeedDashMaxVelocity3D->m_funcData->m_pValue = 100.0f;
+            LightSpeedDashMaxVelocity3D->m_funcData->update();
+
+            break;
+        }
+        }
+    }
+
+    originalStage_MsgNotifyObjectEvent(This, Edx, a2);
+}
+
 void Stage::applyPatches()
 {
     // Play robe sfx in Kingdom Valley
@@ -225,19 +308,17 @@ void Stage::applyPatches()
 
     // For 06 HUD, do checkpoint time here so we can draw on top of itembox
     INSTALL_HOOK(Stage_MsgNotifyLapTimeHud);
-}
 
-void __fastcall Stage::getIsWallJumpImpl(float* outOfControl)
-{
-    if (*outOfControl < 0.0f)
-    {
-        m_wallJumpStart = true;
-        *outOfControl = -*outOfControl;
-    }
-    else
-    {
-        m_wallJumpStart = false;
-    }
+    // Object Physics dummy event
+    ParamManager::addParam(&LightSpeedDashStartCollisionFovy, "LightSpeedDashStartCollisionFovy");
+    ParamManager::addParam(&LightSpeedDashStartCollisionFar, "LightSpeedDashStartCollisionFar");
+    ParamManager::addParam(&LightSpeedDashCollisionFovy, "LightSpeedDashCollisionFovy");
+    ParamManager::addParam(&LightSpeedDashCollisionFar, "LightSpeedDashCollisionFar");
+    ParamManager::addParam(&LightSpeedDashMinVelocity, "LightSpeedDashMinVelocity");
+    ParamManager::addParam(&LightSpeedDashMinVelocity3D, "LightSpeedDashMinVelocity3D");
+    ParamManager::addParam(&LightSpeedDashMaxVelocity, "LightSpeedDashMaxVelocity");
+    ParamManager::addParam(&LightSpeedDashMaxVelocity3D, "LightSpeedDashMaxVelocity3D");
+    INSTALL_HOOK(Stage_MsgNotifyObjectEvent);
 }
 
 void Stage::draw()
