@@ -203,6 +203,30 @@ void __declspec(naked) CObjPlaTramCarBoostButtonChange()
     }
 }
 
+float m_lightdashCountdown = 0.0f;
+HOOK(int*, __fastcall, NextGenPhysics_CSonicStateLightSpeedDashAdvance, 0x1231810, void* This)
+{
+    if (m_lightdashCountdown < 1.5f && Common::GetSonicStateFlags()->KeepRunning)
+    {
+        WRITE_JUMP(0xE16CCE, (void*)0xE16EEB);
+        m_lightdashCountdown = 1.5f;
+    }
+    return originalNextGenPhysics_CSonicStateLightSpeedDashAdvance(This);
+}
+
+HOOK(void, __fastcall, NextGenPhysics_CSonicUpdate, 0xE6BF20, void* This, void* Edx, float* dt)
+{
+    if (m_lightdashCountdown > 0.0f)
+    {
+        m_lightdashCountdown -= *dt;
+        if (m_lightdashCountdown <= 0.0f)
+        {
+            WRITE_MEMORY(0xE16CCE, uint8_t, 0x0F, 0x85, 0x17, 0x02, 0x00, 0x00);
+        }
+    }
+    originalNextGenPhysics_CSonicUpdate(This, Edx, dt);
+}
+
 void NextGenPhysics::applyPatches()
 {
     // Change character movement aniamtion speeds
@@ -299,6 +323,10 @@ void NextGenPhysics::applyPatches()
 
         // TODO: Change notification buttons?
     }
+
+    // After light dash, force using mach speed animation
+    INSTALL_HOOK(NextGenPhysics_CSonicStateLightSpeedDashAdvance);
+    INSTALL_HOOK(NextGenPhysics_CSonicUpdate);
 
     // Apply character specific patches
     switch (Configuration::m_model)

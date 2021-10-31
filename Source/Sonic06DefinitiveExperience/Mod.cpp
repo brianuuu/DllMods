@@ -16,6 +16,8 @@
 
 extern "C" void __declspec(dllexport) OnFrame()
 {
+    //printf("OnFrame\n");
+
     // Detect whether custom camera was used last frame
     CustomCamera::advance();
 }

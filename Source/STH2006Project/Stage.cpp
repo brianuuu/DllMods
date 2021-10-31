@@ -258,13 +258,13 @@ HOOK(void, __fastcall, Stage_MsgNotifyObjectEvent, 0xEA4F50, void* This, void* E
             *LightSpeedDashStartCollisionFovy->m_funcData->m_pValue = 80.0f;
             LightSpeedDashStartCollisionFovy->m_funcData->update();
 
-            *LightSpeedDashStartCollisionFar->m_funcData->m_pValue = 20.0f;
+            *LightSpeedDashStartCollisionFar->m_funcData->m_pValue = 10.0f;
             LightSpeedDashStartCollisionFar->m_funcData->update();
 
             *LightSpeedDashCollisionFovy->m_funcData->m_pValue = 80.0f;
             LightSpeedDashCollisionFovy->m_funcData->update();
 
-            *LightSpeedDashCollisionFar->m_funcData->m_pValue = 20.0f;
+            *LightSpeedDashCollisionFar->m_funcData->m_pValue = 10.0f;
             LightSpeedDashCollisionFar->m_funcData->update();
 
             float speed = 80.0f;
