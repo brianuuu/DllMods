@@ -224,19 +224,26 @@ bool Configuration::load(const std::string& rootPath)
 
     // Optional codes
     // Patch "Disable Homing Reticle" by "Hyper"
-    bool noCursor = reader.GetBoolean("Main", "bNoCursor", false);
-    if (noCursor)
+    if (reader.GetBoolean("Main", "bNoCursor", false))
     {
         WRITE_MEMORY(0xB6AB8C, uint8_t, 0xE9, 0xF7, 0x01, 0x00, 0x00);
         WRITE_MEMORY(0xDEBC36, uint8_t, 0x00);
     }
 
     // Patch "Boost Gauge Starts Empty" by "PTKickass"
-    bool noBoost = reader.GetBoolean("Main", "bNoBoost", false);
-    if (noBoost)
+    if (reader.GetBoolean("Main", "bNoBoost", false))
     {
         WRITE_MEMORY(0xE64F2F, uint32_t, 0x90C9570F);
         WRITE_NOP(0xE64F33, 4);
+    }
+
+    // Patch "All Rings Can Be Light Dashed" by "Skyth"
+    // Patch "Disable Light Dash Particles" by "Hyper"
+    if (reader.GetBoolean("Main", "bLightdashAll", false))
+    {
+        WRITE_MEMORY(0x105334D, uint32_t, 0x10C47C6);
+        WRITE_NOP(0x1053351, 16);
+        WRITE_MEMORY(0x10538EB, uint8_t, 0xE9, 0x8F, 0x00, 0x00, 0x00, 0x90);
     }
 
     return true;
