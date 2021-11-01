@@ -280,6 +280,12 @@ HOOK(void, __fastcall, NextGenSonic_CSonicStateSlidingAdvance, 0x11D69A0, void* 
     NextGenSonic::m_slidingTime -= Application::getDeltaTime();
     if (bPressed || NextGenSonic::m_slidingTime <= 0.0f)
     {
+        if (bPressed && Configuration::m_xButtonAction && NextGenPhysics::checkUseLightSpeedDash())
+        {
+            // Pressed X button and use light speed dash
+            return;
+        }
+
         if (NextGenSonic::m_isSpindash)
         {
             // Cancel spindash, this will still do sweep kick and will also allow jumping before it
