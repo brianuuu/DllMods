@@ -991,4 +991,18 @@ void NextGenSonic::applyPatches()
         INSTALL_HOOK(NextGenSonic_CSonicStateSquatAdvance);
         INSTALL_HOOK(NextGenSonic_CSonicStateSquatEnd);
     }
+
+    //-------------------------------------------------------
+    // Rechargable Shield
+    //-------------------------------------------------------
+    if (m_isElise)
+    {
+        NextGenPhysics::applyRechargableBoost
+        (
+            10.0f, 50.0f, 0.5f, 
+            Configuration::m_xButtonAction ? 
+            Sonic::EKeyState::eKeyState_RightTrigger : 
+            Sonic::EKeyState::eKeyState_X
+        );
+    }
 }

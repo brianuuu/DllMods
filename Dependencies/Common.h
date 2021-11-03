@@ -504,6 +504,12 @@ inline bool IsPlayerGrounded()
 	return *(bool*)((uint32_t)*PLAYER_CONTEXT + 0x440);
 }
 
+inline bool IsPlayerExtendedBoost()
+{
+	if (!*PLAYER_CONTEXT) return false;
+	return *(uint32_t*)((uint32_t)*PLAYER_CONTEXT + 0x680) == 2;
+}
+
 inline bool IsAtLoadingScreen()
 {
 	uint32_t** hudCount = (uint32_t**)0x1E66B40;
@@ -557,6 +563,11 @@ inline float* GetPlayerBoost()
 {
 	if (!*PLAYER_CONTEXT) return 0;
 	return (float*)((uint32_t)*PLAYER_CONTEXT + 0x5BC);
+}
+
+inline float GetPlayerMaxBoost()
+{
+	return IsPlayerExtendedBoost() ? 200.0f : 100.0f;
 }
 
 inline float* GetPlayerMaxSpeed()

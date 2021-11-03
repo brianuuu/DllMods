@@ -108,7 +108,7 @@ HOOK(void, __fastcall, Itembox_MsgGetItemType, 0xE6D7D0, void* This, void* Edx, 
 	if (type == 20)
 	{
 		// Gauge up
-		float const maxBoost = (Common::GetPlayerSkill() & 0x8) ? 200.0f : 100.0f;
+		float const maxBoost = Common::GetPlayerMaxBoost();
 		float* currentBoost = Common::GetPlayerBoost();
 		if (*currentBoost < maxBoost)
 		{

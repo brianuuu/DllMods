@@ -3,11 +3,11 @@
 
 #include "NextGenSonic.h"
 
+//---------------------------------------------------
+// CSonicRotation
+//---------------------------------------------------
 float const NextGenPhysics::c_funcMaxTurnRate = 400.0f;
 float const NextGenPhysics::c_funcTurnRateMultiplier = PI_F * 10.0f;
-float NextGenPhysics::m_homingDownSpeed = 0.0f;
-float const c_homingDownSpeedAdd = 15.0f;
-
 HOOK(void, __stdcall, NextGenSonic_CSonicRotationAdvance, 0xE310A0, void* a1, float* targetDir, float turnRate1, float turnRateMultiplier, bool noLockDirection, float turnRate2)
 {
     CSonicStateFlags* flags = Common::GetSonicStateFlags();
@@ -40,6 +40,9 @@ void NextGenPhysics::applyCSonicRotationAdvance(void* This, float* targetDir, fl
     originalNextGenSonic_CSonicRotationAdvance(This, targetDir, turnRate1, turnRateMultiplier, noLockDirection, turnRate2);
 }
 
+//---------------------------------------------------
+// Light Speed Dash
+//---------------------------------------------------
 bool NextGenPhysics::checkUseLightSpeedDash()
 {
     if (!*PLAYER_CONTEXT) return false;
@@ -53,6 +56,53 @@ bool NextGenPhysics::checkUseLightSpeedDash()
     return false;
 }
 
+void __declspec(naked) lightDashHigherPriority()
+{
+    static uint32_t returnAddress = 0xDFDDD0;
+    static uint32_t successAddress = 0xDFDDED;
+    static uint32_t fpLightSpeedDash = 0xDFB3F0;
+    __asm
+    {
+        // Check light speed dash
+        call    [fpLightSpeedDash]
+        test    al, al
+        jz      jump
+        jmp     [successAddress]
+
+        // Original check B-button actions
+        jump:
+        push    [0x15F55A4]
+        jmp     [returnAddress]
+    }
+}
+
+float m_lightdashCountdown = 0.0f;
+HOOK(int*, __fastcall, NextGenPhysics_CSonicStateLightSpeedDashAdvance, 0x1231810, void* This)
+{
+    if (m_lightdashCountdown < 1.5f && Common::GetSonicStateFlags()->KeepRunning)
+    {
+        WRITE_JUMP(0xE16CCE, (void*)0xE16EEB);
+        m_lightdashCountdown = 1.5f;
+    }
+    return originalNextGenPhysics_CSonicStateLightSpeedDashAdvance(This);
+}
+
+HOOK(void, __fastcall, NextGenPhysics_CSonicUpdate, 0xE6BF20, void* This, void* Edx, float* dt)
+{
+    if (m_lightdashCountdown > 0.0f)
+    {
+        m_lightdashCountdown -= *dt;
+        if (m_lightdashCountdown <= 0.0f)
+        {
+            WRITE_MEMORY(0xE16CCE, uint8_t, 0x0F, 0x85, 0x17, 0x02, 0x00, 0x00);
+        }
+    }
+    originalNextGenPhysics_CSonicUpdate(This, Edx, dt);
+}
+
+//---------------------------------------------------
+// CSonicSetMaxSpeed
+//---------------------------------------------------
 HOOK(void, __fastcall, NextGenPhysics_CSonicSetMaxSpeedBasis, 0xDFBCA0, int* This)
 {
     originalNextGenPhysics_CSonicSetMaxSpeedBasis(This);
@@ -63,6 +113,9 @@ HOOK(void, __fastcall, NextGenPhysics_CSonicSetMaxSpeedBasis, 0xDFBCA0, int* Thi
     }
 }
 
+//---------------------------------------------------
+// Trick System
+//---------------------------------------------------
 HOOK(void, __fastcall, NextGenPhysics_MsgApplyImpulse, 0xE6CFA0, void* This, void* Edx, MsgApplyImpulse* message)
 {
     // Fix trick start animation
@@ -86,6 +139,32 @@ HOOK(void, __fastcall, NextGenPhysics_MsgApplyImpulse, 0xE6CFA0, void* This, voi
     originalNextGenPhysics_MsgApplyImpulse(This, Edx, message);
 }
 
+void __declspec(naked) noTrickRainbowRing()
+{
+    static uint32_t returnAddress = 0xE6D417;
+    __asm
+    {
+        // Copied from dash ring case 8
+        mov     eax, [ebx]
+        mov     edx, [eax + 11Ch]
+        push    1
+        push    1
+        push    ecx
+        lea     ecx, [esp + 0ACh - 64h]
+        fstp    [esp]
+        push    ecx
+        mov     ecx, ebx
+        call    edx
+
+        jmp     [returnAddress]
+    }
+}
+
+//---------------------------------------------------
+// Homing Attack
+//---------------------------------------------------
+float NextGenPhysics::m_homingDownSpeed = 0.0f;
+float const c_homingDownSpeedAdd = 15.0f;
 SharedPtrTypeless homingPfxHandle;
 HOOK(int, __fastcall, NextGenPhysics_CSonicStateHomingAttackBegin, 0x1232040, void* This)
 {
@@ -147,47 +226,9 @@ void __declspec(naked) noAirDashOutOfControl()
     }
 }
 
-void __declspec(naked) lightDashHigherPriority()
-{
-    static uint32_t returnAddress = 0xDFDDD0;
-    static uint32_t successAddress = 0xDFDDED;
-    static uint32_t fpLightSpeedDash = 0xDFB3F0;
-    __asm
-    {
-        // Check light speed dash
-        call    [fpLightSpeedDash]
-        test    al, al
-        jz      jump
-        jmp     [successAddress]
-
-        // Original check B-button actions
-        jump:
-        push    [0x15F55A4]
-        jmp     [returnAddress]
-    }
-}
-
-void __declspec(naked) noTrickRainbowRing()
-{
-    static uint32_t returnAddress = 0xE6D417;
-    __asm
-    {
-        // Copied from dash ring case 8
-        mov     eax, [ebx]
-        mov     edx, [eax + 11Ch]
-        push    1
-        push    1
-        push    ecx
-        lea     ecx, [esp + 0ACh - 64h]
-        fstp    [esp]
-        push    ecx
-        mov     ecx, ebx
-        call    edx
-
-        jmp     [returnAddress]
-    }
-}
-
+//---------------------------------------------------
+// PlaTram Buttom Fix
+//---------------------------------------------------
 void __declspec(naked) CObjPlaTramCarBoostButtonChange()
 {
     static uint32_t successAddress = 0xF368C4;
@@ -203,30 +244,71 @@ void __declspec(naked) CObjPlaTramCarBoostButtonChange()
     }
 }
 
-float m_lightdashCountdown = 0.0f;
-HOOK(int*, __fastcall, NextGenPhysics_CSonicStateLightSpeedDashAdvance, 0x1231810, void* This)
+//---------------------------------------------------
+// Rechargable Boost
+//---------------------------------------------------
+float NextGenPhysics::m_boostDecRate = 20.0f;
+float NextGenPhysics::m_boostRechargeRate = 0.0f;
+float NextGenPhysics::m_boostNoChargeTime = 0.0f;
+float NextGenPhysics::m_boostNoChargeDelay = 0.0f;
+Sonic::EKeyState NextGenPhysics::m_boostButton = Sonic::EKeyState::eKeyState_None;
+
+void __declspec(naked) setBoostDecRate()
 {
-    if (m_lightdashCountdown < 1.5f && Common::GetSonicStateFlags()->KeepRunning)
+    static uint32_t returnAddress = 0x1117745;
+    __asm
     {
-        WRITE_JUMP(0xE16CCE, (void*)0xE16EEB);
-        m_lightdashCountdown = 1.5f;
+        lea     ecx, NextGenPhysics::m_boostDecRate
+        movss   xmm0, dword ptr [ecx]
+        jmp     [returnAddress]
     }
-    return originalNextGenPhysics_CSonicStateLightSpeedDashAdvance(This);
 }
 
-HOOK(void, __fastcall, NextGenPhysics_CSonicUpdate, 0xE6BF20, void* This, void* Edx, float* dt)
+HOOK(void, __fastcall, NextGenPhysics_CSonicUpdateRechargeBoost, 0xE6BF20, void* This, void* Edx, float* dt)
 {
-    if (m_lightdashCountdown > 0.0f)
+    Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
+    if (Common::GetSonicStateFlags()->Boost || !Common::IsPlayerGrounded() || padState->IsDown(NextGenPhysics::m_boostButton))
     {
-        m_lightdashCountdown -= *dt;
-        if (m_lightdashCountdown <= 0.0f)
+        NextGenPhysics::m_boostNoChargeTime = NextGenPhysics::m_boostNoChargeDelay;
+    }
+    else
+    {
+        // Delay before actually recharge
+        NextGenPhysics::m_boostNoChargeTime = max(0.0f, NextGenPhysics::m_boostNoChargeTime - *dt);
+        if (NextGenPhysics::m_boostNoChargeTime == 0.0f)
         {
-            WRITE_MEMORY(0xE16CCE, uint8_t, 0x0F, 0x85, 0x17, 0x02, 0x00, 0x00);
+            float const maxBoost = Common::GetPlayerMaxBoost();
+            float* currentBoost = Common::GetPlayerBoost();
+            *currentBoost = min(maxBoost, *currentBoost + NextGenPhysics::m_boostRechargeRate * *dt);
         }
     }
-    originalNextGenPhysics_CSonicUpdate(This, Edx, dt);
+
+    originalNextGenPhysics_CSonicUpdateRechargeBoost(This, Edx, dt);
 }
 
+// Set boost to be rechargable, but disable recharging from rings
+void NextGenPhysics::applyRechargableBoost(float decreaseRate, float rechargeRate, float noRechargeDelay, Sonic::EKeyState boostButton)
+{
+    m_boostButton = boostButton;
+
+    m_boostDecRate = decreaseRate * -1.0f;
+    WRITE_JUMP(0x1117740, setBoostDecRate);
+
+    m_boostRechargeRate = rechargeRate;
+    m_boostNoChargeDelay = noRechargeDelay;
+    INSTALL_HOOK(NextGenPhysics_CSonicUpdateRechargeBoost);
+
+    // Ignore first decrease
+    WRITE_MEMORY(0xE5E839, uint8_t, 0xEB); // ground boost
+    WRITE_MEMORY(0xE5E75F, uint8_t, 0xEB); // air boost
+
+    // Don't add boost from rings
+    WRITE_MEMORY(0xE6853B, uint8_t, 0xEB);
+}
+
+//---------------------------------------------------
+// Main Apply Patches
+//---------------------------------------------------
 void NextGenPhysics::applyPatches()
 {
     // Change character movement aniamtion speeds
