@@ -997,7 +997,7 @@ void NextGenSonic::applyPatches()
     //-------------------------------------------------------
     if (m_isElise)
     {
-        NextGenPhysics::applyRechargableBoost
+        NextGenPhysics::applyRechargeableBoost
         (
             10.0f, 50.0f, 0.5f, 
             Configuration::m_xButtonAction ? 

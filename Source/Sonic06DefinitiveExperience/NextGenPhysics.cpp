@@ -245,7 +245,7 @@ void __declspec(naked) CObjPlaTramCarBoostButtonChange()
 }
 
 //---------------------------------------------------
-// Rechargable Boost
+// Rechargeable Boost
 //---------------------------------------------------
 float NextGenPhysics::m_boostDecRate = 20.0f;
 float NextGenPhysics::m_boostRechargeRate = 0.0f;
@@ -287,7 +287,7 @@ HOOK(void, __fastcall, NextGenPhysics_CSonicUpdateRechargeBoost, 0xE6BF20, void*
 }
 
 // Set boost to be rechargable, but disable recharging from rings
-void NextGenPhysics::applyRechargableBoost(float decreaseRate, float rechargeRate, float noRechargeDelay, Sonic::EKeyState boostButton)
+void NextGenPhysics::applyRechargeableBoost(float decreaseRate, float rechargeRate, float noRechargeDelay, Sonic::EKeyState boostButton)
 {
     m_boostButton = boostButton;
 

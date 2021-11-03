@@ -52,7 +52,7 @@ public:
 	static float m_boostNoChargeTime;
 	static float m_boostNoChargeDelay;
 	static Sonic::EKeyState m_boostButton;
-	static void applyRechargableBoost
+	static void applyRechargeableBoost
 	(
 		float decreaseRate,
 		float rechargeRate,
