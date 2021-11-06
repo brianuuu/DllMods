@@ -181,6 +181,9 @@ HOOK(int, __fastcall, NextGenPhysics_CSonicStateHomingAttackBegin, 0x1232040, vo
     void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
     Common::fCGlitterCreate(*PLAYER_CONTEXT, homingPfxHandle, matrixNode, "ef_ch_sng_homing", 1);
 
+    // Apply motion blur
+    WRITE_NOP(0x6577F4, 6);
+
     return originalNextGenPhysics_CSonicStateHomingAttackBegin(This);
 }
 
@@ -197,6 +200,9 @@ HOOK(int*, __fastcall, NextGenPhysics_CSonicStateHomingAttackEnd, 0x1231F80, voi
 
     // Kill homing pfx
     Common::fCGlitterEnd(*PLAYER_CONTEXT, homingPfxHandle, false);
+
+    // Disable motion blur
+    WRITE_MEMORY(0x6577F4, uint8_t, 0x0F, 0x84, 0xE5, 0x01, 0x00, 0x00);
 
     return originalNextGenPhysics_CSonicStateHomingAttackEnd(This);
 }
@@ -262,6 +268,7 @@ void NextGenPhysics::applyPatches()
     INSTALL_HOOK(NextGenPhysics_MsgApplyImpulse);
 
     // Maintain down speed when homing attack finished (for 06 physics)
+    // Apply Motion Blur during Homing Attack
     INSTALL_HOOK(NextGenPhysics_CSonicStateHomingAttackBegin);
     INSTALL_HOOK(NextGenPhysics_CSonicStateHomingAttackEnd);
 
