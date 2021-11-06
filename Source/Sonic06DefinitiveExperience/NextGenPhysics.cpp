@@ -245,68 +245,6 @@ void __declspec(naked) CObjPlaTramCarBoostButtonChange()
 }
 
 //---------------------------------------------------
-// Rechargeable Boost
-//---------------------------------------------------
-float NextGenPhysics::m_boostDecRate = 20.0f;
-float NextGenPhysics::m_boostRechargeRate = 0.0f;
-float NextGenPhysics::m_boostNoChargeTime = 0.0f;
-float NextGenPhysics::m_boostNoChargeDelay = 0.0f;
-Sonic::EKeyState NextGenPhysics::m_boostButton = Sonic::EKeyState::eKeyState_None;
-
-void __declspec(naked) setBoostDecRate()
-{
-    static uint32_t returnAddress = 0x1117745;
-    __asm
-    {
-        lea     ecx, NextGenPhysics::m_boostDecRate
-        movss   xmm0, dword ptr [ecx]
-        jmp     [returnAddress]
-    }
-}
-
-HOOK(void, __fastcall, NextGenPhysics_CSonicUpdateRechargeBoost, 0xE6BF20, void* This, void* Edx, float* dt)
-{
-    Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
-    if (Common::GetSonicStateFlags()->Boost || !Common::IsPlayerGrounded() || padState->IsDown(NextGenPhysics::m_boostButton))
-    {
-        NextGenPhysics::m_boostNoChargeTime = NextGenPhysics::m_boostNoChargeDelay;
-    }
-    else
-    {
-        // Delay before actually recharge
-        NextGenPhysics::m_boostNoChargeTime = max(0.0f, NextGenPhysics::m_boostNoChargeTime - *dt);
-        if (NextGenPhysics::m_boostNoChargeTime == 0.0f)
-        {
-            float const maxBoost = Common::GetPlayerMaxBoost();
-            float* currentBoost = Common::GetPlayerBoost();
-            *currentBoost = min(maxBoost, *currentBoost + NextGenPhysics::m_boostRechargeRate * *dt);
-        }
-    }
-
-    originalNextGenPhysics_CSonicUpdateRechargeBoost(This, Edx, dt);
-}
-
-// Set boost to be rechargable, but disable recharging from rings
-void NextGenPhysics::applyRechargeableBoost(float decreaseRate, float rechargeRate, float noRechargeDelay, Sonic::EKeyState boostButton)
-{
-    m_boostButton = boostButton;
-
-    m_boostDecRate = decreaseRate * -1.0f;
-    WRITE_JUMP(0x1117740, setBoostDecRate);
-
-    m_boostRechargeRate = rechargeRate;
-    m_boostNoChargeDelay = noRechargeDelay;
-    INSTALL_HOOK(NextGenPhysics_CSonicUpdateRechargeBoost);
-
-    // Ignore first decrease
-    WRITE_MEMORY(0xE5E839, uint8_t, 0xEB); // ground boost
-    WRITE_MEMORY(0xE5E75F, uint8_t, 0xEB); // air boost
-
-    // Don't add boost from rings
-    WRITE_MEMORY(0xE6853B, uint8_t, 0xEB);
-}
-
-//---------------------------------------------------
 // Main Apply Patches
 //---------------------------------------------------
 void NextGenPhysics::applyPatches()

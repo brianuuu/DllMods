@@ -810,6 +810,235 @@ bool __fastcall NextGenSonic::applySlidingHorizontalTargetVel(void* context)
     return true;
 }
 
+//-------------------------------------------------------
+// Rechargable Shield
+//-------------------------------------------------------
+void __declspec(naked) NextGenSonic_groundBoostSuperSonicOnly()
+{
+    static uint32_t returnAddress = 0xDFF270;
+    static uint32_t failAddress = 0xDFF2CB;
+    __asm
+    {
+        // disable air boost for normal Sonic
+        mov     eax, [ebx + 534h]
+        mov     eax, [eax + 4]
+        cmp     byte ptr[eax + 6Fh], 0
+        jz      jump
+
+        // original function
+        movss   xmm0, dword ptr[ebx + 5BCh]
+        jmp     [returnAddress]
+        
+        jump:
+        jmp     [failAddress]
+    }
+}
+
+void __declspec(naked) NextGenSonic_airBoostSuperSonicOnly()
+{
+    static uint32_t returnAddress = 0xDFE094;
+    static uint32_t failAddress = 0xDFDFE6;
+    __asm
+    {
+        // disable air boost for normal Sonic
+        mov     eax, [esi + 534h]
+        mov     eax, [eax + 4]
+        cmp     byte ptr[eax + 6Fh], 0
+        jz      jump
+
+        // original function
+        movss   xmm0, dword ptr[esi + 5BCh]
+        jmp     [returnAddress]
+        
+        jump:
+        jmp     [failAddress]
+    }
+}
+
+bool NextGenSonic::m_isShield = false;
+SharedPtrTypeless shieldSoundHandle_Elise;
+SharedPtrTypeless shieldPfxHandle_Elise;
+HOOK(int*, __fastcall, NextGenSonic_CSonicStatePluginBoostBegin, 0x1117A20, void* This)
+{
+    if (Common::IsPlayerSuper())
+    {
+        return originalNextGenSonic_CSonicStatePluginBoostBegin(This);
+    }
+
+    // Play shield sfx
+    Common::SonicContextPlaySound(shieldSoundHandle_Elise, 2002030, 1);
+    static uint32_t sub_DFAC30 = 0xDFAC30;
+    __asm
+    {
+        mov     eax, This
+        mov     eax, [eax + 8]
+        call    [sub_DFAC30]
+    }
+
+    // Play shield pfx
+    void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
+    Common::fCGlitterCreate(*PLAYER_CONTEXT, shieldPfxHandle_Elise, matrixNode, "ef_ch_sng_yh1_boost2", 5);
+    
+    // Enable boost collision
+    Common::SonicContextSetCollision(SonicCollision::TypeSonicBoost, true);
+
+    // Float on water
+    Common::GetSonicStateFlags()->AcceptBuoyancyForce = true;
+    WRITE_NOP(0x119C0E5, 2); // float even if speed is 0
+    WRITE_NOP(0xDED132, 3);  // don't reset AcceptBuoyancyForce
+    WRITE_MEMORY(0xDFB98A, uint8_t, 0x90, 0x90, 0xF3, 0x0F, 0x10, 0x05, 0x00,   // always use BuoyantForceMaxGravityRate
+        0xB5, 0x58, 0x01, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90);      // and set it as 10.0f
+    WRITE_MEMORY(0x119C00E, uint8_t, 0x0F, 0x57, 0xC0, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90); // Set WaterDecreaseForce = 0
+    
+    return nullptr;
+}
+
+bool __fastcall NextGenSonic_CSonicStatePluginBoostAdvanceImpl()
+{
+    float* currentBoost = Common::GetPlayerBoost();
+    Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
+
+    return Common::IsPlayerSuper() || 
+        Common::IsPlayerDead() ||
+        *currentBoost <= 0.0f || 
+        !padState->IsDown(NextGenSonic::m_shieldButton);
+}
+
+void __declspec(naked) NextGenSonic_CSonicStatePluginBoostAdvance()
+{
+    static uint32_t returnAddress = 0x1117731;
+    static uint32_t successAddress = 0x11178F1;
+    __asm
+    {
+        push    eax
+        push    ecx
+        call    NextGenSonic_CSonicStatePluginBoostAdvanceImpl
+        mov     byte ptr[ebp + 1Ch], al
+        pop     ecx
+        pop     eax
+
+        // Use normal advance for Super Sonic
+        cmp     byte ptr[ecx + 6Fh], 0
+        jnz     jump
+        jmp     [successAddress]
+
+        // original function
+        jump:
+        mov     byte ptr[ebp + 1Ch], 0
+        mov     [esp + 0Fh], 0
+        jmp     [returnAddress]
+    }
+}
+
+HOOK(void, __fastcall, NextGenSonic_CSonicStatePluginBoostEnd, 0x1117900, void* This)
+{
+    if (Common::IsPlayerSuper())
+    {
+        originalNextGenSonic_CSonicStatePluginBoostEnd(This);
+    }
+
+    NextGenSonic::m_isShield = false;
+
+    // Stop sfx
+    Common::SonicContextPlaySound(shieldSoundHandle_Elise, 3002089, 1);
+    __asm
+    {
+        mov     edi, This
+        mov     edi, [edi + 8]
+        mov     eax, [edi]
+        mov     edx, [eax + 9Ch]
+        lea     ecx, [edi + 14B4h]
+        push    ecx
+        mov     ecx, edi
+        call    edx
+    }
+
+    // Stop pfx
+    Common::fCGlitterEnd(*PLAYER_CONTEXT, shieldPfxHandle_Elise, false);
+
+    // Disable boost collision
+    Common::SonicContextSetCollision(SonicCollision::TypeSonicBoost, false);
+
+    // Disable float on water
+    Eigen::Vector3f playerVelocity;
+    if (Common::GetPlayerVelocity(playerVelocity))
+    {
+        playerVelocity.y() = 0.0f;
+        if (playerVelocity.norm() == 0.0f)
+        {
+            Common::GetSonicStateFlags()->AcceptBuoyancyForce = false;
+        }
+    }
+    WRITE_MEMORY(0x119C0E5, uint8_t, 0x76, 0x59);
+    WRITE_MEMORY(0xDED132, uint8_t, 0x88, 0x59, 0x59);
+    WRITE_MEMORY(0xDFB98A, uint8_t, 0x74, 0x3A, 0x8B, 0x86, 0x7C, 0x02, 0x00,
+        0x00, 0x68, 0xA6, 0x00, 0x00, 0x00, 0xE8, 0x54, 0xF0, 0x73, 0xFF);
+    WRITE_MEMORY(0x119C00E, uint8_t, 0x68, 0xA7, 0x00, 0x00, 0x00, 0xE8, 0xD8, 0xE9, 0x39, 0xFF);
+}
+
+float NextGenSonic::m_shieldDecRate = 10.0f;
+float NextGenSonic::m_shieldRechargeRate = 50.0f;
+float NextGenSonic::m_shieldNoChargeTime = 0.0f;
+float NextGenSonic::m_shieldNoChargeDelay = 0.5f;
+Sonic::EKeyState NextGenSonic::m_shieldButton = Sonic::EKeyState::eKeyState_X;
+HOOK(void, __fastcall, NextGenSonic_CSonicUpdateEliseShield, 0xE6BF20, void* This, void* Edx, float* dt)
+{
+    // Ignore for Super Sonic
+    if (Common::IsPlayerSuper())
+    {
+        originalNextGenSonic_CSonicUpdateEliseShield(This, Edx, dt);
+        return;
+    }
+
+    // Handle shield start and end
+    float* currentBoost = Common::GetPlayerBoost();
+    Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
+    if (!Common::IsPlayerDead() && *currentBoost > 0.0f && padState->IsDown(NextGenSonic::m_shieldButton))
+    {
+        if (!NextGenSonic::m_isShield)
+        {
+            NextGenSonic::m_isShield = true;
+
+            FUNCTION_PTR(void, __thiscall, addPlayerPlugin, 0xE77D80, Hedgehog::Base::CSharedString* plugin, void* player);
+            static Hedgehog::Base::CSharedString boost("Boost");
+            addPlayerPlugin(&boost, Common::GetPlayer());
+        }
+    }
+    else
+    {
+        NextGenSonic::m_isShield = false;
+    }
+
+    // Handle boost gauge
+    if (NextGenSonic::m_isShield || !Common::IsPlayerGrounded() || padState->IsDown(NextGenSonic::m_shieldButton))
+    {
+        NextGenSonic::m_shieldNoChargeTime = NextGenSonic::m_shieldNoChargeDelay;
+        if (NextGenSonic::m_isShield)
+        {
+            *currentBoost = max(0.0f, *currentBoost - NextGenSonic::m_shieldDecRate * *dt);
+        }
+    }
+    else
+    {
+        // Delay before actually recharge
+        NextGenSonic::m_shieldNoChargeTime = max(0.0f, NextGenSonic::m_shieldNoChargeTime - *dt);
+        if (NextGenSonic::m_shieldNoChargeTime == 0.0f)
+        {
+            float const maxBoost = Common::GetPlayerMaxBoost();
+            *currentBoost = min(maxBoost, *currentBoost + NextGenSonic::m_shieldRechargeRate * *dt);
+        }
+    }
+
+    originalNextGenSonic_CSonicUpdateEliseShield(This, Edx, dt);
+}
+
+HOOK(int, __fastcall, NextGenSonic_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
+{
+    int result = originalNextGenSonic_MsgRestartStage(This, Edx, message);
+    *Common::GetPlayerBoost() = Common::GetPlayerMaxBoost();
+    return result;
+}
+
 //---------------------------------------------------
 // Main Apply Patches
 //---------------------------------------------------
@@ -997,12 +1226,33 @@ void NextGenSonic::applyPatches()
     //-------------------------------------------------------
     if (m_isElise)
     {
-        NextGenPhysics::applyRechargeableBoost
-        (
-            10.0f, 50.0f, 0.5f, 
-            Configuration::m_xButtonAction ? 
-            Sonic::EKeyState::eKeyState_RightTrigger : 
-            Sonic::EKeyState::eKeyState_X
-        );
+        m_shieldButton = Configuration::m_xButtonAction ? Sonic::EKeyState::eKeyState_RightTrigger : Sonic::EKeyState::eKeyState_X;
+
+        // Don't add boost from rings
+        WRITE_MEMORY(0xE6853B, uint8_t, 0xEB);
+
+        // Disable boost for normal Sonic only
+        WRITE_JUMP(0xDFF268, NextGenSonic_groundBoostSuperSonicOnly);
+        WRITE_JUMP(0xDFE05F, NextGenSonic_airBoostSuperSonicOnly);
+
+        // Handle shield and gauge
+        INSTALL_HOOK(NextGenSonic_CSonicUpdateEliseShield);
+        INSTALL_HOOK(NextGenSonic_MsgRestartStage);
+
+        // Hijack boost plugin as shield
+        INSTALL_HOOK(NextGenSonic_CSonicStatePluginBoostBegin);
+        WRITE_JUMP(0x1117728, NextGenSonic_CSonicStatePluginBoostAdvance);
+        INSTALL_HOOK(NextGenSonic_CSonicStatePluginBoostEnd);
+
+        //WRITE_JUMP(0xE303F3, (void*)0xE30403); // boost forward push
+
+        // Change "Stomping" type object physics to "Normal"
+        WRITE_MEMORY(0xE9FFC9, uint32_t, 5);
+
+        // Disable stomping
+        WRITE_MEMORY(0xDFDDB3, uint8_t, 0xEB);
+
+        // Fix Homing Attack no getting locked after using once on water
+        WRITE_NOP(0x119C932, 7);
     }
 }

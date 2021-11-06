@@ -47,19 +47,6 @@ public:
 	static NextGenAnimation m_animationData;
 	static void applyCharacterAnimationSpeed();
 
-	static float m_boostDecRate;
-	static float m_boostRechargeRate;
-	static float m_boostNoChargeTime;
-	static float m_boostNoChargeDelay;
-	static Sonic::EKeyState m_boostButton;
-	static void applyRechargeableBoost
-	(
-		float decreaseRate,
-		float rechargeRate,
-		float noRechargeDelay,
-		Sonic::EKeyState boostButton
-	);
-
 	static float const c_funcMaxTurnRate;
 	static float const c_funcTurnRateMultiplier;
 	static void applyCSonicRotationAdvance

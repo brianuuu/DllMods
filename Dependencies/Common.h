@@ -462,6 +462,12 @@ inline bool IsPlayerSuper()
     return GetSonicStateFlags()->InvokeSuperSonic;
 }
 
+inline bool IsPlayerDead()
+{
+	if (!*PLAYER_CONTEXT) return false;
+	return GetSonicStateFlags()->Dead;
+}
+
 inline bool IsPlayerOnBoard()
 {
 	if (!*PLAYER_CONTEXT) return false;
@@ -545,6 +551,13 @@ inline uint32_t GetCurrentStageID()
 {
 	uint32_t stageIDAddress = GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x80, 0x0 });
 	return *(uint32_t*)stageIDAddress;
+}
+
+inline void* GetPlayer()
+{
+	if (!*PLAYER_CONTEXT) return 0;
+	// Sonic::Player::CSonicContext -> Sonic::Player::CSonic
+	return *(void**)((uint32_t)*PLAYER_CONTEXT + 0x110);
 }
 
 inline uint32_t GetPlayerSkill()
@@ -750,6 +763,32 @@ inline void SonicContextRequestLocusEffect()
 	FUNCTION_PTR(int, __thiscall, processMsgRequestLocusEffect, 0xE178D0, void* This, void* pMessage);
 	void* player = *(void**)((uint32_t)*PLAYER_CONTEXT + 0x110);
 	processMsgRequestLocusEffect(player, &message);
+}
+
+static void* SonicContextSetCollision(SonicCollision collisionType, bool enabled)
+{
+	static void* const pEnableFunc = (void*)0xE65610;
+	static void* const pDisableFunc = (void*)0xE655C0;
+	__asm
+	{
+		mov		edi, PLAYER_CONTEXT
+		mov		edi, [edi]
+
+		mov		ecx, collisionType
+		mov		ecx, [ecx]
+		push	ecx
+
+		cmp		enabled, 0
+		je		jump
+
+		call	[pEnableFunc]
+		jmp		end
+
+		jump:
+		call	[pDisableFunc]
+		
+		end:
+	}
 }
 
 inline void PlaySoundStatic(SharedPtrTypeless& soundHandle, uint32_t cueID)

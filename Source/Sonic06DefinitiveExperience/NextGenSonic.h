@@ -39,5 +39,13 @@ public:
 	static float m_bHeldTimer;
 	static bool bActionHandlerImpl();
 	static void getActionButtonStates(bool& bDown, bool& bPressed, bool& bReleased);
+
+	// Elise Shield
+	static bool m_isShield;
+	static float m_shieldDecRate;
+	static float m_shieldRechargeRate;
+	static float m_shieldNoChargeTime;
+	static float m_shieldNoChargeDelay;
+	static Sonic::EKeyState m_shieldButton;
 };
 
