@@ -97,6 +97,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     float const invertX = Configuration::m_cameraInvertX ? -1.0f : 1.0f;
     float const cameraYawAdd = Common::IsPlayerControlLocked() ? 0.0f : padState->RightStickHorizontal * c_cameraRotateRate * dt * invertX;
     targetYawAdd += (cameraYawAdd - targetYawAdd) * c_cameraLerpRate * dt;
+    Common::ClampFloat(targetYawAdd, -0.5f * PI_F, 0.5f * PI_F);
     Eigen::Quaternionf rotationYaw(0, 0, 0, 1);
     rotationYaw = Eigen::AngleAxisf(targetYawAdd, playerUpAxis);
     dir = rotationYaw * dir;
