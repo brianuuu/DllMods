@@ -54,8 +54,13 @@ struct NewAnimationData
 class AnimationSetPatcher
 {
 public:
-    static std::vector<NewAnimationData> m_newAnimationData;
+    typedef std::vector<NewAnimationData> NewAnimationDataList;
+    static NewAnimationDataList m_newAnimationData;
+    static NewAnimationDataList m_newAnimationDataSuper;
     static void applyPatches();
+
+    static void initializeAnimationList(CAnimationStateInfo* pEntries, size_t const count, NewAnimationDataList const& dataList);
+    static void createAnimationState(void* A2, NewAnimationDataList const& dataList);
 
     // New animation states
     static const char* volatile const RunResult;
