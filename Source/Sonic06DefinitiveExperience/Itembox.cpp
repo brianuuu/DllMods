@@ -164,8 +164,8 @@ tinyxml2::XMLError Itembox::getInjectStr(char const* pData, uint32_t size, std::
 			// Only inject if ID not exist already
 			if (setObjectIDs.find(newSetObjectID) != setObjectIDs.end())
 			{
-				printf("[Itembox] cmn_itembox_lock (%u) already injected!\n", newSetObjectID);
-				continue;
+				printf("[Itembox] WARNING: cmn_itembox_lock already injected!\n");
+				return tinyxml2::XML_ERROR_COUNT;
 			}
 
 			printf("[Itembox] Injecting cmn_itembox_lock (%u) at pos: %s, %s, %s\n", newSetObjectID, positionStr.x.c_str(), positionStr.y.c_str(), positionStr.z.c_str());
