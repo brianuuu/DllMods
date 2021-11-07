@@ -1285,7 +1285,7 @@ void NextGenSonic::applyPatches()
         // Disable stomping
         WRITE_MEMORY(0xDFDDB3, uint8_t, 0xEB);
 
-        // Fix Homing Attack no getting locked after using once on water
+        // Fix Homing Attack getting locked after using it once on water
         WRITE_NOP(0x119C932, 7);
     }
 }
