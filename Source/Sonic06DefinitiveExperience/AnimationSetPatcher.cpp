@@ -199,6 +199,11 @@ void AnimationSetPatcher::applyPatches()
     // ssn_trick_jump
     // ssn_grind_loop
     // ssn_grind_switch
+    m_newAnimationDataSuper.emplace_back("SkyDivingStart", "ssn_move_f_loop", 1.0f, true, nullptr);
+    m_newAnimationDataSuper.emplace_back("SkyDiving", "ssn_move_f_loop", 1.0f, true, nullptr);
+    m_newAnimationDataSuper.emplace_back("SkyDivingL", "ssn_move_f_loop", 1.0f, true, nullptr);
+    m_newAnimationDataSuper.emplace_back("SkyDivingR", "ssn_move_f_loop", 1.0f, true, nullptr);
+    m_newAnimationDataSuper.emplace_back("SkyDivingDEnd", "ssn_move_f_loop", 1.0f, true, nullptr);
     m_newAnimationDataSuper.emplace_back("GrindQuickJumpR", "ssn_jump_loop", 1.0f, true, nullptr);
     m_newAnimationDataSuper.emplace_back("GrindQuickJumpL", "ssn_jump_loop", 1.0f, true, nullptr);
     m_newAnimationDataSuper.emplace_back("GrindSideRightJumpR", "ssn_jump_loop", 1.0f, true, nullptr);
