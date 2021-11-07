@@ -68,7 +68,6 @@ void __declspec(naked) UpdateSuperSonicAnimationListSize()
     }
 }
 
-
 std::vector<NewAnimationData> AnimationSetPatcher::m_newAnimationDataSuper;
 HOOK(void*, __cdecl, InitializeSuperSonicAnimationList, 0x1291D60)
 {

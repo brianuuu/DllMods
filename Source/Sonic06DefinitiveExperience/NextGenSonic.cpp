@@ -508,14 +508,14 @@ HOOK(void, __fastcall, NextGenSonic_CSonicStateSquatKickAdvance, 0x1252810, void
         alignas(16) float dir[4] = { NextGenSonic::m_brakeFlipDir.x(), NextGenSonic::m_brakeFlipDir.y(), NextGenSonic::m_brakeFlipDir.z(), 0 };
         NextGenPhysics::applyCSonicRotationAdvance(This, dir);
     }
+}
 
-    if (Configuration::m_model == Configuration::ModelType::Sonic)
+bool __fastcall NextGenSonic_CSonicStateSquatKickAdvanceTransitionOutImpl(char const* name)
+{
+    if (strcmp(name, "Stand") == 0 || strcmp(name, "Walk") == 0)
     {
-        // About to transition out and on ground
         CSonicStateFlags* flags = Common::GetSonicStateFlags();
-        if (!flags->KeepRunning
-            && !StateManager::isCurrentAction(StateAction::SquatKick)
-            && !StateManager::isCurrentAction(StateAction::Fall))
+        if (!flags->KeepRunning)
         {
             Eigen::Vector3f inputDirection;
             if (Common::GetWorldInputDirection(inputDirection) && inputDirection.isZero())
@@ -523,8 +523,36 @@ HOOK(void, __fastcall, NextGenSonic_CSonicStateSquatKickAdvance, 0x1252810, void
                 // Stops Sonic completely if no stick input
                 slidingEndWasSliding = NextGenSonic::m_isSliding;
                 StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
+                return true;
             }
         }
+    }
+
+    return false;
+}
+
+void __declspec(naked) NextGenSonic_CSonicStateSquatKickAdvanceTransitionOut()
+{
+    static uint32_t returnAddress = 0x1252924;
+    static uint32_t sub_E4FF30 = 0xE4FF30;
+    __asm
+    {
+        push    eax
+        push    ecx
+
+        mov     ecx, [eax]
+        call    NextGenSonic_CSonicStateSquatKickAdvanceTransitionOutImpl
+        mov     bl, al
+
+        pop     ecx
+        pop     eax
+
+        test    bl, bl
+        jnz     jump
+        call    [sub_E4FF30]
+
+        jump:
+        jmp     [returnAddress]
     }
 }
 
@@ -1134,10 +1162,15 @@ void NextGenSonic::applyPatches()
     //-------------------------------------------------------
     if (!m_isElise)
     {
-        // Play squat kick sfx
         INSTALL_HOOK(NextGenSonic_CSonicStateSquatKickBegin);
         INSTALL_HOOK(NextGenSonic_CSonicStateSquatKickAdvance);
+        WRITE_JUMP(0x125291F, NextGenSonic_CSonicStateSquatKickAdvanceTransitionOut);
         INSTALL_HOOK(NextGenSonic_CSonicStateSquatKickEnd);
+
+        // Don't transition out to Stand, only Walk and Fall
+        WRITE_MEMORY(0x1252905, uint32_t, 0x15F4FE8);
+
+        // Play squat kick sfx
         if (Configuration::m_language == Configuration::LanguageType::English)
         {
             WRITE_MEMORY(0x1252740, uint32_t, 3002020);
