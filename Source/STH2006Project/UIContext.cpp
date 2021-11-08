@@ -4,6 +4,7 @@
 #include "ScoreManager.h"
 #include "Stage.h"
 #include "Omochao.h"
+#include "LoadingUI.h"
 
 HWND UIContext::window;
 IDirect3DDevice9* UIContext::device;
@@ -65,6 +66,7 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     Itembox::initTextures();
     ScoreManager::initTextures();
     Omochao::m_captionData.init();
+    LoadingUI::initTextures();
 }
 
 void UIContext::update()
@@ -89,6 +91,7 @@ void UIContext::update()
 
         ImGui::PushFont(fontSubtitle);
         Omochao::draw();
+        LoadingUI::draw();
         ImGui::PopFont();
     }
 
