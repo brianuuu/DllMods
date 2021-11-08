@@ -366,15 +366,15 @@ bool Itembox::initTextures()
 {
 	std::wstring const dir = Application::getModDirWString();
 	bool success = true;
-	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item_5ring.dds").c_str(), &m_item_5ring);
-	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item_10ring.dds").c_str(), &m_item_10ring);
-	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item_20ring.dds").c_str(), &m_item_20ring);
-	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item_1up.dds").c_str(), &m_item_1up);
-	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item_invin.dds").c_str(), &m_item_invin);
-	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item_speed.dds").c_str(), &m_item_speed);
-	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item_gauge.dds").c_str(), &m_item_gauge);
-	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item_shield.dds").c_str(), &m_item_shield);
-	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item_fire.dds").c_str(), &m_item_fire);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item\\Item_5ring.dds").c_str(), &m_item_5ring);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item\\Item_10ring.dds").c_str(), &m_item_10ring);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item\\Item_20ring.dds").c_str(), &m_item_20ring);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item\\Item_1up.dds").c_str(), &m_item_1up);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item\\Item_invin.dds").c_str(), &m_item_invin);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item\\Item_speed.dds").c_str(), &m_item_speed);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item\\Item_gauge.dds").c_str(), &m_item_gauge);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item\\Item_shield.dds").c_str(), &m_item_shield);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Item\\Item_fire.dds").c_str(), &m_item_fire);
 
 	if (!success)
 	{

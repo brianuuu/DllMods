@@ -73,8 +73,8 @@ void UIContext::update()
     ImGui_ImplWin32_NewFrame();
 
     ImGuiIO& io = ImGui::GetIO();
-    io.DisplaySize.x = (float)(*BACKBUFFER_WIDTH);
-    io.DisplaySize.y = (float)(*BACKBUFFER_HEIGHT);
+    io.DisplaySize.x = (float)(*BACKBUFFER_WIDTH) * 1.1f;
+    io.DisplaySize.y = (float)(*BACKBUFFER_HEIGHT)*2 * 1.1f;
 
     ImGui::NewFrame();
     ImGui::PushFont(font);

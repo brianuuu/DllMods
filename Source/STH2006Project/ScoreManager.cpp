@@ -876,8 +876,8 @@ bool ScoreManager::initTextures()
 {
 	std::wstring const dir = Application::getModDirWString();
 	bool success = true;
-	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Bonus_Great.dds").c_str(), &m_bonus_Great);
-	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Bonus_Radical.dds").c_str(), &m_bonus_Radical);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Bonus\\Bonus_Great.dds").c_str(), &m_bonus_Great);
+	success &= UIContext::loadTextureFromFile((dir + L"Assets\\Bonus\\Bonus_Radical.dds").c_str(), &m_bonus_Radical);
 	
 	if (!success)
 	{

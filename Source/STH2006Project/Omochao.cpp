@@ -253,17 +253,17 @@ bool CaptionData::init()
 {
     std::wstring const dir = Application::getModDirWString();
     bool success = true;
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox.dds").c_str(), &m_textbox);
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_A.dds").c_str(), &m_buttonA);
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_B.dds").c_str(), &m_buttonB);
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_X.dds").c_str(), &m_buttonX);
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_Y.dds").c_str(), &m_buttonY);
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_LB.dds").c_str(), &m_buttonLB);
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_LT.dds").c_str(), &m_buttonLT);
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_RB.dds").c_str(), &m_buttonRB);
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_RT.dds").c_str(), &m_buttonRT);
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_Start.dds").c_str(), &m_buttonStart);
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Button_Back.dds").c_str(), &m_buttonBack);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Textbox.dds").c_str(), &m_textbox);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_A.dds").c_str(), &m_buttonA);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_B.dds").c_str(), &m_buttonB);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_X.dds").c_str(), &m_buttonX);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_Y.dds").c_str(), &m_buttonY);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_LB.dds").c_str(), &m_buttonLB);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_LT.dds").c_str(), &m_buttonLT);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_RB.dds").c_str(), &m_buttonRB);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_RT.dds").c_str(), &m_buttonRT);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_Start.dds").c_str(), &m_buttonStart);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_Back.dds").c_str(), &m_buttonBack);
 
     if (!success)
     {
@@ -348,25 +348,25 @@ void Omochao::draw()
                         break;
                     }
 
-                    PDIRECT3DTEXTURE9 texture = nullptr;
+                    PDIRECT3DTEXTURE9* texture = nullptr;
                     switch (caption.m_buttons[i])
                     {
-                    case CBT_A:     texture = m_captionData.m_buttonA;      break;
-                    case CBT_B:     texture = m_captionData.m_buttonB;      break;
-                    case CBT_Y:     texture = m_captionData.m_buttonY;      break;
-                    case CBT_X:     texture = m_captionData.m_buttonX;      break;
-                    case CBT_LB:    texture = m_captionData.m_buttonLB;     break;
-                    case CBT_RB:    texture = m_captionData.m_buttonRB;     break;
-                    case CBT_LT:    texture = m_captionData.m_buttonLT;     break;
-                    case CBT_RT:    texture = m_captionData.m_buttonRT;     break;
-                    case CBT_Start: texture = m_captionData.m_buttonStart;  break;
-                    case CBT_Back:  texture = m_captionData.m_buttonBack;   break;
+                    case CBT_A:     texture = &m_captionData.m_buttonA;      break;
+                    case CBT_B:     texture = &m_captionData.m_buttonB;      break;
+                    case CBT_Y:     texture = &m_captionData.m_buttonY;      break;
+                    case CBT_X:     texture = &m_captionData.m_buttonX;      break;
+                    case CBT_LB:    texture = &m_captionData.m_buttonLB;     break;
+                    case CBT_RB:    texture = &m_captionData.m_buttonRB;     break;
+                    case CBT_LT:    texture = &m_captionData.m_buttonLT;     break;
+                    case CBT_RT:    texture = &m_captionData.m_buttonRT;     break;
+                    case CBT_Start: texture = &m_captionData.m_buttonStart;  break;
+                    case CBT_Back:  texture = &m_captionData.m_buttonBack;   break;
                     }
 
                     ImGui::SameLine();
                     if (texture)
                     {
-                        ImGui::Image(texture, ImVec2(*BACKBUFFER_WIDTH * buttonSizeX / 1280.0f, *BACKBUFFER_HEIGHT * 28.0f / 720.0f));
+                        ImGui::Image(*texture, ImVec2(*BACKBUFFER_WIDTH * buttonSizeX / 1280.0f, *BACKBUFFER_HEIGHT * 28.0f / 720.0f));
                     }
                 }
 
