@@ -288,6 +288,23 @@ HOOK(void, __fastcall, Stage_MsgNotifyObjectEvent, 0xEA4F50, void* This, void* E
     originalStage_MsgNotifyObjectEvent(This, Edx, a2);
 }
 
+//---------------------------------------------------
+// Result music
+//---------------------------------------------------
+HOOK(int, __fastcall, Stage_CStateGoalFadeIn, 0xCFD2D0, void* This)
+{
+    // TODO: Switch to town music for missions (Cue: Result_Town)
+    static const char* Result_Town = "Result_Town";
+    static const char* Result = (char*)0x15B38F0;
+    WRITE_MEMORY(0xCFD3C9, char*, Result);
+
+    // Music length
+    static double length = 7.831;
+    WRITE_MEMORY(0xCFD562, double*, &length);
+
+    return originalStage_CStateGoalFadeIn(This);
+}
+
 void Stage::applyPatches()
 {
     // Play robe sfx in Kingdom Valley
@@ -319,6 +336,16 @@ void Stage::applyPatches()
     ParamManager::addParam(&LightSpeedDashMaxVelocity, "LightSpeedDashMaxVelocity");
     ParamManager::addParam(&LightSpeedDashMaxVelocity3D, "LightSpeedDashMaxVelocity3D");
     INSTALL_HOOK(Stage_MsgNotifyObjectEvent);
+
+    // Use custom SNG19_JNG, adjust round clear length
+    static const char* SNG19_JNG_STH = "SNG19_JNG_STH";
+    WRITE_MEMORY(0xCFF44E, char*, SNG19_JNG_STH);
+    WRITE_MEMORY(0xD01A06, char*, SNG19_JNG_STH);
+    INSTALL_HOOK(Stage_CStateGoalFadeIn);
+
+    // Always use Result1
+    WRITE_MEMORY(0xCFD4E5, uint8_t, 0xEB);
+
 }
 
 void Stage::draw()
