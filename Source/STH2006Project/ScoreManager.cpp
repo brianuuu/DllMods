@@ -718,23 +718,23 @@ ResultData* ScoreManager::calculateResultData()
 	switch (stageID)
 	{
 	case 0:		timeBonusBase = 10000;	break; // TODO: Prelude Stage
-	case 1:		timeBonusBase = 47000;	break; // TODO: Wave Ocean
+	case 1:		timeBonusBase = 17000;	break; // Wave Ocean
 	case 3:		timeBonusBase = 43000;	break; // TODO: Dusty Desert
 	case 5:		timeBonusBase = 50000;	break; // TODO: White Acropolis
-	case 7:		timeBonusBase = 47000;	break; // TODO: Crisis City
+	case 7:		timeBonusBase = 27000;	break; // Crisis City
 	case 9:		timeBonusBase = 50000;	break; // TODO: Flame Core
 	case 11:	timeBonusBase = 45000;	break; // TODO: Radical Train
-	case 13:	timeBonusBase = 46000;	break; // TODO: Tropical Jungle
-	case 15:	timeBonusBase = 31000;	break; // TODO: Kingdom Valley
+	case 13:	timeBonusBase = 36000;	break; // Tropical Jungle
+	case 15:	timeBonusBase = 24000;	break; // Kingdom Valley
 	case 17:	timeBonusBase = 23000;	break; // TODO: Aquatic Base
 	case 22:	timeBonusBase = 21000;	break; // Silver
 	case 278:	timeBonusBase = 22000;	break; // Silver Hard Mode
-	case 24:	timeBonusBase = 26500;	break; // TODO: Iblis
-	case 280:	timeBonusBase = 26500;	break; // TODO: Iblis Hard Mode
+	case 24:	timeBonusBase = 19000;	break; // Iblis
+	case 280:	timeBonusBase = 20000;	break; // Iblis Hard Mode
 	default:	break;
 	}
 
-	// TODO: Overwrite rank table on special stages (boss stages, missions etc.)
+	// Overwrite rank table on special stages (boss stages, missions etc.)
 	switch (stageID)
 	{
 	case 22:	// Silver
