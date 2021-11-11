@@ -41,6 +41,7 @@
     <ClCompile Include="UIContext.cpp" />
     <ClCompile Include="SynchronizedObject.cpp" />
     <ClCompile Include="ParamManager.cpp" />
+    <ClCompile Include="ResultUI.cpp" />
     <ClCompile Include="LoadingUI.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -61,6 +62,7 @@
     <ClInclude Include="UIContext.h" />
     <ClInclude Include="SynchronizedObject.h" />
     <ClInclude Include="ParamManager.h" />
+    <ClInclude Include="ResultUI.h" />
     <ClInclude Include="LoadingUI.h" />
   </ItemGroup>
   <ItemGroup>

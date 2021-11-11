@@ -38,6 +38,7 @@
 #include <INIReader.h>
 #include <Helpers.h>
 #include <Hedgehog.h>
+#include <Sonic.h>
 
 #define DEBUG_DRAW_TEXT_DLL_IMPORT
 #include <DebugDrawText.h>
