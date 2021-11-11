@@ -37,6 +37,7 @@ public:
 
 	// Action
 	static float m_bHeldTimer;
+	static bool m_enableAutoRunAction;
 	static bool bActionHandlerImpl();
 	static void getActionButtonStates(bool& bDown, bool& bPressed, bool& bReleased);
 

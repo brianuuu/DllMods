@@ -71,6 +71,7 @@ float const c_spindashTime = 3.0f;
 float const c_spindashSpeed = 30.0f;
 
 float NextGenSonic::m_bHeldTimer = 0.0f;
+bool NextGenSonic::m_enableAutoRunAction = true;
 
 char const* ef_ch_sng_bound = "ef_ch_sng_bound";
 char const* ef_ch_sps_bound = "ef_ch_sps_bound";
@@ -591,6 +592,44 @@ HOOK(bool, __stdcall, NextGenSonic_BActionHandler, 0xDFF660, CSonicContext* cont
     return NextGenSonic::bActionHandlerImpl();
 }
 
+HOOK(int, __fastcall, NextGenSonic_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
+{
+    int result = originalNextGenSonic_MsgRestartStage(This, Edx, message);
+
+    // For Elise's shield
+    if (NextGenSonic::m_isElise)
+    {
+        *Common::GetPlayerBoost() = Common::GetPlayerMaxBoost();
+    }
+
+    // Re-enable auto run actions (squat kick/bounce bracelet)
+    NextGenSonic::m_enableAutoRunAction = true;
+
+    return result;
+}
+
+HOOK(void, __fastcall, NextGenSonic_MsgNotifyObjectEvent, 0xEA4F50, void* This, void* Edx, uint32_t a2)
+{
+    uint32_t* pEvent = (uint32_t*)(a2 + 16);
+    uint32_t* pObject = (uint32_t*)This;
+
+    // Only use [1001-2000] events
+    if (*pEvent > 1000 && *pEvent <= 2000)
+    {
+        switch (*pEvent)
+        {
+        // Disable action in auto run (mach speed)
+        case 1001:
+        {
+            NextGenSonic::m_enableAutoRunAction = false;
+            break;
+        }
+        }
+    }
+
+    originalNextGenSonic_MsgNotifyObjectEvent(This, Edx, a2);
+}
+
 void NextGenSonic::getActionButtonStates(bool& bDown, bool& bPressed, bool& bReleased)
 {
     Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
@@ -616,7 +655,7 @@ bool NextGenSonic::bActionHandlerImpl()
     }
 
     CSonicStateFlags* flags = Common::GetSonicStateFlags();
-    if (flags->KeepRunning)
+    if (flags->KeepRunning && !m_enableAutoRunAction)
     {
         // Cannot use any action during auto run
         return false;
@@ -1060,13 +1099,6 @@ HOOK(void, __fastcall, NextGenSonic_CSonicUpdateEliseShield, 0xE6BF20, void* Thi
     originalNextGenSonic_CSonicUpdateEliseShield(This, Edx, dt);
 }
 
-HOOK(int, __fastcall, NextGenSonic_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
-{
-    int result = originalNextGenSonic_MsgRestartStage(This, Edx, message);
-    *Common::GetPlayerBoost() = Common::GetPlayerMaxBoost();
-    return result;
-}
-
 //---------------------------------------------------
 // Main Apply Patches
 //---------------------------------------------------
@@ -1107,6 +1139,8 @@ void NextGenSonic::applyPatches()
         WRITE_MEMORY(0xDFF8D5, uint8_t, 0xEB, 0x05);
         WRITE_MEMORY(0xDFF856, uint8_t, 0xE9, 0x81, 0x00, 0x00, 0x00);
         INSTALL_HOOK(NextGenSonic_BActionHandler);
+        INSTALL_HOOK(NextGenSonic_MsgRestartStage);
+        INSTALL_HOOK(NextGenSonic_MsgNotifyObjectEvent);
     }
 
     //-------------------------------------------------------
@@ -1270,7 +1304,6 @@ void NextGenSonic::applyPatches()
 
         // Handle shield and gauge
         INSTALL_HOOK(NextGenSonic_CSonicUpdateEliseShield);
-        INSTALL_HOOK(NextGenSonic_MsgRestartStage);
 
         // Hijack boost plugin as shield
         INSTALL_HOOK(NextGenSonic_CSonicStatePluginBoostBegin);

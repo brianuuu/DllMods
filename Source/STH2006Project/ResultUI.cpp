@@ -295,7 +295,6 @@ void ResultUI::ResultUIData::reset()
 	m_scoreCount = 0;
 }
 
-
 static SharedPtrTypeless soundHandle_boxIn;
 static SharedPtrTypeless soundHandle_countUp;
 void ResultUI::ResultUIData::draw()
