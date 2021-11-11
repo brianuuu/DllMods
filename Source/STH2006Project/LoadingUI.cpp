@@ -101,7 +101,7 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 		UIContext::loadTextureFromFile((dir + L"Assets\\Title\\cmn.dds").c_str(), &LoadingUI::m_stageTexture);
 		if (currentStage == "ghz100")
 		{
-			LoadingUI::m_bottomText = isJapanese ? u8"ソレアナに向かえ！" : "Get  to  Soleanna!";
+			LoadingUI::m_bottomText = isJapanese ? u8"ソレアナへ向かえ！" : "Get  to  Soleanna!";
 		}
 		else if (currentStage == "bsl" || currentStage == "bsl001")
 		{
@@ -131,7 +131,7 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestCloseLoading, 0x1092BF0, uint32_t* Th
 		(*hudCount)[2] = 0;
 	}
 
-	LoadingUI::m_fadeInTime = 0.3f;
+	LoadingUI::m_fadeInTime = 0.4f;
 }
 
 void LoadingUI::applyPatches()
