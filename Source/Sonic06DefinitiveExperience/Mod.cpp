@@ -34,7 +34,7 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     
     if (!Configuration::load(dir))
     {
-        MessageBox(NULL, L"Failed to parse Config.ini", NULL, MB_ICONERROR);
+        MessageBox(NULL, L"Failed to parse Sonic06DefinitiveExperience.ini", NULL, MB_ICONERROR);
     }
 
     // -------------Patches--------------

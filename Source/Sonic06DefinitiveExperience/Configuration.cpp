@@ -19,7 +19,7 @@ vector<string> Configuration::m_runStages = {};
 
 bool Configuration::load(const std::string& rootPath)
 {
-    const INIReader reader(rootPath + "mod.ini");
+    const INIReader reader(rootPath + "Sonic06DefinitiveExperience.ini");
     if (reader.ParseError() != 0)
     {
         return false;
@@ -28,6 +28,26 @@ bool Configuration::load(const std::string& rootPath)
     // --------------General--------------
     m_model = (ModelType)reader.GetInteger("Main", "nModel", 0);
     m_language = (LanguageType)reader.GetInteger("Main", "nLanguage", 0);
+
+    static double roundClearLength = 7.831;
+    WRITE_MEMORY(0xCFD562, double*, &roundClearLength);
+    if (reader.GetInteger("Main", "nStageClear", 0))
+    {
+        static const char* Result_Town = "Result_Town";
+        WRITE_MEMORY(0xCFD3C9, char*, Result_Town);
+    }
+    if (reader.GetInteger("Main", "nStageLoop", 0))
+    {
+        // E3 loop
+        WRITE_STRING(0x15B38F8, "Result2");
+        WRITE_STRING(0x15B3900, "Result2");
+    }
+    else 
+    {
+        // retail loop
+        WRITE_STRING(0x15B38F8, "Result1");
+        WRITE_STRING(0x15B3900, "Result1");
+    }
 
     // --------------Camera--------------
     m_camera = reader.GetBoolean("Main", "bCamera", false);
