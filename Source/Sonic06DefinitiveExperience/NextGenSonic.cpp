@@ -965,7 +965,7 @@ bool __fastcall NextGenSonic_CanActivateEliseShield()
     float* currentBoost = Common::GetPlayerBoost();
     Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
 
-    return !Common::IsAtLoadingScreen() &&
+    return !Common::IsPlayerControlLocked() &&
            !Common::IsPlayerSuper() &&
            !Common::IsPlayerDead() &&
            *currentBoost > 0.0f &&
