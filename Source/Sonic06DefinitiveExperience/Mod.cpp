@@ -98,3 +98,13 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     WRITE_MEMORY(0xE0AC1C, uint8_t, 0xE9, 0x27, 0x01, 0x00, 0x00);
     WRITE_MEMORY(0xE0C734, uint8_t, 0xE9, 0x27, 0x01, 0x00, 0x00);
 }
+
+extern "C" __declspec(dllexport) void PostInit()
+{
+    if (*(uint16_t*)0x115A6AF == 0x9090)
+    {
+        // Make sure people don't use "No Trick Rainbow Rings" patch cuz they don't read
+        MessageBox(nullptr, TEXT("\"No Trick Rainbow Rings\" code detected, please disable it and use the built-in configuration instead."), TEXT("Sonic 06 Definitive Experience"), MB_ICONERROR);
+        exit(-1);
+    }
+}
