@@ -42,6 +42,7 @@ HOOK(int, __fastcall, ResultUI_CStateGoalFadeBefore, 0xCFE080, uint32_t* This)
 bool resultFinished = false;
 HOOK(void, __fastcall, ResultUI_CHudResultAdvance, 0x10B96D0, uint32_t* This, void* Edx, void* a2)
 {
+	// Fake pressing A when result has faded out
 	if (resultFinished)
 	{
 		WRITE_JUMP(0x10B96E6, (void*)0x10B974B);
@@ -49,6 +50,7 @@ HOOK(void, __fastcall, ResultUI_CHudResultAdvance, 0x10B96D0, uint32_t* This, vo
 
 	originalResultUI_CHudResultAdvance(This, Edx, a2);
 
+	// Restore original code
 	if (resultFinished)
 	{
 		WRITE_MEMORY(0x10B96E6, uint8_t, 0xE8, 0x85, 0xD2, 0xFF, 0xFF);
@@ -63,15 +65,6 @@ void ResultUI::applyPatches()
 	INSTALL_HOOK(ResultUI_MsgStartGoalResult);
 	INSTALL_HOOK(ResultUI_CStateGoalFadeBefore);
 	INSTALL_HOOK(ResultUI_CHudResultAdvance);
-}
-
-void ResultUI::playRankSfx()
-{
-	static uint32_t jump = 0x11D2350;
-	__asm
-	{
-		jmp		[jump]
-	}
 }
 
 bool ResultUI::initTextures()
@@ -617,9 +610,6 @@ void ResultUI::ResultUIData::nextState()
 	case RS_RankShow: 
 	{	 
 		printf("[ResultUI] State: Rank Show\n");
-
-		//FUNCTION_PTR(void, __cdecl, PlayRankSlamSfx, 0x11D24B0);
-		//PlayRankSlamSfx();
 
 		// Enable rank quote
 		FUNCTION_PTR(void, __cdecl, EnableRankQuote, 0x10B77A8);
