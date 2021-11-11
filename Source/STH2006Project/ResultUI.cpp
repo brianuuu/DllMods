@@ -618,8 +618,8 @@ void ResultUI::ResultUIData::nextState()
 	{	 
 		printf("[ResultUI] State: Rank Show\n");
 
-		FUNCTION_PTR(void, __cdecl, PlayRankSlamSfx, 0x11D24B0);
-		PlayRankSlamSfx();
+		//FUNCTION_PTR(void, __cdecl, PlayRankSlamSfx, 0x11D24B0);
+		//PlayRankSlamSfx();
 
 		// Enable rank quote
 		FUNCTION_PTR(void, __cdecl, EnableRankQuote, 0x10B77A8);
