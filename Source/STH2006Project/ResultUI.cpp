@@ -438,7 +438,7 @@ void ResultUI::ResultUIData::draw()
 		if (m_state >= ResultState::RS_FadeOut)
 		{
 			ImGui::SetCursorPos(ImVec2(-5, -5));
-			ImGui::Image(m_resultFadeTexture, ImVec2((float)*BACKBUFFER_WIDTH * 1.1f, (float)*BACKBUFFER_HEIGHT * 1.1f), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1.0f - m_frame / 120.0f));
+			ImGui::Image(m_resultFadeTexture, ImVec2((float)*BACKBUFFER_WIDTH * 1.1f, (float)*BACKBUFFER_HEIGHT * 1.1f), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, min(1.0f, 1.0f - (m_frame - 20.0f) / 120.0f)));
 		}
 
 		// Dummy image at the bottom right
@@ -639,7 +639,7 @@ void ResultUI::ResultUIData::nextState()
 	case RS_FadeOut:
 	{	 
 		printf("[ResultUI] State: Next Rank\n");
-		m_frame = 120.0f; 
+		m_frame = 140.0f; 
 		break; 
 	}
 	case RS_Finish: 
