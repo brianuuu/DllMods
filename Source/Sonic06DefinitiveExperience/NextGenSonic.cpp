@@ -960,15 +960,16 @@ HOOK(int*, __fastcall, NextGenSonic_CSonicStatePluginBoostBegin, 0x1117A20, void
     return nullptr;
 }
 
-bool __fastcall NextGenSonic_CSonicStatePluginBoostAdvanceImpl()
+bool __fastcall NextGenSonic_CanActivateEliseShield()
 {
     float* currentBoost = Common::GetPlayerBoost();
     Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
 
-    return Common::IsPlayerSuper() || 
-        Common::IsPlayerDead() ||
-        *currentBoost <= 0.0f || 
-        !padState->IsDown(NextGenSonic::m_shieldButton);
+    return !Common::IsAtLoadingScreen() &&
+           !Common::IsPlayerSuper() &&
+           !Common::IsPlayerDead() &&
+           *currentBoost > 0.0f &&
+           padState->IsDown(NextGenSonic::m_shieldButton);
 }
 
 void __declspec(naked) NextGenSonic_CSonicStatePluginBoostAdvance()
@@ -979,7 +980,8 @@ void __declspec(naked) NextGenSonic_CSonicStatePluginBoostAdvance()
     {
         push    eax
         push    ecx
-        call    NextGenSonic_CSonicStatePluginBoostAdvanceImpl
+        call    NextGenSonic_CanActivateEliseShield
+        xor     al, 1 // flip it so we can exit for false
         mov     byte ptr[ebp + 1Ch], al
         pop     ecx
         pop     eax
@@ -1058,9 +1060,7 @@ HOOK(void, __fastcall, NextGenSonic_CSonicUpdateEliseShield, 0xE6BF20, void* Thi
     }
 
     // Handle shield start and end
-    float* currentBoost = Common::GetPlayerBoost();
-    Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
-    if (!Common::IsPlayerDead() && *currentBoost > 0.0f && padState->IsDown(NextGenSonic::m_shieldButton))
+    if (NextGenSonic_CanActivateEliseShield())
     {
         if (!NextGenSonic::m_isShield)
         {
@@ -1077,6 +1077,8 @@ HOOK(void, __fastcall, NextGenSonic_CSonicUpdateEliseShield, 0xE6BF20, void* Thi
     }
 
     // Handle boost gauge
+    float* currentBoost = Common::GetPlayerBoost();
+    Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
     if (NextGenSonic::m_isShield || !Common::IsPlayerGrounded() || padState->IsDown(NextGenSonic::m_shieldButton))
     {
         NextGenSonic::m_shieldNoChargeTime = NextGenSonic::m_shieldNoChargeDelay;
