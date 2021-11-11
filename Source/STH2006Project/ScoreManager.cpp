@@ -704,6 +704,7 @@ uint32_t ScoreManager::calculateEnemyChainBonus()
 	}
 }
 
+int ScoreManager::m_timeBonus = 0;
 ResultData* ScoreManager::calculateResultData()
 {
 	// Default score table for regular stages
@@ -750,9 +751,9 @@ ResultData* ScoreManager::calculateResultData()
 
 	// Calculate final score
 	static ResultData data;
-	int timeBonus = max(timeBonusBase - (int)floorf(ScoreManager::m_currentTime) * timeBonusRate, 0 );
+	m_timeBonus = max(timeBonusBase - (int)floorf(ScoreManager::m_currentTime) * timeBonusRate, 0 );
 	int ringBonus = *Common::GetPlayerRingCount() * 100;
-	data.m_score = m_pCScoreManager->m_score + timeBonus + ringBonus;
+	data.m_score = m_pCScoreManager->m_score + m_timeBonus + ringBonus;
 
 	// Get current rank and score to next rank (if applicable)
 	if (data.m_score > scoreTable.m_scoreS)
@@ -783,7 +784,7 @@ ResultData* ScoreManager::calculateResultData()
 	data.m_perfectRank = data.m_rank;
 
 	// Get the prop of "base score + time bonus" and "total score" (since we only have 2 bars)
-	data.m_timeProp = getScoreProp(scoreTable, m_pCScoreManager->m_score + timeBonus);
+	data.m_timeProp = getScoreProp(scoreTable, m_pCScoreManager->m_score + m_timeBonus);
 	data.m_totalProp = getScoreProp(scoreTable, data.m_score);
 
 	printf
@@ -808,7 +809,7 @@ ResultData* ScoreManager::calculateResultData()
 		: (data.m_rank == RankType::RT_B ? "B" 
 		: (data.m_rank == RankType::RT_C ? "C" : "D")))
 		, m_pCScoreManager->m_score
-		, timeBonus
+		, m_timeBonus
 		, timeBonusBase
 		, (int)floorf(m_currentTime)
 		, timeBonusRate

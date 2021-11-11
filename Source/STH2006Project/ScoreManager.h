@@ -151,5 +151,6 @@ public:
 	static CScoreManager* m_pCScoreManager;
 	static bool m_updateScoreHUD;
 	static float m_currentTime;
+	static int m_timeBonus;
 };
 
