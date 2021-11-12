@@ -386,7 +386,6 @@ HOOK(bool, __cdecl, ScoreManager_IsPerfectBonus, 0x10B8A90)
 
 HOOK(bool, __fastcall, ScoreManager_CRivalSilverMsgDamage, 0xC89080, uint32_t* This, void* Edx, void* message)
 {
-	// TODO: Don't hide UI so we can show the score getting added
 	// Add score for Silver's final hit
 	uint32_t* pCSilver = (uint32_t*)This[104];
 	if ((pCSilver[81] & 0x100000) != 0)
@@ -395,6 +394,17 @@ HOOK(bool, __fastcall, ScoreManager_CRivalSilverMsgDamage, 0xC89080, uint32_t* T
 	}
 
 	return originalScoreManager_CRivalSilverMsgDamage(This, Edx, message);
+}
+
+HOOK(void, __fastcall, ScoreManager_CBossPerfectChaosMsgHitEventCollision, 0xC10990, uint32_t* This, void* Edx, uint32_t* message)
+{
+	// Add score for Perfect Chaos's final hit
+	if (message[1] == This[159] && *(uint32_t*)(message[4]) == 0 && *(bool*)((uint32_t)This + 500))
+	{
+		ScoreManager::addScore(ScoreType::ST_boss, This);
+	}
+
+	originalScoreManager_CBossPerfectChaosMsgHitEventCollision(This, Edx, message);
 }
 
 std::string externIniPath;
@@ -455,7 +465,9 @@ void ScoreManager::applyPatches()
 	INSTALL_HOOK(ScoreManager_CRivalSilverMsgDamage);
 	WRITE_MEMORY(0xC783DE, bool, true); // Don't hide HUD after defeating
 
-	// TODO: Iblis boss
+	// Iblis boss
+	INSTALL_HOOK(ScoreManager_CBossPerfectChaosMsgHitEventCollision);
+	//WRITE_STRING(0x1587DD8, "ev601");
 }
 
 void ScoreManager::applyPatches_ScoreGensSystem()
