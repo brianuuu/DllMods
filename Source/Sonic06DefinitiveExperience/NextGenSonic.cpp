@@ -1304,6 +1304,9 @@ void NextGenSonic::applyPatches()
         WRITE_JUMP(0xDFF268, NextGenSonic_groundBoostSuperSonicOnly);
         WRITE_JUMP(0xDFE05F, NextGenSonic_airBoostSuperSonicOnly);
 
+        // Disable boost inside Perfect Chaos
+        WRITE_MEMORY(0x11A06F7, uint8_t, 0xE9, 0xC1, 0x00, 0x00, 0x00, 0x90);
+
         // Handle shield and gauge
         INSTALL_HOOK(NextGenSonic_CSonicUpdateEliseShield);
 
