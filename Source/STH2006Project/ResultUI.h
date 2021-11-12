@@ -85,7 +85,6 @@ public:
 	static float m_currentTime;
 	static ResultData* m_resultData;
 	static void applyPatches();
-	static void playRankSfx();
 
 	// ImGui
 	static ResultUIData m_resultUIData;

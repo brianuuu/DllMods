@@ -734,7 +734,7 @@ ResultData* ScoreManager::calculateResultData()
 	uint32_t stageID = Common::GetCurrentStageID();
 	switch (stageID)
 	{
-	case 0:		timeBonusBase = 10000;	break; // TODO: Prelude Stage
+	case 0:		timeBonusBase = 45000;	break; // Prelude Stage
 	case 1:		timeBonusBase = 17000;	break; // Wave Ocean
 	case 3:		timeBonusBase = 43000;	break; // TODO: Dusty Desert
 	case 5:		timeBonusBase = 50000;	break; // TODO: White Acropolis

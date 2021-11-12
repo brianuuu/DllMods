@@ -5,8 +5,12 @@
 bool LoadingUI::m_init = false;
 bool LoadingUI::m_drawEnabled = false;
 float LoadingUI::m_fadeInTime = 0.0f;
+int LoadingUI::m_frame = 0;
+bool LoadingUI::m_showNowLoading = false;
 PDIRECT3DTEXTURE9 LoadingUI::m_backgroundTexture = nullptr;
 PDIRECT3DTEXTURE9 LoadingUI::m_stageTexture = nullptr;
+PDIRECT3DTEXTURE9 LoadingUI::m_nowLoadingTexture = nullptr;
+PDIRECT3DTEXTURE9 LoadingUI::m_arrowTexture = nullptr;
 std::string LoadingUI::m_stagePrevious;
 std::string LoadingUI::m_bottomText;
 
@@ -116,8 +120,11 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 
 	if (LoadingUI::m_stageTexture)
 	{
+		// Reset data
 		LoadingUI::m_drawEnabled = true;
 		LoadingUI::m_fadeInTime = 0.0f;
+		LoadingUI::m_frame = 0;
+		LoadingUI::m_showNowLoading = false;
 	}
 	LoadingUI::m_stagePrevious = currentStage;
 }
@@ -165,7 +172,7 @@ void LoadingUI::draw()
 		float alpha = 1.0f;
 		if (m_fadeInTime > 0.0f)
 		{
-			m_fadeInTime = max(0.0f, m_fadeInTime - Application::getHudDeltaTime());
+			m_fadeInTime = max(0.0f, m_fadeInTime - Application::getDeltaTime());
 			if (m_fadeInTime <= 0.2f)
 			{
 				alpha = m_fadeInTime * 2.5f;
@@ -194,15 +201,51 @@ void LoadingUI::draw()
 				ImGui::SetCursorPos(ImVec2(640 * scaleX - size.x * 0.5f, 570 * scaleY));
 				ImGui::Text(m_bottomText.c_str());
 			}
+
+			// Show text after 24 frames
+			if (!m_showNowLoading && m_frame >= 24)
+			{
+				m_showNowLoading = true;
+			}
+
+			// Now Loading Text
+			if (m_showNowLoading)
+			{
+				ImGui::SetCursorPos(ImVec2(914 * scaleX, 612 * scaleY));
+				ImGui::Image(m_nowLoadingTexture, ImVec2(256 * scaleX, 40 * scaleY));
+
+				// Pop out
+				if (m_frame >= 24 && m_frame <= 76)
+				{
+					float nowLoadingAlpha = (float)(76 - m_frame) / 52.0f;
+					float nowLoadingscale = 1.0f + (1.0f - nowLoadingAlpha) * 0.3f;
+					ImGui::SetCursorPos(ImVec2((1042 - 128 * nowLoadingscale) * scaleX, (632 - 20 * nowLoadingscale) * scaleY));
+					ImGui::Image(m_nowLoadingTexture, ImVec2(256 * nowLoadingscale * scaleX, 40 * nowLoadingscale * scaleY), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, nowLoadingAlpha));
+				}
+			}
+
+			// Now Loading Arrpws
+			ImGui::SetCursorPos(ImVec2((-113 + 39 * m_frame)* scaleX, 612 * scaleY));
+			ImGui::Image(m_arrowTexture, ImVec2(110 * scaleX, 40 * scaleY));
 		}
 	}
 	ImGui::End();
+
+	m_frame++;
+	if (m_frame >= 100)
+	{
+		m_frame = 0;
+	}
 }
 
 bool LoadingUI::initTextures()
 {
 	std::wstring const dir = Application::getModDirWString();
-	m_init = UIContext::loadTextureFromFile((dir + L"Assets\\Title\\rect.dds").c_str(), &m_backgroundTexture);
+	m_init = true;
+	
+	m_init &= UIContext::loadTextureFromFile((dir + L"Assets\\Title\\rect.dds").c_str(), &m_backgroundTexture);
+	m_init &= UIContext::loadTextureFromFile((dir + L"Assets\\Title\\NowLoading.dds").c_str(), &m_nowLoadingTexture);
+	m_init &= UIContext::loadTextureFromFile((dir + L"Assets\\Title\\NowLoadingArrow.dds").c_str(), &m_arrowTexture);
 
 	if (!m_init)
 	{
