@@ -305,6 +305,28 @@ HOOK(int, __fastcall, Stage_CStateGoalFadeIn, 0xCFD2D0, void* This)
     return originalStage_CStateGoalFadeIn(This);
 }
 
+void Stage_CBossPerfectChaosFinalHitSfxImpl()
+{
+    static SharedPtrTypeless soundHandle;
+    Common::PlaySoundStatic(soundHandle, 5552007);
+}
+
+void __declspec(naked) Stage_CBossPerfectChaosFinalHitSfx()
+{
+    static uint32_t returnAddress = 0xC0FFC5;
+    static uint32_t sub_C0F580 = 0xC0F580;
+    __asm
+    {
+        push	eax
+        call	Stage_CBossPerfectChaosFinalHitSfxImpl
+        pop     eax
+
+        // original function
+        call    [sub_C0F580]
+        jmp     [returnAddress]
+    }
+}
+
 void Stage::applyPatches()
 {
     // Play robe sfx in Kingdom Valley
@@ -346,6 +368,8 @@ void Stage::applyPatches()
     // Always use Result1
     WRITE_MEMORY(0xCFD4E5, uint8_t, 0xEB);
 
+    // Iblis final hit sfx
+    WRITE_JUMP(0xC0FFC0, Stage_CBossPerfectChaosFinalHitSfx);
 }
 
 void Stage::draw()
