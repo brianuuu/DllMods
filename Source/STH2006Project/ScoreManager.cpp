@@ -473,7 +473,6 @@ void ScoreManager::applyPatches()
 
 	// Iblis boss
 	WRITE_JUMP(0xC0FFC5, ScoreManager_CBossPerfectChaosAddScore)
-	//WRITE_STRING(0x1587DD8, "ev601");
 }
 
 void ScoreManager::applyPatches_ScoreGensSystem()
@@ -600,7 +599,7 @@ void ScoreManager::setExternalIni(bool reset)
 	}
 }
 
-void ScoreManager::addScore(ScoreType type, uint32_t* This)
+void __fastcall ScoreManager::addScore(ScoreType type, uint32_t* This)
 {
 	// Prevent same object to add score multiple times
 	if (This)

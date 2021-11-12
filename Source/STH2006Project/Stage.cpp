@@ -368,8 +368,9 @@ void Stage::applyPatches()
     // Always use Result1
     WRITE_MEMORY(0xCFD4E5, uint8_t, 0xEB);
 
-    // Iblis final hit sfx
+    // Iblis final hit sfx & event movie
     WRITE_JUMP(0xC0FFC0, Stage_CBossPerfectChaosFinalHitSfx);
+    //WRITE_STRING(0x1587DD8, "ev601");
 }
 
 void Stage::draw()
