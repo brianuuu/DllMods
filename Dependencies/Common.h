@@ -427,6 +427,35 @@ static float fGetParameter
 	*/
 }
 
+static bool fRaycast
+(
+	Eigen::Vector4f const& rayStartPos,
+	Eigen::Vector4f const& rayEndPos,
+	Eigen::Vector4f& outPos,
+	Eigen::Vector4f& outNormal,
+	uint32_t flag
+)
+{
+	// sub_10BE3B0(&rayStartPos, flag, **(_DWORD ***)(*PLAYER_CONTEXT+ 1516), &outPos, &outNormal, &rayEndPos)
+	static void* const pfRaycast = (void*)0x10BE3B0;
+	__asm
+	{
+		mov		ecx, rayEndPos
+		push	ecx
+		mov		edx, outNormal
+		push	edx
+		mov		eax, outPos
+		push	eax
+		mov		ebx, PLAYER_CONTEXT
+		mov		ebx, [ebx]
+		mov     eax, [ebx + 5ECh]
+		mov     edi, [eax]
+		mov		edx, flag
+		mov		eax, rayStartPos
+		call	[pfRaycast]
+	}
+}
+
 inline void ObjectCGlitterPlayerOneShot(void* pObject, Hedgehog::Base::CSharedString const& name)
 {
 	uint32_t* CGlitterPlayer = *(uint32_t**)((uint32_t)pObject + 0xF8);

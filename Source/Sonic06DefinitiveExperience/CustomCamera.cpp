@@ -2,6 +2,7 @@
 #include "Application.h"
 #include "Configuration.h"
 
+bool m_blockByTerrainMode = false;
 float const c_pitchMin = -20.0f * DEG_TO_RAD;
 float const c_pitchMax = 50.0f * DEG_TO_RAD;
 float const c_pitchDefault = 6.0f * DEG_TO_RAD;
@@ -27,6 +28,7 @@ bool m_wasPaused = false;
 bool m_usedCustomCamera = false;
 int m_usedCustomCameraLastFrame = false;
 Eigen::Vector3f cameraPosCached(0, 0, 0);
+Eigen::Vector3f cameraPosPitchCorrected(0, 0, 0);
 Eigen::Quaternionf targetPlayerRotation(1, 0, 0, 0);
 HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
 {
@@ -152,33 +154,34 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     {
         cameraToPlayerDist *= 1.0f + (c_pitchDistanceUpScale - 1.0f) * (targetPitch - c_pitchDistanceUp);
     }
-    else if (targetPitch < c_pitchDistanceDown && 
-        Common::IsPlayerGrounded() && 
-        !Common::IsPlayerGrinding() && 
-        !flags->OnNoWallWalkGround &&
-        playerUpAxis.y() > 0.99f && 
-        playerSpeed < 30.0f)
-    {
-        cameraToPlayerDist *= pow(1.0f + (1.0f - c_pitchDistanceDownScale) * (targetPitch - c_pitchDistanceDown), 2.0f);
-        cameraToPlayerDist = max(2.5f, cameraToPlayerDist);
-    }
 
     // Interpolate target camera distance
     targetCameraToPlayerDist += (cameraToPlayerDist - targetCameraToPlayerDist) * c_cameraLerpRate * dt;
     Common::ClampFloat(targetCameraToPlayerDist, 2.0f, 30.0f);
 
-    // Pitch before correction
-    Eigen::Quaternionf rotationPitch(0, 0, 0, 1);
-    rotationPitch = Eigen::AngleAxisf(90.0f * DEG_TO_RAD - pitch, pitchAxis);
-    dir = rotationPitch * playerUpAxis;
-    cameraPosCached = playerPosition + dir * targetCameraToPlayerDist;
+    // Get camera pos before/after pitch correction
+    dir = CustomCamera::calculateCameraPos(playerPosition, playerUpAxis, pitchAxis, pitch, targetPitch);
 
-    // Apply pitch correction
-    Eigen::Quaternionf rotationPitchAdd(0, 0, 0, 1);
-    rotationPitchAdd = Eigen::AngleAxisf(90.0f * DEG_TO_RAD - targetPitch, pitchAxis);
-    dir = rotationPitchAdd * playerUpAxis;
-    Eigen::Vector3f cameraPosPitchCorrected = playerPosition + dir * targetCameraToPlayerDist;
-    //printf("dist = %.3f, pitch = %.3f, pitch correction = %.3f\n", targetCameraToPlayerDist, targetPitch * RAD_TO_DEG, targetPitchCorrection * RAD_TO_DEG);
+    // Use raycast to prevent camera clipping through terrain
+    Eigen::Vector4f const rayStartPos(playerPosition.x(), playerPosition.y() - 0.1f, playerPosition.z(), 1.0f);
+    Eigen::Vector4f const rayEndPos(cameraPosPitchCorrected.x(), cameraPosPitchCorrected.y() - 0.1f, cameraPosPitchCorrected.z(), 1.0f);
+    Eigen::Vector4f outPos;
+    Eigen::Vector4f outNormal;
+    if (Common::fRaycast(rayStartPos, rayEndPos, outPos, outNormal, 21))
+    {
+        //printf("%.3f, %.3f, %.3f\n", outPos.x(), outPos.y(), outPos.z());
+        if (!m_blockByTerrainMode)
+        {
+            // Just zoom closer
+            targetCameraToPlayerDist = (outPos.head<3>() - playerPosition).norm();
+            CustomCamera::calculateCameraPos(playerPosition, playerUpAxis, pitchAxis, pitch, targetPitch);
+        }
+        else if (!cameraPosPitchCorrected.isZero())
+        {
+            // For 06, it blocks and pushes away camera
+            // TODO: I don't know how to do this yet
+        }
+    }
 
     // Apply final rotation
     Eigen::Quaternionf rotation = Eigen::Quaternionf::FromTwoVectors(Eigen::Vector3f::UnitZ(), dir);
@@ -244,4 +247,33 @@ void CustomCamera::advance()
         }
     }
     m_usedCustomCamera = false;
+}
+
+Eigen::Vector3f CustomCamera::calculateCameraPos
+(
+    Eigen::Vector3f const& playerPosition,
+    Eigen::Vector3f const& playerUpAxis,
+    Eigen::Vector3f const& pitchAxis,
+    float const& pitch,
+    float const& targetPitch
+)
+{
+    Eigen::Vector3f dir;
+
+    // Pitch before correction
+    Eigen::Quaternionf rotationPitch(0, 0, 0, 1);
+    rotationPitch = Eigen::AngleAxisf(90.0f * DEG_TO_RAD - pitch, pitchAxis);
+    dir = rotationPitch * playerUpAxis;
+    cameraPosCached = playerPosition + dir * targetCameraToPlayerDist;
+
+    // Apply pitch correction
+    Eigen::Quaternionf rotationPitchAdd(0, 0, 0, 1);
+    rotationPitchAdd = Eigen::AngleAxisf(90.0f * DEG_TO_RAD - targetPitch, pitchAxis);
+    dir = rotationPitchAdd * playerUpAxis;
+
+    Eigen::Vector3f cameraPosPrev = cameraPosPitchCorrected;
+    cameraPosPitchCorrected = playerPosition + dir * targetCameraToPlayerDist;
+    //printf("dist = %.3f, pitch = %.3f, pitch correction = %.3f\n", targetCameraToPlayerDist, targetPitch * RAD_TO_DEG, targetPitchCorrection * RAD_TO_DEG);
+
+    return dir;
 }
