@@ -175,7 +175,7 @@ void LoadingUI::draw()
 			m_fadeInTime = max(0.0f, m_fadeInTime - Application::getDeltaTime());
 			if (m_fadeInTime <= 0.2f)
 			{
-				alpha = m_fadeInTime * 2.5f;
+				alpha = m_fadeInTime * 5.0f;
 			}
 
 			if (m_fadeInTime == 0.0f)
