@@ -176,7 +176,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
             targetCameraToPlayerDist = (outPos.head<3>() - playerPosition).norm();
             CustomCamera::calculateCameraPos(playerPosition, playerUpAxis, pitchAxis, pitch, targetPitch);
         }
-        else if (!cameraPosPitchCorrected.isZero())
+        else
         {
             // For 06, it blocks and pushes away camera
             // TODO: I don't know how to do this yet
