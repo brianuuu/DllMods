@@ -61,7 +61,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     CSonicStateFlags* flags = Common::GetSonicStateFlags();
     Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
 
-    float dt = Application::getDeltaTime();
+    float const dt = 1.0f / 60.0f; // this always run at 60fps
     bool isReset = !Common::IsPlayerControlLocked() && padState->IsTapped(Sonic::EKeyState::eKeyState_LeftTrigger);
 
     // Calculate current pitch correction
