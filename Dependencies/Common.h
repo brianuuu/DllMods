@@ -774,7 +774,6 @@ inline void SonicContextGetAnimationInfo(MsgGetAnimationInfo& message)
 
 inline void SonicContextRequestLocusEffect()
 {
-	// Note: This doesn't work at result screen, use PlaySoundStatic instead
 	void* pSonicContext = *PLAYER_CONTEXT;
 	if (!pSonicContext) return;
 

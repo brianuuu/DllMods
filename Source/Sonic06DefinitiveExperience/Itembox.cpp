@@ -38,24 +38,16 @@ HOOK(uint32_t*, __fastcall, ReadXmlData, 0xCE5FC0, uint32_t size, char* pData, v
 }
 
 const char* volatile const ObjectProductionItemboxLock = "ObjectProductionItemboxLock.phy.xml";
-void __declspec(naked) LoadItemboxLockAsmHook()
+HOOK(void, __stdcall, Itembox_LoadObjectProduction, 0xEA0450, void* a1, Hedgehog::Base::CSharedString* pName)
 {
-	static uint32_t returnAddress = 0xD45FAA;
-	static uint32_t sub_EA0450 = 0xEA0450;
-	__asm
+	if (strstr(pName->m_pStr, "ObjectProduction.phy.xml"))
 	{
-		call	[CStringDestructor]
-		push    ObjectProductionItemboxLock
-		lea     ecx, [esp + 0x10]
-		call	[CStringConstructor]
-		lea     ecx, [esp + 0xC]
-		push    ecx
-		push    esi
-		call	[sub_EA0450]
-		lea     ecx, [esp + 0xC]
-		call	[CStringDestructor]
-		jmp		[returnAddress]
+		printf("[Itembox] Injecting %s\n", ObjectProductionItemboxLock);
+		static Hedgehog::Base::CSharedString pInjectName(ObjectProductionItemboxLock);
+		originalItembox_LoadObjectProduction(a1, &pInjectName);
 	}
+
+	originalItembox_LoadObjectProduction(a1, pName);
 }
 
 // Have to use ASM to prevent double playing sfx
@@ -94,7 +86,7 @@ void Itembox::applyPatches()
 	WRITE_JUMP(0xFFFA5E, (void*)0xFFFB15);
 
 	// Load itembox lock-on object physics
-	WRITE_JUMP(0xD45FA5, LoadItemboxLockAsmHook);
+	INSTALL_HOOK(Itembox_LoadObjectProduction);
 
 	// Disable Item always facing screen
 	WRITE_NOP(0xFFF4E3, 3);

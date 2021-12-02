@@ -17,23 +17,16 @@ uint32_t const CStringConstructor = 0x6621A0;
 uint32_t const CStringDestructor = 0x661550;
 
 const char* volatile const ObjectProductionChip = "ObjectProductionChip.phy.xml";
-uint32_t const LoadChipObjPhyAsmHookReturnAddress = 0xD45FAA;
-void __declspec(naked) LoadChipObjPhyAsmHook()
+HOOK(void, __stdcall, LoadObjectProduction, 0xEA0450, void* a1, Hedgehog::Base::CSharedString* pName)
 {
-    __asm
+    if (strstr(pName->m_pStr, "ObjectProduction.phy.xml"))
     {
-        call    [CStringDestructor]
-        push    ObjectProductionChip
-        lea     ecx, [esp + 0x10]
-        call    [CStringConstructor]
-        lea     ecx, [esp + 0xC]
-        push    ecx
-        push    esi
-        call    [sub_EA0450]
-        lea     ecx, [esp + 0xC]
-        call    [CStringDestructor]
-        jmp     [LoadChipObjPhyAsmHookReturnAddress]
+        printf("[Itembox] Injecting %s\n", ObjectProductionChip);
+        static Hedgehog::Base::CSharedString pInjectName(ObjectProductionChip);
+        originalLoadObjectProduction(a1, &pInjectName);
     }
+
+    originalLoadObjectProduction(a1, pName);
 }
 
 bool getAtHubWorld()
@@ -343,7 +336,7 @@ HOOK(int, __fastcall, CGameObject3DDestruction, 0xD5D790, void* This, void* Edx)
 void Chip::applyPatches()
 {
     // Load Chip object physics
-	WRITE_JUMP(0xD45FA5, LoadChipObjPhyAsmHook);
+    INSTALL_HOOK(LoadObjectProduction);
 
     // Get Sonic's starting position and mode
     INSTALL_HOOK(ParseStageStgXml);
