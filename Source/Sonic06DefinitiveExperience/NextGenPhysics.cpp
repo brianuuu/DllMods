@@ -304,7 +304,7 @@ void NextGenPhysics::applyPatches()
     }
 
     // Change all actions to X button, change boost to R2
-    if (Configuration::m_xButtonAction)
+    if (Configuration::m_characterMoveset)
     {
         // Check for light speed dash before stomp
         WRITE_JUMP(0xDFDDCB, lightDashHigherPriority);

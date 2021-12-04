@@ -47,6 +47,5 @@ public:
 	static float m_shieldRechargeRate;
 	static float m_shieldNoChargeTime;
 	static float m_shieldNoChargeDelay;
-	static Sonic::EKeyState m_shieldButton;
 };
 

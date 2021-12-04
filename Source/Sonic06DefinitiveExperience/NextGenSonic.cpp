@@ -281,7 +281,7 @@ HOOK(void, __fastcall, NextGenSonic_CSonicStateSlidingAdvance, 0x11D69A0, void* 
     NextGenSonic::m_slidingTime -= Application::getDeltaTime();
     if (bPressed || NextGenSonic::m_slidingTime <= 0.0f)
     {
-        if (bPressed && Configuration::m_xButtonAction && NextGenPhysics::checkUseLightSpeedDash())
+        if (bPressed && NextGenPhysics::checkUseLightSpeedDash())
         {
             // Pressed X button and use light speed dash
             return;
@@ -633,10 +633,7 @@ HOOK(void, __fastcall, NextGenSonic_MsgNotifyObjectEvent, 0xEA4F50, void* This, 
 void NextGenSonic::getActionButtonStates(bool& bDown, bool& bPressed, bool& bReleased)
 {
     Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
-    Sonic::EKeyState actionButton =
-        Configuration::m_xButtonAction ?
-        Sonic::EKeyState::eKeyState_X :
-        Sonic::EKeyState::eKeyState_B;
+    Sonic::EKeyState const actionButton = Sonic::EKeyState::eKeyState_X;
 
     bDown = padState->IsDown(actionButton);
     bPressed = padState->IsTapped(actionButton);
@@ -969,7 +966,7 @@ bool __fastcall NextGenSonic_CanActivateEliseShield()
            !Common::IsPlayerSuper() &&
            !Common::IsPlayerDead() &&
            *currentBoost > 0.0f &&
-           padState->IsDown(NextGenSonic::m_shieldButton);
+           padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger);
 }
 
 void __declspec(naked) NextGenSonic_CSonicStatePluginBoostAdvance()
@@ -1049,7 +1046,6 @@ float NextGenSonic::m_shieldDecRate = 10.0f;
 float NextGenSonic::m_shieldRechargeRate = 50.0f;
 float NextGenSonic::m_shieldNoChargeTime = 0.0f;
 float NextGenSonic::m_shieldNoChargeDelay = 0.5f;
-Sonic::EKeyState NextGenSonic::m_shieldButton = Sonic::EKeyState::eKeyState_X;
 HOOK(void, __fastcall, NextGenSonic_CSonicUpdateEliseShield, 0xE6BF20, void* This, void* Edx, float* dt)
 {
     // Ignore for Super Sonic
@@ -1079,7 +1075,7 @@ HOOK(void, __fastcall, NextGenSonic_CSonicUpdateEliseShield, 0xE6BF20, void* Thi
     // Handle boost gauge
     float* currentBoost = Common::GetPlayerBoost();
     Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
-    if (NextGenSonic::m_isShield || !Common::IsPlayerGrounded() || padState->IsDown(NextGenSonic::m_shieldButton))
+    if (NextGenSonic::m_isShield || !Common::IsPlayerGrounded() || padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger))
     {
         NextGenSonic::m_shieldNoChargeTime = NextGenSonic::m_shieldNoChargeDelay;
         if (NextGenSonic::m_isShield)
@@ -1295,8 +1291,6 @@ void NextGenSonic::applyPatches()
     //-------------------------------------------------------
     if (m_isElise)
     {
-        m_shieldButton = Configuration::m_xButtonAction ? Sonic::EKeyState::eKeyState_RightTrigger : Sonic::EKeyState::eKeyState_X;
-
         // Don't add boost from rings
         WRITE_MEMORY(0xE6853B, uint8_t, 0xEB);
 
