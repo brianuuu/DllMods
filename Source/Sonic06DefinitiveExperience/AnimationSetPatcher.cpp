@@ -199,6 +199,7 @@ void AnimationSetPatcher::applyPatches()
     // ssn_trick_jump
     // ssn_grind_loop
     // ssn_grind_switch
+    // ssn_float_loop
     m_newAnimationDataSuper.emplace_back("SkyDivingStart", "ssn_move_f_loop", 1.0f, true, nullptr);
     m_newAnimationDataSuper.emplace_back("SkyDiving", "ssn_move_f_loop", 1.0f, true, nullptr);
     m_newAnimationDataSuper.emplace_back("SkyDivingL", "ssn_move_f_loop", 1.0f, true, nullptr);
@@ -235,8 +236,9 @@ void AnimationSetPatcher::applyPatches()
     m_newAnimationDataSuper.emplace_back("GrindToWallROnGoofy", "ssn_jump_loop", 1.0f, true, nullptr);
     m_newAnimationDataSuper.emplace_back("GrindToWallLOnGoofy", "ssn_jump_loop", 1.0f, true, nullptr);
 
-    // Trick animation for Super Form
-    WRITE_STRING(0x15D58F4, "ssn_trick_jump");
+    // Fix Super Form animation
+    WRITE_STRING(0x15D58F4, "ssn_trick_jump"); // TrickPrepare
+    WRITE_STRING(0x15D5FD0, "ssn_float_loop"); // Float
 
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
