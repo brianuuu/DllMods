@@ -11,6 +11,10 @@ class LoadingUI
 public:
 	static void applyPatches();
 
+	static float m_startCountdown;
+	static void startNowLoading(float countdown = 0.0f);
+	static void stopNowLoading();
+
 	// ImGui
 	static std::string m_stagePrevious;
 	static std::string m_bottomText;

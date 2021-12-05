@@ -120,11 +120,7 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 
 	if (LoadingUI::m_stageTexture)
 	{
-		// Reset data
-		LoadingUI::m_drawEnabled = true;
-		LoadingUI::m_fadeInTime = 0.0f;
-		LoadingUI::m_frame = 0;
-		LoadingUI::m_showNowLoading = false;
+		LoadingUI::startNowLoading();
 	}
 	LoadingUI::m_stagePrevious = currentStage;
 }
@@ -138,7 +134,14 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestCloseLoading, 0x1092BF0, uint32_t* Th
 		(*hudCount)[2] = 0;
 	}
 
-	LoadingUI::m_fadeInTime = 0.4f;
+	LoadingUI::stopNowLoading();
+}
+
+HOOK(int, __fastcall, LoadingUI_CStateGoalFadeIn, 0xCFD2D0, uint32_t* This)
+{
+	// Stop loading in case it is activated before result screen
+	LoadingUI::stopNowLoading();
+	return originalLoadingUI_CStateGoalFadeIn(This);
 }
 
 void LoadingUI::applyPatches()
@@ -150,15 +153,54 @@ void LoadingUI::applyPatches()
 
 	INSTALL_HOOK(LoadingUI_MsgRequestStartLoading);
 	INSTALL_HOOK(LoadingUI_MsgRequestCloseLoading);
+	INSTALL_HOOK(LoadingUI_CStateGoalFadeIn);
 
 	// Disable loading sfx
 	WRITE_MEMORY(0x44A2E8, int, -1);
 	WRITE_MEMORY(0x44A4F5, int, -1);
 }
 
+float LoadingUI::m_startCountdown = -1.0f;
+void LoadingUI::startNowLoading(float countdown)
+{
+	if (!m_drawEnabled)
+	{
+		if (countdown > 0.0f)
+		{
+			m_startCountdown = countdown;
+		}
+		else
+		{
+			m_startCountdown = -1.0f;
+			m_drawEnabled = true;
+			m_fadeInTime = 0.0f;
+			m_frame = 0;
+			m_showNowLoading = false;
+		}
+	}
+}
+
+void LoadingUI::stopNowLoading()
+{
+	if (m_drawEnabled)
+	{
+		LoadingUI::m_fadeInTime = 0.4f;
+	}
+}
+
 void LoadingUI::draw()
 {
-	if (!m_drawEnabled || !m_stageTexture) return;
+	// Loading has been requested with countdown
+	if (m_startCountdown > 0.0f)
+	{
+		m_startCountdown -= Application::getDeltaTime();
+		if (m_startCountdown <= 0.0f)
+		{
+			startNowLoading();
+		}
+	}
+
+	if (!m_drawEnabled) return;
 
 	float scaleX = *BACKBUFFER_WIDTH / 1280.0f;
 	float scaleY = *BACKBUFFER_HEIGHT / 720.0f;
@@ -180,7 +222,13 @@ void LoadingUI::draw()
 
 			if (m_fadeInTime == 0.0f)
 			{
+				m_startCountdown = -1.0f;
 				m_drawEnabled = false;
+				if (LoadingUI::m_stageTexture)
+				{
+					LoadingUI::m_stageTexture->Release();
+					LoadingUI::m_stageTexture = nullptr;
+				}
 			}
 		}
 
@@ -190,16 +238,19 @@ void LoadingUI::draw()
 
 		if (m_drawEnabled && (m_fadeInTime == 0.0f || m_fadeInTime >= 0.2f))
 		{
-			// Stage title
-			ImGui::SetCursorPos(ImVec2(5, 109 * scaleY));
-			ImGui::Image(m_stageTexture, ImVec2(1280 * scaleX, 512 * scaleY));
-
-			// Bottom text
-			if (!m_bottomText.empty())
+			if (m_stageTexture)
 			{
-				ImVec2 size = ImGui::CalcTextSize(m_bottomText.c_str());
-				ImGui::SetCursorPos(ImVec2(640 * scaleX - size.x * 0.5f, 570 * scaleY));
-				ImGui::Text(m_bottomText.c_str());
+				// Stage title
+				ImGui::SetCursorPos(ImVec2(5, 109 * scaleY));
+				ImGui::Image(m_stageTexture, ImVec2(1280 * scaleX, 512 * scaleY));
+
+				// Bottom text
+				if (!m_bottomText.empty())
+				{
+					ImVec2 size = ImGui::CalcTextSize(m_bottomText.c_str());
+					ImGui::SetCursorPos(ImVec2(640 * scaleX - size.x * 0.5f, 570 * scaleY));
+					ImGui::Text(m_bottomText.c_str());
+				}
 			}
 
 			// Show text after 24 frames
