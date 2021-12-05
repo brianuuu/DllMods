@@ -3,6 +3,7 @@
 #include "Configuration.h"
 #include "UIContext.h"
 #include "ParamManager.h"
+#include "LoadingUI.h"
 
 //---------------------------------------------------
 // Kingdom Valley sfx
@@ -305,6 +306,9 @@ HOOK(int, __fastcall, Stage_CStateGoalFadeIn, 0xCFD2D0, void* This)
     return originalStage_CStateGoalFadeIn(This);
 }
 
+//---------------------------------------------------
+// Perfect Chaos
+//---------------------------------------------------
 void Stage_CBossPerfectChaosFinalHitSfxImpl()
 {
     static SharedPtrTypeless soundHandle;
@@ -324,6 +328,26 @@ void __declspec(naked) Stage_CBossPerfectChaosFinalHitSfx()
         // original function
         call    [sub_C0F580]
         jmp     [returnAddress]
+    }
+}
+
+HOOK(void, __fastcall, Stage_CBossPerfectChaosCStateDefeated, 0x5D20A0, int This)
+{
+    bool wasMovieStarted = *(bool*)(This + 40);
+    bool wasMovieEnded = *(bool*)(This + 41);
+
+    originalStage_CBossPerfectChaosCStateDefeated(This);
+
+    if (!wasMovieStarted && *(bool*)(This + 40))
+    {
+        Common::PlayStageMusic("Dummy", 0.0f);
+        LoadingUI::startNowLoading(6.8f);
+    }
+
+    if (!wasMovieEnded && *(bool*)(This + 41))
+    {
+        // Movie ended by player skipping
+        LoadingUI::startNowLoading();
     }
 }
 
@@ -370,7 +394,8 @@ void Stage::applyPatches()
 
     // Iblis final hit sfx & event movie
     WRITE_JUMP(0xC0FFC0, Stage_CBossPerfectChaosFinalHitSfx);
-    //WRITE_STRING(0x1587DD8, "ev601");
+    WRITE_STRING(0x1587DD8, "ev704");
+    INSTALL_HOOK(Stage_CBossPerfectChaosCStateDefeated);
 }
 
 void Stage::draw()

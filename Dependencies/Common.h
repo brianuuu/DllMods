@@ -582,6 +582,27 @@ inline uint32_t GetCurrentStageID()
 	return *(uint32_t*)stageIDAddress;
 }
 
+inline void PlayStageMusic(char const* cueName, float fadeInTime)
+{
+	FUNCTION_PTR(bool, __stdcall, PlayStageMusicFromCueName, 0xD63070, void* gameDocument, Hedgehog::Base::CSharedString & cueName, float fadeInTime);
+	Hedgehog::Base::CSharedString name = Hedgehog::Base::CSharedString(cueName);
+	PlayStageMusicFromCueName(*(void**)0x1E0BE5C, name, fadeInTime);
+}
+
+inline void PlayBGM(char const* cueName, float fadeInTime)
+{
+	FUNCTION_PTR(unsigned int, __stdcall, PlayAudioFromCueName, 0xD62440, void* gameDocument, Hedgehog::Base::CSharedString& cueName, float fadeInTime);
+	Hedgehog::Base::CSharedString name = Hedgehog::Base::CSharedString(cueName);
+	PlayAudioFromCueName(*(void**)0x1E0BE5C, name, fadeInTime);
+}
+
+inline void StopBGM(char const* cueName, float fadeOutTime)
+{
+	FUNCTION_PTR(int, __stdcall, StopAudioFromCueName, 0xD61E40, void* gameDocument, Hedgehog::Base::CSharedString & cueName, float fadeOutTime);
+	Hedgehog::Base::CSharedString name = Hedgehog::Base::CSharedString(cueName);
+	StopAudioFromCueName(*(void**)0x1E0BE5C, name, fadeOutTime);
+}
+
 inline void* GetPlayer()
 {
 	if (!*PLAYER_CONTEXT) return 0;
