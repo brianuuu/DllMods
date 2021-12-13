@@ -288,10 +288,9 @@ void SubtitleUI::draw()
                 alpha = 0.2f * frame2;
             }
 
-            alpha *= 0.9f;
             ImGui::SetWindowFocus();
             ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
-            ImGui::Image(m_captionData.m_textbox, ImVec2(sizeX, sizeY), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, alpha));
+            ImGui::Image(m_captionData.m_textbox, ImVec2(sizeX, sizeY), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, alpha * 0.9f));
             ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * posX, *BACKBUFFER_HEIGHT * posY));
         }
         ImGui::End();
@@ -303,7 +302,7 @@ void SubtitleUI::draw()
             for (uint32_t i = 0; i < caption.m_captions.size(); i++)
             {
                 std::string const& str = caption.m_captions[i];
-                ImGui::TextColored(ImVec4(1, 1, 1, alpha), str.c_str());
+                ImGui::TextColored(ImVec4(1, 1, 1, alpha * 0.9f), str.c_str());
                 if (caption.m_buttons.count(i))
                 {
                     float buttonSizeX = 28.0f;
@@ -335,7 +334,7 @@ void SubtitleUI::draw()
                     ImGui::SameLine();
                     if (texture)
                     {
-                        ImGui::Image(*texture, ImVec2(*BACKBUFFER_WIDTH * buttonSizeX / 1280.0f, *BACKBUFFER_HEIGHT * 28.0f / 720.0f));
+                        ImGui::Image(*texture, ImVec2(*BACKBUFFER_WIDTH * buttonSizeX / 1280.0f, *BACKBUFFER_HEIGHT * 28.0f / 720.0f), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, alpha));
                     }
                 }
 
