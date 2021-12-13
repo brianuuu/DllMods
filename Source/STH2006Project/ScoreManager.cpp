@@ -422,10 +422,10 @@ void ScoreManager::applyPatches()
 		return;
 	}
 
-	// TODO: Ensure Score Generations is loaded LATER/higher priority than this mod (awaiting for HMM dll load order update)
+	// Ensure Score Generations is loaded LATER/higher priority than this mod
 	if (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr)
 	{
-		MessageBox(NULL, L"'Score Generations' detected, please put it higher priority than 'STH2006 Project'!", L"STH2006 Project", MB_ICONERROR);
+		MessageBox(NULL, L"'Score Generations' mod detected, please put it higher priority than 'STH2006 Project'!", L"STH2006 Project", MB_ICONERROR);
 		exit(-1);
 	}
 
