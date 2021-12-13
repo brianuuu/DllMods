@@ -235,14 +235,14 @@ HOOK(void, __fastcall, Stage_MsgNotifyLapTimeHud, 0x1097640, void* This, void* E
 //---------------------------------------------------
 // Object Physics dummy event
 //---------------------------------------------------
-ParamValue* LightSpeedDashStartCollisionFovy = nullptr;
-ParamValue* LightSpeedDashStartCollisionFar = nullptr;
-ParamValue* LightSpeedDashCollisionFovy = nullptr;
-ParamValue* LightSpeedDashCollisionFar = nullptr;
-ParamValue* LightSpeedDashMinVelocity = nullptr;
-ParamValue* LightSpeedDashMinVelocity3D = nullptr;
-ParamValue* LightSpeedDashMaxVelocity = nullptr;
-ParamValue* LightSpeedDashMaxVelocity3D = nullptr;
+ParamValue* m_LightSpeedDashStartCollisionFovy = nullptr;
+ParamValue* m_LightSpeedDashStartCollisionFar = nullptr;
+ParamValue* m_LightSpeedDashCollisionFovy = nullptr;
+ParamValue* m_LightSpeedDashCollisionFar = nullptr;
+ParamValue* m_LightSpeedDashMinVelocity = nullptr;
+ParamValue* m_LightSpeedDashMinVelocity3D = nullptr;
+ParamValue* m_LightSpeedDashMaxVelocity = nullptr;
+ParamValue* m_LightSpeedDashMaxVelocity3D = nullptr;
 HOOK(void, __fastcall, Stage_MsgNotifyObjectEvent, 0xEA4F50, void* This, void* Edx, uint32_t a2)
 {
     uint32_t* pEvent = (uint32_t*)(a2 + 16);
@@ -256,30 +256,30 @@ HOOK(void, __fastcall, Stage_MsgNotifyObjectEvent, 0xEA4F50, void* This, void* E
         // Change light speed dash param
         case 1001:
         {
-            *LightSpeedDashStartCollisionFovy->m_funcData->m_pValue = 80.0f;
-            LightSpeedDashStartCollisionFovy->m_funcData->update();
+            *m_LightSpeedDashStartCollisionFovy->m_funcData->m_pValue = 80.0f;
+            m_LightSpeedDashStartCollisionFovy->m_funcData->update();
 
-            *LightSpeedDashStartCollisionFar->m_funcData->m_pValue = 10.0f;
-            LightSpeedDashStartCollisionFar->m_funcData->update();
+            *m_LightSpeedDashStartCollisionFar->m_funcData->m_pValue = 10.0f;
+            m_LightSpeedDashStartCollisionFar->m_funcData->update();
 
-            *LightSpeedDashCollisionFovy->m_funcData->m_pValue = 80.0f;
-            LightSpeedDashCollisionFovy->m_funcData->update();
+            *m_LightSpeedDashCollisionFovy->m_funcData->m_pValue = 80.0f;
+            m_LightSpeedDashCollisionFovy->m_funcData->update();
 
-            *LightSpeedDashCollisionFar->m_funcData->m_pValue = 10.0f;
-            LightSpeedDashCollisionFar->m_funcData->update();
+            *m_LightSpeedDashCollisionFar->m_funcData->m_pValue = 10.0f;
+            m_LightSpeedDashCollisionFar->m_funcData->update();
 
             float speed = 80.0f;
             if (Common::CheckCurrentStage("ghz200")) speed = 100.0f;
             else if (Common::CheckCurrentStage("euc200")) speed = 65.0f;
-            *LightSpeedDashMinVelocity->m_funcData->m_pValue = speed;
-            LightSpeedDashMinVelocity->m_funcData->update();
-            *LightSpeedDashMinVelocity3D->m_funcData->m_pValue = speed;
-            LightSpeedDashMinVelocity3D->m_funcData->update();
+            *m_LightSpeedDashMinVelocity->m_funcData->m_pValue = speed;
+            m_LightSpeedDashMinVelocity->m_funcData->update();
+            *m_LightSpeedDashMinVelocity3D->m_funcData->m_pValue = speed;
+            m_LightSpeedDashMinVelocity3D->m_funcData->update();
 
-            *LightSpeedDashMaxVelocity->m_funcData->m_pValue = 100.0f;
-            LightSpeedDashMaxVelocity->m_funcData->update();
-            *LightSpeedDashMaxVelocity3D->m_funcData->m_pValue = 100.0f;
-            LightSpeedDashMaxVelocity3D->m_funcData->update();
+            *m_LightSpeedDashMaxVelocity->m_funcData->m_pValue = 100.0f;
+            m_LightSpeedDashMaxVelocity->m_funcData->update();
+            *m_LightSpeedDashMaxVelocity3D->m_funcData->m_pValue = 100.0f;
+            m_LightSpeedDashMaxVelocity3D->m_funcData->update();
 
             break;
         }
@@ -373,14 +373,14 @@ void Stage::applyPatches()
     INSTALL_HOOK(Stage_MsgNotifyLapTimeHud);
 
     // Object Physics dummy event
-    ParamManager::addParam(&LightSpeedDashStartCollisionFovy, "LightSpeedDashStartCollisionFovy");
-    ParamManager::addParam(&LightSpeedDashStartCollisionFar, "LightSpeedDashStartCollisionFar");
-    ParamManager::addParam(&LightSpeedDashCollisionFovy, "LightSpeedDashCollisionFovy");
-    ParamManager::addParam(&LightSpeedDashCollisionFar, "LightSpeedDashCollisionFar");
-    ParamManager::addParam(&LightSpeedDashMinVelocity, "LightSpeedDashMinVelocity");
-    ParamManager::addParam(&LightSpeedDashMinVelocity3D, "LightSpeedDashMinVelocity3D");
-    ParamManager::addParam(&LightSpeedDashMaxVelocity, "LightSpeedDashMaxVelocity");
-    ParamManager::addParam(&LightSpeedDashMaxVelocity3D, "LightSpeedDashMaxVelocity3D");
+    ParamManager::addParam(&m_LightSpeedDashStartCollisionFovy, "LightSpeedDashStartCollisionFovy");
+    ParamManager::addParam(&m_LightSpeedDashStartCollisionFar, "LightSpeedDashStartCollisionFar");
+    ParamManager::addParam(&m_LightSpeedDashCollisionFovy, "LightSpeedDashCollisionFovy");
+    ParamManager::addParam(&m_LightSpeedDashCollisionFar, "LightSpeedDashCollisionFar");
+    ParamManager::addParam(&m_LightSpeedDashMinVelocity, "LightSpeedDashMinVelocity");
+    ParamManager::addParam(&m_LightSpeedDashMinVelocity3D, "LightSpeedDashMinVelocity3D");
+    ParamManager::addParam(&m_LightSpeedDashMaxVelocity, "LightSpeedDashMaxVelocity");
+    ParamManager::addParam(&m_LightSpeedDashMaxVelocity3D, "LightSpeedDashMaxVelocity3D");
     INSTALL_HOOK(Stage_MsgNotifyObjectEvent);
 
     // Use custom SNG19_JNG, adjust round clear length
