@@ -28,6 +28,12 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
         MessageBox(NULL, L"Failed to parse mod.ini", NULL, MB_ICONERROR);
     }
 
+    if (GetModuleHandle(TEXT("Sonic06HUD.dll")))
+    {
+        MessageBox(nullptr, TEXT("'Sonic 06 HUD' mod detected, please put it higher priority than 'STH2006 Project'!"), TEXT("STH2006 Project"), MB_ICONERROR);
+        exit(-1);
+    }
+
     if (GetModuleHandle(TEXT("Sonic06DefinitiveExperience.dll")))
     {
         MessageBox(nullptr, TEXT("'Sonic 06 Definitive Experience' mod detected, please put it higher priority than 'STH2006 Project'!"), TEXT("STH2006 Project"), MB_ICONERROR);
