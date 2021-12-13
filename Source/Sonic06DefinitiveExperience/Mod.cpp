@@ -37,6 +37,12 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
         MessageBox(NULL, L"Failed to parse Sonic06DefinitiveExperience.ini", NULL, MB_ICONERROR);
     }
 
+    if (GetModuleHandle(TEXT("Sonic06HUD.dll")))
+    {
+        MessageBox(nullptr, TEXT("'Sonic 06 HUD' mod must be higher priority than 'Sonic 06 Definitive Experience'!"), TEXT("Sonic 06 Definitive Experience"), MB_ICONERROR);
+        exit(-1);
+    }
+
     // -------------Patches--------------
     // General application patches
     Application::applyPatches();
@@ -107,4 +113,13 @@ extern "C" __declspec(dllexport) void PostInit()
         MessageBox(nullptr, TEXT("\"No Trick Rainbow Rings\" code detected, please disable it and use the built-in configuration instead."), TEXT("Sonic 06 Definitive Experience"), MB_ICONERROR);
         exit(-1);
     }
+
+    // TODO: Mandatory when 06 HUD is ready
+    /*
+    if (GetModuleHandle(TEXT("Sonic06HUD.dll")) == nullptr)
+    {
+        MessageBox(nullptr, TEXT("This mod requires the latest version of 'Sonic 06 HUD' enabled."), TEXT("Sonic 06 Definitive Experience"), MB_ICONERROR);
+        exit(-1);
+    }
+    */
 }
