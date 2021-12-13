@@ -3,7 +3,6 @@
 #include "Itembox.h"
 #include "ScoreManager.h"
 #include "Stage.h"
-#include "Omochao.h"
 #include "ResultUI.h"
 #include "LoadingUI.h"
 
@@ -46,27 +45,11 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
         MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-NewRodin Pro EB.otf\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
         font = io.Fonts->AddFontDefault();
     }
-
-    ImVector<ImWchar> rangesTextbox;
-    ImFontGlyphRangesBuilder builderTextbox;
-    for (auto const& iter : Omochao::m_fontDatabase)
-    {
-        builderTextbox.AddChar(iter.second);
-    }
-    builderTextbox.BuildRanges(&rangesTextbox);
-
-    const float fontSubtitleSize = 40.0f * (float)*BACKBUFFER_WIDTH / 1920.0f;
-    if ((fontSubtitle = io.Fonts->AddFontFromFileTTF((Application::getModDirString() + "Fonts\\FOT-RodinCattleyaPro-DB.otf").c_str(), fontSubtitleSize, nullptr, rangesTextbox.Data)) == nullptr)
-    {
-        MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-RodinCattleyaPro-DB.otf\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
-        fontSubtitle = io.Fonts->AddFontDefault();
-    }
     io.Fonts->Build();
 
     // Initial textures
     Itembox::initTextures();
     ScoreManager::initTextures();
-    Omochao::m_captionData.init();
     ResultUI::initTextures();
     LoadingUI::initTextures();
 }
@@ -89,10 +72,8 @@ void UIContext::update()
         // Draw imgui here
         Itembox::draw();
         ScoreManager::draw();
-        Stage::draw();
 
         ImGui::PushFont(fontSubtitle);
-        Omochao::draw();
         ResultUI::draw();
         LoadingUI::draw();
         ImGui::PopFont();

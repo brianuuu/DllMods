@@ -16,9 +16,5 @@ public:
 	static void __fastcall getIsWallJumpImpl(float* outOfControl);
 
 	static bool m_waterRunning;
-
-	static std::string m_lapTimeStr;
-	static float m_checkpointTimer;
-	static void draw();
 };
 

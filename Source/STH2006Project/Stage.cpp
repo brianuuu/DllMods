@@ -207,32 +207,6 @@ HOOK(void, __stdcall, Stage_SonicChangeAnimation, 0xCDFC80, void* a1, int a2, co
 }
 
 //---------------------------------------------------
-// Checkpoint (TODO: move this to 06 HUD)
-//---------------------------------------------------
-std::string Stage::m_lapTimeStr;
-float Stage::m_checkpointTimer = 0.0f;
-HOOK(void, __fastcall, Stage_MsgNotifyLapTimeHud, 0x1097640, void* This, void* Edx, uint32_t a2)
-{
-    if (Configuration::m_using06HUD)
-    {
-        float lapTime = *(float*)(a2 + 20);
-        int minute = (int)(lapTime / 60.0f);
-        int seconds = (int)(lapTime - 60.0f * (float)minute);
-        int milliseconds = (int)(lapTime * 1000.0f) % 1000;
-
-        char buffer[20];
-        sprintf(buffer, "%02d'%02d\"%03d", minute, seconds, milliseconds);
-
-        Stage::m_lapTimeStr = std::string(buffer);
-        Stage::m_checkpointTimer = 3.0f;
-
-        return;
-    }
-    
-    originalStage_MsgNotifyLapTimeHud(This, Edx, a2);
-}
-
-//---------------------------------------------------
 // Object Physics dummy event
 //---------------------------------------------------
 ParamValue* m_LightSpeedDashStartCollisionFovy = nullptr;
@@ -369,9 +343,6 @@ void Stage::applyPatches()
     INSTALL_HOOK(Stage_SonicChangeAnimation);
     WRITE_JUMP(0x11DD1AC, playWaterPfx);
 
-    // For 06 HUD, do checkpoint time here so we can draw on top of itembox
-    INSTALL_HOOK(Stage_MsgNotifyLapTimeHud);
-
     // Object Physics dummy event
     ParamManager::addParam(&m_LightSpeedDashStartCollisionFovy, "LightSpeedDashStartCollisionFovy");
     ParamManager::addParam(&m_LightSpeedDashStartCollisionFar, "LightSpeedDashStartCollisionFar");
@@ -396,29 +367,4 @@ void Stage::applyPatches()
     WRITE_JUMP(0xC0FFC0, Stage_CBossPerfectChaosFinalHitSfx);
     WRITE_STRING(0x1587DD8, "ev704");
     INSTALL_HOOK(Stage_CBossPerfectChaosCStateDefeated);
-}
-
-void Stage::draw()
-{
-    // At loading screen, clear all
-    if (Common::IsAtLoadingScreen())
-    {
-        m_checkpointTimer = 0.0f;
-        return;
-    }
-
-    if (m_checkpointTimer > 0.0f)
-    {
-        static bool visible = true;
-        ImGui::Begin("Checkpoint", &visible, UIContext::m_hudFlags);
-        {
-            ImVec2 size = ImGui::CalcTextSize(m_lapTimeStr.c_str());
-            ImGui::Text(m_lapTimeStr.c_str());
-            ImGui::SetWindowFocus();
-            ImGui::SetWindowPos(ImVec2((float)*BACKBUFFER_WIDTH * 0.5f - size.x * 0.5f, (float)*BACKBUFFER_HEIGHT * 0.882f - size.y * 0.5f));
-        }
-        ImGui::End();
-
-        m_checkpointTimer -= Application::getHudDeltaTime();
-    }
 }
