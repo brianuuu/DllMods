@@ -1,20 +1,21 @@
 #include "Configuration.h"
 #include "Application.h"
 #include "Stage.h"
+#include "SubtitleUI.h"
 #include "UIContext.h"
 #include "SynchronizedObject.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
-    std::string dir = modInfo->CurrentMod->Path;
-
-    size_t pos = dir.find_last_of("\\/");
+    std::string modDir = modInfo->CurrentMod->Path;
+    size_t pos = modDir.find_last_of("\\/");
     if (pos != std::string::npos)
     {
-        dir.erase(pos + 1);
+        modDir.erase(pos + 1);
     }
-    
-    if (!Configuration::load(dir))
+    Application::setModDir(modDir);
+
+    if (!Configuration::load(modDir))
     {
         MessageBox(NULL, L"Failed to parse Config.ini", NULL, MB_ICONERROR);
     }
@@ -25,6 +26,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     // Stage specific patches
     Stage::applyPatches();
+
+    // 06 dialog box
+    SubtitleUI::applyPatches();
 }
 
 HOOK(LRESULT, __stdcall, WndProc, 0xE7B6C0, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)

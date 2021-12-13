@@ -1,7 +1,7 @@
 ﻿#include "UIContext.h"
 #include "Application.h"
 #include "Stage.h"
-//#include "Omochao.h"
+#include "SubtitleUI.h"
 //#include "ResultUI.h"
 
 HWND UIContext::window;
@@ -44,9 +44,9 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
         font = io.Fonts->AddFontDefault();
     }
 
-    /*ImVector<ImWchar> rangesTextbox;
+    ImVector<ImWchar> rangesTextbox;
     ImFontGlyphRangesBuilder builderTextbox;
-    for (auto const& iter : Omochao::m_fontDatabase)
+    for (auto const& iter : SubtitleUI::m_fontDatabase)
     {
         builderTextbox.AddChar(iter.second);
     }
@@ -57,11 +57,11 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     {
         MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-RodinCattleyaPro-DB.otf\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
         fontSubtitle = io.Fonts->AddFontDefault();
-    }*/
+    }
     io.Fonts->Build();
 
     // Initial textures
-    //Omochao::m_captionData.init();
+    SubtitleUI::m_captionData.init();
     //ResultUI::initTextures();
 }
 
@@ -84,7 +84,7 @@ void UIContext::update()
         Stage::draw();
 
         ImGui::PushFont(fontSubtitle);
-        //Omochao::draw();
+        SubtitleUI::draw();
         //ResultUI::draw();
         ImGui::PopFont();
     }

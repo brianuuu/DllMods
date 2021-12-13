@@ -16,6 +16,7 @@
 #include <fstream>
 #include <iomanip>
 #include <math.h>
+#include <deque>
 
 // ImGui
 #include <imgui.h>

@@ -30,6 +30,7 @@
     <ClCompile Include="UIContext.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="SynchronizedObject.cpp" />
+    <ClCompile Include="SubtitleUI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -38,6 +39,7 @@
     <ClInclude Include="UIContext.h" />
     <ClInclude Include="Application.h" />
     <ClInclude Include="SynchronizedObject.h" />
+    <ClInclude Include="SubtitleUI.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">

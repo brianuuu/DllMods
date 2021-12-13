@@ -198,6 +198,7 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="Stage.cpp" />
+    <ClCompile Include="SubtitleUI.cpp" />
     <ClCompile Include="SynchronizedObject.cpp" />
     <ClCompile Include="UIContext.cpp" />
   </ItemGroup>
@@ -206,6 +207,7 @@
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="Pch.h" />
     <ClInclude Include="Stage.h" />
+    <ClInclude Include="SubtitleUI.h" />
     <ClInclude Include="SynchronizedObject.h" />
     <ClInclude Include="UIContext.h" />
   </ItemGroup>
