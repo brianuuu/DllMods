@@ -24,6 +24,7 @@ struct Caption
 struct CaptionData
 {
 	uint32_t* m_owner;
+	bool m_isCutscene;
 	float m_timer;
 	bool m_bypassLoading;
 	std::deque<Caption> m_captions;
@@ -44,6 +45,7 @@ struct CaptionData
 	void clear()
 	{
 		m_owner = nullptr;
+		m_isCutscene = false;
 		m_timer = 0.0f;
 		m_bypassLoading = false;
 		m_captions.clear();
@@ -74,7 +76,7 @@ public:
 	static bool initFontDatabase();
 
 	static CaptionData m_captionData;
-	static void __cdecl addCaptionImpl(uint32_t* owner, uint32_t* caption, float duration);
+	static void __cdecl addCaptionImpl(uint32_t* owner, uint32_t* caption, float duration, bool isCutscene);
 	static void draw();
 };
 

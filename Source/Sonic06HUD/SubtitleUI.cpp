@@ -4,7 +4,7 @@
 #include "Configuration.h"
 
 CaptionData SubtitleUI::m_captionData;
-void __declspec(naked) addCaption()
+void __declspec(naked) addCaption_COmochaoFollow()
 {
     static uint32_t sub_6B02B0 = 0x6B02B0;
     static uint32_t returnAddress = 0x461407;
@@ -15,8 +15,11 @@ void __declspec(naked) addCaption()
         push    eax
         push    edx
 
+        // not cutscene
+        push    0
+
         // duration
-        mov     ecx, [esp + 0x1C + 0x8]
+        mov     ecx, [esp + 0x1C + 0xC]
         push    ecx
 
         // caption
@@ -28,7 +31,7 @@ void __declspec(naked) addCaption()
         push    ecx
 
         call    SubtitleUI::addCaptionImpl
-        add     esp, 0xC
+        add     esp, 0x10
 
         pop     edx
         pop     eax
@@ -48,8 +51,11 @@ void __declspec(naked) addCaption_MsgOmochao_PlayVoice()
         push    eax
         push    edx
 
+        // not cutscene
+        push    0
+
         // duration
-        mov     ecx, [esp + 0x1C + 0x8]
+        mov     ecx, [esp + 0x1C + 0xC]
         push    ecx
 
         // caption
@@ -60,7 +66,7 @@ void __declspec(naked) addCaption_MsgOmochao_PlayVoice()
         push    ebx
 
         call    SubtitleUI::addCaptionImpl
-        add     esp, 0xC
+        add     esp, 0x10
 
         pop     edx
         pop     eax
@@ -69,16 +75,67 @@ void __declspec(naked) addCaption_MsgOmochao_PlayVoice()
     }
 }
 
+float cutsceneCaptionDuration = 0.0f;
+void __declspec(naked) addCaption_GetCutsceneDuration()
+{
+    static uint32_t sub_6AE910 = 0x6AE910;
+    static uint32_t returnAddress = 0xB16E71;
+    __asm
+    {
+        lea     eax, [cutsceneCaptionDuration]
+        mov     edx, [esp + 20h]
+        movss   xmm0, dword ptr [edx + 4h]
+        movss   [eax], xmm0
+
+        mov     byte ptr[ecx + 44h], 0 // force display immediately
+        call    [sub_6AE910]
+        mov     cutsceneCaptionDuration, 0
+        jmp     [returnAddress]
+    }
+}
+
+void __declspec(naked) addCaption_Cutscene()
+{
+    static uint32_t returnAddress = 0x6AE0A3;
+    __asm
+    {
+        cmp     cutsceneCaptionDuration, 0
+        jz      jump
+
+        push    eax
+        push    ebp
+
+        push    1
+        push    cutsceneCaptionDuration
+        push    eax
+        push    0
+        call    SubtitleUI::addCaptionImpl
+        add     esp, 0x10
+
+        pop     ebp
+        pop     eax
+
+        // original function
+        jump:
+        mov     edx, [eax + 8]
+        sub     edx, [eax + 4]
+        jmp     [returnAddress]
+    }
+}
+
 void SubtitleUI::applyPatches()
 {
     if (initFontDatabase())
     {
-        // Caption subtitle
-        WRITE_JUMP(0x461402, addCaption);
+        // Omochao subtitle
+        WRITE_JUMP(0x461402, addCaption_COmochaoFollow);
         WRITE_JUMP(0x1155E81, addCaption_MsgOmochao_PlayVoice);
         WRITE_JUMP(0x11F8813, (void*)0x11F8979);
 
         // TODO: Cutscene subtitle
+        WRITE_MEMORY(0xB16D7A, uint8_t, 0); // disable original textbox
+        WRITE_JUMP(0xB16E6C, addCaption_GetCutsceneDuration);
+        WRITE_JUMP(0x6AE09D, addCaption_Cutscene);
     }
 }
 
@@ -122,7 +179,7 @@ bool SubtitleUI::initFontDatabase()
     return false;
 }
 
-void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, float duration)
+void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, float duration, bool isCutscene)
 {
     // Caption disabled
     if ((*(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x18 }) & 0x10) == 0)
@@ -130,11 +187,12 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
         return;
     }
 
-    if (m_captionData.m_owner != owner)
+    if (m_captionData.m_owner != owner || isCutscene)
     {
         m_captionData.clear();
     }
     m_captionData.m_owner = owner;
+    m_captionData.m_isCutscene = isCutscene && !Common::CheckCurrentStage("blb");
 
     Caption newCaption;
     newCaption.m_duration = duration;
@@ -259,6 +317,7 @@ void SubtitleUI::draw()
     {
         // At loading screen, clear all
         m_captionData.clear();
+        cutsceneCaptionDuration = 0.0f;
         return;
     }
 
@@ -338,7 +397,7 @@ void SubtitleUI::draw()
                     }
                 }
 
-                if (str.back() == '\n')
+                if (!str.empty() && str.back() == '\n')
                 {
                     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + *BACKBUFFER_HEIGHT * 0.01f);
                 }
@@ -351,7 +410,7 @@ void SubtitleUI::draw()
         }
         ImGui::End();
 
-        m_captionData.m_timer += Application::getHudDeltaTime();
+        m_captionData.m_timer += m_captionData.m_isCutscene ? Application::getDeltaTime() : Application::getHudDeltaTime();
         if (m_captionData.m_timer > caption.m_duration)
         {
             m_captionData.m_captions.pop_front();
