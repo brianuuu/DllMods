@@ -5,6 +5,7 @@
 #include "UIContext.h"
 #include "SynchronizedObject.h"
 
+bool isScoreGenLowerPriority = false;
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
     std::string modDir = modInfo->CurrentMod->Path;
@@ -20,6 +21,8 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
         MessageBox(NULL, L"Failed to parse Config.ini", NULL, MB_ICONERROR);
     }
 
+    isScoreGenLowerPriority = (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr);
+
     // -------------Patches--------------
     // General application patches
     Application::applyPatches();
@@ -29,6 +32,15 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     // 06 dialog box
     SubtitleUI::applyPatches();
+}
+
+extern "C" __declspec(dllexport) void PostInit()
+{
+    if (!isScoreGenLowerPriority && GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr)
+    {
+        MessageBox(nullptr, TEXT("'Score Generations' mod must be lower priority than 'Sonic 06 HUD'!"), TEXT("Sonic 06 HUD"), MB_ICONERROR);
+        exit(-1);
+    }
 }
 
 HOOK(LRESULT, __stdcall, WndProc, 0xE7B6C0, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
