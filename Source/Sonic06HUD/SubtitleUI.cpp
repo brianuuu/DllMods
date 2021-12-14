@@ -398,8 +398,8 @@ void SubtitleUI::draw()
 
 float SubtitleUI::drawCaptions(Caption const& caption, float alpha, bool isShadow)
 {
-    bool addWidth = true;
-    float width = 0.0f;
+    float maxWidth = 0.0f;
+    float currentWidth = 0.0f;
 
     float const offset = 10.0f;
     float const shadowPosX = *BACKBUFFER_WIDTH * 0.002f;
@@ -418,10 +418,7 @@ float SubtitleUI::drawCaptions(Caption const& caption, float alpha, bool isShado
         float color = isShadow ? 0.0f : 1.0f;
 
         ImGui::TextColored(ImVec4(color, color, color, alpha * 0.9f), str.c_str());
-        if (addWidth)
-        {
-            width += ImGui::CalcTextSize(str.c_str()).x;
-        }
+        currentWidth += ImGui::CalcTextSize(str.c_str()).x;
 
         if (caption.m_buttons.count(i))
         {
@@ -455,10 +452,7 @@ float SubtitleUI::drawCaptions(Caption const& caption, float alpha, bool isShado
             if (texture)
             {
                 ImGui::Image(*texture, ImVec2(*BACKBUFFER_WIDTH * buttonSizeX / 1280.0f, *BACKBUFFER_HEIGHT * 28.0f / 720.0f), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, isShadow ? 0.0f : alpha));
-                if (addWidth)
-                {
-                    width += buttonSizeX;
-                }
+                currentWidth += buttonSizeX;
             }
         }
 
@@ -466,7 +460,9 @@ float SubtitleUI::drawCaptions(Caption const& caption, float alpha, bool isShado
         {
             ImGui::SetCursorPosX(isShadow ? shadowPosX + offset : offset);
             ImGui::SetCursorPosY(ImGui::GetCursorPosY() + *BACKBUFFER_HEIGHT * 0.01f);
-            addWidth = false;
+
+            maxWidth = max(maxWidth, currentWidth);
+            currentWidth = 0.0f;
         }
         else
         {
@@ -474,5 +470,6 @@ float SubtitleUI::drawCaptions(Caption const& caption, float alpha, bool isShado
         }
     }
 
-    return width;
+    maxWidth = max(maxWidth, currentWidth);
+    return maxWidth;
 }
