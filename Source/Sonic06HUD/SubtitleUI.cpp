@@ -157,21 +157,6 @@ bool SubtitleUI::initFontDatabase()
             key++;
         }
 
-#if _DEBUG
-        std::wstring missingStr = L"…俺窟秤";
-        std::sort(missingStr.begin(), missingStr.end());
-        int i = 0;
-        for (wchar_t const& c : missingStr)
-        {
-            printf("0x%04X, ", c);
-            i++;
-            if (i % 10 == 0)
-            {
-                printf("\n");
-            }
-        }
-#endif
-
         return true;
     }
 
