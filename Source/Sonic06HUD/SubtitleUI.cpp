@@ -123,6 +123,13 @@ void __declspec(naked) addCaption_Cutscene()
     }
 }
 
+HOOK(bool, __stdcall, SubtitleUI_CEventScene, 0xB238C0, void* a1)
+{
+    // Reset when cutscene starts
+    SubtitleUI::m_captionData.clear();
+    return originalSubtitleUI_CEventScene(a1);
+}
+
 void SubtitleUI::applyPatches()
 {
     if (initFontDatabase())
@@ -132,10 +139,11 @@ void SubtitleUI::applyPatches()
         WRITE_JUMP(0x1155E81, addCaption_MsgOmochao_PlayVoice);
         WRITE_JUMP(0x11F8813, (void*)0x11F8979);
 
-        // TODO: Cutscene subtitle
+        // Cutscene subtitle
         WRITE_MEMORY(0xB16D7A, uint8_t, 0); // disable original textbox
         WRITE_JUMP(0xB16E6C, addCaption_GetCutsceneDuration);
         WRITE_JUMP(0x6AE09D, addCaption_Cutscene);
+        INSTALL_HOOK(SubtitleUI_CEventScene);
     }
 }
 
@@ -354,13 +362,13 @@ void SubtitleUI::draw()
 
             if (m_captionData.m_isCutscene)
             {
-                drawCaptions(caption, alpha, true);
-                float textWidth = drawCaptions(caption, alpha, false);
-                ImGui::SetWindowPos(ImVec2((*BACKBUFFER_WIDTH - textWidth) * 0.5f - 10.0f, *BACKBUFFER_HEIGHT * 0.8169f - 10.0f));
+                drawCaptions(caption, alpha, true, true);
+                float textWidth = drawCaptions(caption, alpha, false, true);
+                ImGui::SetWindowPos(ImVec2((*BACKBUFFER_WIDTH - textWidth) * 0.5f - 10.0f, *BACKBUFFER_HEIGHT * 0.8502f - 10.0f));
             }
             else
             {
-                drawCaptions(caption, alpha, false);
+                drawCaptions(caption, alpha);
                 ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.2023f, *BACKBUFFER_HEIGHT * (posY + 0.047f)));
             }
         }
@@ -381,7 +389,7 @@ void SubtitleUI::draw()
     }
 }
 
-float SubtitleUI::drawCaptions(Caption const& caption, float alpha, bool isShadow)
+float SubtitleUI::drawCaptions(Caption const& caption, float alpha, bool isShadow, bool isCutscene)
 {
     float maxWidth = 0.0f;
     float currentWidth = 0.0f;
@@ -444,7 +452,11 @@ float SubtitleUI::drawCaptions(Caption const& caption, float alpha, bool isShado
         if (!str.empty() && str.back() == '\n')
         {
             ImGui::SetCursorPosX(isShadow ? shadowPosX + offset : offset);
-            ImGui::SetCursorPosY(ImGui::GetCursorPosY() + *BACKBUFFER_HEIGHT * 0.01f);
+            if (!isCutscene)
+            {
+                // y-spacing is slightly larger for gameplay dialog
+                ImGui::SetCursorPosY(ImGui::GetCursorPosY() + *BACKBUFFER_HEIGHT * 0.01f);
+            }
 
             maxWidth = max(maxWidth, currentWidth);
             currentWidth = 0.0f;
