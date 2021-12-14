@@ -206,7 +206,7 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
     uint32_t* captionList = (uint32_t*)caption[1];
 
     bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
-    bool adjustLineBreak = !Configuration::m_usingSTH2006Project && !isJapanese;
+    bool adjustLineBreak = !Configuration::m_usingSTH2006Project && !isJapanese && !m_captionData.m_isCutscene;
 
     std::wstring str;
     int rowLength = 0;
@@ -233,7 +233,7 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
         {
             if (key == 0x82)
             {
-                if (adjustLineBreak && linebreakCount < (m_captionData.m_isCutscene ? 1 : 2) && rowLength > (m_captionData.m_isCutscene ? 72 : 52))
+                if (adjustLineBreak && linebreakCount < 2 && rowLength > (m_captionData.m_isCutscene ? 72 : 52))
                 {
                     // Do line break manually
                     str += L'\n';
@@ -289,7 +289,7 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
     }
 
     m_captionData.m_captions.push_back(newCaption);
-    m_captionData.m_bypassLoading = (*(uint32_t**)0x1E66B40)[2] > 0;
+    m_captionData.m_bypassLoading = Common::IsAtLoadingScreen();
 }
 
 bool CaptionData::init()
