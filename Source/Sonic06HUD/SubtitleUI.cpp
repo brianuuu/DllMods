@@ -227,7 +227,7 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
         {
             if (key == 0x82)
             {
-                if (adjustLineBreak && linebreakCount < 2 && str.size() > 46)
+                if (adjustLineBreak && linebreakCount < 2 && str.size() > (m_captionData.m_isCutscene ? 72u : 46u))
                 {
                     // Do line break manually
                     str += L'\n';
@@ -331,82 +331,53 @@ void SubtitleUI::draw()
         float alpha = 1.0f;
 
         static bool visible = true;
-        ImGui::Begin("Textbox", &visible, UIContext::m_hudFlags);
+        if (m_captionData.m_isCutscene)
         {
-            // Fade in and out
-            float frame1 = m_captionData.m_timer * 60.0f;
-            float frame2 = (caption.m_duration - m_captionData.m_timer) * 60.0f;
-            if (frame1 < 5.0f)
-            {
-                posY += 0.03476f * (5.0f - frame1);
-                alpha = 0.2f * frame1;
-            }
-            else if (frame2 < 5.0f)
-            {
-                posY += 0.03476f * (5.0f - frame2);
-                alpha = 0.2f * frame2;
-            }
-
-            ImGui::SetWindowFocus();
-            ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
-            ImGui::Image(m_captionData.m_textbox, ImVec2(sizeX, sizeY), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, alpha * 0.9f));
-            ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * posX, *BACKBUFFER_HEIGHT * posY));
+            // Don't draw first frame since position is stale
+            alpha = (m_captionData.m_timer == 0.0f) ? 0.0f : 1.0f;
         }
-        ImGui::End();
+        else
+        {
+            ImGui::Begin("Textbox", &visible, UIContext::m_hudFlags);
+            {
+                // Fade in and out
+                float frame1 = m_captionData.m_timer * 60.0f;
+                float frame2 = (caption.m_duration - m_captionData.m_timer) * 60.0f;
+                if (frame1 < 5.0f)
+                {
+                    posY += 0.03476f * (5.0f - frame1);
+                    alpha = 0.2f * frame1;
+                }
+                else if (frame2 < 5.0f)
+                {
+                    posY += 0.03476f * (5.0f - frame2);
+                    alpha = 0.2f * frame2;
+                }
+
+                ImGui::SetWindowFocus();
+                ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
+                ImGui::Image(m_captionData.m_textbox, ImVec2(sizeX, sizeY), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, alpha * 0.9f));
+                ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * posX, *BACKBUFFER_HEIGHT * posY));
+            }
+            ImGui::End();
+        }
 
         ImGui::Begin("Caption", &visible, UIContext::m_hudFlags);
         {
             ImGui::SetWindowFocus();
             ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
-            for (uint32_t i = 0; i < caption.m_captions.size(); i++)
+
+            if (m_captionData.m_isCutscene)
             {
-                std::string const& str = caption.m_captions[i];
-                ImGui::TextColored(ImVec4(1, 1, 1, alpha * 0.9f), str.c_str());
-                if (caption.m_buttons.count(i))
-                {
-                    float buttonSizeX = 28.0f;
-                    switch (caption.m_buttons[i])
-                    {
-                    case CBT_LB:
-                    case CBT_RB:
-                    case CBT_LT:
-                    case CBT_RT:
-                        buttonSizeX = 56.0f;
-                        break;
-                    }
-
-                    PDIRECT3DTEXTURE9* texture = nullptr;
-                    switch (caption.m_buttons[i])
-                    {
-                    case CBT_A:     texture = &m_captionData.m_buttonA;      break;
-                    case CBT_B:     texture = &m_captionData.m_buttonB;      break;
-                    case CBT_X:     texture = &m_captionData.m_buttonX;      break;
-                    case CBT_Y:     texture = &m_captionData.m_buttonY;      break;
-                    case CBT_LB:    texture = &m_captionData.m_buttonLB;     break;
-                    case CBT_RB:    texture = &m_captionData.m_buttonRB;     break;
-                    case CBT_LT:    texture = &m_captionData.m_buttonLT;     break;
-                    case CBT_RT:    texture = &m_captionData.m_buttonRT;     break;
-                    case CBT_Start: texture = &m_captionData.m_buttonStart;  break;
-                    case CBT_Back:  texture = &m_captionData.m_buttonBack;   break;
-                    }
-
-                    ImGui::SameLine();
-                    if (texture)
-                    {
-                        ImGui::Image(*texture, ImVec2(*BACKBUFFER_WIDTH * buttonSizeX / 1280.0f, *BACKBUFFER_HEIGHT * 28.0f / 720.0f), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, alpha));
-                    }
-                }
-
-                if (!str.empty() && str.back() == '\n')
-                {
-                    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + *BACKBUFFER_HEIGHT * 0.01f);
-                }
-                else
-                {
-                    ImGui::SameLine();
-                }
+                drawCaptions(caption, alpha, true);
+                float textWidth = drawCaptions(caption, alpha, false);
+                ImGui::SetWindowPos(ImVec2((*BACKBUFFER_WIDTH - textWidth) * 0.5f - 10.0f, *BACKBUFFER_HEIGHT * 0.8169f - 10.0f));
             }
-            ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.2023f, *BACKBUFFER_HEIGHT * (posY + 0.047f)));
+            else
+            {
+                drawCaptions(caption, alpha, false);
+                ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.2023f, *BACKBUFFER_HEIGHT * (posY + 0.047f)));
+            }
         }
         ImGui::End();
 
@@ -423,4 +394,85 @@ void SubtitleUI::draw()
             }
         }
     }
+}
+
+float SubtitleUI::drawCaptions(Caption const& caption, float alpha, bool isShadow)
+{
+    bool addWidth = true;
+    float width = 0.0f;
+
+    float const offset = 10.0f;
+    float const shadowPosX = *BACKBUFFER_WIDTH * 0.002f;
+    if (isShadow)
+    {
+        ImGui::SetCursorPos(ImVec2(shadowPosX + offset, *BACKBUFFER_HEIGHT * 0.0036f + offset));
+    }
+    else
+    {
+        ImGui::SetCursorPos(ImVec2(offset, offset));
+    }
+
+    for (uint32_t i = 0; i < caption.m_captions.size(); i++)
+    {
+        std::string const& str = caption.m_captions[i];
+        float color = isShadow ? 0.0f : 1.0f;
+
+        ImGui::TextColored(ImVec4(color, color, color, alpha * 0.9f), str.c_str());
+        if (addWidth)
+        {
+            width += ImGui::CalcTextSize(str.c_str()).x;
+        }
+
+        if (caption.m_buttons.count(i))
+        {
+            float buttonSizeX = 28.0f;
+            switch (caption.m_buttons.at(i))
+            {
+            case CBT_LB:
+            case CBT_RB:
+            case CBT_LT:
+            case CBT_RT:
+                buttonSizeX = 56.0f;
+                break;
+            }
+
+            PDIRECT3DTEXTURE9* texture = nullptr;
+            switch (caption.m_buttons.at(i))
+            {
+            case CBT_A:     texture = &m_captionData.m_buttonA;      break;
+            case CBT_B:     texture = &m_captionData.m_buttonB;      break;
+            case CBT_X:     texture = &m_captionData.m_buttonX;      break;
+            case CBT_Y:     texture = &m_captionData.m_buttonY;      break;
+            case CBT_LB:    texture = &m_captionData.m_buttonLB;     break;
+            case CBT_RB:    texture = &m_captionData.m_buttonRB;     break;
+            case CBT_LT:    texture = &m_captionData.m_buttonLT;     break;
+            case CBT_RT:    texture = &m_captionData.m_buttonRT;     break;
+            case CBT_Start: texture = &m_captionData.m_buttonStart;  break;
+            case CBT_Back:  texture = &m_captionData.m_buttonBack;   break;
+            }
+
+            ImGui::SameLine();
+            if (texture)
+            {
+                ImGui::Image(*texture, ImVec2(*BACKBUFFER_WIDTH * buttonSizeX / 1280.0f, *BACKBUFFER_HEIGHT * 28.0f / 720.0f), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, isShadow ? 0.0f : alpha));
+                if (addWidth)
+                {
+                    width += buttonSizeX;
+                }
+            }
+        }
+
+        if (!str.empty() && str.back() == '\n')
+        {
+            ImGui::SetCursorPosX(isShadow ? shadowPosX + offset : offset);
+            ImGui::SetCursorPosY(ImGui::GetCursorPosY() + *BACKBUFFER_HEIGHT * 0.01f);
+            addWidth = false;
+        }
+        else
+        {
+            ImGui::SameLine();
+        }
+    }
+
+    return width;
 }
