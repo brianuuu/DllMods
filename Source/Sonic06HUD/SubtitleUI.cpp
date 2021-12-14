@@ -209,6 +209,7 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
     bool adjustLineBreak = !Configuration::m_usingSTH2006Project && !isJapanese;
 
     std::wstring str;
+    int rowLength = 0;
     int linebreakCount = 0;
     for (uint32_t i = 0; i < length; i++)
     {
@@ -226,27 +227,32 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
                 str.clear();
             }
             newCaption.m_buttons[newCaption.m_captions.size() - 1] = (CaptionButtonType)(key - 0x64);
+            rowLength += 2;
         }
         else if (m_fontDatabase.count(key))
         {
             if (key == 0x82)
             {
-                if (adjustLineBreak && linebreakCount < (m_captionData.m_isCutscene ? 1 : 2) && str.size() > (m_captionData.m_isCutscene ? 72u : 46u))
+                if (adjustLineBreak && linebreakCount < (m_captionData.m_isCutscene ? 1 : 2) && rowLength > (m_captionData.m_isCutscene ? 72 : 52))
                 {
                     // Do line break manually
                     str += L'\n';
+                    rowLength = 0;
+                    linebreakCount++;
+
                     newCaption.m_captions.push_back(Common::wideCharToMultiByte(str.c_str()));
                     str.clear();
-                    linebreakCount++;
                 }
                 else
                 {
                     str += L"  ";
+                    rowLength += 2;
                 }
             }
             else
             {
                 str += m_fontDatabase[key];
+                rowLength++;
             }
         }
         else if (key == 0)
@@ -257,11 +263,14 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
                 if (!str.empty() && str.back() != L' ')
                 {
                     str += L"  ";
+                    rowLength += 2;
                 }
             }
             else
             {
                 str += L'\n';
+                rowLength = 0;
+
                 newCaption.m_captions.push_back(Common::wideCharToMultiByte(str.c_str()));
                 str.clear();
             }
@@ -269,6 +278,7 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
         else if (key != 0x4)
         {
             str += L'?';
+            rowLength++;
         }
     }
 
