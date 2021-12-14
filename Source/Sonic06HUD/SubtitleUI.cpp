@@ -123,11 +123,21 @@ void __declspec(naked) addCaption_Cutscene()
     }
 }
 
-HOOK(bool, __stdcall, SubtitleUI_CEventScene, 0xB238C0, void* a1)
+HOOK(bool, __stdcall, SubtitleUI_CEventSceneStart, 0xB238C0, void* a1)
 {
     // Reset when cutscene starts
     SubtitleUI::m_captionData.clear();
-    return originalSubtitleUI_CEventScene(a1);
+    return originalSubtitleUI_CEventSceneStart(a1);
+}
+
+HOOK(bool, __fastcall, SubtitleUI_CEventSceneAdvance, 0xB24A40, uint32_t* This, void* Edx, int a2)
+{
+    // Reset when cutscene ends
+    if (This[73] == 3)
+    {
+        SubtitleUI::m_captionData.clear();
+    }
+    return originalSubtitleUI_CEventSceneAdvance(This, Edx, a2);
 }
 
 void SubtitleUI::applyPatches()
@@ -143,7 +153,8 @@ void SubtitleUI::applyPatches()
         WRITE_MEMORY(0xB16D7A, uint8_t, 0); // disable original textbox
         WRITE_JUMP(0xB16E6C, addCaption_GetCutsceneDuration);
         WRITE_JUMP(0x6AE09D, addCaption_Cutscene);
-        INSTALL_HOOK(SubtitleUI_CEventScene);
+        INSTALL_HOOK(SubtitleUI_CEventSceneStart);
+        INSTALL_HOOK(SubtitleUI_CEventSceneAdvance);
     }
 }
 
