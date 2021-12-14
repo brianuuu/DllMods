@@ -227,7 +227,7 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
         {
             if (key == 0x82)
             {
-                if (adjustLineBreak && linebreakCount < 2 && str.size() > (m_captionData.m_isCutscene ? 72u : 46u))
+                if (adjustLineBreak && linebreakCount < (m_captionData.m_isCutscene ? 1 : 2) && str.size() > (m_captionData.m_isCutscene ? 72u : 46u))
                 {
                     // Do line break manually
                     str += L'\n';
