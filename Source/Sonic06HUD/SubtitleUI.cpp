@@ -262,7 +262,7 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
                 str.clear();
             }
         }
-        else
+        else if (key != 0x4)
         {
             str += L'?';
         }
