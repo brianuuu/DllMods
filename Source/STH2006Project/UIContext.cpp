@@ -2,7 +2,7 @@
 #include "Application.h"
 #include "Itembox.h"
 #include "ScoreManager.h"
-#include "Stage.h"
+#include "Omochao.h"
 #include "ResultUI.h"
 #include "LoadingUI.h"
 
@@ -45,6 +45,22 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
         MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-NewRodin Pro EB.otf\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
         font = io.Fonts->AddFontDefault();
     }
+
+    ImVector<ImWchar> rangesTextbox;
+    ImFontGlyphRangesBuilder builderTextbox;
+    initFontDatabase();
+    for (auto const& iter : m_fontDatabase)
+    {
+        builderTextbox.AddChar(iter.second);
+    }
+    builderTextbox.BuildRanges(&rangesTextbox);
+
+    const float fontSubtitleSize = 40.0f * (float)*BACKBUFFER_WIDTH / 1920.0f;
+    if ((fontSubtitle = io.Fonts->AddFontFromFileTTF((Application::getModDirString() + "Fonts\\FOT-RodinCattleyaPro-DB.otf").c_str(), fontSubtitleSize, nullptr, rangesTextbox.Data)) == nullptr)
+    {
+        MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-RodinCattleyaPro-DB.otf\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
+        fontSubtitle = io.Fonts->AddFontDefault();
+    }
     io.Fonts->Build();
 
     // Initial textures
@@ -52,6 +68,31 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     ScoreManager::initTextures();
     ResultUI::initTextures();
     LoadingUI::initTextures();
+}
+
+std::map<uint32_t, wchar_t> UIContext::m_fontDatabase;
+bool UIContext::initFontDatabase()
+{
+    std::ifstream database(Application::getModDirWString() + L"Fonts\\FontDatabase.txt");
+    if (database.is_open())
+    {
+        std::stringstream ss;
+        ss << database.rdbuf();
+        database.close();
+
+        uint32_t key = 0x82;
+        std::wstring str = Common::multiByteToWideChar(ss.str().c_str());
+        for (wchar_t const& c : str)
+        {
+            m_fontDatabase[key] = c;
+            key++;
+        }
+
+        return true;
+    }
+
+    MessageBox(nullptr, TEXT("Failed to load font database, reverting to in-game textbox."), TEXT("Sonic 06 HUD"), MB_ICONWARNING);
+    return false;
 }
 
 void UIContext::update()
