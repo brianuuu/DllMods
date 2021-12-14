@@ -25,6 +25,13 @@ HOOK(void, __fastcall, ResultUI_MsgStartGoalResult, 0x10B58A0, uint32_t* This, v
 	// Don't run the message itself
 }
 
+HOOK(bool, __stdcall, ResultUI_CEventScene, 0xB238C0, void* a1)
+{
+	// Reset when cutscene starts
+	ResultUI::m_resultUIData.reset();
+	return originalResultUI_CEventScene(a1);
+}
+
 HOOK(int, __fastcall, ResultUI_CStateGoalFadeBefore, 0xCFE080, uint32_t* This)
 {
 	int result = originalResultUI_CStateGoalFadeBefore(This);
@@ -63,6 +70,7 @@ void ResultUI::applyPatches()
 	if (!m_init) return;
 
 	INSTALL_HOOK(ResultUI_MsgStartGoalResult);
+	INSTALL_HOOK(ResultUI_CEventScene);
 	INSTALL_HOOK(ResultUI_CStateGoalFadeBefore);
 	INSTALL_HOOK(ResultUI_CHudResultAdvance);
 }
