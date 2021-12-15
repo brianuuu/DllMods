@@ -275,11 +275,7 @@ void NextGenPhysics::applyPatches()
     // Disable trick system
     if (Configuration::m_noTrick)
     {
-        // No trick rainbow ring, but keep rainbow ring animation
-        WRITE_JUMP(0xE6D3FB, noTrickRainbowRing);
-
-        // Make trick ramp use JumpBaord animation
-        WRITE_MEMORY(0x1014866, uint32_t, ImpulseType::JumpBoard);
+        applyNoTrickPatches();
     }
 
     // 06 physics general code
@@ -365,6 +361,15 @@ void NextGenPhysics::applyPatches()
         break;
     }
     }
+}
+
+void NextGenPhysics::applyNoTrickPatches()
+{
+    // No trick rainbow ring, but keep rainbow ring animation
+    WRITE_JUMP(0xE6D3FB, noTrickRainbowRing);
+
+    // Make trick ramp use JumpBaord animation
+    WRITE_MEMORY(0x1014866, uint32_t, ImpulseType::JumpBoard);
 }
 
 NextGenAnimation NextGenPhysics::m_animationData = NextGenAnimation();

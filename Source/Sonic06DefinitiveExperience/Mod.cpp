@@ -109,9 +109,21 @@ extern "C" __declspec(dllexport) void PostInit()
 {
     if (*(uint16_t*)0x115A6AF == 0x9090)
     {
-        // Make sure people don't use "No Trick Rainbow Rings" patch cuz they don't read
-        MessageBox(nullptr, TEXT("\"No Trick Rainbow Rings\" code detected, please disable it and use the built-in configuration instead."), TEXT("Sonic 06 Definitive Experience"), MB_ICONERROR);
-        exit(-1);
+        // Revert "No Trick Rainbow Rings" code
+        WRITE_MEMORY(0x115A6AF, uint8_t, 0xF7, 0xD9);
+
+        // Apply no trick hooks if not already
+        if (!Configuration::m_noTrick)
+        {
+            Configuration::m_noTrick = true;
+            NextGenPhysics::applyNoTrickPatches();
+        }
+    }
+
+    if (Configuration::m_physics && *(uint32_t*)0x121EDA4 == 0xADE9)
+    {
+        // Revert "Disable Grind Rail Lock-on" code
+        WRITE_MEMORY(0x121EDA4, uint8_t, 0x0F, 0x84, 0xAC, 0x00, 0x00);
     }
 
     // TODO: Mandatory when 06 HUD is ready

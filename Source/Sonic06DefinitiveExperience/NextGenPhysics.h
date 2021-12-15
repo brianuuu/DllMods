@@ -41,6 +41,7 @@ class NextGenPhysics
 {
 public:
 	static void applyPatches();
+	static void applyNoTrickPatches();
 
 	// Common 06 Physics
 	static float m_homingDownSpeed;
