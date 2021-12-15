@@ -398,18 +398,18 @@ void Itembox::draw()
 	{
 		ItemboxGUI& data = m_guiData[i];
 
-		PDIRECT3DTEXTURE9 texture = nullptr;
+		PDIRECT3DTEXTURE9* texture = nullptr;
 		switch (data.m_type)
 		{
-		case IT_5ring:	 texture = m_item_5ring;  break;
-		case IT_10ring:	 texture = m_item_10ring; break;
-		case IT_20ring:	 texture = m_item_20ring; break;
-		case IT_1up:	 texture = m_item_1up;	  break;
-		case IT_invin:	 texture = m_item_invin;  break;
-		case IT_speed:	 texture = m_item_speed;  break;
-		case IT_gauge:	 texture = m_item_gauge;  break;
-		case IT_shield:	 texture = m_item_shield; break;
-		case IT_fire:	 texture = m_item_fire;	  break;
+		case IT_5ring:	 texture = &m_item_5ring;	break;
+		case IT_10ring:	 texture = &m_item_10ring;	break;
+		case IT_20ring:	 texture = &m_item_20ring;	break;
+		case IT_1up:	 texture = &m_item_1up;		break;
+		case IT_invin:	 texture = &m_item_invin;	break;
+		case IT_speed:	 texture = &m_item_speed;	break;
+		case IT_gauge:	 texture = &m_item_gauge;	break;
+		case IT_shield:	 texture = &m_item_shield;	break;
+		case IT_fire:	 texture = &m_item_fire;	break;
 		}
 
 		if (data.m_frame > 0.0f && texture)
@@ -439,7 +439,7 @@ void Itembox::draw()
 				ImGui::SetWindowFocus();
 				ImGui::SetWindowPos(ImVec2(posX, posY));
 				ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
-				ImGui::Image(texture, ImVec2(sizeX, sizeY));
+				ImGui::Image(*texture, ImVec2(sizeX, sizeY));
 			}
 			ImGui::End();
 		}
