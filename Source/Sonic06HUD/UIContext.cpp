@@ -1,6 +1,7 @@
 ﻿#include "UIContext.h"
 #include "Application.h"
 #include "Stage.h"
+#include "ItemboxUI.h"
 #include "SubtitleUI.h"
 //#include "ResultUI.h"
 
@@ -61,6 +62,7 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     io.Fonts->Build();
 
     // Initial textures
+    ItemboxUI::initTextures();
     SubtitleUI::m_captionData.init();
     //ResultUI::initTextures();
 }
@@ -81,6 +83,7 @@ void UIContext::update()
     if (*(bool*)0x1A430D7)
     {
         // Draw imgui here
+        ItemboxUI::draw();
         Stage::draw();
 
         ImGui::PushFont(fontSubtitle);

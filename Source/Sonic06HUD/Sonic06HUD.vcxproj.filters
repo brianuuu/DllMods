@@ -31,6 +31,7 @@
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="SynchronizedObject.cpp" />
     <ClCompile Include="SubtitleUI.cpp" />
+    <ClCompile Include="ItemboxUI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -40,6 +41,7 @@
     <ClInclude Include="Application.h" />
     <ClInclude Include="SynchronizedObject.h" />
     <ClInclude Include="SubtitleUI.h" />
+    <ClInclude Include="ItemboxUI.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">
