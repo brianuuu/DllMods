@@ -4,7 +4,7 @@
 #include "ItemboxUI.h"
 #include "SubtitleUI.h"
 #include "ScoreUI.h"
-//#include "ResultUI.h"
+#include "ResultUI.h"
 
 HWND UIContext::window;
 IDirect3DDevice9* UIContext::device;
@@ -66,7 +66,7 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     ItemboxUI::initTextures();
     SubtitleUI::m_captionData.init();
     ScoreUI::initTextures();
-    //ResultUI::initTextures();
+    ResultUI::initTextures();
 }
 
 void UIContext::update()
@@ -91,7 +91,7 @@ void UIContext::update()
 
         ImGui::PushFont(fontSubtitle);
         SubtitleUI::draw();
-        //ResultUI::draw();
+        ResultUI::draw();
         ImGui::PopFont();
     }
 

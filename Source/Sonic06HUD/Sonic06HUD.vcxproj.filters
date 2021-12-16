@@ -33,6 +33,7 @@
     <ClCompile Include="SubtitleUI.cpp" />
     <ClCompile Include="ItemboxUI.cpp" />
     <ClCompile Include="ScoreUI.cpp" />
+    <ClCompile Include="ResultUI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -44,6 +45,7 @@
     <ClInclude Include="SubtitleUI.h" />
     <ClInclude Include="ItemboxUI.h" />
     <ClInclude Include="ScoreUI.h" />
+    <ClInclude Include="ResultUI.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">

@@ -21,7 +21,7 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
         MessageBox(NULL, L"Failed to parse Config.ini", NULL, MB_ICONERROR);
     }
 
-    isScoreGenLowerPriority = (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr);
+    isScoreGenLowerPriority = (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr || GetModuleHandle(TEXT("STH2006ProjectExtra.dll")) != nullptr);
 
     // -------------Patches--------------
     // General application patches
@@ -36,7 +36,7 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
 extern "C" __declspec(dllexport) void PostInit()
 {
-    if (!isScoreGenLowerPriority && GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr)
+    if (!isScoreGenLowerPriority && (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr || GetModuleHandle(TEXT("STH2006ProjectExtra.dll")) != nullptr))
     {
         MessageBox(nullptr, TEXT("'Score Generations' mod must be lower priority than 'Sonic 06 HUD'!"), TEXT("Sonic 06 HUD"), MB_ICONERROR);
         exit(-1);

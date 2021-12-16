@@ -206,6 +206,7 @@ xcopy /Y /E /I "$(MSBuildProjectDirectory)\Fonts" "$(MSBuildProjectDirectory)\bi
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pch.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="ResultUI.cpp" />
     <ClCompile Include="ScoreUI.cpp" />
     <ClCompile Include="Stage.cpp" />
     <ClCompile Include="SubtitleUI.cpp" />
@@ -217,6 +218,7 @@ xcopy /Y /E /I "$(MSBuildProjectDirectory)\Fonts" "$(MSBuildProjectDirectory)\bi
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="ItemboxUI.h" />
     <ClInclude Include="Pch.h" />
+    <ClInclude Include="ResultUI.h" />
     <ClInclude Include="ScoreUI.h" />
     <ClInclude Include="Stage.h" />
     <ClInclude Include="SubtitleUI.h" />
