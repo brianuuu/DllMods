@@ -32,6 +32,7 @@
     <ClCompile Include="SynchronizedObject.cpp" />
     <ClCompile Include="SubtitleUI.cpp" />
     <ClCompile Include="ItemboxUI.cpp" />
+    <ClCompile Include="ScoreUI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -42,6 +43,7 @@
     <ClInclude Include="SynchronizedObject.h" />
     <ClInclude Include="SubtitleUI.h" />
     <ClInclude Include="ItemboxUI.h" />
+    <ClInclude Include="ScoreUI.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">

@@ -3,6 +3,7 @@
 #include "Stage.h"
 #include "ItemboxUI.h"
 #include "SubtitleUI.h"
+#include "ScoreUI.h"
 //#include "ResultUI.h"
 
 HWND UIContext::window;
@@ -64,6 +65,7 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     // Initial textures
     ItemboxUI::initTextures();
     SubtitleUI::m_captionData.init();
+    ScoreUI::initTextures();
     //ResultUI::initTextures();
 }
 
@@ -85,6 +87,7 @@ void UIContext::update()
         // Draw imgui here
         ItemboxUI::draw();
         Stage::draw();
+        ScoreUI::draw();
 
         ImGui::PushFont(fontSubtitle);
         SubtitleUI::draw();
