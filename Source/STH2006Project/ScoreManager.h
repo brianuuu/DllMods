@@ -48,7 +48,7 @@ inline char const* GetScoreTypeName(ScoreType type)
 	}
 }
 
-enum RankType : uint32_t
+enum ResultRankType : uint32_t
 {
 	RT_D,
 	RT_C,
@@ -68,8 +68,8 @@ struct ScoreTable
 struct ResultData
 {
 	int m_score;
-	RankType m_rank;
-	RankType m_perfectRank;
+	ResultRankType m_rank;
+	ResultRankType m_perfectRank;
 	int m_nextRankScore; // Used to be time in milliseconds, but we repurpose it
 	float m_totalProp;	// result progress bar (time prop + ring prop) 
 	float m_timeProp;	// result progress bar (time prop)
@@ -125,7 +125,7 @@ public:
 	static uint32_t m_bonus;
 	static float m_bonusTimer;
 	static float m_bonusDrawTimer;
-	static PDIRECT3DTEXTURE9 m_bonusTexture;
+	static PDIRECT3DTEXTURE9* m_bonusTexture;
 	static void notifyDraw(BonusCommentType type);
 	static void draw();
 

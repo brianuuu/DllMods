@@ -23,7 +23,7 @@ float ScoreManager::m_enemyChainTimer = 0.0f;
 uint32_t ScoreManager::m_bonus = 0;
 float ScoreManager::m_bonusTimer = 0.0f;
 float ScoreManager::m_bonusDrawTimer = 0.0f;
-PDIRECT3DTEXTURE9 ScoreManager::m_bonusTexture = nullptr;
+PDIRECT3DTEXTURE9* ScoreManager::m_bonusTexture = nullptr;
 PDIRECT3DTEXTURE9 ScoreManager::m_bonus_Great = nullptr;
 PDIRECT3DTEXTURE9 ScoreManager::m_bonus_Radical = nullptr;
 
@@ -775,27 +775,27 @@ ResultData* ScoreManager::calculateResultData()
 	// Get current rank and score to next rank (if applicable)
 	if (data.m_score > scoreTable.m_scoreS)
 	{
-		data.m_rank = RankType::RT_S;
+		data.m_rank = ResultRankType::RT_S;
 		data.m_nextRankScore = 0;
 	}
 	else if (data.m_score > scoreTable.m_scoreA)
 	{
-		data.m_rank = RankType::RT_A;
+		data.m_rank = ResultRankType::RT_A;
 		data.m_nextRankScore = scoreTable.m_scoreS - data.m_score;
 	}
 	else if (data.m_score > scoreTable.m_scoreB)
 	{
-		data.m_rank = RankType::RT_B;
+		data.m_rank = ResultRankType::RT_B;
 		data.m_nextRankScore = scoreTable.m_scoreA - data.m_score;
 	}
 	else if (data.m_score > scoreTable.m_scoreC)
 	{
-		data.m_rank = RankType::RT_C;
+		data.m_rank = ResultRankType::RT_C;
 		data.m_nextRankScore = scoreTable.m_scoreB - data.m_score;
 	}
 	else
 	{
-		data.m_rank = RankType::RT_D;
+		data.m_rank = ResultRankType::RT_D;
 		data.m_nextRankScore = scoreTable.m_scoreC - data.m_score;
 	}
 	data.m_perfectRank = data.m_rank;
@@ -821,10 +821,10 @@ ResultData* ScoreManager::calculateResultData()
 		, (int)(m_currentTime * 1000.0f) % 1000
 		, m_currentTime
 		, *Common::GetPlayerRingCount()
-		, data.m_rank == RankType::RT_S ? "S" 
-		: (data.m_rank == RankType::RT_A ? "A" 
-		: (data.m_rank == RankType::RT_B ? "B" 
-		: (data.m_rank == RankType::RT_C ? "C" : "D")))
+		, data.m_rank == ResultRankType::RT_S ? "S"
+		: (data.m_rank == ResultRankType::RT_A ? "A"
+		: (data.m_rank == ResultRankType::RT_B ? "B"
+		: (data.m_rank == ResultRankType::RT_C ? "C" : "D")))
 		, m_pCScoreManager->m_score
 		, m_timeBonus
 		, timeBonusBase
@@ -881,8 +881,8 @@ void ScoreManager::notifyDraw(BonusCommentType type)
 	{
 		switch (type)
 		{
-		case BCT_Great:		m_bonusTexture = m_bonus_Great;   break;
-		case BCT_Radical:	m_bonusTexture = m_bonus_Radical; break;
+		case BCT_Great:		m_bonusTexture = &m_bonus_Great;   break;
+		case BCT_Radical:	m_bonusTexture = &m_bonus_Radical; break;
 		}
 	}
 
@@ -944,7 +944,7 @@ void ScoreManager::draw()
 
 				ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * posX, *BACKBUFFER_HEIGHT * posY));
 				ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
-				ImGui::Image(m_bonusTexture, ImVec2(sizeX, sizeY));
+				ImGui::Image(*m_bonusTexture, ImVec2(sizeX, sizeY));
 			}
 			ImGui::End();
 		}
