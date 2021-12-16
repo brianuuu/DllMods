@@ -459,7 +459,7 @@ void ResultUI::ResultUIData::draw()
 
 void ResultUI::ResultUIData::nextState()
 {
-	// Finished the black screen delay, exist
+	// Finished the black screen delay, exit
 	if (m_state == ResultState::RS_Finish)
 	{
 		reset();
@@ -635,7 +635,7 @@ void ResultUI::ResultUIData::nextState()
 	}
 	case RS_FadeOut:
 	{	 
-		printf("[ResultUI] State: Next Rank\n");
+		printf("[ResultUI] State: Fade Out\n");
 		m_frame = 140.0f; 
 		break; 
 	}

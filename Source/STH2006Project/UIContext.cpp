@@ -3,7 +3,7 @@
 #include "Itembox.h"
 #include "ScoreManager.h"
 #include "Omochao.h"
-#include "ResultUI.h"
+//#include "ResultUI.h"
 #include "LoadingUI.h"
 
 HWND UIContext::window;
@@ -66,7 +66,7 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     // Initial textures
     Itembox::initTextures();
     ScoreManager::initTextures();
-    ResultUI::initTextures();
+    //ResultUI::initTextures();
     LoadingUI::initTextures();
 }
 
@@ -115,7 +115,7 @@ void UIContext::update()
         ScoreManager::draw();
 
         ImGui::PushFont(fontSubtitle);
-        ResultUI::draw();
+        //ResultUI::draw();
         LoadingUI::draw();
         ImGui::PopFont();
     }
