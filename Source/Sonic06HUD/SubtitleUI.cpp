@@ -228,6 +228,7 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
             }
             newCaption.m_buttons[newCaption.m_captions.size() - 1] = (CaptionButtonType)(key - 0x64);
             rowLength += 2;
+            // TODO: L-stick & R-stick texture
         }
         else if (m_fontDatabase.count(key))
         {

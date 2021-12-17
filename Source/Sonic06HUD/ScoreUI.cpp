@@ -57,7 +57,7 @@ void ScoreUI::applyPatches()
 	m_physicsScore = scoreTable.Physics;
 	if (m_physicsScore > 0)
 	{
-
+		// TODO: maunally remove physics score for itembox lock-on
 	}
 }
 
