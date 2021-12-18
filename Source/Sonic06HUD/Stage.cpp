@@ -243,7 +243,9 @@ void Stage::applyPatches()
     // Make boost particles goes to Sonic
     INSTALL_HOOK(Stage_MsgGetHudPosition);
 
-    // TODO: Remove Life + 1 UI
+    // Remove Life + 1 UI
+    WRITE_JUMP(0xE75565, (void*)0xE75630);
+    WRITE_NOP(0xE75656, 9);
 }
 
 void Stage::draw()
