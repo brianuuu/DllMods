@@ -17,6 +17,7 @@ public:
 	static float m_bonusDrawTimer;
 	static PDIRECT3DTEXTURE9* m_bonusTexture;
 	static void draw();
+	static void clearDraw();
 
 	// Textures
 	static bool initTextures();

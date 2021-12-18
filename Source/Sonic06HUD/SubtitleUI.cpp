@@ -332,8 +332,7 @@ void SubtitleUI::draw()
     else if (Common::IsAtLoadingScreen())
     {
         // At loading screen, clear all
-        m_captionData.clear();
-        cutsceneCaptionDuration = 0.0f;
+        clearDraw();
         return;
     }
 
@@ -410,6 +409,12 @@ void SubtitleUI::draw()
             }
         }
     }
+}
+
+void SubtitleUI::clearDraw()
+{
+    m_captionData.clear();
+    cutsceneCaptionDuration = 0.0f;
 }
 
 float SubtitleUI::drawCaptions(Caption const& caption, float alpha, bool isShadow, bool isCutscene)

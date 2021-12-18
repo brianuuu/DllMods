@@ -135,9 +135,7 @@ void ScoreUI::draw()
 	// At loading screen, clear all
 	if (Common::IsAtLoadingScreen())
 	{
-		m_bonus = 0;
-		m_bonusDrawTimer = 0.0f;
-		m_rainbowRingChain = 0;
+		clearDraw();
 		return;
 	}
 
@@ -173,4 +171,11 @@ void ScoreUI::draw()
 			ImGui::End();
 		}
 	}
+}
+
+void ScoreUI::clearDraw()
+{
+	m_bonus = 0;
+	m_bonusDrawTimer = 0.0f;
+	m_rainbowRingChain = 0;
 }

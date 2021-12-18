@@ -166,6 +166,11 @@ void ResultUI::draw()
 	m_resultUIData.draw();
 }
 
+void ResultUI::clearDraw()
+{
+	m_resultUIData.reset();
+}
+
 ResultUI::ResultUIBox::ResultUIBox(ResultUI::ResultTextType type, ImVec2 pos)
 : m_type(type), m_finalPos(pos)
 {

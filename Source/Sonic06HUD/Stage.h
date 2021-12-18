@@ -14,5 +14,6 @@ public:
 	static std::string m_lapTimeStr;
 	static float m_checkpointTimer;
 	static void draw();
+	static void clearDraw();
 };
 

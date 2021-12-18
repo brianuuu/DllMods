@@ -73,7 +73,7 @@ void ItemboxUI::draw()
 	// At loading screen, clear all
 	if (Common::IsAtLoadingScreen())
 	{
-		m_guiData.clear();
+		clearDraw();
 		return;
 	}
 
@@ -131,4 +131,9 @@ void ItemboxUI::draw()
 
 		data.m_frame += Application::getHudDeltaTime() * 60.0f;
 	}
+}
+
+void ItemboxUI::clearDraw()
+{
+	m_guiData.clear();
 }

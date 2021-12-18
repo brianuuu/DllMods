@@ -84,6 +84,7 @@ public:
 	static CaptionData m_captionData;
 	static void __cdecl addCaptionImpl(uint32_t* owner, uint32_t* caption, float duration, bool isCutscene);
 	static void draw();
+	static void clearDraw();
 	static float drawCaptions(Caption const& caption, float alpha, bool isShadow = false, bool isCutscene = false);
 };
 

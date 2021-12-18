@@ -116,6 +116,7 @@ public:
 	// ImGui
 	static ResultUIData m_resultUIData;
 	static void draw();
+	static void clearDraw();
 
 	// Textures
 	static bool m_init;

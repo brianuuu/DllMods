@@ -101,6 +101,15 @@ void UIContext::update()
     ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 }
 
+void UIContext::clearDraw()
+{
+    ItemboxUI::clearDraw();
+    Stage::clearDraw();
+    ScoreUI::clearDraw();
+    SubtitleUI::clearDraw();
+    ResultUI::clearDraw();
+}
+
 void UIContext::reset()
 {
     ImGui_ImplDX9_InvalidateDeviceObjects();

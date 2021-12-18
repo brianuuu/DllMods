@@ -25,6 +25,8 @@ void __fastcall SetLoadingFadeIn(float startAlpha, float* a2)
 
 void __fastcall SetLoadingFadeOut(float* a2)
 {
+    UIContext::clearDraw();
+
     uint8_t* color = (uint8_t*)((uint32_t)a2 + 21);
     if (color[0] == 0 && color[1] == 0 && color[2] == 0)
     {
@@ -253,7 +255,7 @@ void Stage::draw()
     // At loading screen, clear all
     if (Common::IsAtLoadingScreen())
     {
-        m_checkpointTimer = 0.0f;
+        clearDraw();
         return;
     }
 
@@ -271,4 +273,9 @@ void Stage::draw()
 
         m_checkpointTimer -= Application::getHudDeltaTime();
     }
+}
+
+void Stage::clearDraw()
+{
+    m_checkpointTimer = 0.0f;
 }
