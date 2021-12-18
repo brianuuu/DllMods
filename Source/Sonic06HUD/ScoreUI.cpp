@@ -4,7 +4,6 @@
 #include "UIContext.h"
 
 uint32_t ScoreUI::m_rainbowRingChain = 0;
-int ScoreUI::m_physicsScore = 0;
 int ScoreUI::m_bonus = 0;
 float ScoreUI::m_bonusTimer = 0.0f;
 float ScoreUI::m_bonusDrawTimer = 0.0f;
@@ -46,19 +45,33 @@ HOOK(void, __fastcall, ScoreUI_CHudSonicStageUpdate, 0x1098A50, void* This, void
 	originalScoreUI_CHudSonicStageUpdate(This, Edx, dt);
 }
 
+HOOK(void, __stdcall, ScoreUI_AddPhysicsScore, 0xEA49B0, uint32_t This, int a2, void* a3, bool a4)
+{
+	// Check if it's a breakable object
+	if (!*(bool*)(This + 0x120))
+	{
+		if (!a4 || *(uint32_t*)(This + 0x108) == 1)
+		{
+			// Manually do Object Physics score except for cmn_itembox_lock
+			std::string name(*(char**)(This + 0x130));
+			if (name.find("cmn_itembox_lock") == std::string::npos)
+			{
+				ScoreGenerationsAPI::AddScore(20);
+			}
+		}
+	}
+
+	originalScoreUI_AddPhysicsScore(This, a2, a3, a4);
+}
+
 void ScoreUI::applyPatches()
 {
 	// Apply hooks for displaying rainbow ring score
 	WRITE_JUMP(0x115A8F6, ScoreUI_GetRainbow);
 	INSTALL_HOOK(ScoreUI_CHudSonicStageUpdate);
 
-	// Manual adjust scores
-	Tables::ScoreTable scoreTable = ScoreGenerationsAPI::GetScoreTable();
-	m_physicsScore = scoreTable.Physics;
-	if (m_physicsScore > 0)
-	{
-		// TODO: maunally remove physics score for itembox lock-on
-	}
+	// Maunally add score for object physics (cuz Score Gens is bugged)
+	INSTALL_HOOK(ScoreUI_AddPhysicsScore);
 }
 
 int ScoreUI::calculateRainbowRingChainBonus()

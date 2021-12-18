@@ -12,7 +12,6 @@ public:
 	static void __fastcall addRainbowScore();
 
 	// Bonus GUI
-	static int m_physicsScore;
 	static int m_bonus;
 	static float m_bonusTimer;
 	static float m_bonusDrawTimer;
