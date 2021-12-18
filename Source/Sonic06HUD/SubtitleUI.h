@@ -12,6 +12,8 @@ enum CaptionButtonType : uint32_t
 	CBT_RT,
 	CBT_Start,
 	CBT_Back,
+	CBT_LStick,
+	CBT_RStick,
 };
 
 struct Caption
@@ -40,6 +42,8 @@ struct CaptionData
 	PDIRECT3DTEXTURE9 m_buttonRT;
 	PDIRECT3DTEXTURE9 m_buttonStart;
 	PDIRECT3DTEXTURE9 m_buttonBack;
+	PDIRECT3DTEXTURE9 m_buttonLStick;
+	PDIRECT3DTEXTURE9 m_buttonRStick;
 
 	bool init();
 	void clear()
@@ -64,6 +68,8 @@ struct CaptionData
 		if (m_buttonRT) m_buttonRT->Release();
 		if (m_buttonStart) m_buttonStart->Release();
 		if (m_buttonBack) m_buttonBack->Release();
+		if (m_buttonLStick) m_buttonLStick->Release();
+		if (m_buttonRStick) m_buttonRStick->Release();
 	}
 };
 
