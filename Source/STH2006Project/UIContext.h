@@ -18,6 +18,7 @@ public:
     static bool initFontDatabase();
 
     static void update();
+    static void clearDraw();
     static void reset();
 
     static LRESULT wndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);

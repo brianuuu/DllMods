@@ -16,8 +16,23 @@ bool UIContext::isInitialized()
     return window && device;
 }
 
+HOOK(float*, __fastcall, MsgFadeOutFxp, 0x10CEDB0, void* This, void* Edx, float* a2)
+{
+    UIContext::clearDraw();
+    return originalMsgFadeOutFxp(This, Edx, a2);
+}
+
+HOOK(float*, __fastcall, MsgFadeOutMtfx, 0x57B270, void* This, void* Edx, float* a2)
+{
+    UIContext::clearDraw();
+    return originalMsgFadeOutMtfx(This, Edx, a2);
+}
+
 void UIContext::initialize(HWND window, IDirect3DDevice9* device)
 {
+    INSTALL_HOOK(MsgFadeOutFxp);
+    INSTALL_HOOK(MsgFadeOutMtfx);
+
     UIContext::window = window;
     UIContext::device = device;
 
@@ -124,6 +139,12 @@ void UIContext::update()
     ImGui::EndFrame();
     ImGui::Render();
     ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+}
+
+void UIContext::clearDraw()
+{
+    Itembox::clearDraw();
+    ScoreManager::clearDraw();
 }
 
 void UIContext::reset()

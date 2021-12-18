@@ -47,6 +47,7 @@ public:
 	static std::deque<ItemboxGUI> m_guiData;
 	static void addItemToGui(ItemboxType type);
 	static void draw();
+	static void clearDraw();
 
 	// Textures
 	static bool initTextures();
