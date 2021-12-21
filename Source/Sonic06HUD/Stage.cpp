@@ -165,6 +165,19 @@ HOOK(void, __fastcall, Stage_CHudSonicStageUpdate, 0x1098A50, void* This, void* 
     originalStage_CHudSonicStageUpdate(This, Edx, dt);
 }
 
+HOOK(int, __fastcall, Stage_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
+{
+    int result = originalStage_MsgRestartStage(This, Edx, message);
+
+    // Force disable extended boost
+    if (Common::IsPlayerExtendedBoost())
+    {
+        *(uint32_t*)((uint32_t)*PLAYER_CONTEXT + 0x680) = 1;
+    }
+
+    return result;
+}
+
 //---------------------------------------------------
 // Boost Particle
 //---------------------------------------------------
@@ -241,6 +254,7 @@ void Stage::applyPatches()
 
     // Install HUD update hook
     INSTALL_HOOK(Stage_CHudSonicStageUpdate);
+    INSTALL_HOOK(Stage_MsgRestartStage);
 
     // Make boost particles goes to Sonic
     INSTALL_HOOK(Stage_MsgGetHudPosition);
