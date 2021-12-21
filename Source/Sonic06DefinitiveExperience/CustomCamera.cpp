@@ -54,7 +54,14 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     Eigen::Vector3f playerPosition;
     Eigen::Quaternionf playerRotation;
     Common::GetPlayerTransform(playerPosition, playerRotation);
-    playerPosition += playerRotation * Eigen::Vector3f(0, c_cameraTargetOffset, 0);
+    if (Common::IsPlayerGrounded())
+    {
+        playerPosition += playerRotation * Eigen::Vector3f(0, c_cameraTargetOffset, 0);
+    }
+    else
+    {
+        playerPosition += Eigen::Vector3f(0, c_cameraTargetOffset, 0);
+    }
 
     Eigen::Vector3f playerVelocity;
     Common::GetPlayerVelocity(playerVelocity);
@@ -169,7 +176,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     Eigen::Vector4f outNormal;
     if (Common::fRaycast(rayStartPos, rayEndPos, outPos, outNormal, 21))
     {
-        //printf("%.3f, %.3f, %.3f\n", outPos.x(), outPos.y(), outPos.z());
+        //printf("Collision occured from (%.3f, %.3f, %.3f) to (%.3f, %.3f, %.3f) at (%.3f, %.3f, %.3f)\n", DEBUG_VECTOR3(rayStartPos), DEBUG_VECTOR3(rayEndPos), DEBUG_VECTOR3(outPos));
         if (!m_blockByTerrainMode)
         {
             // Just zoom closer
