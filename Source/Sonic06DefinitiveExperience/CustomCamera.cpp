@@ -174,7 +174,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     Eigen::Vector4f const rayEndPos(cameraPosPitchCorrected.x(), cameraPosPitchCorrected.y() - 0.1f, cameraPosPitchCorrected.z(), 1.0f);
     Eigen::Vector4f outPos;
     Eigen::Vector4f outNormal;
-    if (Common::fRaycast(rayStartPos, rayEndPos, outPos, outNormal, 21))
+    if (!Common::IsPlayerGrinding() && Common::fRaycast(rayStartPos, rayEndPos, outPos, outNormal, 21))
     {
         //printf("Collision occured from (%.3f, %.3f, %.3f) to (%.3f, %.3f, %.3f) at (%.3f, %.3f, %.3f)\n", DEBUG_VECTOR3(rayStartPos), DEBUG_VECTOR3(rayEndPos), DEBUG_VECTOR3(outPos));
         if (!m_blockByTerrainMode)
