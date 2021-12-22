@@ -26,22 +26,22 @@ float const c_grindJumpSpeedMax = 15.0f;
 FUNCTION_PTR(void*, __thiscall, processGameObjectMsgSetPosition, 0xD5CEB0, void* This, void* message);
 FUNCTION_PTR(void*, __thiscall, processGameObjectMsgSetRotation, 0xD5CE70, void* This, void* message);
 
-HOOK(int, __stdcall, HomingUpdate, 0xE5FF10, int a1)
+HOOK(int, __stdcall, RailPhysics_HomingUpdate, 0xE5FF10, int a1)
 {
     RailPhysics::updateHomingTargetPos();
-    int result = originalHomingUpdate(a1);
+    int result = originalRailPhysics_HomingUpdate(a1);
     m_forceRailCollisionQuery = false;
     return result;
 }
 
-HOOK(bool, __stdcall, ParsePathXml, 0x11E3460, uint32_t* This, char* pData, uint32_t size, char a4)
+HOOK(bool, __stdcall, RailPhysics_ParsePathXml, 0x11E3460, uint32_t* This, char* pData, uint32_t size, char a4)
 {
     RailPhysics::m_pPathContainer.insert(This);
     RailPhysics::parsePathXmlData(pData, size);
-    return originalParsePathXml(This, pData, size, a4);
+    return originalRailPhysics_ParsePathXml(This, pData, size, a4);
 }
 
-HOOK(uint32_t*, __fastcall, CHomingTargetDestructor, 0x500280, uint32_t* This, void* Edx, char a2)
+HOOK(uint32_t*, __fastcall, RailPhysics_CHomingTargetDestructor, 0x500280, uint32_t* This, void* Edx, char a2)
 {
     if (This == RailPhysics::m_pHomingTargetObj)
     {
@@ -50,10 +50,10 @@ HOOK(uint32_t*, __fastcall, CHomingTargetDestructor, 0x500280, uint32_t* This, v
         printf("[RailPhysics] Homing Target Destructed\n");
     }
 
-    return originalCHomingTargetDestructor(This, Edx, a2);
+    return originalRailPhysics_CHomingTargetDestructor(This, Edx, a2);
 }
 
-HOOK(uint32_t*, __fastcall, CDatabaseDataDestructor, 0x699380, uint32_t* This)
+HOOK(uint32_t*, __fastcall, RailPhysics_CDatabaseDataDestructor, 0x699380, uint32_t* This)
 {
     if (!RailPhysics::m_pPathContainer.empty())
     {
@@ -66,12 +66,12 @@ HOOK(uint32_t*, __fastcall, CDatabaseDataDestructor, 0x699380, uint32_t* This)
         }
     }
 
-    return originalCDatabaseDataDestructor(This);
+    return originalRailPhysics_CDatabaseDataDestructor(This);
 }
 
-HOOK(uint32_t*, __cdecl, CEventCollisionConstructor, 0x11836F0, int a1, int a2, int a3, int a4, int a5, char a6, int a7)
+HOOK(uint32_t*, __cdecl, RailPhysics_CEventCollisionConstructor, 0x11836F0, int a1, int a2, int a3, int a4, int a5, char a6, int a7)
 {
-    uint32_t* pObject = originalCEventCollisionConstructor(a1, a2, a3, a4, a5, a6, a7);
+    uint32_t* pObject = originalRailPhysics_CEventCollisionConstructor(a1, a2, a3, a4, a5, a6, a7);
 
     if (RailPhysics::m_isGettingHomingTarget)
     {
@@ -82,16 +82,16 @@ HOOK(uint32_t*, __cdecl, CEventCollisionConstructor, 0x11836F0, int a1, int a2, 
     return pObject;
 }
 
-HOOK(int, __fastcall, CSonicPostureGrindBegin, 0x11D8060, void* This)
+HOOK(int, __fastcall, RailPhysics_CSonicPostureGrindBegin, 0x11D8060, void* This)
 {
     RailPhysics::m_grindSpeed = Common::IsPlayerOnBoard() ? c_grindSpeedBoard : (Common::IsPlayerSuper() ? c_grindSpeedInitSuper : c_grindSpeedInit);
     RailPhysics::m_grindAccelTime = 0.0f;
-    return originalCSonicPostureGrindBegin(This);
+    return originalRailPhysics_CSonicPostureGrindBegin(This);
 }
 
-HOOK(void, __fastcall, CSonicPostureGrindAdvance, 0x11D81E0, void* This)
+HOOK(void, __fastcall, RailPhysics_CSonicPostureGrindAdvance, 0x11D81E0, void* This)
 {
-    originalCSonicPostureGrindAdvance(This);
+    originalRailPhysics_CSonicPostureGrindAdvance(This);
 
     Eigen::Vector3f velocity;
     if (Common::GetPlayerVelocity(velocity))
@@ -125,7 +125,7 @@ HOOK(void, __fastcall, CSonicPostureGrindAdvance, 0x11D81E0, void* This)
     }
 }
 
-HOOK(int, __fastcall, CSonicStateGrindSquatBegin, 0x1118830, void* This)
+HOOK(int, __fastcall, RailPhysics_CSonicStateGrindSquatBegin, 0x1118830, void* This)
 {
     // Gain speed
     if (Configuration::m_physics)
@@ -137,12 +137,12 @@ HOOK(int, __fastcall, CSonicStateGrindSquatBegin, 0x1118830, void* This)
     static SharedPtrTypeless soundHandle;
     Common::SonicContextPlaySound(soundHandle, 80041020, 1);
 
-    return originalCSonicStateGrindSquatBegin(This);
+    return originalRailPhysics_CSonicStateGrindSquatBegin(This);
 }
 
-HOOK(bool, __fastcall, CSonicStateGrindJumpShortBegin, 0x124A8C0, void* This)
+HOOK(bool, __fastcall, RailPhysics_CSonicStateGrindJumpShortBegin, 0x124A8C0, void* This)
 {
-    bool result = originalCSonicStateGrindJumpShortBegin(This);
+    bool result = originalRailPhysics_CSonicStateGrindJumpShortBegin(This);
 
     if (!Common::IsPlayerOnBoard())
     {
@@ -165,6 +165,18 @@ HOOK(bool, __fastcall, CSonicStateGrindJumpShortBegin, 0x124A8C0, void* This)
     }
 
     return result;
+}
+
+HOOK(bool, __fastcall, RailPhysics_CheckRailSwitch, 0xDFCC70, void* This, void* Edx, int a2, int a3)
+{
+    if (Common::IsPlayerIn2D())
+    {
+        return false;
+    }
+    else
+    {
+        return originalRailPhysics_CheckRailSwitch(This, Edx, a2, a3);
+    }
 }
 
 void __declspec(naked) getHomingTargetObj()
@@ -289,7 +301,7 @@ void RailPhysics::applyPatches()
     WRITE_MEMORY(0xE4FC78, uint8_t, 0xEB);
 
     // Add speed at start of GrindSquat
-    INSTALL_HOOK(CSonicStateGrindSquatBegin);
+    INSTALL_HOOK(RailPhysics_CSonicStateGrindSquatBegin);
 
     // Disable GrindSquat and skip to GrindSwitch immdiately
     WRITE_MEMORY(0x1118886, uint8_t, 0x58, 0x90);
@@ -299,6 +311,12 @@ void RailPhysics::applyPatches()
     // Skip BoardLand on grind rails
     WRITE_NOP(0x111D55A, 0x2);
     WRITE_NOP(0x111D569, 0x2);
+
+    // Don't check for rail switch in 2D
+    INSTALL_HOOK(RailPhysics_CheckRailSwitch);
+
+    // Force normal grinding animation even when holding stick after switching
+    WRITE_NOP(0xDF26E3, 2);
 
     if (Configuration::m_physics)
     {
@@ -312,32 +330,32 @@ void RailPhysics::applyPatches()
         WRITE_JUMP(0xE744C1, forceQueryHomingCollision);
 
         // Grab the event collision pointer
-        INSTALL_HOOK(CEventCollisionConstructor);
+        INSTALL_HOOK(RailPhysics_CEventCollisionConstructor);
 
         // Update rail lock-on position
-        INSTALL_HOOK(HomingUpdate);
+        INSTALL_HOOK(RailPhysics_HomingUpdate);
 
         // For resetting pointers
-        INSTALL_HOOK(CHomingTargetDestructor);
+        INSTALL_HOOK(RailPhysics_CHomingTargetDestructor);
 
         // Disable stick rail switching
         WRITE_MEMORY(0xDFCC9F, uint8_t, 0xEB, 0x6D);
 
         // Force constant velocity on rails
-        INSTALL_HOOK(CSonicPostureGrindBegin);
-        INSTALL_HOOK(CSonicPostureGrindAdvance);
+        INSTALL_HOOK(RailPhysics_CSonicPostureGrindBegin);
+        INSTALL_HOOK(RailPhysics_CSonicPostureGrindAdvance);
 
         // Normalize grind jump speed
-        INSTALL_HOOK(CSonicStateGrindJumpShortBegin);
+        INSTALL_HOOK(RailPhysics_CSonicStateGrindJumpShortBegin);
 
         // Patch "Disable Rail Boosters" by "Hyper"
         WRITE_MEMORY(0x166F238, uint8_t, 0x00);
 
         // Get all grind rail path data
-        INSTALL_HOOK(ParsePathXml);
+        INSTALL_HOOK(RailPhysics_ParsePathXml);
 
         // For resetting path data
-        INSTALL_HOOK(CDatabaseDataDestructor);
+        INSTALL_HOOK(RailPhysics_CDatabaseDataDestructor);
     }
 }
 
