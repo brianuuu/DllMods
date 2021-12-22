@@ -170,10 +170,7 @@ HOOK(int, __fastcall, Stage_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx
     int result = originalStage_MsgRestartStage(This, Edx, message);
 
     // Force disable extended boost
-    if (Common::IsPlayerExtendedBoost())
-    {
-        *(uint32_t*)((uint32_t)*PLAYER_CONTEXT + 0x680) = 1;
-    }
+    *(uint32_t*)((uint32_t)*PLAYER_CONTEXT + 0x680) = 1;
 
     return result;
 }
@@ -262,6 +259,11 @@ void Stage::applyPatches()
     // Remove Life + 1 UI
     WRITE_JUMP(0xE75565, (void*)0xE75630);
     WRITE_NOP(0xE75656, 9);
+
+    // Force 200% and 300% boost challenge to 100%, and allow rings to refill boost
+    WRITE_MEMORY(0x1104F29, uint32_t, 4);
+    WRITE_MEMORY(0x1105000, uint32_t, 4);
+    WRITE_MEMORY(0x1104DDA, uint32_t, 4);
 }
 
 void Stage::draw()
