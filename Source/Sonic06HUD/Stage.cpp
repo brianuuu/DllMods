@@ -203,6 +203,10 @@ void Stage::applyPatches()
     INSTALL_HOOK(MsgFadeInMtfx);
     INSTALL_HOOK(MsgFadeOutMtfx);
 
+    // Disable loading sfx
+    WRITE_MEMORY(0x44A2E8, int, -1);
+    WRITE_MEMORY(0x44A4F5, int, -1);
+
     // Prevent timer getting reset twice after fade in is completed
     WRITE_MEMORY(0xCFDD8F, uint8_t, 0xEB);
 
