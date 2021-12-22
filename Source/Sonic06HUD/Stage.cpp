@@ -207,6 +207,9 @@ void Stage::applyPatches()
     WRITE_MEMORY(0x44A2E8, int, -1);
     WRITE_MEMORY(0x44A4F5, int, -1);
 
+    // Use different xncp for READY GO
+    WRITE_STRING(0x168F1EC, "ui_gp_signul");
+
     // Prevent timer getting reset twice after fade in is completed
     WRITE_MEMORY(0xCFDD8F, uint8_t, 0xEB);
 
