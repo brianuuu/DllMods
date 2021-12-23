@@ -179,6 +179,18 @@ HOOK(bool, __fastcall, RailPhysics_CheckRailSwitch, 0xDFCC70, void* This, void* 
     }
 }
 
+HOOK(int*, __fastcall, RailPhysics_CSonicStateGrindBegin, 0xDF26A0, void* This)
+{
+    alignas(16) MsgGetAnimationInfo message {};
+    Common::SonicContextGetAnimationInfo(message);
+    if (!message.IsAnimation("GrindStandL") && !message.IsAnimation("GrindStandR"))
+    {
+        Common::SonicContextChangeAnimation("GrindStandL");
+    }
+
+    return originalRailPhysics_CSonicStateGrindBegin(This);
+}
+
 void __declspec(naked) getHomingTargetObj()
 {
     static uint32_t returnAddress = 0xE91412;
@@ -316,7 +328,7 @@ void RailPhysics::applyPatches()
     INSTALL_HOOK(RailPhysics_CheckRailSwitch);
 
     // Force normal grinding animation even when holding stick after switching
-    WRITE_NOP(0xDF26E3, 2);
+    INSTALL_HOOK(RailPhysics_CSonicStateGrindBegin);
 
     if (Configuration::m_physics)
     {
