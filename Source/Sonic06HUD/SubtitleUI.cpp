@@ -206,7 +206,7 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
     uint32_t* captionList = (uint32_t*)caption[1];
 
     bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
-    bool adjustLineBreak = !Configuration::m_usingSTH2006Project && !isJapanese && !m_captionData.m_isCutscene;
+    bool adjustLineBreak = !Configuration::m_usingSTH2006Project && !m_captionData.m_isCutscene;
 
     std::wstring str;
     int rowLength = 0;
@@ -233,31 +233,33 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
         {
             if (key == 0x82)
             {
-                if (adjustLineBreak && linebreakCount < 2 && rowLength > (m_captionData.m_isCutscene ? 72 : 50))
-                {
-                    // Do line break manually
-                    str += L'\n';
-                    rowLength = 0;
-                    linebreakCount++;
-
-                    newCaption.m_captions.push_back(Common::wideCharToMultiByte(str.c_str()));
-                    str.clear();
-                }
-                else
-                {
-                    str += L"  ";
-                    rowLength += 2;
-                }
+                str += L"  ";
+                rowLength += 2;
             }
             else
             {
+                if (adjustLineBreak && linebreakCount < 2 && rowLength > 56)
+                {
+                    int space = str.find_last_of(L' ');
+                    if (space != std::string::npos)
+                    {
+                        // Go back to the previous space to split from there
+                        std::wstring const leftStr = str.substr(0, space + 1) + L'\n';
+                        newCaption.m_captions.push_back(Common::wideCharToMultiByte(leftStr.c_str()));
+
+                        str = str.substr(space + 1);
+                        rowLength = str.size() * (isJapanese ? 2 : 1);
+                        linebreakCount++;
+                    }
+                }
+
                 str += m_fontDatabase[key];
-                rowLength++;
+                rowLength += isJapanese ? 2 : 1;
             }
         }
         else if (key == 0)
         {
-            if (adjustLineBreak)
+            if (adjustLineBreak && !isJapanese)
             {
                 // Don't do line break here
                 if (!str.empty() && str.back() != L' ')
