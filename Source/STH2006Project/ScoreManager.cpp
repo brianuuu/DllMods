@@ -195,6 +195,7 @@ HOOK(void, __stdcall, ScoreManager_GetPhysics, 0xEA49B0, uint32_t This, int a2, 
 		"cmn_itembox",
 		"cmn_bombbox_big",
 		"lock_dummy",
+		"goalpost",
 
 		"en_e", // this will prevent fake enemy _col to be counted
 		"enm_eggchaser",
