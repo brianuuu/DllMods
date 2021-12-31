@@ -79,8 +79,7 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 		if (LoadingUI::m_stagePrevious == "ghz200" ||
 			LoadingUI::m_stagePrevious == "cpz200" ||
 			LoadingUI::m_stagePrevious == "pla200" ||
-			LoadingUI::m_stagePrevious == "bsl" ||
-			LoadingUI::m_stagePrevious == "bsl001")
+			LoadingUI::m_stagePrevious == "bsl")
 		{
 			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\twn_a.dds").c_str(), &LoadingUI::m_stageTexture);
 			// TODO: text
@@ -88,8 +87,7 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 		else if (LoadingUI::m_stagePrevious == "ssz200" ||
 				 LoadingUI::m_stagePrevious == "sph200" ||
 				 LoadingUI::m_stagePrevious == "ssh200" ||
-				 LoadingUI::m_stagePrevious == "bpc" ||
-				 LoadingUI::m_stagePrevious == "bpc001")
+				 LoadingUI::m_stagePrevious == "bpc")
 		{
 			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\twn_b.dds").c_str(), &LoadingUI::m_stageTexture);
 			// TODO: text
@@ -107,11 +105,11 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 		{
 			LoadingUI::m_bottomText = isJapanese ? u8"ソレアナへ向かえ！" : "Get  to  Soleanna!";
 		}
-		else if (currentStage == "bsl" || currentStage == "bsl001")
+		else if (currentStage == "bsl")
 		{
 			LoadingUI::m_bottomText = isJapanese ? u8"シルバーを倒せ！" : "Defeat  Silver!";
 		}
-		else if (currentStage == "bpc" || currentStage == "bpc001")
+		else if (currentStage == "bpc")
 		{
 			LoadingUI::m_bottomText = isJapanese ? u8"イブリースを倒せ！" : "Defeat  Iblis!";
 		}

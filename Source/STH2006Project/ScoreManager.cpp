@@ -118,12 +118,12 @@ HOOK(int*, __fastcall, ScoreManager_GameplayManagerInit, 0xD00F70, void* This, v
 	uint32_t stageID = Common::GetCurrentStageID();
 	if 
 	(
-		stageID <= 17 ||	// All main stages
-		stageID == 18 ||	// Casino Night (unused but that's original code)
-		stageID == 22 ||	// Silver
-		stageID == 278 ||	// Silver Hard Mode
-		stageID == 24 ||	// Iblis
-		stageID == 280 		// Iblis Hard Mode
+		stageID <= SMT_pla200 ||	// All main stages
+		stageID == SMT_cnz100 ||	// Casino Night (unused but that's original code)
+		stageID == SMT_bsl ||					// Silver
+		stageID == (SMT_bsl | SMT_BossHard) ||	// Silver Hard Mode
+		stageID == SMT_bpc ||					// Iblis
+		stageID == (SMT_bpc | SMT_BossHard) 	// Iblis Hard Mode
 	)		
 	{
 		// Enable CScoreManager
@@ -735,30 +735,30 @@ ResultData* ScoreManager::calculateResultData()
 	uint32_t stageID = Common::GetCurrentStageID();
 	switch (stageID)
 	{
-	case 0:		timeBonusBase = 45000;	break; // Prelude Stage
-	case 1:		timeBonusBase = 17000;	break; // Wave Ocean
-	case 3:		timeBonusBase = 43000;	break; // TODO: Dusty Desert
-	case 5:		timeBonusBase = 50000;	break; // TODO: White Acropolis
-	case 7:		timeBonusBase = 27000;	break; // Crisis City
-	case 9:		timeBonusBase = 50000;	break; // TODO: Flame Core
-	case 11:	timeBonusBase = 45000;	break; // TODO: Radical Train
-	case 13:	timeBonusBase = 36000;	break; // Tropical Jungle
-	case 15:	timeBonusBase = 24000;	break; // Kingdom Valley
-	case 17:	timeBonusBase = 23000;	break; // TODO: Aquatic Base
-	case 22:	timeBonusBase = 21000;	break; // Silver
-	case 278:	timeBonusBase = 22000;	break; // Silver Hard Mode
-	case 24:	timeBonusBase = 19000;	break; // Iblis
-	case 280:	timeBonusBase = 20000;	break; // Iblis Hard Mode
+	case SMT_ghz100:	timeBonusBase = 45000;	break; // Prelude Stage
+	case SMT_ghz200:	timeBonusBase = 17000;	break; // Wave Ocean
+	case SMT_cpz200:	timeBonusBase = 43000;	break; // TODO: Dusty Desert
+	case SMT_ssz200:	timeBonusBase = 50000;	break; // TODO: White Acropolis
+	case SMT_sph200:	timeBonusBase = 27000;	break; // Crisis City
+	case SMT_cte200:	timeBonusBase = 50000;	break; // TODO: Flame Core
+	case SMT_ssh200:	timeBonusBase = 45000;	break; // TODO: Radical Train
+	case SMT_csc200:	timeBonusBase = 36000;	break; // Tropical Jungle
+	case SMT_rct200:	timeBonusBase = 24000;	break; // Kingdom Valley
+	case SMT_pla200:	timeBonusBase = 23000;	break; // TODO: Aquatic Base
+	case SMT_bsl:					timeBonusBase = 21000;	break; // Silver
+	case (SMT_bsl | SMT_BossHard):	timeBonusBase = 22000;	break; // Silver Hard Mode
+	case SMT_bpc:					timeBonusBase = 19000;	break; // Iblis
+	case (SMT_bpc | SMT_BossHard):	timeBonusBase = 20000;	break; // Iblis Hard Mode
 	default:	break;
 	}
 
 	// Overwrite rank table on special stages (boss stages, missions etc.)
 	switch (stageID)
 	{
-	case 22:	// Silver
-	case 278:	// Silver Hard Mode
-	case 24:	// Iblis
-	case 280:	// Iblis Hard Mode
+	case SMT_bsl:					// Silver
+	case (SMT_bsl | SMT_BossHard):	// Silver Hard Mode
+	case SMT_bpc:					// Iblis
+	case (SMT_bpc | SMT_BossHard):	// Iblis Hard Mode
 	{
 		scoreTable = ScoreTable{ 30000,27500,25000,5000 };
 		timeBonusRate = 80;

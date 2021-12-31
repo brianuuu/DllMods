@@ -898,6 +898,50 @@ enum EPlayerParameter
 	XButtonHoming = 0x11B,
 };
 
+enum StageMissionType : uint32_t
+{
+	SMT_ghz100 = 0x00,
+	SMT_ghz200 = 0x01,
+	SMT_cpz100 = 0x02,
+	SMT_cpz200 = 0x03,
+	SMT_ssz100 = 0x04,
+	SMT_ssz200 = 0x05,
+	SMT_sph100 = 0x06,
+	SMT_sph200 = 0x07,
+	SMT_cte100 = 0x08,
+	SMT_cte200 = 0x09,
+	SMT_ssh100 = 0x0A,
+	SMT_ssh200 = 0x0B,
+	SMT_csc100 = 0x0C,
+	SMT_csc200 = 0x0D,
+	SMT_rct100 = 0x0E,
+	SMT_rct200 = 0x0F,
+	SMT_pla100 = 0x10,
+	SMT_pla200 = 0x11,
+	SMT_cnz100 = 0x12,
+	SMT_emu	= 0x13,
+	SMT_bms	= 0x14,
+	SMT_bsd	= 0x15,
+	SMT_bsl	= 0x16,
+	SMT_bde	= 0x17,
+	SMT_bpc	= 0x18,
+	SMT_bne	= 0x19,
+	SMT_blb	= 0x1A,
+	SMT_pam000 = 0x1B,
+	SMT_fig000 = 0x1C,
+	SMT_evt041 = 0x1D,
+	SMT_evt105 = 0x1E,
+	SMT_evt121 = 0x1F,
+
+	SMT_Mission1 = 0x100,
+	SMT_Mission2 = 0x200,
+	SMT_Mission3 = 0x300,
+	SMT_Mission4 = 0x400,
+	SMT_Mission5 = 0x500,
+
+	SMT_BossHard = 0x100,
+};
+
 #ifndef XMLCheckResult
 #define XMLCheckResult(a_eResult) if (a_eResult != tinyxml2::XML_SUCCESS) { printf("XMLParse Error: %i\n", a_eResult); return a_eResult; }
 #endif
@@ -1209,6 +1253,13 @@ inline uint32_t* GetPlayerRingCount()
 {
 	if (!*PLAYER_CONTEXT) return 0;
 	return (uint32_t*)((uint32_t)*PLAYER_CONTEXT + 0x5B8);
+}
+
+inline uint32_t* GetPlayerLives()
+{
+	if (!*PLAYER_CONTEXT) return 0;
+	uint32_t lifeAddress = GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x9FDC });
+	return (uint32_t*)lifeAddress;
 }
 
 inline float* GetPlayerBoost()
