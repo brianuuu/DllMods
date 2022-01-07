@@ -11,7 +11,7 @@ PDIRECT3DTEXTURE9 LoadingUI::m_backgroundTexture = nullptr;
 PDIRECT3DTEXTURE9 LoadingUI::m_stageTexture = nullptr;
 PDIRECT3DTEXTURE9 LoadingUI::m_nowLoadingTexture = nullptr;
 PDIRECT3DTEXTURE9 LoadingUI::m_arrowTexture = nullptr;
-std::string LoadingUI::m_stagePrevious;
+uint32_t LoadingUI::m_stagePrevious;
 std::string LoadingUI::m_bottomText;
 
 HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* This, void* Edx, void* message)
@@ -28,66 +28,79 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 	LoadingUI::m_bottomText.clear();
 
 	std::wstring const dir = Application::getModDirWString();
-	std::string currentStage = std::string((char*)0x01E774D4);
-	if (currentStage == "ghz200")
+	uint32_t currentStage = Common::GetCurrentStageID();
+	switch (currentStage)
+	{
+	case SMT_ghz200:
 	{
 		UIContext::loadTextureFromFile((dir + L"Assets\\Title\\wvo.dds").c_str(), &LoadingUI::m_stageTexture);
 		LoadingUI::m_bottomText = isJapanese ? u8"エッグキャリアを追跡せよ！" : "Pursue  the  Egg  Carrier!";
+		break;
 	}
-	else if (currentStage == "cpz200")
+	case SMT_cpz200:
 	{
 		UIContext::loadTextureFromFile((dir + L"Assets\\Title\\dtd.dds").c_str(), &LoadingUI::m_stageTexture);
 		LoadingUI::m_bottomText = isJapanese ? u8"Ｄｒ．エッグマンの追っ手から逃げ切れ！" : "Escape  Dr.  Eggman's  Minions!";
+		break;
 	}
-	else if (currentStage == "ssz200")
+	case SMT_ssz200:
 	{
 		UIContext::loadTextureFromFile((dir + L"Assets\\Title\\wap.dds").c_str(), &LoadingUI::m_stageTexture);
 		LoadingUI::m_bottomText = isJapanese ? u8"Ｄｒ．エッグマンの基地に侵入せよ！" : "Infiltrate  Dr.  Eggman's  Base!";
+		break;
 	}
-	else if (currentStage == "sph200")
+	case SMT_sph200:
 	{
 		UIContext::loadTextureFromFile((dir + L"Assets\\Title\\csc.dds").c_str(), &LoadingUI::m_stageTexture);
 		LoadingUI::m_bottomText = isJapanese ? u8"データベースを探し出せ！" : "Find  the  Database!";
+		break;
 	}
-	else if (currentStage == "cte200")
+	case SMT_cte200:
 	{
 		UIContext::loadTextureFromFile((dir + L"Assets\\Title\\flc.dds").c_str(), &LoadingUI::m_stageTexture);
 		LoadingUI::m_bottomText = isJapanese ? u8"カオスエメラルドを探し出せ！" : "Find  the  Chaos  Emerald!";
+		break;
 	}
-	else if (currentStage == "ssh200")
+	case SMT_ssh200:
 	{
 		UIContext::loadTextureFromFile((dir + L"Assets\\Title\\rct.dds").c_str(), &LoadingUI::m_stageTexture);
 		LoadingUI::m_bottomText = isJapanese ? u8"Ｄｒ．エッグマンの列車を追え！！" : "Follow  Dr.  Eggman's  Train!";
+		break;
 	}
-	else if (currentStage == "csc200")
+	case SMT_csc200:
 	{
 		UIContext::loadTextureFromFile((dir + L"Assets\\Title\\tpj.dds").c_str(), &LoadingUI::m_stageTexture);
 		LoadingUI::m_bottomText = isJapanese ? u8"Ｄｒ．エッグマンの追跡をかわせ！" : "Avoid  Dr.  Eggman's  Pursuit!";
+		break;
 	}
-	else if (currentStage == "euc200")
+	case SMT_euc200:
 	{
 		UIContext::loadTextureFromFile((dir + L"Assets\\Title\\kdv.dds").c_str(), &LoadingUI::m_stageTexture);
 		LoadingUI::m_bottomText = isJapanese ? u8"エッグキャリアを追え！" : "Follow  the  Egg  Carrier!";
+		break;
 	}
-	else if (currentStage == "pla200")
+	case SMT_pla200:
 	{
 		UIContext::loadTextureFromFile((dir + L"Assets\\Title\\aqa.dds").c_str(), &LoadingUI::m_stageTexture);
 		LoadingUI::m_bottomText = isJapanese ? u8"エッグキャリアの発進を阻止せよ！" : "Stop  the  Egg  Carrier's  Launch!";
+		break;
 	}
-	else if (currentStage == "pam000")
+	case SMT_pam000:
 	{
-		if (LoadingUI::m_stagePrevious == "ghz200" ||
-			LoadingUI::m_stagePrevious == "cpz200" ||
-			LoadingUI::m_stagePrevious == "pla200" ||
-			LoadingUI::m_stagePrevious == "bsl")
+		if (LoadingUI::m_stagePrevious == SMT_ghz200 ||
+			LoadingUI::m_stagePrevious == SMT_cpz200 ||
+			LoadingUI::m_stagePrevious == SMT_pla200 ||
+			LoadingUI::m_stagePrevious == SMT_bsl || 
+			LoadingUI::m_stagePrevious == (SMT_bsl | SMT_BossHard))
 		{
 			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\twn_a.dds").c_str(), &LoadingUI::m_stageTexture);
 			// TODO: text
 		}
-		else if (LoadingUI::m_stagePrevious == "ssz200" ||
-				 LoadingUI::m_stagePrevious == "sph200" ||
-				 LoadingUI::m_stagePrevious == "ssh200" ||
-				 LoadingUI::m_stagePrevious == "bpc")
+		else if (LoadingUI::m_stagePrevious == SMT_ssz200 ||
+			LoadingUI::m_stagePrevious == SMT_sph200 ||
+			LoadingUI::m_stagePrevious == SMT_ssh200 ||
+			LoadingUI::m_stagePrevious == SMT_bpc ||
+			LoadingUI::m_stagePrevious == (SMT_bpc | SMT_BossHard))
 		{
 			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\twn_b.dds").c_str(), &LoadingUI::m_stageTexture);
 			// TODO: text
@@ -97,23 +110,26 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\twn_c.dds").c_str(), &LoadingUI::m_stageTexture);
 			// TODO: text
 		}
+		break;
 	}
-	else
+	default:
 	{
 		UIContext::loadTextureFromFile((dir + L"Assets\\Title\\cmn.dds").c_str(), &LoadingUI::m_stageTexture);
-		if (currentStage == "ghz100")
+		if (currentStage == SMT_ghz100)
 		{
 			LoadingUI::m_bottomText = isJapanese ? u8"ソレアナへ向かえ！" : "Get  to  Soleanna!";
 		}
-		else if (currentStage == "bsl")
+		else if (currentStage == SMT_bsl || currentStage == (SMT_bsl | SMT_BossHard))
 		{
 			LoadingUI::m_bottomText = isJapanese ? u8"シルバーを倒せ！" : "Defeat  Silver!";
 		}
-		else if (currentStage == "bpc")
+		else if (currentStage == SMT_bpc || currentStage == (SMT_bpc | SMT_BossHard))
 		{
 			LoadingUI::m_bottomText = isJapanese ? u8"イブリースを倒せ！" : "Defeat  Iblis!";
 		}
 		// TODO: text
+		break;
+	}
 	}
 
 	if (LoadingUI::m_stageTexture)

@@ -743,7 +743,7 @@ ResultData* ScoreManager::calculateResultData()
 	case SMT_cte200:	timeBonusBase = 50000;	break; // TODO: Flame Core
 	case SMT_ssh200:	timeBonusBase = 45000;	break; // TODO: Radical Train
 	case SMT_csc200:	timeBonusBase = 36000;	break; // Tropical Jungle
-	case SMT_rct200:	timeBonusBase = 24000;	break; // Kingdom Valley
+	case SMT_euc200:	timeBonusBase = 24000;	break; // Kingdom Valley
 	case SMT_pla200:	timeBonusBase = 23000;	break; // TODO: Aquatic Base
 	case SMT_bsl:					timeBonusBase = 21000;	break; // Silver
 	case (SMT_bsl | SMT_BossHard):	timeBonusBase = 22000;	break; // Silver Hard Mode

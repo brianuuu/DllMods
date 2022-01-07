@@ -16,7 +16,7 @@ public:
 	static void stopNowLoading();
 
 	// ImGui
-	static std::string m_stagePrevious;
+	static uint32_t m_stagePrevious;
 	static std::string m_bottomText;
 	static bool m_drawEnabled;
 	static float m_fadeInTime;

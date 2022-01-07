@@ -914,8 +914,8 @@ enum StageMissionType : uint32_t
 	SMT_ssh200 = 0x0B,
 	SMT_csc100 = 0x0C,
 	SMT_csc200 = 0x0D,
-	SMT_rct100 = 0x0E,
-	SMT_rct200 = 0x0F,
+	SMT_euc100 = 0x0E,
+	SMT_euc200 = 0x0F,
 	SMT_pla100 = 0x10,
 	SMT_pla200 = 0x11,
 	SMT_cnz100 = 0x12,
@@ -1213,6 +1213,12 @@ inline uint32_t GetCurrentStageID()
 {
 	uint32_t stageIDAddress = GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x80, 0x0 });
 	return *(uint32_t*)stageIDAddress;
+}
+
+inline char* GetCurrentTerrain()
+{
+	uint32_t terrainAddress = GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x80, 0x20 });
+	return *(char**)terrainAddress;
 }
 
 inline void PlayStageMusic(char const* cueName, float fadeInTime)
