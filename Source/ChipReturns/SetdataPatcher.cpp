@@ -40,9 +40,12 @@ HOOK(uint32_t*, __fastcall, ReadXmlData, 0xCE5FC0, uint32_t size, char* pData, v
         if (setObjectIDEnd != std::string::npos)
         {
             std::string setObjectIDStr = originalSetdataStr.substr(setObjectIDStart + 13, setObjectIDEnd - setObjectIDStart - 13);
-            uint32_t setObjectID = std::stoi(setObjectIDStr);
-            usedSetObjectIDs.insert(setObjectID);
-            //printf("%u\n", setObjectID);
+            if (!setObjectIDStr.empty())
+            {
+                uint32_t setObjectID = std::stoi(setObjectIDStr);
+                usedSetObjectIDs.insert(setObjectID);
+                //printf("%u\n", setObjectID);
+            }
         }
 
         setObjectIDStart = originalSetdataStr.find("<SetObjectID>", setObjectIDEnd);
