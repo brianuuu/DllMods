@@ -1221,6 +1221,11 @@ inline char* GetCurrentTerrain()
 	return *(char**)terrainAddress;
 }
 
+inline bool IsCurrentStageMission()
+{
+	return (GetCurrentStageID() & 0xFF00) > 0;
+}
+
 inline void PlayStageMusic(char const* cueName, float fadeInTime)
 {
 	FUNCTION_PTR(bool, __stdcall, PlayStageMusicFromCueName, 0xD63070, void* gameDocument, Hedgehog::Base::CSharedString & cueName, float fadeInTime);
