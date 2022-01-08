@@ -1223,7 +1223,8 @@ inline char* GetCurrentTerrain()
 
 inline bool IsCurrentStageMission()
 {
-	return (GetCurrentStageID() & 0xFF00) > 0;
+	uint32_t stageID = GetCurrentStageID();
+	return (stageID & 0xFF00) > 0 && (stageID & 0xFF) <= 0x11;
 }
 
 inline void PlayStageMusic(char const* cueName, float fadeInTime)
