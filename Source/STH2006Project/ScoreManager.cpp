@@ -115,14 +115,13 @@ HOOK(int*, __fastcall, ScoreManager_GameplayManagerInit, 0xD00F70, void* This, v
 	static char const* scoreHUD = "ui_gameplay_score";
 	static char const* defaultHUD = (char*)0x0168E328;
 
-	uint32_t stageID = Common::GetCurrentStageID();
+	uint8_t stageID = Common::GetCurrentStageID() & 0xFF;
 	if 
 	(
 		stageID <= SMT_pla200 ||	// All main stages
 		stageID == SMT_cnz100 ||	// Casino Night (unused but that's original code)
 		stageID == SMT_bsl ||		// Silver
-		stageID == SMT_bpc ||		// Iblis
-		Common::IsCurrentStageMission()
+		stageID == SMT_bpc			// Iblis
 	)		
 	{
 		// Enable CScoreManager
