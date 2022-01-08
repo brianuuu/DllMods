@@ -86,6 +86,63 @@ HOOK(void, __fastcall, Mission_CObjMsnNumberDashRing_MsgHitEventCollision, 0xEDB
 	originalMission_CObjMsnNumberDashRing_MsgHitEventCollision(This, Edx, message);
 }
 
+float const NumberDashRingHalfWidth = 0.3f;
+float const NumberDashRingRadius = 2.5f;
+void __declspec(naked) CObjMsnNumberDashRing_CreatehkpCapsuleShape()
+{
+	static uint32_t sub_E92B90 = 0xE92B90;
+	static uint32_t returnAddress = 0x115B4AE;
+	__asm
+	{
+		sub		esp, 20h
+		lea		esi, [esp + 1Ch]
+
+		// radius
+		lea		eax, [NumberDashRingRadius]
+		fld		dword ptr [eax]
+		fstp	[esp + 18h]
+
+		// vertex1 xyz
+		lea		eax, [NumberDashRingHalfWidth]
+		fld		dword ptr[eax]
+		fchs
+		fstp	[esp + 14h]
+		fldz
+		fst		[esp + 10h]
+		fstp	[esp + 0Ch]
+
+		// vertex2 xyz
+		lea		eax, [NumberDashRingHalfWidth]
+		fld		dword ptr[eax]
+		fstp	[esp + 08h]
+		fldz
+		fst		[esp + 04h]
+		fstp	[esp + 00h]
+
+		call	[sub_E92B90]
+		add     esp, 20h
+		mov		eax, [eax]
+
+		jmp		[returnAddress]
+	}
+}
+
+HOOK(bool, __fastcall, Mission_CObjMsnNumberDashRing_AddEventCollision, 0x115B460, int* This, void* Edx, void* a2)
+{
+	if (*This == 0x16CCDEC)
+	{
+		// Change NumberDashRing to use hkpCylinderShape collision
+		WRITE_JUMP(0x115B47C, CObjMsnNumberDashRing_CreatehkpCapsuleShape);
+	}
+
+	bool result = originalMission_CObjMsnNumberDashRing_AddEventCollision(This, Edx, a2);
+	{
+		// Restore code
+		WRITE_MEMORY(0x115B47C, uint8_t, 0xA1, 0xE0, 0xCB, 0xCF, 0x01);
+	}
+	return result;
+}
+
 void MissionManager::applyPatches()
 {
 	// Use normal stage HUD (with life count)
@@ -111,7 +168,20 @@ void MissionManager::applyPatches()
 	// Load correct mission terrain
 	INSTALL_HOOK(Mission_CGameplayFlowStageSetStageInfo);
 
-	// Don't apply impluse on CObjMsnNumberDashRing
+	//---------------------------------------------------
+	// CObjMsnNumberDashRing
+	//---------------------------------------------------
+	// Don't apply impluse
 	WRITE_NOP(0xEDB694, 11);
+
+	// Play sfx
 	INSTALL_HOOK(Mission_CObjMsnNumberDashRing_MsgHitEventCollision);
+
+	// Change to cylinder shape collision
+	INSTALL_HOOK(Mission_CObjMsnNumberDashRing_AddEventCollision);
+
+	// Use different model
+	WRITE_MEMORY(0xEDBD8A, uint8_t, 6);
+	static char const* twn_obj_passring = "twn_obj_passring";
+	WRITE_MEMORY(0x1A4758C, char*, twn_obj_passring);
 }
