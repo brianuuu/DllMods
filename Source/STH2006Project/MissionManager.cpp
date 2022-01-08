@@ -49,6 +49,28 @@ HOOK(int, __fastcall, Mission_CStateGoalFadeBefore, 0xCFE080, uint32_t* This)
 }
 
 //---------------------------------------------------
+// Load terrain
+//---------------------------------------------------
+HOOK(void, __fastcall, Mission_CGameplayFlowStageSetStageInfo, 0xCFF6A0, void* This)
+{
+	originalMission_CGameplayFlowStageSetStageInfo(This);
+
+	if (Common::IsCurrentStageMission())
+	{
+		static std::string stageTerrain = "pam000";
+
+		// TODO: Exceptions, missions that uses MapD instead of MapABC
+		uint32_t stageID = Common::GetCurrentStageID();
+		switch (stageID)
+		{
+		default: stageTerrain = "pam000"; break;
+		}
+
+		strcpy(Common::GetCurrentTerrain(), stageTerrain.c_str());
+	}
+}
+
+//---------------------------------------------------
 // CObjMsnNumberDashRing
 //---------------------------------------------------
 HOOK(void, __fastcall, Mission_CObjMsnNumberDashRing_MsgHitEventCollision, 0xEDB560, uint32_t This, void* Edx, void* message)
@@ -85,6 +107,9 @@ void MissionManager::applyPatches()
 	INSTALL_HOOK(Mission_CMissionManagerAdvance);
 	INSTALL_HOOK(Mission_MsgGoalResult);
 	INSTALL_HOOK(Mission_CStateGoalFadeBefore);
+
+	// Load correct mission terrain
+	INSTALL_HOOK(Mission_CGameplayFlowStageSetStageInfo);
 
 	// Don't apply impluse on CObjMsnNumberDashRing
 	WRITE_NOP(0xEDB694, 11);
