@@ -25,12 +25,25 @@ HOOK(void, __fastcall, Mission_MsgGoalResult, 0x10950E0, uint32_t* This, void* E
 
 HOOK(int, __fastcall, Mission_CStateGoalFadeBefore, 0xCFE080, uint32_t* This)
 {
+	// Change getScoreTimeTable for missions
+	static char* stageName = nullptr;
+	uint8_t stageID = Common::GetCurrentStageID() & 0xFF;
+	bool fixMission = stageID <= 0x11 && Common::IsCurrentStageMission();
+	if (fixMission)
+	{
+		stageName = *(char**)(4 * stageID + 0x1E66B48);
+		stageName[5] = '0' + ((Common::GetCurrentStageID() & 0xFF00) >> 8);
+	}
+
 	int result = originalMission_CStateGoalFadeBefore(This);
 	{
-		// Fix result camera
-		if (Common::IsCurrentStageMission())
+		if (fixMission)
 		{
+			// Fix result camera
 			*(float*)0x1A48C80 -= 1.655f;
+
+			// Restore getScoreTimeTable code
+			stageName[5] = '0';
 		}
 	}
 	return result;
@@ -77,6 +90,4 @@ void MissionManager::applyPatches()
 	// Don't apply impluse on CObjMsnNumberDashRing
 	WRITE_NOP(0xEDB694, 11);
 	INSTALL_HOOK(Mission_CObjMsnNumberDashRing_MsgHitEventCollision);
-
-	// TODO: when played without score system, need to change getScoreTimeTable
 }
