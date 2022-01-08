@@ -268,10 +268,17 @@ HOOK(void, __fastcall, Stage_MsgNotifyObjectEvent, 0xEA4F50, void* This, void* E
 //---------------------------------------------------
 HOOK(int, __fastcall, Stage_CStateGoalFadeIn, 0xCFD2D0, void* This)
 {
-    // TODO: Switch to town music for missions (Cue: Result_Town)
     static const char* Result_Town = "Result_Town";
     static const char* Result = (char*)0x15B38F0;
-    WRITE_MEMORY(0xCFD3C9, char*, Result);
+
+    if (Common::IsCurrentStageMission())
+    {
+        WRITE_MEMORY(0xCFD3C9, char*, Result_Town);
+    }
+    else
+    {
+        WRITE_MEMORY(0xCFD3C9, char*, Result);
+    }
 
     // Music length
     static double length = 7.831;

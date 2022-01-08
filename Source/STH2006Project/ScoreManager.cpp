@@ -120,10 +120,9 @@ HOOK(int*, __fastcall, ScoreManager_GameplayManagerInit, 0xD00F70, void* This, v
 	(
 		stageID <= SMT_pla200 ||	// All main stages
 		stageID == SMT_cnz100 ||	// Casino Night (unused but that's original code)
-		stageID == SMT_bsl ||					// Silver
-		stageID == (SMT_bsl | SMT_BossHard) ||	// Silver Hard Mode
-		stageID == SMT_bpc ||					// Iblis
-		stageID == (SMT_bpc | SMT_BossHard) 	// Iblis Hard Mode
+		stageID == SMT_bsl ||		// Silver
+		stageID == SMT_bpc ||		// Iblis
+		Common::IsCurrentStageMission()
 	)		
 	{
 		// Enable CScoreManager
@@ -270,6 +269,16 @@ void __declspec(naked) ScoreManager_GetRainbow()
 		mov     eax, [esi + 0BCh]
 		jmp		[returnAddress]
 	}
+}
+
+HOOK(void, __fastcall, ScoreManager_GetMissionDashRing, 0xEDB560, uint32_t This, void* Edx, void* message)
+{
+	if (*(uint8_t*)(This + 0x154) == 2)
+	{
+		ScoreManager::addScore(ScoreType::ST_missionDashRing, (uint32_t*)This);
+	}
+
+	originalScoreManager_GetMissionDashRing(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyGunner, 0xBAA2F0, uint32_t* This, void* Edx, void* message)
@@ -445,6 +454,7 @@ void ScoreManager::applyPatches()
 	INSTALL_HOOK(ScoreManager_GetSuperRing);
 	INSTALL_HOOK(ScoreManager_GetPhysics);
 	WRITE_JUMP(0x115A8F6, ScoreManager_GetRainbow);
+	INSTALL_HOOK(ScoreManager_GetMissionDashRing);
 
 	// Enemy score hooks
 	INSTALL_HOOK(ScoreManager_EnemyGunner);
@@ -630,6 +640,7 @@ void __fastcall ScoreManager::addScore(ScoreType type, uint32_t* This)
 	case ST_enemyStealth:	score = 1500;	break;
 	case ST_enemyBonus:		score = calculateEnemyChainBonus();	break;
 	case ST_boss:			score = 10000;	break;
+	case ST_missionDashRing:score = 100;	break;
 	default: return;
 	}
 
@@ -763,6 +774,12 @@ ResultData* ScoreManager::calculateResultData()
 		scoreTable = ScoreTable{ 30000,27500,25000,5000 };
 		timeBonusRate = 80;
 		break;
+	}
+	case (SMT_ghz200 | SMT_Mission1): // Sonic Mission 1
+	{
+		scoreTable = ScoreTable{ 30000,27500,25000,22500 };
+		timeBonusBase = 40000;
+		timeBonusRate = 500;
 	}
 	default: break;
 	}

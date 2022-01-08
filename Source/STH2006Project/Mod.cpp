@@ -12,6 +12,7 @@
 #include "UIContext.h"
 #include "SynchronizedObject.h"
 #include "ParamManager.h"
+#include "MissionManager.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
@@ -71,6 +72,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     // Get Param Data
     ParamManager::applyPatches();
+
+    // Mission related
+    MissionManager::applyPatches();
 
     // -------------Mandatory codes--------------
     // Patch "Red Rings Appear On New Game" by "brianuuu"
