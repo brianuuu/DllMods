@@ -10,7 +10,7 @@ bool RankRunAnimation::checkCanPlayRunAnimation()
     if (Configuration::m_run == Configuration::RunResultType::Disable) return false;
 
     // Not Modern Sonic or currently in super form
-    if (!*pModernSonicContext || Common::IsPlayerSuper()) return false;
+    if (!*pModernSonicContext || Common::IsPlayerSuper() || Common::IsCurrentStageMission()) return false;
 
     if (Configuration::m_run == Configuration::RunResultType::STH2006)
     {
