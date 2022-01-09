@@ -1,5 +1,7 @@
 #include "MissionManager.h"
 
+FUNCTION_PTR(void*, __stdcall, Mission_fpEventTrigger, 0xD5ED00, void* This, int Event);
+
 //---------------------------------------------------
 // Mission Complete Result HUD
 //---------------------------------------------------
@@ -81,6 +83,9 @@ HOOK(void, __fastcall, Mission_CObjMsnNumberDashRing_MsgHitEventCollision, 0xEDB
 		typedef void* __fastcall CObjMsnNumberDashRingPlaySound(uint32_t, void*, SharedPtrTypeless&, uint32_t cueId);
 		CObjMsnNumberDashRingPlaySound* playSoundFunc = *(CObjMsnNumberDashRingPlaySound**)(*(uint32_t*)This + 0x40);
 		playSoundFunc(This, nullptr, soundHandle, 8002040);
+
+		// Send event
+		Mission_fpEventTrigger((void*)This, 1);
 	}
 
 	originalMission_CObjMsnNumberDashRing_MsgHitEventCollision(This, Edx, message);
