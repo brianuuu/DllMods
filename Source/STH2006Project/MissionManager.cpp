@@ -1,6 +1,29 @@
 #include "MissionManager.h"
+#include "ScoreManager.h"
 
 FUNCTION_PTR(void*, __stdcall, Mission_fpEventTrigger, 0xD5ED00, void* This, int Event);
+
+//---------------------------------------------------
+// Mission Gameplay HUD
+//---------------------------------------------------
+HOOK(int*, __fastcall, Mission_GameplayManagerInit, 0xD00F70, void* This, void* Edx, int* a2)
+{
+	static char const* scoreHUD = "ui_gameplay_score";
+	static char const* defaultHUD = (char*)0x0168E328;
+
+	if (Common::IsCurrentStageMission())
+	{
+		// Use HUD with moved life icon
+		WRITE_MEMORY(0x109D669, char*, scoreHUD);
+	}
+	else
+	{
+		// Original code
+		WRITE_MEMORY(0x109D669, char*, defaultHUD);
+	}
+
+	return originalMission_GameplayManagerInit(This, Edx, a2);
+}
 
 //---------------------------------------------------
 // Mission Complete Result HUD
@@ -150,6 +173,12 @@ HOOK(bool, __fastcall, Mission_CObjMsnNumberDashRing_AddEventCollision, 0x115B46
 
 void MissionManager::applyPatches()
 {
+	// Fix Generations HUD
+	if (!ScoreManager::m_externalHUD)
+	{
+		INSTALL_HOOK(Mission_GameplayManagerInit);
+	}
+
 	// Use normal stage HUD (with life count)
 	WRITE_MEMORY(0x109ADEB, uint8_t, 0xEB);
 

@@ -63,7 +63,7 @@ void ArchiveTreePatcher::applyPatches()
     m_archiveDependencies.push_back(ArchiveDependency("ItemboxLock", { "ActionCommon" }));
     m_archiveDependencies.push_back(ArchiveDependency("SystemCommonItemboxLock", { "SystemCommon" }));
     
-    // Score system
+    // Score system/Mission HUD for Generations
     if (ScoreManager::m_internalSystem && !ScoreManager::m_externalHUD)
     {
         m_archiveDependencies.push_back(ArchiveDependency("ScoreHud", { "SonicActionCommonHud" }));

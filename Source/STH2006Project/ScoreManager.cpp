@@ -132,6 +132,7 @@ HOOK(int*, __fastcall, ScoreManager_GameplayManagerInit, 0xD00F70, void* This, v
 		if (!ScoreManager::m_externalHUD)
 		{
 			WRITE_MEMORY(0x109D669, char*, scoreHUD);
+			// TODO: For mission, use hud that move counter to bottom right
 		}
 
 		// Hook result custom result calculation
@@ -425,6 +426,26 @@ void __declspec(naked) ScoreManager_CBossPerfectChaosAddScore()
 std::string externIniPath;
 void ScoreManager::applyPatches()
 {
+	// Check if we are using external HUD
+	std::vector<std::string> modIniList;
+	Common::GetModIniList(modIniList);
+	for (size_t i = 0; i < modIniList.size(); i++)
+	{
+		std::string const& config = modIniList[i];
+		std::string scoreGenerationsConfig = config.substr(0, config.find_last_of("\\")) + "\\ScoreGenerations.ini";
+		if (!scoreGenerationsConfig.empty() && Common::IsFileExist(scoreGenerationsConfig))
+		{
+			INIReader configReader(scoreGenerationsConfig);
+			if (configReader.GetBoolean("Developer", "customXNCP", false))
+			{
+				m_externalHUD = true;
+				m_scoreLimit = configReader.GetInteger("Behaviour", "scoreLimit", 999999);
+				m_scoreFormat = configReader.Get("Appearance", "scoreFormat", "%01d");
+				break;
+			}
+		}
+	}
+
 	// Must enable Score Generations, whether for internal score system or not
 	if (!Common::IsModEnabled("Score Generations", &externIniPath))
 	{
@@ -494,25 +515,6 @@ void ScoreManager::applyPatches_InternalSystem()
 {
 	// Disable extern .dll in mod.ini
 	setExternalIni(false);
-
-	std::vector<std::string> modIniList;
-	Common::GetModIniList(modIniList);
-	for (size_t i = 0; i < modIniList.size(); i++)
-	{
-		std::string const& config = modIniList[i];
-		std::string scoreGenerationsConfig = config.substr(0, config.find_last_of("\\")) + "\\ScoreGenerations.ini";
-		if (!scoreGenerationsConfig.empty() && Common::IsFileExist(scoreGenerationsConfig))
-		{
-			INIReader configReader(scoreGenerationsConfig);
-			if (configReader.GetBoolean("Developer", "customXNCP", false))
-			{
-				m_externalHUD = true;
-				m_scoreLimit = configReader.GetInteger("Behaviour", "scoreLimit", 999999);
-				m_scoreFormat = configReader.Get("Appearance", "scoreFormat", "%01d");
-				break;
-			}
-		}
-	}
 
 	// Set score format
 	WRITE_MEMORY(0x1095D7D, char*, m_scoreFormat.c_str());
