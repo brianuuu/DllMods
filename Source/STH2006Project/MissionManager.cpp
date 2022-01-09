@@ -175,6 +175,23 @@ HOOK(bool, __fastcall, Mission_CObjMsnNumberDashRing_AddEventCollision, 0x115B46
 	return result;
 }
 
+//---------------------------------------------------
+// Goalring
+//---------------------------------------------------
+HOOK(void, __fastcall, Mission_CObjGoalRing_MsgHitEventCollision, 0x1159010, uint32_t This, void* Edx, void* message)
+{
+	if (Common::IsCurrentStageMission())
+	{
+		// Disable goalring sfx
+		WRITE_MEMORY(0x1159054, int, -1);
+	}
+
+	originalMission_CObjGoalRing_MsgHitEventCollision(This, Edx, message);
+
+	// Original code
+	WRITE_MEMORY(0x1159054, uint32_t, 4001005);
+}
+
 void MissionManager::applyPatches()
 {
 	// Fix Generations HUD
@@ -226,4 +243,9 @@ void MissionManager::applyPatches()
 	WRITE_MEMORY(0xEDBD8A, uint8_t, 6);
 	static char const* twn_obj_passring = "twn_obj_passring";
 	WRITE_MEMORY(0x1A4758C, char*, twn_obj_passring);
+
+	//---------------------------------------------------
+	// Goalring
+	//---------------------------------------------------
+	INSTALL_HOOK(Mission_CObjGoalRing_MsgHitEventCollision);
 }
