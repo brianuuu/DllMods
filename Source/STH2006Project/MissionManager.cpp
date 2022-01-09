@@ -208,6 +208,10 @@ void MissionManager::applyPatches()
 	// Don't apply impluse
 	WRITE_NOP(0xEDB694, 11);
 
+	// Lower transparency
+	static float passRingAlpha = 0.3f;
+	WRITE_MEMORY(0xEDB3A4, float*, &passRingAlpha);
+
 	// Play sfx
 	INSTALL_HOOK(Mission_CObjMsnNumberDashRing_MsgHitEventCollision);
 
