@@ -52,9 +52,9 @@ HOOK(int, __fastcall, Mission_CStateGoalFadeBefore, 0xCFE080, uint32_t* This)
 {
 	// Change getScoreTimeTable for missions
 	static char* stageName = nullptr;
-	uint8_t stageID = Common::GetCurrentStageID() & 0xFF;
 	if (Common::IsCurrentStageMission())
 	{
+		uint8_t stageID = Common::GetCurrentStageID() & 0xFF;
 		stageName = *(char**)(4 * stageID + 0x1E66B48);
 		stageName[5] = '0' + ((Common::GetCurrentStageID() & 0xFF00) >> 8);
 	}
@@ -64,7 +64,11 @@ HOOK(int, __fastcall, Mission_CStateGoalFadeBefore, 0xCFE080, uint32_t* This)
 		if (Common::IsCurrentStageMission())
 		{
 			// Fix result camera
-			*(float*)0x1A48C80 -= 1.655f;
+			float* cameraUp = (float*)0x1A48C80;
+			if (*cameraUp > 0.0f)
+			{
+				*cameraUp -= 1.655f;
+			}
 
 			// Restore getScoreTimeTable code
 			stageName[5] = '0';
