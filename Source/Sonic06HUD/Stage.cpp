@@ -60,6 +60,12 @@ HOOK(float*, __fastcall, MsgFadeOutMtfx, 0x57B270, void* This, void* Edx, float*
     return originalMsgFadeOutMtfx(This, Edx, a2);
 }
 
+HOOK(int*, __fastcall, Stage_CGameplayFlowStage_CStateBegin, 0xCFF2B0, void* This)
+{
+    UIContext::clearDraw();
+    return originalStage_CGameplayFlowStage_CStateBegin(This);
+}
+
 //---------------------------------------------------
 // 3 digit milliseconds correction
 //---------------------------------------------------
@@ -202,6 +208,7 @@ void Stage::applyPatches()
     INSTALL_HOOK(MsgFadeOutFxp);
     INSTALL_HOOK(MsgFadeInMtfx);
     INSTALL_HOOK(MsgFadeOutMtfx);
+    INSTALL_HOOK(Stage_CGameplayFlowStage_CStateBegin);
 
     // Disable loading sfx
     WRITE_MEMORY(0x44A2E8, int, -1);
