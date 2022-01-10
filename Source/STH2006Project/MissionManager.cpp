@@ -119,7 +119,7 @@ HOOK(void, __fastcall, Mission_CObjMsnNumberDashRing_MsgHitEventCollision, 0xEDB
 }
 
 float const NumberDashRingHalfWidth = 0.3f;
-float const NumberDashRingRadius = 2.5f;
+float const NumberDashRingRadius = 2.3f;
 void __declspec(naked) CObjMsnNumberDashRing_CreatehkpCapsuleShape()
 {
 	static uint32_t sub_E92B90 = 0xE92B90;
