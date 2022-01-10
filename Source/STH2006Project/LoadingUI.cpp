@@ -284,7 +284,7 @@ void LoadingUI::draw()
 				if (!m_bottomText.empty())
 				{
 					ImVec2 size = ImGui::CalcTextSize(m_bottomText.c_str());
-					ImGui::SetCursorPos(ImVec2(640 * scaleX - size.x * 0.5f, 570 * scaleY));
+					ImGui::SetCursorPos(ImVec2(640 * scaleX - size.x * 0.5f, 566 * scaleY));
 					ImGui::Text(m_bottomText.c_str());
 				}
 			}
@@ -298,7 +298,7 @@ void LoadingUI::draw()
 			// Now Loading Text
 			if (m_showNowLoading)
 			{
-				ImGui::SetCursorPos(ImVec2(914 * scaleX, 612 * scaleY));
+				ImGui::SetCursorPos(ImVec2(914 * scaleX, 617 * scaleY));
 				ImGui::Image(m_nowLoadingTexture, ImVec2(256 * scaleX, 40 * scaleY));
 
 				// Pop out
@@ -306,13 +306,13 @@ void LoadingUI::draw()
 				{
 					float nowLoadingAlpha = (float)(76 - m_frame) / 52.0f;
 					float nowLoadingscale = 1.0f + (1.0f - nowLoadingAlpha) * 0.3f;
-					ImGui::SetCursorPos(ImVec2((1042 - 128 * nowLoadingscale) * scaleX, (632 - 20 * nowLoadingscale) * scaleY));
+					ImGui::SetCursorPos(ImVec2((1042 - 128 * nowLoadingscale) * scaleX, (637 - 20 * nowLoadingscale) * scaleY));
 					ImGui::Image(m_nowLoadingTexture, ImVec2(256 * nowLoadingscale * scaleX, 40 * nowLoadingscale * scaleY), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, nowLoadingAlpha));
 				}
 			}
 
 			// Now Loading Arrpws
-			ImGui::SetCursorPos(ImVec2((-113 + 39 * m_frame)* scaleX, 612 * scaleY));
+			ImGui::SetCursorPos(ImVec2((-113 + 39 * m_frame)* scaleX, 617 * scaleY));
 			ImGui::Image(m_arrowTexture, ImVec2(110 * scaleX, 40 * scaleY));
 		}
 	}
