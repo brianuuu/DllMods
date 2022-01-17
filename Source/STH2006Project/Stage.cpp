@@ -334,6 +334,9 @@ HOOK(void, __fastcall, Stage_CBossPerfectChaosCStateDefeated, 0x5D20A0, int This
 
 void Stage::applyPatches()
 {
+    // Disable enter CpzPipe sfx
+    WRITE_MEMORY(0x1234856, int, -1);
+    
     // Play robe sfx in Kingdom Valley
     INSTALL_HOOK(Stage_CObjSpringSFX);
 
