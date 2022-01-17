@@ -429,18 +429,18 @@ void ScoreManager::applyPatches()
 	// Check if we are using external HUD
 	std::vector<std::string> modIniList;
 	Common::GetModIniList(modIniList);
-	for (size_t i = 0; i < modIniList.size(); i++)
+	for (int i = modIniList.size() - 1; i >= 0; i--)
 	{
 		std::string const& config = modIniList[i];
 		std::string scoreGenerationsConfig = config.substr(0, config.find_last_of("\\")) + "\\ScoreGenerations.ini";
 		if (!scoreGenerationsConfig.empty() && Common::IsFileExist(scoreGenerationsConfig))
 		{
 			INIReader configReader(scoreGenerationsConfig);
+			m_scoreLimit = configReader.GetInteger("Behaviour", "scoreLimit", 999999);
+			m_scoreFormat = configReader.Get("Appearance", "scoreFormat", "%01d");
 			if (configReader.GetBoolean("Developer", "customXNCP", false))
 			{
 				m_externalHUD = true;
-				m_scoreLimit = configReader.GetInteger("Behaviour", "scoreLimit", 999999);
-				m_scoreFormat = configReader.Get("Appearance", "scoreFormat", "%01d");
 				break;
 			}
 		}
