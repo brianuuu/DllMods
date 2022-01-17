@@ -30,127 +30,58 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 	std::wstring const dir = Application::getModDirWString();
 	uint32_t currentStage = Common::GetCurrentStageID();
 
-	if (Common::IsCurrentStageMission())
+	// Deal with special case first
+	switch (currentStage)
 	{
-		switch (currentStage)
-		{
-		case SMT_ghz200 | SMT_Mission1:
+	case SMT_pam000:
+	{
+		if (LoadingUI::m_stagePrevious == SMT_ghz200 ||
+			LoadingUI::m_stagePrevious == SMT_cpz200 ||
+			LoadingUI::m_stagePrevious == SMT_pla200 ||
+			LoadingUI::m_stagePrevious == SMT_bsl ||
+			LoadingUI::m_stagePrevious == (SMT_bsl | SMT_BossHard))
 		{
 			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\twn_a.dds").c_str(), &LoadingUI::m_stageTexture);
-			LoadingUI::m_bottomText = isJapanese ? u8"奇跡の靴職人" : "The  winder  of  a  Shoemaker";
-			break;
-		}
-		default:
-		{
-			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\cmn.dds").c_str(), &LoadingUI::m_stageTexture);
-			LoadingUI::m_bottomText = "MISSING MISSION TEXT";
-			break;
-		}
-		}
-	}
-	else
-	{
-		switch (currentStage)
-		{
-		case SMT_ghz200:
-		{
-			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\wvo.dds").c_str(), &LoadingUI::m_stageTexture);
-			LoadingUI::m_bottomText = isJapanese ? u8"エッグキャリアを追跡せよ！" : "Pursue  the  Egg  Carrier!";
-			break;
-		}
-		case SMT_cpz200:
-		{
-			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\dtd.dds").c_str(), &LoadingUI::m_stageTexture);
-			LoadingUI::m_bottomText = isJapanese ? u8"Ｄｒ．エッグマンの追っ手から逃げ切れ！" : "Escape  Dr.  Eggman's  Minions!";
-			break;
-		}
-		case SMT_ssz200:
-		{
-			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\wap.dds").c_str(), &LoadingUI::m_stageTexture);
-			LoadingUI::m_bottomText = isJapanese ? u8"Ｄｒ．エッグマンの基地に侵入せよ！" : "Infiltrate  Dr.  Eggman's  Base!";
-			break;
-		}
-		case SMT_sph200:
-		{
-			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\csc.dds").c_str(), &LoadingUI::m_stageTexture);
-			LoadingUI::m_bottomText = isJapanese ? u8"データベースを探し出せ！" : "Find  the  Database!";
-			break;
-		}
-		case SMT_cte200:
-		{
-			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\flc.dds").c_str(), &LoadingUI::m_stageTexture);
-			LoadingUI::m_bottomText = isJapanese ? u8"カオスエメラルドを探し出せ！" : "Find  the  Chaos  Emerald!";
-			break;
-		}
-		case SMT_ssh200:
-		{
-			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\rct.dds").c_str(), &LoadingUI::m_stageTexture);
-			LoadingUI::m_bottomText = isJapanese ? u8"Ｄｒ．エッグマンの列車を追え！！" : "Follow  Dr.  Eggman's  Train!";
-			break;
-		}
-		case SMT_csc200:
-		{
-			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\tpj.dds").c_str(), &LoadingUI::m_stageTexture);
-			LoadingUI::m_bottomText = isJapanese ? u8"Ｄｒ．エッグマンの追跡をかわせ！" : "Avoid  Dr.  Eggman's  Pursuit!";
-			break;
-		}
-		case SMT_euc200:
-		{
-			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\kdv.dds").c_str(), &LoadingUI::m_stageTexture);
-			LoadingUI::m_bottomText = isJapanese ? u8"エッグキャリアを追え！" : "Follow  the  Egg  Carrier!";
-			break;
-		}
-		case SMT_pla200:
-		{
-			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\aqa.dds").c_str(), &LoadingUI::m_stageTexture);
-			LoadingUI::m_bottomText = isJapanese ? u8"エッグキャリアの発進を阻止せよ！" : "Stop  the  Egg  Carrier's  Launch!";
-			break;
-		}
-		case SMT_pam000:
-		{
-			if (LoadingUI::m_stagePrevious == SMT_ghz200 ||
-				LoadingUI::m_stagePrevious == SMT_cpz200 ||
-				LoadingUI::m_stagePrevious == SMT_pla200 ||
-				LoadingUI::m_stagePrevious == SMT_bsl ||
-				LoadingUI::m_stagePrevious == (SMT_bsl | SMT_BossHard))
-			{
-				UIContext::loadTextureFromFile((dir + L"Assets\\Title\\twn_a.dds").c_str(), &LoadingUI::m_stageTexture);
-				// TODO: text
-			}
-			else if (LoadingUI::m_stagePrevious == SMT_ssz200 ||
-				LoadingUI::m_stagePrevious == SMT_sph200 ||
-				LoadingUI::m_stagePrevious == SMT_ssh200 ||
-				LoadingUI::m_stagePrevious == SMT_bpc ||
-				LoadingUI::m_stagePrevious == (SMT_bpc | SMT_BossHard))
-			{
-				UIContext::loadTextureFromFile((dir + L"Assets\\Title\\twn_b.dds").c_str(), &LoadingUI::m_stageTexture);
-				// TODO: text
-			}
-			else
-			{
-				UIContext::loadTextureFromFile((dir + L"Assets\\Title\\twn_c.dds").c_str(), &LoadingUI::m_stageTexture);
-				// TODO: text
-			}
-			break;
-		}
-		default:
-		{
-			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\cmn.dds").c_str(), &LoadingUI::m_stageTexture);
-			if (currentStage == SMT_ghz100)
-			{
-				LoadingUI::m_bottomText = isJapanese ? u8"ソレアナへ向かえ！" : "Get  to  Soleanna!";
-			}
-			else if (currentStage == SMT_bsl || currentStage == (SMT_bsl | SMT_BossHard))
-			{
-				LoadingUI::m_bottomText = isJapanese ? u8"シルバーを倒せ！" : "Defeat  Silver!";
-			}
-			else if (currentStage == SMT_bpc || currentStage == (SMT_bpc | SMT_BossHard))
-			{
-				LoadingUI::m_bottomText = isJapanese ? u8"イブリースを倒せ！" : "Defeat  Iblis!";
-			}
 			// TODO: text
-			break;
 		}
+		else if (LoadingUI::m_stagePrevious == SMT_ssz200 ||
+			LoadingUI::m_stagePrevious == SMT_sph200 ||
+			LoadingUI::m_stagePrevious == SMT_ssh200 ||
+			LoadingUI::m_stagePrevious == SMT_bpc ||
+			LoadingUI::m_stagePrevious == (SMT_bpc | SMT_BossHard))
+		{
+			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\twn_b.dds").c_str(), &LoadingUI::m_stageTexture);
+			// TODO: text
+		}
+		else
+		{
+			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\twn_c.dds").c_str(), &LoadingUI::m_stageTexture);
+			// TODO: text
+		}
+		break;
+	}
+	}
+
+	if (LoadingUI::m_stageTexture == nullptr)
+	{
+		// Get loading UI data from ini
+		const INIReader reader(Application::getModDirString() + "Assets\\Title\\titleData.ini");
+		if (reader.ParseError() != 0)
+		{
+			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\cmn.dds").c_str(), &LoadingUI::m_stageTexture);
+			LoadingUI::m_bottomText = "MISSING TEXT";
+		}
+		else
+		{
+			std::string currentStageStr = std::to_string(currentStage);
+
+			// Title card
+			std::string title = reader.Get(currentStageStr, "Title", "cmn");
+			std::wstring titleWide = dir + L"Assets\\Title\\" + Common::multiByteToWideChar(title.c_str()) + L".dds";
+			UIContext::loadTextureFromFile(titleWide.c_str(), &LoadingUI::m_stageTexture);
+
+			// Bottom text
+			LoadingUI::m_bottomText = reader.Get(currentStageStr, isJapanese ? "TextJP" : "Text", "MISSING TEXT");
 		}
 	}
 
