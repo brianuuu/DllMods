@@ -85,10 +85,7 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 		}
 	}
 
-	if (LoadingUI::m_stageTexture)
-	{
-		LoadingUI::startNowLoading();
-	}
+	LoadingUI::startNowLoading();
 	LoadingUI::m_stagePrevious = currentStage;
 }
 
