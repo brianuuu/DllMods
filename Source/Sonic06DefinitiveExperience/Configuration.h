@@ -26,7 +26,6 @@ public:
 
     // General
     static ModelType m_model;
-    static LanguageType m_language;
 
     // Camera
     static bool m_camera;

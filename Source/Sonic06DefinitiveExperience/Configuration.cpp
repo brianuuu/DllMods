@@ -2,7 +2,6 @@
 #include "bbWriter.h"
 
 Configuration::ModelType Configuration::m_model = Configuration::ModelType::Sonic;
-Configuration::LanguageType Configuration::m_language = Configuration::LanguageType::English;
 
 bool Configuration::m_physics = false;
 bool Configuration::m_characterMoveset = false;
@@ -26,7 +25,6 @@ bool Configuration::load(const std::string& rootPath)
 
     // --------------General--------------
     m_model = (ModelType)reader.GetInteger("Main", "nModel", 0);
-    m_language = (LanguageType)reader.GetInteger("Main", "nLanguage", 0);
 
     static double roundClearLength = 7.831;
     WRITE_MEMORY(0xCFD562, double*, &roundClearLength);
