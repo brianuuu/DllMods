@@ -9,5 +9,6 @@ class MissionManager
 {
 public:
 	static void applyPatches();
+	static void startMissionCompleteDialog(bool success);
 };
 

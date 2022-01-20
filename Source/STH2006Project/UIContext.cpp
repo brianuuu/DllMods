@@ -3,7 +3,7 @@
 #include "Itembox.h"
 #include "ScoreManager.h"
 #include "Omochao.h"
-//#include "ResultUI.h"
+#include "SubtitleUI.h"
 #include "LoadingUI.h"
 
 HWND UIContext::window;
@@ -70,7 +70,7 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     }
     builderTextbox.BuildRanges(&rangesTextbox);
 
-    const float fontSubtitleSize = 40.0f * (float)*BACKBUFFER_WIDTH / 1920.0f;
+    const float fontSubtitleSize = 39.0f * (float)*BACKBUFFER_WIDTH / 1920.0f;
     if ((fontSubtitle = io.Fonts->AddFontFromFileTTF((Application::getModDirString() + "Fonts\\FOT-RodinCattleyaPro-DB.otf").c_str(), fontSubtitleSize, nullptr, rangesTextbox.Data)) == nullptr)
     {
         MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-RodinCattleyaPro-DB.otf\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
@@ -81,7 +81,7 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     // Initial textures
     Itembox::initTextures();
     ScoreManager::initTextures();
-    //ResultUI::initTextures();
+    SubtitleUI::m_captionData.init();
     LoadingUI::initTextures();
 }
 
@@ -130,7 +130,7 @@ void UIContext::update()
         ScoreManager::draw();
 
         ImGui::PushFont(fontSubtitle);
-        //ResultUI::draw();
+        SubtitleUI::draw();
         LoadingUI::draw();
         ImGui::PopFont();
     }
@@ -145,6 +145,7 @@ void UIContext::clearDraw()
 {
     Itembox::clearDraw();
     ScoreManager::clearDraw();
+    SubtitleUI::clearDraw();
 }
 
 void UIContext::reset()

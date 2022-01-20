@@ -201,6 +201,7 @@ xcopy /Y /E /I "$(MSBuildProjectDirectory)\Fonts" "$(MSBuildProjectDirectory)\bi
     <ClCompile Include="MissionManager.cpp" />
     <ClCompile Include="ParamManager.cpp" />
     <ClCompile Include="ResultUI.cpp" />
+    <ClCompile Include="SubtitleUI.cpp" />
     <ClCompile Include="UIContext.cpp" />
     <ClCompile Include="Itembox.cpp" />
     <ClCompile Include="Mod.cpp" />
@@ -233,6 +234,7 @@ xcopy /Y /E /I "$(MSBuildProjectDirectory)\Fonts" "$(MSBuildProjectDirectory)\bi
     <ClInclude Include="MissionManager.h" />
     <ClInclude Include="ParamManager.h" />
     <ClInclude Include="ResultUI.h" />
+    <ClInclude Include="SubtitleUI.h" />
     <ClInclude Include="UIContext.h" />
     <ClInclude Include="Itembox.h" />
     <ClInclude Include="Navigation.h" />

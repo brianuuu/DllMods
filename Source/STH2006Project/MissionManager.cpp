@@ -1,5 +1,7 @@
 #include "MissionManager.h"
 #include "ScoreManager.h"
+#include "Application.h"
+#include "SubtitleUI.h"
 
 FUNCTION_PTR(void*, __stdcall, Mission_fpEventTrigger, 0xD5ED00, void* This, int Event);
 
@@ -28,16 +30,79 @@ HOOK(int*, __fastcall, Mission_GameplayManagerInit, 0xD00F70, void* This, void* 
 //---------------------------------------------------
 // Mission Complete Result HUD
 //---------------------------------------------------
-HOOK(void, __fastcall, Mission_CMissionManagerAdvance, 0xD10690, uint32_t* This, void* Edx, float* a2)
+HOOK(void, __fastcall, Mission_CMissionManagerAdvance, 0xD10690, uint32_t This, void* Edx, float* a2)
 {
-	uint32_t state = This[46];
+	uint32_t* pState = (uint32_t*)(This + 184);
+	uint32_t state = *pState;
+
+	float* pStateTime = (float*)(This + 188);
+	static bool dialogShown = false;
+	if (state == 1 || state == 2)
+	{
+		if (*pStateTime == 0.0f)
+		{
+			// Prevent changing game state until we show dialog
+			WRITE_MEMORY(0xD104B0, uint8_t, 0xE9, 0xCF, 0x01, 0x00, 0x00, 0x90);
+			WRITE_MEMORY(0xD101B0, uint8_t, 0xE9, 0xC1, 0x02, 0x00, 0x00, 0x90);
+			dialogShown = false;
+		}
+		else if (*pStateTime >= 1.0f)
+		{
+			if (!dialogShown)
+			{
+				// Show dialog
+				MissionManager::startMissionCompleteDialog(state == 1);
+				dialogShown = true;
+			}
+			else if (!SubtitleUI::isPlayingCaption())
+			{
+				// Revert code
+				WRITE_MEMORY(0xD104B0, uint8_t, 0x0F, 0x82, 0xCE, 0x01, 0x00, 0x00);
+				WRITE_MEMORY(0xD101B0, uint8_t, 0x0F, 0x82, 0xC0, 0x02, 0x00, 0x00);
+			}
+		}
+	}
+
 	originalMission_CMissionManagerAdvance(This, Edx, a2);
 
-	// Mission success
-	if (This[46] == 3 && state == 1)
+	// Mission success finished
+	if (state == 1 && *pState == 3)
 	{
 		WRITE_MEMORY(0x10951F5, uint8_t, 0xEB);
 	}
+}
+
+void MissionManager::startMissionCompleteDialog(bool success)
+{
+	bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
+	uint32_t stageID = Common::GetCurrentStageID();
+	std::vector<std::string> captions;
+
+	int dialogCount = 1;
+	std::string name = "Mission";
+	name += success ? "Success" : "Fail";
+	std::string voice = name + "Voice";
+	name += isJapanese ? "JP" : "";
+
+	const INIReader reader(Application::getModDirString() + "Assets\\Textbox\\missionData.ini");
+	std::string const currentStageStr = std::to_string(stageID);
+	while (true)
+	{
+		std::string caption = reader.Get(currentStageStr, name + std::to_string(dialogCount), "");
+		if (caption.empty())
+		{
+			break;
+		}
+
+		captions.push_back(caption);
+		dialogCount++;
+	}
+
+	SubtitleUI::addCaption(captions, reader.Get(currentStageStr, isJapanese ? "SpeakerJP" : "Speaker", ""));
+
+	// Play voice
+	static SharedPtrTypeless soundHandle;
+	Common::PlaySoundStatic(soundHandle, reader.GetInteger(currentStageStr, voice, -1));
 }
 
 HOOK(void, __fastcall, Mission_MsgGoalResult, 0x10950E0, uint32_t* This, void* Edx, void* message)

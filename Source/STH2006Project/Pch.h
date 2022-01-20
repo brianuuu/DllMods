@@ -17,6 +17,7 @@
 #include <iomanip>
 #include <unordered_set>
 #include <deque>
+#include <regex>
 
 #include <Eigen/Core>
 #include <Eigen/Dense>

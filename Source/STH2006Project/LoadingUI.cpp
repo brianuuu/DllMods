@@ -80,8 +80,8 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 			std::wstring titleWide = dir + L"Assets\\Title\\" + Common::multiByteToWideChar(title.c_str()) + L".dds";
 			UIContext::loadTextureFromFile(titleWide.c_str(), &LoadingUI::m_stageTexture);
 
-			// Bottom text
-			LoadingUI::m_bottomText = reader.Get(currentStageStr, isJapanese ? "TextJP" : "Text", "MISSING TEXT");
+			// Bottom text (add extra space)
+			LoadingUI::m_bottomText = std::regex_replace(reader.Get(currentStageStr, isJapanese ? "TextJP" : "Text", "MISSING TEXT"), std::regex(" "), "  ");
 		}
 	}
 
