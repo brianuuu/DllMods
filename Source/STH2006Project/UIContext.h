@@ -14,8 +14,8 @@ public:
 
     static void initialize(HWND window, IDirect3DDevice9* device);
 
-    static std::map<uint32_t, wchar_t> m_fontDatabase;
-    static bool initFontDatabase();
+    static std::set<wchar_t> m_fontDatabase;
+    static bool initFontDatabase(std::wstring const& file);
 
     static void update();
     static void clearDraw();

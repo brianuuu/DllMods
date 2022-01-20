@@ -63,10 +63,11 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
 
     ImVector<ImWchar> rangesTextbox;
     ImFontGlyphRangesBuilder builderTextbox;
-    initFontDatabase();
-    for (auto const& iter : m_fontDatabase)
+    initFontDatabase(L"Assets\\Textbox\\missionData.ini");
+    initFontDatabase(L"Assets\\Title\\titleData.ini");
+    for (auto const& c : m_fontDatabase)
     {
-        builderTextbox.AddChar(iter.second);
+        builderTextbox.AddChar(c);
     }
     builderTextbox.BuildRanges(&rangesTextbox);
 
@@ -85,28 +86,26 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     LoadingUI::initTextures();
 }
 
-std::map<uint32_t, wchar_t> UIContext::m_fontDatabase;
-bool UIContext::initFontDatabase()
+std::set<wchar_t> UIContext::m_fontDatabase;
+bool UIContext::initFontDatabase(std::wstring const& file)
 {
-    std::ifstream database(Application::getModDirWString() + L"Fonts\\FontDatabase.txt");
+    std::ifstream database(Application::getModDirWString() + file);
     if (database.is_open())
     {
         std::stringstream ss;
         ss << database.rdbuf();
         database.close();
 
-        uint32_t key = 0x82;
         std::wstring str = Common::multiByteToWideChar(ss.str().c_str());
         for (wchar_t const& c : str)
         {
-            m_fontDatabase[key] = c;
-            key++;
+            m_fontDatabase.insert(c);
         }
 
         return true;
     }
 
-    MessageBox(nullptr, TEXT("Failed to load font database, reverting to in-game textbox."), TEXT("Sonic 06 HUD"), MB_ICONWARNING);
+    MessageBox(nullptr, TEXT("Failed to load font database, text may not display correctly."), TEXT("STH2006 Project"), MB_ICONERROR);
     return false;
 }
 
