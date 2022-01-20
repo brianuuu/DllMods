@@ -220,18 +220,12 @@ bool Configuration::load(const std::string& rootPath)
         bb3.addReplace("SonicRankD.arl", str + ".arl");
 
         // voice
-        if (m_language == LanguageType::English)
-        {
-            str = "voices\\English";
-            bbWriter::applyModel(str, m_model);
-            bb3.addReplace("voices\\English", str);
-        }
-        else
-        {
-            str = "voices\\Japanese";
-            bbWriter::applyModel(str, m_model);
-            bb3.addReplace("voices\\Japanese", str);
-        }
+        str = "voices\\English";
+        bbWriter::applyModel(str, m_model);
+        bb3.addReplace("voices\\English", str);
+        str = "voices\\Japanese";
+        bbWriter::applyModel(str, m_model);
+        bb3.addReplace("voices\\Japanese", str);
 
         // Sonic.ar
         str = "Sonic";

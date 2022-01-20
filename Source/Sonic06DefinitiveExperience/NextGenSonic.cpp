@@ -473,6 +473,17 @@ HOOK(int*, __fastcall, NextGenSonic_CSonicStateSquatKickBegin, 0x12526D0, void* 
     // Don't allow direction change for squat kick
     WRITE_MEMORY(0x11D943D, uint8_t, 0xEB);
 
+    // Don't play voice for Japanese
+    bool isJapaneseVoice = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x10 });
+    if (!isJapaneseVoice)
+    {
+        WRITE_MEMORY(0x1252740, uint32_t, 3002020);
+    }
+    else
+    {
+        WRITE_MEMORY(0x1252740, int, -1);
+    }
+
     // Get initial brake flip direction
     Eigen::Vector3f playerPosition;
     Eigen::Quaternionf playerRotation;
@@ -1201,18 +1212,6 @@ void NextGenSonic::applyPatches()
 
         // Don't transition out to Stand, only Walk and Fall
         WRITE_MEMORY(0x1252905, uint32_t, 0x15F4FE8);
-
-        // Play squat kick sfx
-        if (Configuration::m_language == Configuration::LanguageType::English)
-        {
-            WRITE_MEMORY(0x1252740, uint32_t, 3002020);
-        }
-        else
-        {
-            // Don't play voice for Japanese Sonic
-            WRITE_NOP(0x1252731, 2);
-            WRITE_JUMP(0x1252737, (void*)0x125277F);
-        }
 
         // Enable sweep kick attack collision immediately
         static double const c_sweepKickActivateTime = 0.0;
