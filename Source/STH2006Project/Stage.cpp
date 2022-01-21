@@ -222,42 +222,58 @@ HOOK(void, __fastcall, Stage_MsgNotifyObjectEvent, 0xEA4F50, void* This, void* E
     uint32_t* pEvent = (uint32_t*)(a2 + 16);
     uint32_t* pObject = (uint32_t*)This;
 
-    // Only use [1001-2000] events
-    if (*pEvent > 1000 && *pEvent <= 2000)
+    switch (*pEvent)
     {
-        switch (*pEvent)
-        {
-        // Change light speed dash param
-        case 1001:
-        {
-            *m_LightSpeedDashStartCollisionFovy->m_funcData->m_pValue = 80.0f;
-            m_LightSpeedDashStartCollisionFovy->m_funcData->update();
+    // Change light speed dash param
+    case 1001:
+    {
+        *m_LightSpeedDashStartCollisionFovy->m_funcData->m_pValue = 80.0f;
+        m_LightSpeedDashStartCollisionFovy->m_funcData->update();
 
-            *m_LightSpeedDashStartCollisionFar->m_funcData->m_pValue = 10.0f;
-            m_LightSpeedDashStartCollisionFar->m_funcData->update();
+        *m_LightSpeedDashStartCollisionFar->m_funcData->m_pValue = 10.0f;
+        m_LightSpeedDashStartCollisionFar->m_funcData->update();
 
-            *m_LightSpeedDashCollisionFovy->m_funcData->m_pValue = 80.0f;
-            m_LightSpeedDashCollisionFovy->m_funcData->update();
+        *m_LightSpeedDashCollisionFovy->m_funcData->m_pValue = 80.0f;
+        m_LightSpeedDashCollisionFovy->m_funcData->update();
 
-            *m_LightSpeedDashCollisionFar->m_funcData->m_pValue = 10.0f;
-            m_LightSpeedDashCollisionFar->m_funcData->update();
+        *m_LightSpeedDashCollisionFar->m_funcData->m_pValue = 10.0f;
+        m_LightSpeedDashCollisionFar->m_funcData->update();
 
-            float speed = 80.0f;
-            if (Common::CheckCurrentStage("ghz200")) speed = 100.0f;
-            else if (Common::CheckCurrentStage("euc200")) speed = 65.0f;
-            *m_LightSpeedDashMinVelocity->m_funcData->m_pValue = speed;
-            m_LightSpeedDashMinVelocity->m_funcData->update();
-            *m_LightSpeedDashMinVelocity3D->m_funcData->m_pValue = speed;
-            m_LightSpeedDashMinVelocity3D->m_funcData->update();
+        float speed = 80.0f;
+        if (Common::CheckCurrentStage("ghz200")) speed = 100.0f;
+        else if (Common::CheckCurrentStage("euc200")) speed = 65.0f;
+        *m_LightSpeedDashMinVelocity->m_funcData->m_pValue = speed;
+        m_LightSpeedDashMinVelocity->m_funcData->update();
+        *m_LightSpeedDashMinVelocity3D->m_funcData->m_pValue = speed;
+        m_LightSpeedDashMinVelocity3D->m_funcData->update();
 
-            *m_LightSpeedDashMaxVelocity->m_funcData->m_pValue = 100.0f;
-            m_LightSpeedDashMaxVelocity->m_funcData->update();
-            *m_LightSpeedDashMaxVelocity3D->m_funcData->m_pValue = 100.0f;
-            m_LightSpeedDashMaxVelocity3D->m_funcData->update();
+        *m_LightSpeedDashMaxVelocity->m_funcData->m_pValue = 100.0f;
+        m_LightSpeedDashMaxVelocity->m_funcData->update();
+        *m_LightSpeedDashMaxVelocity3D->m_funcData->m_pValue = 100.0f;
+        m_LightSpeedDashMaxVelocity3D->m_funcData->update();
 
-            break;
-        }
-        }
+        break;
+    }
+    case 300:
+    {
+        Common::PlayStageMusic("City_Escape_Generic2", 1.5f);
+        break;
+    }
+    case 301:
+    {
+        Common::PlayStageMusic("Speed_Highway_Generic1", 0.0f);
+        break;
+    }
+    case 302:
+    {
+        Common::PlayStageMusic("Speed_Highway_Generic2", 0.0f);
+        break;
+    }
+    case 303:
+    {
+        Common::PlayStageMusic("Speed_Highway_Generic3", 0.0f);
+        break;
+    }
     }
 
     originalStage_MsgNotifyObjectEvent(This, Edx, a2);
@@ -332,28 +348,54 @@ HOOK(void, __fastcall, Stage_CBossPerfectChaosCStateDefeated, 0x5D20A0, int This
     }
 }
 
+//---------------------------------------------------
+// Tutorial Stop HUD Music
+//---------------------------------------------------
+HOOK(void, __fastcall, Stage_CTutorialImpl, 0xD24440, int This, void* Edx, int a2)
+{
+    if (*(uint32_t*)(This + 176) == 3)
+    {
+        Common::PlayStageMusic("City_Escape_Generic2", 1.5f);
+    }
+    originalStage_CTutorialImpl(This, Edx, a2);
+}
+
 void Stage::applyPatches()
 {
+    //---------------------------------------------------
+    // General
+    //---------------------------------------------------
     // Disable enter CpzPipe sfx
     WRITE_MEMORY(0x1234856, int, -1);
     
+    //---------------------------------------------------
+    // Kingdom Valley sfx
+    //---------------------------------------------------
     // Play robe sfx in Kingdom Valley
     INSTALL_HOOK(Stage_CObjSpringSFX);
 
     // Play wind rail sfx for Kingdom Valley
     INSTALL_HOOK(Stage_MsgHitGrindPath);
 
+    //---------------------------------------------------
+    // Wall Jump
+    //---------------------------------------------------
     // Do SpinAttack animation for walljumps (required negative out of control time)
     WRITE_JUMP(0xE6D5AA, getIsWallJump);
     INSTALL_HOOK(Stage_CSonicStateFallAdvance);
     INSTALL_HOOK(Stage_CSonicStateFallEnd);
 
+    //---------------------------------------------------
+    // Water Running
+    //---------------------------------------------------
     // Do slide animation on water running in Wave Ocean
     INSTALL_HOOK(Stage_CSonicStateGrounded);
     INSTALL_HOOK(Stage_SonicChangeAnimation);
     WRITE_JUMP(0x11DD1AC, playWaterPfx);
 
+    //---------------------------------------------------
     // Object Physics dummy event
+    //---------------------------------------------------
     ParamManager::addParam(&m_LightSpeedDashStartCollisionFovy, "LightSpeedDashStartCollisionFovy");
     ParamManager::addParam(&m_LightSpeedDashStartCollisionFar, "LightSpeedDashStartCollisionFar");
     ParamManager::addParam(&m_LightSpeedDashCollisionFovy, "LightSpeedDashCollisionFovy");
@@ -364,6 +406,9 @@ void Stage::applyPatches()
     ParamManager::addParam(&m_LightSpeedDashMaxVelocity3D, "LightSpeedDashMaxVelocity3D");
     INSTALL_HOOK(Stage_MsgNotifyObjectEvent);
 
+    //---------------------------------------------------
+    // Result music
+    //---------------------------------------------------
     // Use custom SNG19_JNG, adjust round clear length
     static const char* SNG19_JNG_STH = "SNG19_JNG_STH";
     WRITE_MEMORY(0xCFF44E, char*, SNG19_JNG_STH);
@@ -373,8 +418,16 @@ void Stage::applyPatches()
     // Always use Result1
     WRITE_MEMORY(0xCFD4E5, uint8_t, 0xEB);
 
+    //---------------------------------------------------
+    // Perfect Chaos
+    //---------------------------------------------------
     // Iblis final hit sfx & event movie
     WRITE_JUMP(0xC0FFC0, Stage_CBossPerfectChaosFinalHitSfx);
     WRITE_STRING(0x1587DD8, "ev704");
     INSTALL_HOOK(Stage_CBossPerfectChaosCStateDefeated);
+
+    //---------------------------------------------------
+    // Tutorial Stop HUD Music
+    //---------------------------------------------------
+    INSTALL_HOOK(Stage_CTutorialImpl);
 }
