@@ -63,9 +63,10 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
 
     ImVector<ImWchar> rangesTextbox;
     ImFontGlyphRangesBuilder builderTextbox;
-    initFontDatabase(L"Assets\\Textbox\\missionData.ini");
-    initFontDatabase(L"Assets\\Title\\titleData.ini");
-    for (auto const& c : m_fontDatabase)
+    std::set<wchar_t> database;
+    initFontDatabase(L"Assets\\Textbox\\missionData.ini", database);
+    initFontDatabase(L"Assets\\Title\\titleData.ini", database);
+    for (auto const& c : database)
     {
         builderTextbox.AddChar(c);
     }
@@ -86,20 +87,19 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     LoadingUI::initTextures();
 }
 
-std::set<wchar_t> UIContext::m_fontDatabase;
-bool UIContext::initFontDatabase(std::wstring const& file)
+bool UIContext::initFontDatabase(std::wstring const& file, std::set<wchar_t>& database)
 {
-    std::ifstream database(Application::getModDirWString() + file);
-    if (database.is_open())
+    std::ifstream fstream(Application::getModDirWString() + file);
+    if (fstream.is_open())
     {
         std::stringstream ss;
-        ss << database.rdbuf();
-        database.close();
+        ss << fstream.rdbuf();
+        fstream.close();
 
         std::wstring str = Common::multiByteToWideChar(ss.str().c_str());
         for (wchar_t const& c : str)
         {
-            m_fontDatabase.insert(c);
+            database.insert(c);
         }
 
         return true;

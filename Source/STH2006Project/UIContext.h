@@ -13,9 +13,7 @@ public:
     static bool isInitialized();
 
     static void initialize(HWND window, IDirect3DDevice9* device);
-
-    static std::set<wchar_t> m_fontDatabase;
-    static bool initFontDatabase(std::wstring const& file);
+    static bool initFontDatabase(std::wstring const& file, std::set<wchar_t>& database);
 
     static void update();
     static void clearDraw();
