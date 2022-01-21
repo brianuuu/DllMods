@@ -3,6 +3,7 @@
 #include "Application.h"
 #include "SubtitleUI.h"
 
+#define MISSION_DATA_FILE "Assets\\Textbox\\missionData.ini"
 FUNCTION_PTR(void*, __stdcall, Mission_fpEventTrigger, 0xD5ED00, void* This, int Event);
 
 //---------------------------------------------------
@@ -72,23 +73,16 @@ HOOK(void, __fastcall, Mission_CMissionManagerAdvance, 0xD10690, uint32_t This, 
 	}
 }
 
-void MissionManager::startMissionCompleteDialog(bool success)
+std::string MissionManager::getMissionDialog(std::vector<std::string>& captions, uint32_t stageID, std::string const& name)
 {
 	bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
-	uint32_t stageID = Common::GetCurrentStageID();
-	std::vector<std::string> captions;
-
-	int dialogCount = 1;
-	std::string name = "Mission";
-	name += success ? "Success" : "Fail";
-	std::string voice = name + "Voice";
-	name += isJapanese ? "JP" : "";
-
-	const INIReader reader(Application::getModDirString() + "Assets\\Textbox\\missionData.ini");
 	std::string const currentStageStr = std::to_string(stageID);
+
+	const INIReader reader(Application::getModDirString() + MISSION_DATA_FILE);
+	int dialogCount = 1;
 	while (true)
 	{
-		std::string caption = reader.Get(currentStageStr, name + std::to_string(dialogCount), "");
+		std::string caption = reader.Get(currentStageStr, name + (isJapanese ? "JP" : "") + std::to_string(dialogCount), "");
 		if (caption.empty())
 		{
 			break;
@@ -98,11 +92,23 @@ void MissionManager::startMissionCompleteDialog(bool success)
 		dialogCount++;
 	}
 
-	SubtitleUI::addCaption(captions, reader.Get(currentStageStr, isJapanese ? "SpeakerJP" : "Speaker", ""));
+	return reader.Get(currentStageStr, isJapanese ? "SpeakerJP" : "Speaker", "");
+}
+
+void MissionManager::startMissionCompleteDialog(bool success)
+{
+	std::vector<std::string> captions;
+
+	std::string name = "Mission";
+	name += success ? "Success" : "Fail";
+
+	std::string speaker = MissionManager::getMissionDialog(captions, Common::GetCurrentStageID(), name);
+	SubtitleUI::addCaption(captions, speaker);
 
 	// Play voice
+	const INIReader reader(Application::getModDirString() + MISSION_DATA_FILE);
 	static SharedPtrTypeless soundHandle;
-	Common::PlaySoundStatic(soundHandle, reader.GetInteger(currentStageStr, voice, -1));
+	Common::PlaySoundStatic(soundHandle, reader.GetInteger(std::to_string(Common::GetCurrentStageID()), name + "Voice", -1));
 }
 
 HOOK(void, __fastcall, Mission_MsgGoalResult, 0x10950E0, uint32_t* This, void* Edx, void* message)
@@ -257,6 +263,66 @@ HOOK(void, __fastcall, Mission_CObjGoalRing_MsgHitEventCollision, 0x1159010, uin
 	WRITE_MEMORY(0x1159054, uint32_t, 4001005);
 }
 
+//---------------------------------------------------
+// HUB Mission Talk
+//---------------------------------------------------
+uint32_t gateStageID = 0;
+uint32_t gateMissionID = 0;
+bool MissionManager::m_missionAccept = true;
+HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateLoadingBegin, 0x107D790, uint32_t** This)
+{
+	gateStageID = This[2][84];
+	gateMissionID = This[2][85];
+
+	if (gateMissionID > 0 && gateStageID <= SMT_pla200)
+	{
+		MissionManager::m_missionAccept = true;
+
+		std::vector<std::string> captions;
+		uint32_t stageID = (gateMissionID << 8) + gateStageID;
+		std::string speaker = MissionManager::getMissionDialog(captions, stageID, "MissionStart");
+
+		// Get reject dialog size
+		size_t size = captions.size();
+		MissionManager::getMissionDialog(captions, stageID, "MissionReject");
+		SubtitleUI::addCaption(captions, speaker, captions.size() - size);
+
+		// Play voice
+		const INIReader reader(Application::getModDirString() + MISSION_DATA_FILE);
+		static SharedPtrTypeless soundHandle;
+		Common::PlaySoundStatic(soundHandle, reader.GetInteger(std::to_string(stageID), "MissionStartVoice", -1));
+	}
+
+	originalMission_CHudGateMenuMain_CStateLoadingBegin(This);
+}
+
+HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateLoadingAdvance, 0x10804C0, uint32_t* This)
+{
+	if (!SubtitleUI::isPlayingCaption())
+	{
+		originalMission_CHudGateMenuMain_CStateLoadingAdvance(This);
+	}
+}
+
+HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateIntroBegin, 0x1080110, uint32_t This)
+{
+	if (gateMissionID > 0 && gateStageID <= SMT_pla200)
+	{
+		if (MissionManager::m_missionAccept)
+		{
+			FUNCTION_PTR(void, __cdecl, Mission_fpEnterStage, 0xD401F0, uint32_t This, uint32_t nStageID, uint32_t nMissionID);
+			Mission_fpEnterStage(*(uint32_t*)(This + 8), gateStageID, gateMissionID);
+		}
+
+		// Kill state machine
+		*(bool*)(This + 0x1C) = 1;
+	}
+	else
+	{
+		originalMission_CHudGateMenuMain_CStateIntroBegin(This);
+	}
+}
+
 void MissionManager::applyPatches()
 {
 	// Fix Generations HUD
@@ -313,4 +379,11 @@ void MissionManager::applyPatches()
 	// Goalring
 	//---------------------------------------------------
 	INSTALL_HOOK(Mission_CObjGoalRing_MsgHitEventCollision);
+
+	//---------------------------------------------------
+	// HUB Mission Talk
+	//---------------------------------------------------
+	INSTALL_HOOK(Mission_CHudGateMenuMain_CStateLoadingBegin);
+	INSTALL_HOOK(Mission_CHudGateMenuMain_CStateLoadingAdvance);
+	INSTALL_HOOK(Mission_CHudGateMenuMain_CStateIntroBegin);
 }

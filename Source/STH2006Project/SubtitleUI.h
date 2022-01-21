@@ -14,7 +14,12 @@ struct CaptionData
 	std::string m_speaker;
 	std::deque<Caption> m_captions;
 
+	int m_rejectDialogSize;
+	bool m_acceptDialogShown;
+	float m_yesNoColorTime;
+
 	PDIRECT3DTEXTURE9 m_textbox;
+	PDIRECT3DTEXTURE9 m_acceptbox;
 
 	bool init();
 	void clear()
@@ -25,11 +30,16 @@ struct CaptionData
 		m_isFadeIn = true;
 		m_speaker.clear();
 		m_captions.clear();
+
+		m_rejectDialogSize = -1;
+		m_acceptDialogShown = false;
+		m_yesNoColorTime = 0.0f;
 	}
 
 	~CaptionData()
 	{
 		if (m_textbox) m_textbox->Release();
+		if (m_acceptbox) m_acceptbox->Release();
 	}
 };
 
@@ -41,7 +51,7 @@ public:
 	static CaptionData m_captionData;
 	static bool isPlayingCaption() { return !m_captionData.m_captions.empty(); }
 
-	static void addCaption(std::vector<std::string> const& captions, std::string const& speaker = "");
+	static void addCaption(std::vector<std::string> const& captions, std::string const& speaker = "", int rejectDialogSize = -1);
 	static void draw();
 	static void clearDraw();
 	static void drawCaptions(Caption const& caption, float alpha);
