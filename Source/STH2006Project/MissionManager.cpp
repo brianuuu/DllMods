@@ -386,4 +386,12 @@ void MissionManager::applyPatches()
 	INSTALL_HOOK(Mission_CHudGateMenuMain_CStateLoadingBegin);
 	INSTALL_HOOK(Mission_CHudGateMenuMain_CStateLoadingAdvance);
 	INSTALL_HOOK(Mission_CHudGateMenuMain_CStateIntroBegin);
+
+	// Disable MissionGate bell
+	WRITE_MEMORY(0xEEB4FD, uint8_t, 0xE9, 0x0A, 0x02, 0x00, 0x00, 0x90);
+	WRITE_MEMORY(0xEEC5CE, uint8_t, 0xE9, 0xD5, 0x02, 0x00, 0x00, 0x90);
+
+	// Disable MissionGate Icon
+	WRITE_JUMP(0xEEBA3C, (void*)0xEEBAFC);
+	WRITE_MEMORY(0xEEBCBC, uint8_t, 0xE9, 0x25, 0x01, 0x00, 0x00, 0x90);
 }
