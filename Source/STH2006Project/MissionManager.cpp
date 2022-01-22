@@ -291,8 +291,13 @@ HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateLoadingBegin, 0x107D790, u
 		MissionManager::getMissionDialog(captions, stageID, "MissionStart", &speaker);
 
 		// Get accept & reject dialog size
-		int acceptSize = MissionManager::getMissionDialog(captions, stageID, "MissionAccept");
-		int rejectSize = MissionManager::getMissionDialog(captions, stageID, "MissionReject");
+		int acceptSize = -1;
+		int rejectSize = -1;
+		if (gateMissionID <= 5)
+		{
+			acceptSize = MissionManager::getMissionDialog(captions, stageID, "MissionAccept");
+			rejectSize = MissionManager::getMissionDialog(captions, stageID, "MissionReject");
+		}
 		SubtitleUI::addCaption(captions, speaker, acceptSize, rejectSize);
 
 		// Play voice
@@ -408,4 +413,11 @@ void MissionManager::applyPatches()
 	// Disable MissionGate Icon
 	WRITE_JUMP(0xEEBA3C, (void*)0xEEBAFC);
 	WRITE_MEMORY(0xEEBCBC, uint8_t, 0xE9, 0x25, 0x01, 0x00, 0x00, 0x90);
+
+	// Don't clamp MissionID param
+	WRITE_NOP(0xEEAED4, 0x14);
+
+	// Force invalid MissionID to allow interact
+	WRITE_MEMORY(0xEEB17C, uint8_t, 0xB0, 0x01);
+	WRITE_MEMORY(0x552145, uint8_t, 0xEB); // ID = 9 is hardcoded for something...?
 }
