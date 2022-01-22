@@ -63,13 +63,8 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
 
     ImVector<ImWchar> rangesTextbox;
     ImFontGlyphRangesBuilder builderTextbox;
-    std::set<wchar_t> database;
-    initFontDatabase(L"Assets\\Textbox\\npcData.ini", database);
-    initFontDatabase(L"Assets\\Title\\titleData.ini", database);
-    for (auto const& c : database)
-    {
-        builderTextbox.AddChar(c);
-    }
+    initFontDatabase(L"Assets\\Textbox\\npcData.ini", builderTextbox);
+    initFontDatabase(L"Assets\\Title\\titleData.ini", builderTextbox);
     builderTextbox.BuildRanges(&rangesTextbox);
 
     const float fontSubtitleSize = 39.0f * (float)*BACKBUFFER_WIDTH / 1920.0f;
@@ -87,7 +82,7 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     LoadingUI::initTextures();
 }
 
-bool UIContext::initFontDatabase(std::wstring const& file, std::set<wchar_t>& database)
+bool UIContext::initFontDatabase(std::wstring const& file, ImFontGlyphRangesBuilder& builder)
 {
     std::ifstream fstream(Application::getModDirWString() + file);
     if (fstream.is_open())
@@ -95,13 +90,7 @@ bool UIContext::initFontDatabase(std::wstring const& file, std::set<wchar_t>& da
         std::stringstream ss;
         ss << fstream.rdbuf();
         fstream.close();
-
-        std::wstring str = Common::multiByteToWideChar(ss.str().c_str());
-        for (wchar_t const& c : str)
-        {
-            database.insert(c);
-        }
-
+        builder.AddText(ss.str().c_str());
         return true;
     }
 
