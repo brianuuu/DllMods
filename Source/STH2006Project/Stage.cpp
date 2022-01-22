@@ -349,7 +349,7 @@ HOOK(void, __fastcall, Stage_CBossPerfectChaosCStateDefeated, 0x5D20A0, int This
 }
 
 //---------------------------------------------------
-// Tutorial Stop HUD Music
+// HUD Music
 //---------------------------------------------------
 HOOK(void, __fastcall, Stage_CTutorialImpl, 0xD24440, int This, void* Edx, int a2)
 {
@@ -367,6 +367,10 @@ void Stage::applyPatches()
     //---------------------------------------------------
     // Disable enter CpzPipe sfx
     WRITE_MEMORY(0x1234856, int, -1);
+
+    // HUB World Omochao model
+    WRITE_STRING(0x161B4C0, "chr_omocha2_HD");
+    WRITE_STRING(0x161B4D0, "chr_omocha2_HD");
     
     //---------------------------------------------------
     // Kingdom Valley sfx
@@ -427,7 +431,12 @@ void Stage::applyPatches()
     INSTALL_HOOK(Stage_CBossPerfectChaosCStateDefeated);
 
     //---------------------------------------------------
-    // Tutorial Stop HUD Music
+    // HUD Music
     //---------------------------------------------------
+    // Tutorial stop music
     INSTALL_HOOK(Stage_CTutorialImpl);
+
+    // Shop don't change music
+    WRITE_JUMP(0xD34984, (void*)0xD349E2);
+    WRITE_JUMP(0xD32D4C, (void*)0xD32D8E);
 }
