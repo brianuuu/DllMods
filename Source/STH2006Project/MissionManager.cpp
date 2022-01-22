@@ -3,7 +3,7 @@
 #include "Application.h"
 #include "SubtitleUI.h"
 
-#define MISSION_DATA_FILE "Assets\\Textbox\\missionData.ini"
+#define MISSION_DATA_FILE "Assets\\Textbox\\npcData.ini"
 FUNCTION_PTR(void*, __stdcall, Mission_fpEventTrigger, 0xD5ED00, void* This, int Event);
 
 //---------------------------------------------------
@@ -264,7 +264,7 @@ HOOK(void, __fastcall, Mission_CObjGoalRing_MsgHitEventCollision, 0x1159010, uin
 }
 
 //---------------------------------------------------
-// HUB Mission Talk
+// HUB NPC Talk
 //---------------------------------------------------
 uint32_t gateStageID = 0;
 uint32_t gateMissionID = 0;
@@ -308,7 +308,7 @@ HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateIntroBegin, 0x1080110, uin
 {
 	if (gateMissionID > 0 && gateStageID <= SMT_pla200)
 	{
-		if (MissionManager::m_missionAccept)
+		if (gateMissionID  <= 5 && MissionManager::m_missionAccept)
 		{
 			FUNCTION_PTR(void, __cdecl, Mission_fpEnterStage, 0xD401F0, uint32_t This, uint32_t nStageID, uint32_t nMissionID);
 			Mission_fpEnterStage(*(uint32_t*)(This + 8), gateStageID, gateMissionID);
@@ -354,6 +354,12 @@ void MissionManager::applyPatches()
 	// Load correct mission terrain
 	INSTALL_HOOK(Mission_CGameplayFlowStageSetStageInfo);
 
+	// Change press X to interact stage gate
+	WRITE_MEMORY(0xD315F4, Sonic::EKeyState, Sonic::EKeyState::eKeyState_X);
+
+	// MissionGate will use "Talk" UI popup instead
+	WRITE_MEMORY(0xEEAF15, uint32_t, 0);
+
 	//---------------------------------------------------
 	// CObjMsnNumberDashRing
 	//---------------------------------------------------
@@ -381,7 +387,7 @@ void MissionManager::applyPatches()
 	INSTALL_HOOK(Mission_CObjGoalRing_MsgHitEventCollision);
 
 	//---------------------------------------------------
-	// HUB Mission Talk
+	// HUB NPC Talk
 	//---------------------------------------------------
 	INSTALL_HOOK(Mission_CHudGateMenuMain_CStateLoadingBegin);
 	INSTALL_HOOK(Mission_CHudGateMenuMain_CStateLoadingAdvance);

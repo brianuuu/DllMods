@@ -64,7 +64,7 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     ImVector<ImWchar> rangesTextbox;
     ImFontGlyphRangesBuilder builderTextbox;
     std::set<wchar_t> database;
-    initFontDatabase(L"Assets\\Textbox\\missionData.ini", database);
+    initFontDatabase(L"Assets\\Textbox\\npcData.ini", database);
     initFontDatabase(L"Assets\\Title\\titleData.ini", database);
     for (auto const& c : database)
     {
