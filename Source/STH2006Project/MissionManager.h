@@ -12,7 +12,7 @@ public:
 	static void applyPatches();
 
 	static bool m_missionAccept;
-	static std::string getMissionDialog(std::vector<std::string>& captions, uint32_t stageID, std::string const& name);
+	static int getMissionDialog(std::vector<std::string>& captions, uint32_t stageID, std::string const& name, std::string* speaker = nullptr);
 	static void startMissionCompleteDialog(bool success);
 };
 

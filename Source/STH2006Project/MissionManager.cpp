@@ -3,7 +3,7 @@
 #include "Application.h"
 #include "SubtitleUI.h"
 
-#define MISSION_DATA_FILE "Assets\\Textbox\\npcData.ini"
+#define NPC_DATA_FILE "Assets\\Textbox\\npcData.ini"
 FUNCTION_PTR(void*, __stdcall, Mission_fpEventTrigger, 0xD5ED00, void* This, int Event);
 
 //---------------------------------------------------
@@ -73,12 +73,12 @@ HOOK(void, __fastcall, Mission_CMissionManagerAdvance, 0xD10690, uint32_t This, 
 	}
 }
 
-std::string MissionManager::getMissionDialog(std::vector<std::string>& captions, uint32_t stageID, std::string const& name)
+int MissionManager::getMissionDialog(std::vector<std::string>& captions, uint32_t stageID, std::string const& name, std::string* speaker)
 {
 	bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
 	std::string const currentStageStr = std::to_string(stageID);
 
-	const INIReader reader(Application::getModDirString() + MISSION_DATA_FILE);
+	const INIReader reader(Application::getModDirString() + NPC_DATA_FILE);
 	int dialogCount = 1;
 	while (true)
 	{
@@ -92,7 +92,13 @@ std::string MissionManager::getMissionDialog(std::vector<std::string>& captions,
 		dialogCount++;
 	}
 
-	return reader.Get(currentStageStr, isJapanese ? "SpeakerJP" : "Speaker", "");
+	// Get speaker
+	if (speaker != nullptr)
+	{
+		*speaker = reader.Get(currentStageStr, isJapanese ? "SpeakerJP" : "Speaker", "");
+	}
+
+	return dialogCount - 1;
 }
 
 void MissionManager::startMissionCompleteDialog(bool success)
@@ -102,11 +108,12 @@ void MissionManager::startMissionCompleteDialog(bool success)
 	std::string name = "Mission";
 	name += success ? "Success" : "Fail";
 
-	std::string speaker = MissionManager::getMissionDialog(captions, Common::GetCurrentStageID(), name);
+	std::string speaker;
+	MissionManager::getMissionDialog(captions, Common::GetCurrentStageID(), name, &speaker);
 	SubtitleUI::addCaption(captions, speaker);
 
 	// Play voice
-	const INIReader reader(Application::getModDirString() + MISSION_DATA_FILE);
+	const INIReader reader(Application::getModDirString() + NPC_DATA_FILE);
 	static SharedPtrTypeless soundHandle;
 	Common::PlaySoundStatic(soundHandle, reader.GetInteger(std::to_string(Common::GetCurrentStageID()), name + "Voice", -1));
 }
@@ -280,15 +287,16 @@ HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateLoadingBegin, 0x107D790, u
 
 		std::vector<std::string> captions;
 		uint32_t stageID = (gateMissionID << 8) + gateStageID;
-		std::string speaker = MissionManager::getMissionDialog(captions, stageID, "MissionStart");
+		std::string speaker;
+		MissionManager::getMissionDialog(captions, stageID, "MissionStart", &speaker);
 
-		// Get reject dialog size
-		size_t size = captions.size();
-		MissionManager::getMissionDialog(captions, stageID, "MissionReject");
-		SubtitleUI::addCaption(captions, speaker, captions.size() - size);
+		// Get accept & reject dialog size
+		int acceptSize = MissionManager::getMissionDialog(captions, stageID, "MissionAccept");
+		int rejectSize = MissionManager::getMissionDialog(captions, stageID, "MissionReject");
+		SubtitleUI::addCaption(captions, speaker, acceptSize, rejectSize);
 
 		// Play voice
-		const INIReader reader(Application::getModDirString() + MISSION_DATA_FILE);
+		const INIReader reader(Application::getModDirString() + NPC_DATA_FILE);
 		static SharedPtrTypeless soundHandle;
 		Common::PlaySoundStatic(soundHandle, reader.GetInteger(std::to_string(stageID), "MissionStartVoice", -1));
 	}

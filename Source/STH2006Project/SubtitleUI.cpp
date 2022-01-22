@@ -11,7 +11,7 @@ void SubtitleUI::applyPatches()
     
 }
 
-void __cdecl SubtitleUI::addCaption(std::vector<std::string> const& captions, std::string const& speaker, int rejectDialogSize)
+void __cdecl SubtitleUI::addCaption(std::vector<std::string> const& captions, std::string const& speaker, int acceptDialogSize, int rejectDialogSize)
 {
     m_captionData.clear();
     for (std::string caption : captions)
@@ -32,6 +32,7 @@ void __cdecl SubtitleUI::addCaption(std::vector<std::string> const& captions, st
         m_captionData.m_captions.push_back(newCaption);
     }
 
+    m_captionData.m_acceptDialogSize = acceptDialogSize;
     m_captionData.m_rejectDialogSize = rejectDialogSize;
     m_captionData.m_speaker = speaker;
     m_captionData.m_bypassLoading = Common::IsAtLoadingScreen();
@@ -218,7 +219,7 @@ void SubtitleUI::draw()
         if (m_captionData.m_frame >= 5.0f && (padState->IsTapped(Sonic::EKeyState::eKeyState_A) || padState->IsTapped(Sonic::EKeyState::eKeyState_X)))
         {
             int size = m_captionData.m_captions.size();
-            if (!m_captionData.m_acceptDialogShown && size == m_captionData.m_rejectDialogSize + 1)
+            if (!m_captionData.m_acceptDialogShown && size == m_captionData.m_acceptDialogSize + m_captionData.m_rejectDialogSize + 1)
             {
                 // Show YES/NO box
                 m_captionData.m_acceptDialogShown = true;
@@ -234,9 +235,19 @@ void SubtitleUI::draw()
 
                     if (MissionManager::m_missionAccept)
                     {
-                        // Accept mission
-                        m_captionData.clear();
-                        return;
+                        // Accept mission, remove reject dialogs
+                        for (int i = 0; i < m_captionData.m_rejectDialogSize; i++)
+                        {
+                            m_captionData.m_captions.pop_back();
+                        }
+                    }
+                    else
+                    {
+                        // Reject mission, remove accept dialogs
+                        for (int i = 0; i < m_captionData.m_acceptDialogSize; i++)
+                        {
+                            m_captionData.m_captions.pop_front();
+                        }
                     }
                 }
 

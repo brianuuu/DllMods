@@ -14,6 +14,7 @@ struct CaptionData
 	std::string m_speaker;
 	std::deque<Caption> m_captions;
 
+	int m_acceptDialogSize;
 	int m_rejectDialogSize;
 	bool m_acceptDialogShown;
 	float m_yesNoColorTime;
@@ -33,6 +34,7 @@ struct CaptionData
 		m_speaker.clear();
 		m_captions.clear();
 
+		m_acceptDialogSize = -1;
 		m_rejectDialogSize = -1;
 		m_acceptDialogShown = false;
 		m_yesNoColorTime = 0.0f;
@@ -55,7 +57,7 @@ public:
 	static CaptionData m_captionData;
 	static bool isPlayingCaption() { return !m_captionData.m_captions.empty(); }
 
-	static void addCaption(std::vector<std::string> const& captions, std::string const& speaker = "", int rejectDialogSize = -1);
+	static void addCaption(std::vector<std::string> const& captions, std::string const& speaker = "", int acceptDialogSize = -1, int rejectDialogSize = -1);
 	static void draw();
 	static void clearDraw();
 	static void drawCaptions(Caption const& caption, float alpha);
