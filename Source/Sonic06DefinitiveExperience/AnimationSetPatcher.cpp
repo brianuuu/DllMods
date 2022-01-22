@@ -195,6 +195,17 @@ void AnimationSetPatcher::applyPatches()
     WRITE_MEMORY(0x1276D20, uint8_t, 0x1D); // DashRingL
     WRITE_MEMORY(0x1276D87, uint8_t, 0x1D); // DashRingR
 
+    if (GetModuleHandle(TEXT("STH2006Project.dll")))
+    {
+        // Use idle animation on stage gates in STH2006 Project
+        WRITE_MEMORY(0x127ADF1, uint32_t, 0x15E7670);
+        WRITE_MEMORY(0x127AE58, uint32_t, 0x15E7670);
+        WRITE_MEMORY(0x127AEAC, uint32_t, 0x15E7670);
+        WRITE_MEMORY(0x127AF2A, uint32_t, 0x15E7670);
+        WRITE_MEMORY(0x127AF91, uint32_t, 0x15E7670);
+        WRITE_MEMORY(0x127AFF8, uint32_t, 0x15E7670);
+    }
+
     // Add Super Sonic missing animation states
     // ssn_trick_jump
     // ssn_grind_loop
