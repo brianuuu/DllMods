@@ -43,6 +43,7 @@ bool CaptionData::init()
     bool success = true;
     success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Textbox.dds").c_str(), &m_textbox);
     success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\YesNoBox.dds").c_str(), &m_acceptbox);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Arrow.dds").c_str(), &m_arrow);
 
     if (!success)
     {
@@ -116,10 +117,10 @@ void SubtitleUI::draw()
 
         if (m_captionData.m_acceptDialogShown)
         {
-            float sizeX2 = *BACKBUFFER_WIDTH * 312.0f / 1920.0f;
-            float sizeY2 = *BACKBUFFER_HEIGHT * 215.0f / 1080.0f;
             ImGui::Begin("YesNoBox", &visible, UIContext::m_hudFlags);
             {
+                float sizeX2 = *BACKBUFFER_WIDTH * 312.0f / 1920.0f;
+                float sizeY2 = *BACKBUFFER_HEIGHT * 215.0f / 1080.0f;
                 ImGui::SetWindowFocus();
                 ImGui::SetWindowSize(ImVec2(sizeX2, sizeY2));
                 ImGui::Image(m_captionData.m_acceptbox, ImVec2(sizeX2, sizeY2));
@@ -134,7 +135,6 @@ void SubtitleUI::draw()
                 ImVec4 color(1.0f, blueGreenFactor, blueGreenFactor, 1.0f);
 
                 ImGui::SetWindowFocus();
-                ImGui::SetWindowSize(ImVec2(sizeX2, sizeY2));
                 ImGui::TextColored(MissionManager::m_missionAccept ? color : ImVec4(1.0f, 1.0f, 1.0f, 1.0f), isJapanese ? u8"はい" : "Yes");
                 ImGui::SetCursorPosY(ImGui::GetCursorPosY() + *BACKBUFFER_HEIGHT * 0.018f);
                 ImGui::TextColored(!MissionManager::m_missionAccept ? color : ImVec4(1.0f, 1.0f, 1.0f, 1.0f), isJapanese ? u8"いいえ" : "No");
@@ -142,10 +142,61 @@ void SubtitleUI::draw()
             }
             ImGui::End();
 
+            ImGui::Begin("YesNoArrow", &visible, UIContext::m_hudFlags);
+            {
+                float sizeX3 = *BACKBUFFER_WIDTH * 27.0f / 2560.0f;
+                float sizeY3 = *BACKBUFFER_HEIGHT * 50.0f / 1440.0f;
+                float posX = 0.8183f;
+                float posY = MissionManager::m_missionAccept ? 0.7711f : 0.8280f;
+
+                float alpha1 = 0.6f;
+                float alpha2 = 0.4f;
+                float alpha3 = 0.2f;
+
+                if (m_captionData.m_yesNoArrowFrame >= 6.0f && m_captionData.m_yesNoArrowFrame <= 12.0f)
+                {
+                    alpha1 = (m_captionData.m_yesNoArrowFrame <= 9.0f)
+                        ? 0.6f + ((m_captionData.m_yesNoArrowFrame - 6.0f) * 0.4f / 3.0f)
+                        : 1.0f - (m_captionData.m_yesNoArrowFrame - 9.0f) * 0.4f;
+                }
+
+                if (m_captionData.m_yesNoArrowFrame >= 3.0f && m_captionData.m_yesNoArrowFrame <= 9.0f)
+                {
+                    alpha2 = (m_captionData.m_yesNoArrowFrame <= 6.0f)
+                        ? 0.4f + ((m_captionData.m_yesNoArrowFrame - 3.0f) * 0.6f / 3.0f)
+                        : 1.0f - (m_captionData.m_yesNoArrowFrame - 6.0f) * 0.6f;
+                }
+
+                if (m_captionData.m_yesNoArrowFrame >= 0.0f && m_captionData.m_yesNoArrowFrame <= 6.0f)
+                {
+                    alpha3 = (m_captionData.m_yesNoArrowFrame <= 3.0f) 
+                        ? 0.2f + (m_captionData.m_yesNoArrowFrame * 0.8f / 3.0f) 
+                        : 1.0f - (m_captionData.m_yesNoArrowFrame - 3.0f) * 0.8f;
+                }
+
+                ImGui::SetWindowFocus();
+                ImGui::SetWindowSize(ImVec2(sizeX3, sizeY3));
+                ImGui::Image(m_captionData.m_arrow, ImVec2(sizeX3, sizeY3), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, alpha1));
+                ImGui::SameLine();
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX() - *BACKBUFFER_HEIGHT * 0.015f);
+                ImGui::Image(m_captionData.m_arrow, ImVec2(sizeX3, sizeY3), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, alpha2));
+                ImGui::SameLine();
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX() - *BACKBUFFER_HEIGHT * 0.015f);
+                ImGui::Image(m_captionData.m_arrow, ImVec2(sizeX3, sizeY3), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, alpha3));
+                ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * posX, *BACKBUFFER_HEIGHT * posY));
+            }
+            ImGui::End();
+
             m_captionData.m_yesNoColorTime += Application::getHudDeltaTime();
-            if (m_captionData.m_yesNoColorTime > 1.0f)
+            if (m_captionData.m_yesNoColorTime >= 1.0f)
             {
                 m_captionData.m_yesNoColorTime -= 1.0f;
+            }
+
+            m_captionData.m_yesNoArrowFrame += Application::getHudDeltaTime() * 60.0f;
+            if (m_captionData.m_yesNoArrowFrame >= 13.0f)
+            {
+                m_captionData.m_yesNoArrowFrame -= 13.0f;
             }
         }
 

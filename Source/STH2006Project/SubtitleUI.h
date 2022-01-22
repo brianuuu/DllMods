@@ -17,9 +17,11 @@ struct CaptionData
 	int m_rejectDialogSize;
 	bool m_acceptDialogShown;
 	float m_yesNoColorTime;
+	float m_yesNoArrowFrame;
 
 	PDIRECT3DTEXTURE9 m_textbox;
 	PDIRECT3DTEXTURE9 m_acceptbox;
+	PDIRECT3DTEXTURE9 m_arrow;
 
 	bool init();
 	void clear()
@@ -34,12 +36,14 @@ struct CaptionData
 		m_rejectDialogSize = -1;
 		m_acceptDialogShown = false;
 		m_yesNoColorTime = 0.0f;
+		m_yesNoArrowFrame = 0.0f;
 	}
 
 	~CaptionData()
 	{
 		if (m_textbox) m_textbox->Release();
 		if (m_acceptbox) m_acceptbox->Release();
+		if (m_arrow) m_arrow->Release();
 	}
 };
 
