@@ -273,13 +273,11 @@ HOOK(void, __fastcall, Mission_CObjGoalRing_MsgHitEventCollision, 0x1159010, uin
 //---------------------------------------------------
 // HUB NPC Talk
 //---------------------------------------------------
-uint32_t gateStageID = 0;
-uint32_t gateMissionID = 0;
 bool MissionManager::m_missionAccept = true;
 HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateLoadingBegin, 0x107D790, uint32_t** This)
 {
-	gateStageID = This[2][84];
-	gateMissionID = This[2][85];
+	uint32_t gateStageID = This[2][84];
+	uint32_t gateMissionID = This[2][85];
 
 	if (gateMissionID > 0 && gateStageID <= SMT_pla200)
 	{
@@ -309,7 +307,7 @@ HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateLoadingBegin, 0x107D790, u
 	originalMission_CHudGateMenuMain_CStateLoadingBegin(This);
 }
 
-HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateLoadingAdvance, 0x10804C0, uint32_t* This)
+HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateLoadingAdvance, 0x10804C0, uint32_t** This)
 {
 	if (!SubtitleUI::isPlayingCaption())
 	{
@@ -317,18 +315,21 @@ HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateLoadingAdvance, 0x10804C0,
 	}
 }
 
-HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateIntroBegin, 0x1080110, uint32_t This)
+HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateIntroBegin, 0x1080110, uint32_t** This)
 {
+	uint32_t gateStageID = This[2][84];
+	uint32_t gateMissionID = This[2][85];
+
 	if (gateMissionID > 0 && gateStageID <= SMT_pla200)
 	{
 		if (gateMissionID  <= 5 && MissionManager::m_missionAccept)
 		{
-			FUNCTION_PTR(void, __cdecl, Mission_fpEnterStage, 0xD401F0, uint32_t This, uint32_t nStageID, uint32_t nMissionID);
-			Mission_fpEnterStage(*(uint32_t*)(This + 8), gateStageID, gateMissionID);
+			FUNCTION_PTR(void, __cdecl, Mission_fpEnterStage, 0xD401F0, uint32_t* This, uint32_t nStageID, uint32_t nMissionID);
+			Mission_fpEnterStage(This[2], gateStageID, gateMissionID);
 		}
 
 		// Kill state machine
-		*(bool*)(This + 0x1C) = 1;
+		*(bool*)((uint32_t)This + 0x1C) = 1;
 	}
 	else
 	{
