@@ -7,22 +7,28 @@
 FUNCTION_PTR(void*, __stdcall, Mission_fpEventTrigger, 0xD5ED00, void* This, int Event);
 
 //---------------------------------------------------
-// Mission Gameplay HUD
+// Mission Gameplay HUD (injected for Gens HUD only)
 //---------------------------------------------------
 HOOK(int*, __fastcall, Mission_GameplayManagerInit, 0xD00F70, void* This, void* Edx, int* a2)
 {
 	static char const* scoreHUD = "ui_gameplay_score";
 	static char const* defaultHUD = (char*)0x0168E328;
 
-	if (Common::IsCurrentStageMission())
+	uint32_t stageID = Common::GetCurrentStageID();
+	switch (stageID)
 	{
-		// Use HUD with moved life icon
+	case (SMT_ghz200 | SMT_Mission1):
+	{
+		// Use HUD with moved life icon for missions with counter
 		WRITE_MEMORY(0x109D669, char*, scoreHUD);
+		break;
 	}
-	else
+	default:
 	{
 		// Original code
 		WRITE_MEMORY(0x109D669, char*, defaultHUD);
+		break;
+	}
 	}
 
 	return originalMission_GameplayManagerInit(This, Edx, a2);
@@ -166,7 +172,7 @@ HOOK(void, __fastcall, Mission_CGameplayFlowStageSetStageInfo, 0xCFF6A0, void* T
 	{
 		static std::string stageTerrain = "pam000";
 
-		// TODO: Exceptions, missions that uses MapD instead of MapABC
+		// Exceptions, missions that uses MapD instead of MapABC
 		uint32_t stageID = Common::GetCurrentStageID();
 		switch (stageID)
 		{
@@ -373,6 +379,16 @@ void MissionManager::applyPatches()
 
 	// MissionGate will use "Talk" UI popup instead
 	WRITE_MEMORY(0xEEAF15, uint32_t, 0);
+
+	// Don't disable item in missions
+	WRITE_NOP(0xFFF531, 6);
+
+	// Don't stop camera after mission finishes
+	WRITE_JUMP(0xD0FFDF, (void*)0xD1016C); // success
+	WRITE_JUMP(0xD0F9A4, (void*)0xD0FB31); // fail
+
+	// Always fail mission if you die (since there's no checkpoint)
+	WRITE_MEMORY(0xD10803, uint8_t, 0xE9, 0xFA, 0x00, 0x00, 0x00, 0x90);
 
 	//---------------------------------------------------
 	// CObjMsnNumberDashRing
