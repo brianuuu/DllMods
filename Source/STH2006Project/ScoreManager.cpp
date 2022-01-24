@@ -131,8 +131,14 @@ HOOK(int*, __fastcall, ScoreManager_GameplayManagerInit, 0xD00F70, void* This, v
 		// Use fixed score HUD if not using external
 		if (!ScoreManager::m_externalHUD)
 		{
-			WRITE_MEMORY(0x109D669, char*, scoreHUD);
-			// TODO: For mission, use hud that move counter to bottom right
+			if (strcmp(*(char**)0x109D669, scoreHUD) == 0)
+			{
+				// TODO: For mission, use hud that move counter to bottom right
+			}
+			else
+			{
+				WRITE_MEMORY(0x109D669, char*, scoreHUD);
+			}
 		}
 
 		// Hook result custom result calculation
@@ -781,6 +787,12 @@ ResultData* ScoreManager::calculateResultData()
 		scoreTable = ScoreTable{ 30000,27500,25000,22500 };
 		timeBonusBase = 40000;
 		timeBonusRate = 500;
+	}
+	case (SMT_ghz200 | SMT_Mission2): // Sonic Mission 2
+	{
+		scoreTable = ScoreTable{ 30000,27500,25000,22500 };
+		timeBonusBase = 30000;
+		timeBonusRate = 100;
 	}
 	default: break;
 	}
