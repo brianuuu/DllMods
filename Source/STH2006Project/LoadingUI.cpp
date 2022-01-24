@@ -81,7 +81,9 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 			UIContext::loadTextureFromFile(titleWide.c_str(), &LoadingUI::m_stageTexture);
 
 			// Bottom text (add extra space)
-			LoadingUI::m_bottomText = std::regex_replace(reader.Get(currentStageStr, isJapanese ? "TextJP" : "Text", "MISSING TEXT"), std::regex(" "), "  ");
+			LoadingUI::m_bottomText = reader.Get(currentStageStr, isJapanese ? "TextJP" : "Text", "MISSING TEXT");
+			LoadingUI::m_bottomText = std::regex_replace(LoadingUI::m_bottomText, std::regex(" "), "  ");
+			LoadingUI::m_bottomText = std::regex_replace(LoadingUI::m_bottomText, std::regex("\\\\n"), "\n");
 		}
 	}
 
@@ -122,6 +124,8 @@ void LoadingUI::applyPatches()
 	// Disable loading sfx
 	WRITE_MEMORY(0x44A2E8, int, -1);
 	WRITE_MEMORY(0x44A4F5, int, -1);
+
+	// TODO: Trigger this when restarting stage/retry mission
 }
 
 float LoadingUI::m_startCountdown = -1.0f;
