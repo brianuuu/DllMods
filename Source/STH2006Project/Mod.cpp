@@ -103,6 +103,10 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     // Disable using RB/LB to teleport to stages (TODO: remove UI)
     WRITE_MEMORY(0x1081068, uint8_t, 0xEB);
     WRITE_MEMORY(0x1081090, uint8_t, 0xE9, 0xB7, 0x00, 0x00, 0x00, 0x90);
+
+    // Default enable subtitle in game settings
+    WRITE_MEMORY(0x551F21, uint8_t, 0x37);
+    WRITE_MEMORY(0xD20009, uint8_t, 0x37);
 }
 
 extern "C" __declspec(dllexport) void PostInit()
