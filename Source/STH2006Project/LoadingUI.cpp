@@ -110,6 +110,20 @@ HOOK(int, __fastcall, LoadingUI_CStateGoalFadeIn, 0xCFD2D0, uint32_t* This)
 	return originalLoadingUI_CStateGoalFadeIn(This);
 }
 
+HOOK(int, __fastcall, LoadingUI_CLoadingSimple, 0x44A480, uint32_t* This, void* Edx, float* a2)
+{
+	int result = originalLoadingUI_CLoadingSimple(This, Edx, a2);
+	if (result == 3)
+	{
+		LoadingUI::stopNowLoading();
+	}
+	else if (result == 0)
+	{
+		LoadingUI::startNowLoading();
+	}
+	return result;
+}
+
 void LoadingUI::applyPatches()
 {
 	if (!m_init) return;
@@ -125,7 +139,8 @@ void LoadingUI::applyPatches()
 	WRITE_MEMORY(0x44A2E8, int, -1);
 	WRITE_MEMORY(0x44A4F5, int, -1);
 
-	// TODO: Trigger this when restarting stage/retry mission
+	// Trigger 06 loading when restarting stage/retry mission
+	INSTALL_HOOK(LoadingUI_CLoadingSimple);
 }
 
 float LoadingUI::m_startCountdown = -1.0f;
