@@ -113,7 +113,7 @@ HOOK(int, __fastcall, LoadingUI_CStateGoalFadeIn, 0xCFD2D0, uint32_t* This)
 HOOK(int, __fastcall, LoadingUI_CLoadingSimple, 0x44A480, uint32_t* This, void* Edx, float* a2)
 {
 	int result = originalLoadingUI_CLoadingSimple(This, Edx, a2);
-	if (result == 3)
+	if (!Common::IsAtLoadingScreen() || result == 2)
 	{
 		LoadingUI::stopNowLoading();
 	}
@@ -165,7 +165,7 @@ void LoadingUI::startNowLoading(float countdown)
 
 void LoadingUI::stopNowLoading()
 {
-	if (m_drawEnabled)
+	if (m_drawEnabled && LoadingUI::m_fadeInTime == 0.0f)
 	{
 		LoadingUI::m_fadeInTime = 0.4f;
 	}
