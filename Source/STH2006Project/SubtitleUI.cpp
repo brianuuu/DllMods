@@ -216,7 +216,12 @@ void SubtitleUI::draw()
 
         // Goto next dialog when pressing A
         Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
-        if (m_captionData.m_frame >= 5.0f && (padState->IsTapped(Sonic::EKeyState::eKeyState_A) || padState->IsTapped(Sonic::EKeyState::eKeyState_X)))
+        if (m_captionData.m_frame >= 5.0f && 
+            (
+                padState->IsTapped(Sonic::EKeyState::eKeyState_A) ||
+                padState->IsTapped(Sonic::EKeyState::eKeyState_X) ||
+                (!m_captionData.m_acceptDialogShown && padState->IsTapped(Sonic::EKeyState::eKeyState_B))
+            ))
         {
             int size = m_captionData.m_captions.size();
             if (!m_captionData.m_acceptDialogShown && size == m_captionData.m_acceptDialogSize + m_captionData.m_rejectDialogSize + 1)
