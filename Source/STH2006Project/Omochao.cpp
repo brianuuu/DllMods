@@ -33,4 +33,27 @@ HOOK(int, __fastcall, Omochao_MsgNotifyObjectEvent, 0x114FB60, void* This, void*
 void Omochao::applyPatches()
 {
 	INSTALL_HOOK(Omochao_MsgNotifyObjectEvent);
+
+	// Force different omochao model in HUB
+	WRITE_STRING(0x161B4C0, "chr_omocha2_HD");
+	WRITE_STRING(0x161B4D0, "chr_omocha2_HD");
+	//WRITE_STRING(0x1667BDC, "chr_omocha2_HD");
+	//WRITE_STRING(0x1667BEC, "chr_omocha2_HD");
+
+	// Don't follow Sonic in stages
+	WRITE_NOP(0x461724, 2);
+
+	// Disable omochao pfx
+	WRITE_STRING(0x16686E4, "");
+	WRITE_STRING(0x166884C, "");
+	WRITE_STRING(0x1668894, "");
+	WRITE_STRING(0x1668A94, "");
+
+	// Disable omochao sfx
+	WRITE_MEMORY(0x460DD7, int, -1);
+	WRITE_MEMORY(0x4627FC, int, -1);
+	WRITE_MEMORY(0x462B98, int, -1);
+	WRITE_MEMORY(0x462C75, int, -1);
+	WRITE_MEMORY(0x1150999, int, -1);
+	WRITE_MEMORY(0x1151AC4, int, -1);
 }

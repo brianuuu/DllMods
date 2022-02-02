@@ -367,10 +367,6 @@ void Stage::applyPatches()
     //---------------------------------------------------
     // Disable enter CpzPipe sfx
     WRITE_MEMORY(0x1234856, int, -1);
-
-    // HUB World Omochao model
-    WRITE_STRING(0x161B4C0, "chr_omocha2_HD");
-    WRITE_STRING(0x161B4D0, "chr_omocha2_HD");
     
     //---------------------------------------------------
     // Kingdom Valley sfx
