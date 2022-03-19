@@ -1,4 +1,5 @@
 #include "Itembox.h"
+#include "NextGenPhysics.h"
 
 float const c_10ringRadius = 0.57f;
 float const c_1upRadius = 0.70f;
@@ -19,6 +20,8 @@ HOOK(uint32_t*, __fastcall, ReadXmlData, 0xCE5FC0, uint32_t size, char* pData, v
     std::string injectStr;
 	if (!m_setdataLayer.empty())
 	{
+		NextGenPhysics::fixGenerationsLayout(pData);
+
 		if (Itembox::getInjectStr(pData, size, injectStr) == tinyxml2::XML_SUCCESS && !injectStr.empty())
 		{
 			const size_t newSize = size + injectStr.size();

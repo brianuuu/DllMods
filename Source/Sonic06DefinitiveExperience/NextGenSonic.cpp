@@ -964,7 +964,10 @@ HOOK(int*, __fastcall, NextGenSonic_CSonicStatePluginBoostBegin, 0x1117A20, void
     WRITE_MEMORY(0xDFB98A, uint8_t, 0x90, 0x90, 0xF3, 0x0F, 0x10, 0x05, 0x00,   // always use BuoyantForceMaxGravityRate
         0xB5, 0x58, 0x01, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90);      // and set it as 10.0f
     WRITE_MEMORY(0x119C00E, uint8_t, 0x0F, 0x57, 0xC0, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90); // Set WaterDecreaseForce = 0
-    
+
+    // Push CObjCscLavaRide down with boost collision
+    WRITE_MEMORY(0xF1E7D6, SonicCollision, TypeSonicBoost);
+
     return nullptr;
 }
 
@@ -1051,6 +1054,9 @@ HOOK(void, __fastcall, NextGenSonic_CSonicStatePluginBoostEnd, 0x1117900, void* 
     WRITE_MEMORY(0xDFB98A, uint8_t, 0x74, 0x3A, 0x8B, 0x86, 0x7C, 0x02, 0x00,
         0x00, 0x68, 0xA6, 0x00, 0x00, 0x00, 0xE8, 0x54, 0xF0, 0x73, 0xFF);
     WRITE_MEMORY(0x119C00E, uint8_t, 0x68, 0xA7, 0x00, 0x00, 0x00, 0xE8, 0xD8, 0xE9, 0x39, 0xFF);
+
+    // Revert CObjCscLavaRide to stomp collision
+    WRITE_MEMORY(0xF1E7D6, SonicCollision, TypeSonicStomping);
 }
 
 float NextGenSonic::m_shieldDecRate = 10.0f;
@@ -1062,8 +1068,16 @@ HOOK(void, __fastcall, NextGenSonic_CSonicUpdateEliseShield, 0xE6BF20, void* Thi
     // Ignore for Super Sonic
     if (Common::IsPlayerSuper())
     {
+        // Enable stomping
+        WRITE_MEMORY(0xDFDDB3, uint8_t, 0x75);
+
         originalNextGenSonic_CSonicUpdateEliseShield(This, Edx, dt);
         return;
+    }
+    else
+    {
+        // Disable stomping
+        WRITE_MEMORY(0xDFDDB3, uint8_t, 0xEB);
     }
 
     // Handle shield start and end
@@ -1312,9 +1326,6 @@ void NextGenSonic::applyPatches()
 
         // Change "Stomping" type object physics to "Normal"
         WRITE_MEMORY(0xE9FFC9, uint32_t, 5);
-
-        // Disable stomping
-        WRITE_MEMORY(0xDFDDB3, uint8_t, 0xEB);
 
         // Fix Homing Attack getting locked after using it once on water
         WRITE_NOP(0x119C932, 7);

@@ -439,3 +439,19 @@ void NextGenPhysics::applyCharacterAnimationSpeed()
     WRITE_MEMORY(0x1272D14, float*, &m_animationData.boostWall_speedFactor);
     WRITE_MEMORY(0x1272D83, float*, &m_animationData.boostWall_speedFactor);
 }
+
+void NextGenPhysics::fixGenerationsLayout(char* pData)
+{
+    uint8_t stageID = Common::GetCurrentStageID();
+
+    // Move EnemyTaker3D at beginning of Crisis City Act 2 so 06 physics can reach it
+    if (stageID == SMT_csc200 && Configuration::m_physics)
+    {
+        char* pEnemyTaker3DPosX = strstr(pData, "<x>-1026</x>\n      <y>9</y>\n      <z>-1</z>");
+        if (pEnemyTaker3DPosX)
+        {
+            pEnemyTaker3DPosX[6] = '3';
+            pEnemyTaker3DPosX[7] = '3';
+        }
+    }
+}

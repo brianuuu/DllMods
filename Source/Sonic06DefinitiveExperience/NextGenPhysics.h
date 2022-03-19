@@ -61,5 +61,7 @@ public:
 	);
 
 	static bool checkUseLightSpeedDash();
+
+	static void fixGenerationsLayout(char* pData);
 };
 
