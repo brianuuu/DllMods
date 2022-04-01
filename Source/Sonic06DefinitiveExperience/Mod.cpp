@@ -104,6 +104,10 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     // Patch "Disable Spin Dash on Dash Panels" by "Hyper"
     WRITE_MEMORY(0xE0AC1C, uint8_t, 0xE9, 0x27, 0x01, 0x00, 0x00);
     WRITE_MEMORY(0xE0C734, uint8_t, 0xE9, 0x27, 0x01, 0x00, 0x00);
+
+    // Patch "Disable Ring Cap" by "Dario"
+    WRITE_MEMORY(0xE68522, uint16_t, 0xDEB);
+    WRITE_MEMORY(0x1098E5F, uint8_t, 0xEB);
 }
 
 extern "C" __declspec(dllexport) void PostInit()
