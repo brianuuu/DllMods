@@ -108,7 +108,7 @@ enum class StateAction
 	SlidingEnd,
 	SelectJump,
 	JumpSelector,
-	Stomping_Crash,
+	Stomping,
 	StompingLand,
 	LightSpeedDash,
 	SelectJumpAfter,
@@ -747,9 +747,9 @@ inline const char* StringFromActionEnum(StateAction state)
 		result = "JumpSelector";
 		break;
 	}
-	case StateAction::Stomping_Crash:
+	case StateAction::Stomping:
 	{
-		result = "Stomping_Crash";
+		result = "Stomping";
 		break;
 	}
 	case StateAction::StompingLand:

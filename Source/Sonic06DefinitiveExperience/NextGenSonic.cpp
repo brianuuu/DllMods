@@ -101,6 +101,21 @@ HOOK(int, __fastcall, NextGenSonic_CSonicStateHomingAttackBegin, 0x1232040, void
     return originalNextGenSonic_CSonicStateHomingAttackBegin(This);
 }
 
+HOOK(void, __fastcall, NextGenSonic_CSonicStateHomingAttackAfterAdvance, 0x1118600, void* This)
+{
+    bool bDown, bPressed, bReleased;
+    NextGenSonic::getActionButtonStates(bDown, bPressed, bReleased);
+
+    if (bPressed && !Common::GetSonicStateFlags()->OutOfControl)
+    {
+        StateManager::ChangeState(StateAction::Stomping, *PLAYER_CONTEXT);
+        NextGenSonic::m_bHeldTimer = 0.0f;
+        return;
+    }
+
+    originalNextGenSonic_CSonicStateHomingAttackAfterAdvance(This);
+}
+
 //---------------------------------------------------
 // CSonicStateJumpBall
 //---------------------------------------------------
@@ -1212,6 +1227,9 @@ void NextGenSonic::applyPatches()
         WRITE_MEMORY(0x1249C19, char**, &ef_ch_sps_bound);
         WRITE_MEMORY(0x1254E57, uint8_t, 0x30);
         WRITE_MEMORY(0x1254E73, char**, &ef_ch_sps_bound_down);
+
+        // Allow bounce bracelet immediately after homing attack
+        INSTALL_HOOK(NextGenSonic_CSonicStateHomingAttackAfterAdvance);
     }
 
     //-------------------------------------------------------
