@@ -1,5 +1,6 @@
 #include "RankQuote.h"
 #include "RankRunAnimation.h"
+#include "VoiceOver.h"
 
 uint32_t RankQuote::m_rank = 0;
 uint32_t RankQuote::m_rankSfxID = 1010002;
@@ -105,8 +106,7 @@ HOOK(void, __fastcall, MsgChangeResultState2, 0xE692C0, void* This, void* Edx, u
     && !Common::IsPlayerSuper())
     {
         // Play character stage complete voice
-        static SharedPtrTypeless soundHandle;
-        Common::PlaySoundStatic(soundHandle, 3002019);
+        VoiceOver::playStageCompleteVoice();
     }
 
     originalMsgChangeResultState2(This, Edx, a2);

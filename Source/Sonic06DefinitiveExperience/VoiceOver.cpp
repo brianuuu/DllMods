@@ -113,3 +113,10 @@ void VoiceOver::playHomingAttackVoice()
 	static SharedPtrTypeless soundHandle;
 	Common::SonicContextPlaySound(soundHandle, 3002023, 0);
 }
+
+void VoiceOver::playStageCompleteVoice()
+{
+	// Statuc since sonic context sound doesn't work at result screen
+	static SharedPtrTypeless soundHandle;
+	Common::PlaySoundStatic(soundHandle, 3002019);
+}

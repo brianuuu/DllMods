@@ -16,5 +16,6 @@ public:
 	static void playItemboxVoice();
 	static void playRainbowRingVoice();
 	static void playHomingAttackVoice();
+	static void playStageCompleteVoice();
 };
 
