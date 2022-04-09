@@ -149,89 +149,6 @@ HOOK(char*, __fastcall, NextGenSonic_CSonicStateJumpBallBegin, 0x11BCBE0, void* 
 }
 
 //---------------------------------------------------
-// CSonicStateFall
-//---------------------------------------------------
-uint8_t pendingFallAnimation_Sonic = 0;
-HOOK(int, __fastcall, NextGenSonic_CSonicStateFallBegin, 0x1118FB0, void* This)
-{
-    alignas(16) MsgGetAnimationInfo message {};
-    Common::SonicContextGetAnimationInfo(message);
-    //printf("Animation = %s\n", message.m_name);
-
-    if (message.IsAnimation("TrickPrepare") ||
-        message.IsAnimation("UpReelEnd") ||
-        message.IsAnimation("LookBack") ||
-        message.IsAnimation("DashRingL") ||
-        message.IsAnimation("DashRingR") ||
-        message.IsAnimation("JumpSpring") ||
-        message.IsAnimation("JumpBoard") ||
-        message.IsAnimation("JumpBoardRev") ||
-        message.IsAnimation("JumpBoardSpecialL") ||
-        message.IsAnimation("JumpBoardSpecialR"))
-    {
-        // Delay transition to SpinFall until we start falling
-        pendingFallAnimation_Sonic = message.IsAnimation("TrickPrepare") ? 2 : 1;
-        WRITE_JUMP(0x111911F, (void*)0x1119188);
-    }
-    else
-    {
-        pendingFallAnimation_Sonic = false;
-        WRITE_MEMORY(0x111911F, uint8_t, 0x8D, 0x8E, 0xA0, 0x02, 0x00, 0x00);
-    }
-
-    return originalNextGenSonic_CSonicStateFallBegin(This);
-}
-
-HOOK(bool, __fastcall, NextGenSonic_CSonicStateFallAdvance, 0x1118C50, void* This)
-{
-    switch (pendingFallAnimation_Sonic)
-    {
-    case 2:
-    {
-        // Trick animation
-        alignas(16) MsgGetAnimationInfo message {};
-        Common::SonicContextGetAnimationInfo(message);
-
-        if (message.m_frame >= 92.0f)
-        {
-            Common::SonicContextChangeAnimation("Fall");
-            pendingFallAnimation_Sonic = false;
-        }
-
-        break;
-    }
-    case 1:
-    {
-        // Other animations
-        Eigen::Vector3f playerVelocity;
-        Common::GetPlayerVelocity(playerVelocity);
-        float const vSpeed = playerVelocity.y();
-        playerVelocity.y() = 0.0f;
-        float const hSpeed = playerVelocity.norm();
-
-        if (Common::IsPlayerSuper())
-        {
-            if (vSpeed <= 0.0f)
-            {
-                Common::SonicContextChangeAnimation("Fall");
-                pendingFallAnimation_Sonic = false;
-            }
-        }
-        else if (vSpeed < 5.0f)
-        {
-            Common::SonicContextChangeAnimation(hSpeed <= 5.0f ? AnimationSetPatcher::SpinFallSpring : AnimationSetPatcher::SpinFall);
-            pendingFallAnimation_Sonic = false;
-        }
-
-        break;
-    }
-    default: break;
-    }
-
-    return originalNextGenSonic_CSonicStateFallAdvance(This);
-}
-
-//---------------------------------------------------
 // CSonicStateSliding
 //---------------------------------------------------
 HOOK(int, __fastcall, NextGenSonic_CSonicStateSlidingBegin, 0x11D7110, void* This)
@@ -1152,19 +1069,6 @@ void NextGenSonic::applyPatches()
         // Always disable stomp voice and sfx for Sonic
         WRITE_MEMORY(0x1254E04, int, -1);
         WRITE_MEMORY(0x1254F23, int, -1);
-
-        //-------------------------------------------------------
-        // Spin Fall
-        //-------------------------------------------------------
-        // Transition to Fall immediately without checking down speed for CPlayerSpeedStateSpecialJump
-        WRITE_JUMP(0x11DE320, (void*)0x11DE344);
-
-        // Don't transition to FallLarge when speed < -15.0f
-        WRITE_MEMORY(0x1118DE5, uint8_t, 0xEB);
-
-        // Change animation at CSonicStateFall base on current animation
-        INSTALL_HOOK(NextGenSonic_CSonicStateFallBegin);
-        INSTALL_HOOK(NextGenSonic_CSonicStateFallAdvance);
     }
 
     if (!Configuration::m_characterMoveset) return;

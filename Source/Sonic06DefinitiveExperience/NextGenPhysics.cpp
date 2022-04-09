@@ -1,5 +1,6 @@
 #include "NextGenPhysics.h"
 #include "Configuration.h"
+#include "AnimationSetPatcher.h"
 
 #include "NextGenSonic.h"
 
@@ -251,6 +252,89 @@ void __declspec(naked) CObjPlaTramCarBoostButtonChange()
 }
 
 //---------------------------------------------------
+// CSonicStateFall
+//---------------------------------------------------
+uint8_t pendingFallAnimation = 0;
+HOOK(int, __fastcall, NextGenPhysics_CSonicStateFallBegin, 0x1118FB0, void* This)
+{
+    alignas(16) MsgGetAnimationInfo message {};
+    Common::SonicContextGetAnimationInfo(message);
+    //printf("Animation = %s\n", message.m_name);
+
+    if (message.IsAnimation("TrickPrepare") ||
+        message.IsAnimation("UpReelEnd") ||
+        message.IsAnimation("LookBack") ||
+        message.IsAnimation("DashRingL") ||
+        message.IsAnimation("DashRingR") ||
+        message.IsAnimation("JumpSpring") ||
+        message.IsAnimation("JumpBoard") ||
+        message.IsAnimation("JumpBoardRev") ||
+        message.IsAnimation("JumpBoardSpecialL") ||
+        message.IsAnimation("JumpBoardSpecialR"))
+    {
+        // Delay transition to SpinFall until we start falling
+        pendingFallAnimation = message.IsAnimation("TrickPrepare") ? 2 : 1;
+        WRITE_JUMP(0x111911F, (void*)0x1119188);
+    }
+    else
+    {
+        pendingFallAnimation = false;
+        WRITE_MEMORY(0x111911F, uint8_t, 0x8D, 0x8E, 0xA0, 0x02, 0x00, 0x00);
+    }
+
+    return originalNextGenPhysics_CSonicStateFallBegin(This);
+}
+
+HOOK(bool, __fastcall, NextGenPhysics_CSonicStateFallAdvance, 0x1118C50, void* This)
+{
+    switch (pendingFallAnimation)
+    {
+    case 2:
+    {
+        // Trick animation
+        alignas(16) MsgGetAnimationInfo message {};
+        Common::SonicContextGetAnimationInfo(message);
+
+        if (message.m_frame >= 92.0f)
+        {
+            Common::SonicContextChangeAnimation("Fall");
+            pendingFallAnimation = false;
+        }
+
+        break;
+    }
+    case 1:
+    {
+        // Other animations
+        Eigen::Vector3f playerVelocity;
+        Common::GetPlayerVelocity(playerVelocity);
+        float const vSpeed = playerVelocity.y();
+        playerVelocity.y() = 0.0f;
+        float const hSpeed = playerVelocity.norm();
+
+        if (Common::IsPlayerSuper())
+        {
+            if (vSpeed <= 0.0f)
+            {
+                Common::SonicContextChangeAnimation("Fall");
+                pendingFallAnimation = false;
+            }
+        }
+        else if (vSpeed < 5.0f)
+        {
+            Common::SonicContextChangeAnimation(hSpeed <= 5.0f ? AnimationSetPatcher::SpinFallSpring : AnimationSetPatcher::SpinFall);
+            pendingFallAnimation = false;
+        }
+
+        break;
+    }
+    default: break;
+    }
+
+    return originalNextGenPhysics_CSonicStateFallAdvance(This);
+}
+
+//---------------------------------------------------
 // Main Apply Patches
 //---------------------------------------------------
 void NextGenPhysics::applyPatches()
@@ -350,6 +434,21 @@ void NextGenPhysics::applyPatches()
     // After light dash, force using mach speed animation
     INSTALL_HOOK(NextGenPhysics_CSonicStateLightSpeedDashAdvance);
     INSTALL_HOOK(NextGenPhysics_CSonicUpdate);
+
+    // SpinFall
+    if (Configuration::m_model == Configuration::ModelType::Sonic
+     || Configuration::m_model == Configuration::ModelType::Blaze)
+    {
+        // Transition to Fall immediately without checking down speed for CPlayerSpeedStateSpecialJump
+        WRITE_JUMP(0x11DE320, (void*)0x11DE344);
+
+        // Don't transition to FallLarge when speed < -15.0f
+        WRITE_MEMORY(0x1118DE5, uint8_t, 0xEB);
+
+        // Change animation at CSonicStateFall base on current animation
+        INSTALL_HOOK(NextGenPhysics_CSonicStateFallBegin);
+        INSTALL_HOOK(NextGenPhysics_CSonicStateFallAdvance);
+    }
 
     // Apply character specific patches
     switch (Configuration::m_model)

@@ -251,6 +251,24 @@ void AnimationSetPatcher::applyPatches()
     WRITE_STRING(0x15D58F4, "ssn_trick_jump"); // TrickPrepare
     WRITE_STRING(0x15D5FD0, "ssn_float_loop"); // Float
 
+    // SpinFall animation
+    if (Configuration::m_model == Configuration::ModelType::Sonic
+     || Configuration::m_model == Configuration::ModelType::Blaze)
+    {
+        // Remove JumpBoard to Fall transition and add spin fall
+        WRITE_JUMP(0xE1F503, (void*)0xE1F56E);
+        m_newAnimationData.emplace_back(SpinFall, "sn_spin_fall", 1.0f, false, SpinFallLoop);
+        m_newAnimationData.emplace_back(SpinFallSpring, "sn_spin_fall_spring", 1.0f, false, SpinFallLoop);
+        m_newAnimationData.emplace_back(SpinFallLoop, "sn_jump_d_loop", 1.0f, true, nullptr);
+
+        // Set animations to loop
+        WRITE_MEMORY(0x127779C, uint8_t, 0x1D); // UpReelEnd
+        WRITE_MEMORY(0x1276B84, uint8_t, 0x1D); // JumpBoard
+        WRITE_MEMORY(0x1276BEB, uint8_t, 0x1D); // JumpBoardRev
+        WRITE_MEMORY(0x1276C4D, uint8_t, 0x1D); // JumpBoardSpecialL
+        WRITE_MEMORY(0x1276CB9, uint8_t, 0x1D); // JumpBoardSpecialR
+    }
+
     if (Configuration::m_model == Configuration::ModelType::Sonic)
     {
         // Running goal
@@ -266,19 +284,6 @@ void AnimationSetPatcher::applyPatches()
         // Squat Kick and Brake Flip for Super Sonic
         m_newAnimationDataSuper.emplace_back("SquatKick", "ssn_squat_kick", 1.0f, false, nullptr);
         m_newAnimationDataSuper.emplace_back(BrakeFlip, "ssn_brake_flip", 1.0f, false, nullptr);
-
-        // Remove JumpBoard to Fall transition and add spin fall
-        WRITE_JUMP(0xE1F503, (void*)0xE1F56E);
-        m_newAnimationData.emplace_back(SpinFall, "sn_spin_fall", 1.0f, false, SpinFallLoop);
-        m_newAnimationData.emplace_back(SpinFallSpring, "sn_spin_fall_spring", 1.0f, false, SpinFallLoop);
-        m_newAnimationData.emplace_back(SpinFallLoop, "sn_jump_d_loop", 1.0f, true, nullptr);
-
-        // Set animations to loop
-        WRITE_MEMORY(0x127779C, uint8_t, 0x1D); // UpReelEnd
-        WRITE_MEMORY(0x1276B84, uint8_t, 0x1D); // JumpBoard
-        WRITE_MEMORY(0x1276BEB, uint8_t, 0x1D); // JumpBoardRev
-        WRITE_MEMORY(0x1276C4D, uint8_t, 0x1D); // JumpBoardSpecialL
-        WRITE_MEMORY(0x1276CB9, uint8_t, 0x1D); // JumpBoardSpecialR
     }
     
     if (Configuration::m_model == Configuration::ModelType::SonicElise)
