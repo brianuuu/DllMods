@@ -113,8 +113,10 @@ bool Configuration::load(const std::string& rootPath)
         // Physics
         if (m_physics)
         {
-            bb3.addReplace("#Sonic.ar.00", "#Sonic_06phy.ar.00");
-            bb3.addReplace("#Sonic.arl", "#Sonic_06phy.arl");
+            str = "#Sonic";
+            bbWriter::applyModel(str, m_model);
+            bb3.addReplace("#Sonic.ar.00", str + ".ar.00");
+            bb3.addReplace("#Sonic.arl", str + ".arl");
         }
         else
         {
