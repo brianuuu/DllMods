@@ -9,19 +9,19 @@ uint32_t m_forceRailCollisionQuery = false;
 std::set<uint32_t*> RailPhysics::m_pPathContainer;
 std::vector<PathData> RailPhysics::m_pathData;
 
-float const c_lockOnRange = 8.0f;
+float const cGrind_lockOnRange = 8.0f;
 float RailPhysics::m_grindSpeed = 0.0f;
 float RailPhysics::m_grindAccelTime = 0.0f;
-float const c_grindSpeedInit = 23.0f;
-float const c_grindSpeedInitSuper = 30.0f;
-float const c_grindSpeedBoard = 28.0f;
-float const c_grindSpeedMax = 40.0f;
-float const c_grindSpeedMaxSuper = 60.0f;
-float const c_grindAccel = 15.0f;
-float const c_grindAccelSuper = 25.0f;
-float const c_grindAccelTime = 0.333f;
-float const c_grindJumpPower = 18.0f;
-float const c_grindJumpSpeedMax = 15.0f;
+float const cGrind_speedInit = 23.0f;
+float const cGrind_speedInitSuper = 30.0f;
+float const cGrind_speedBoard = 28.0f;
+float const cGrind_speedMax = 40.0f;
+float const cGrind_speedMaxSuper = 60.0f;
+float const cGrind_accel = 15.0f;
+float const cGrind_accelSuper = 25.0f;
+float const cGrind_accelTime = 0.333f;
+float const cGrind_jumpPower = 18.0f;
+float const cGrind_jumpSpeedMax = 15.0f;
 
 FUNCTION_PTR(void*, __thiscall, processGameObjectMsgSetPosition, 0xD5CEB0, void* This, void* message);
 FUNCTION_PTR(void*, __thiscall, processGameObjectMsgSetRotation, 0xD5CE70, void* This, void* message);
@@ -84,7 +84,7 @@ HOOK(uint32_t*, __cdecl, RailPhysics_CEventCollisionConstructor, 0x11836F0, int 
 
 HOOK(int, __fastcall, RailPhysics_CSonicPostureGrindBegin, 0x11D8060, void* This)
 {
-    RailPhysics::m_grindSpeed = Common::IsPlayerOnBoard() ? c_grindSpeedBoard : (Common::IsPlayerSuper() ? c_grindSpeedInitSuper : c_grindSpeedInit);
+    RailPhysics::m_grindSpeed = Common::IsPlayerOnBoard() ? cGrind_speedBoard : (Common::IsPlayerSuper() ? cGrind_speedInitSuper : cGrind_speedInit);
     RailPhysics::m_grindAccelTime = 0.0f;
     return originalRailPhysics_CSonicPostureGrindBegin(This);
 }
@@ -102,12 +102,12 @@ HOOK(void, __fastcall, RailPhysics_CSonicPostureGrindAdvance, 0x11D81E0, void* T
         if (Common::GetSonicStateFlags()->Boost)
         {
             // Always allow accleration when boosting, but slower
-            RailPhysics::m_grindSpeed += (isSuper ? c_grindAccelSuper : (c_grindAccel * 0.3f)) * dt;
+            RailPhysics::m_grindSpeed += (isSuper ? cGrind_accelSuper : (cGrind_accel * 0.3f)) * dt;
         }
         else if (RailPhysics::m_grindAccelTime > 0.0f)
         {
             // Acclerate after doing grind trick
-            RailPhysics::m_grindSpeed += (isSuper ? c_grindAccelSuper : c_grindAccel) * min(RailPhysics::m_grindAccelTime, dt);
+            RailPhysics::m_grindSpeed += (isSuper ? cGrind_accelSuper : cGrind_accel) * min(RailPhysics::m_grindAccelTime, dt);
             RailPhysics::m_grindAccelTime -= dt;
         }
 
@@ -119,7 +119,7 @@ HOOK(void, __fastcall, RailPhysics_CSonicPostureGrindAdvance, 0x11D81E0, void* T
         bool forward = playerDirection.dot(velocity) >= 0.0f;
 
         // Set current velocity
-        RailPhysics::m_grindSpeed = min(RailPhysics::m_grindSpeed, (isSuper ? c_grindSpeedMaxSuper : c_grindSpeedMax));
+        RailPhysics::m_grindSpeed = min(RailPhysics::m_grindSpeed, (isSuper ? cGrind_speedMaxSuper : cGrind_speedMax));
         velocity = velocity.normalized() * RailPhysics::m_grindSpeed * (forward ? 1.0f : -1.0f);
         Common::SetPlayerVelocity(velocity);
     }
@@ -130,7 +130,7 @@ HOOK(int, __fastcall, RailPhysics_CSonicStateGrindSquatBegin, 0x1118830, void* T
     // Gain speed
     if (Configuration::m_physics)
     {
-        RailPhysics::m_grindAccelTime += c_grindAccelTime;
+        RailPhysics::m_grindAccelTime += cGrind_accelTime;
     }
 
     // Play grind trick sfx
@@ -148,13 +148,13 @@ HOOK(bool, __fastcall, RailPhysics_CSonicStateGrindJumpShortBegin, 0x124A8C0, vo
     {
         float* targetVel = (float*)((uint32_t)*PLAYER_CONTEXT + 0x2A0);
         Eigen::Vector3f vel(targetVel[0], 0, targetVel[2]);
-        if (vel.squaredNorm() > c_grindJumpSpeedMax * c_grindJumpSpeedMax)
+        if (vel.squaredNorm() > cGrind_jumpSpeedMax * cGrind_jumpSpeedMax)
         {
             // Cap horizontal speed
-            vel = vel.normalized() * c_grindJumpSpeedMax;
+            vel = vel.normalized() * cGrind_jumpSpeedMax;
         }
 
-        vel.y() = c_grindJumpPower;
+        vel.y() = cGrind_jumpPower;
         if (targetVel[1] > 0.0f)
         {
             // Only add vertical speed if going up, otherwise use fixed jump power
@@ -398,7 +398,7 @@ void RailPhysics::updateHomingTargetPos()
     }
 
     // Find the closest lock-on position from the list of paths
-    float const rangeSquared = c_lockOnRange * c_lockOnRange;
+    float const rangeSquared = cGrind_lockOnRange * cGrind_lockOnRange;
     Eigen::Vector3f lockPos(0, 10000, 0);
     float minDistSquared = FLT_MAX;
     for (uint32_t index : closestPathIndices)

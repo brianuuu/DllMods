@@ -50,25 +50,25 @@ bool NextGenSonic::m_isElise = false;
 
 bool NextGenSonic::m_bounced = false;
 bool NextGenSonic::m_isStomping = false;
-float const c_bouncePower = 18.0f;
-float const c_bouncePowerBig = 23.0f;
+float const cSonic_bouncePower = 18.0f;
+float const cSonic_bouncePowerBig = 23.0f;
 
 bool NextGenSonic::m_isSquatKick = false;
 bool NextGenSonic::m_isBrakeFlip = false;
 Eigen::Vector3f NextGenSonic::m_brakeFlipDir(0, 0, 1);
 float NextGenSonic::m_squatKickSpeed = 0.0f;
-float const c_squatKickPressMaxTime = 0.3f;
+float const cSonic_squatKickPressMaxTime = 0.3f;
 
 bool slidingEndWasSliding = false;
 bool NextGenSonic::m_isSpindash = false;
 bool NextGenSonic::m_isSliding = false;
 float NextGenSonic::m_slidingTime = 0.0f;
 float NextGenSonic::m_slidingSpeed = 0.0f;
-float const c_slidingTime = 3.0f;
-float const c_slidingSpeedMin = 10.0f;
-float const c_slidingSpeedMax = 16.0f;
-float const c_spindashTime = 3.0f;
-float const c_spindashSpeed = 30.0f;
+float const cSonic_slidingTime = 3.0f;
+float const cSonic_slidingSpeedMin = 10.0f;
+float const cSonic_slidingSpeedMax = 16.0f;
+float const cSonic_spindashTime = 3.0f;
+float const cSonic_spindashSpeed = 30.0f;
 
 float NextGenSonic::m_xHeldTimer = 0.0f;
 bool NextGenSonic::m_enableAutoRunAction = true;
@@ -195,12 +195,12 @@ HOOK(int, __fastcall, NextGenSonic_CSonicStateSlidingBegin, 0x11D7110, void* Thi
         if (Common::GetPlayerVelocity(playerVelocity))
         {
             NextGenSonic::m_slidingSpeed = playerVelocity.norm();
-            NextGenSonic::m_slidingSpeed = max(NextGenSonic::m_slidingSpeed, c_slidingSpeedMin);
-            NextGenSonic::m_slidingSpeed = min(NextGenSonic::m_slidingSpeed, c_slidingSpeedMax);
+            NextGenSonic::m_slidingSpeed = max(NextGenSonic::m_slidingSpeed, cSonic_slidingSpeedMin);
+            NextGenSonic::m_slidingSpeed = min(NextGenSonic::m_slidingSpeed, cSonic_slidingSpeedMax);
         }
     }
 
-    NextGenSonic::m_slidingTime = NextGenSonic::m_isSpindash ? c_spindashTime : c_slidingTime;
+    NextGenSonic::m_slidingTime = NextGenSonic::m_isSpindash ? cSonic_spindashTime : cSonic_slidingTime;
     return originalNextGenSonic_CSonicStateSlidingBegin(This);
 }
 
@@ -235,7 +235,7 @@ HOOK(void, __fastcall, NextGenSonic_CSonicStateSlidingAdvance, 0x11D69A0, void* 
     }
 
     // For 2D slide/spindash, there's one frame delay before Sonic can goto max speed, lower the minSpeed
-    float minSpeed = (NextGenSonic::m_isSpindash ? c_spindashSpeed : c_slidingSpeedMin) - 5.0f;
+    float minSpeed = (NextGenSonic::m_isSpindash ? cSonic_spindashSpeed : cSonic_slidingSpeedMin) - 5.0f;
     minSpeed = Common::IsPlayerIn2D() ? 2.0f : minSpeed;
 
     Eigen::Vector3f playerVelocity;
@@ -596,7 +596,7 @@ bool NextGenSonic::bActionHandlerImpl()
     if (bDown)
     {
         // Standing still and held B for a while (Spin Dash)
-        if (canUseSpindash && m_xHeldTimer > c_squatKickPressMaxTime)
+        if (canUseSpindash && m_xHeldTimer > cSonic_squatKickPressMaxTime)
         {
             if (!m_isElise)
             {
@@ -615,7 +615,7 @@ bool NextGenSonic::bActionHandlerImpl()
     {
         if (bReleased && !flags->OnWater)
         {
-            if (m_xHeldTimer <= c_squatKickPressMaxTime)
+            if (m_xHeldTimer <= cSonic_squatKickPressMaxTime)
             {
                 if (!m_isElise)
                 {
@@ -625,7 +625,7 @@ bool NextGenSonic::bActionHandlerImpl()
                     return true;
                 }
             }
-            else if (moving && !flags->KeepRunning && m_xHeldTimer > c_squatKickPressMaxTime)
+            else if (moving && !flags->KeepRunning && m_xHeldTimer > cSonic_squatKickPressMaxTime)
             {
                 if (!m_isElise && Configuration::m_rapidSpindash)
                 {
@@ -674,7 +674,7 @@ void NextGenSonic::bounceBraceletImpl()
     // Bounce up
     float* velocity = (float*)((uint32_t)*pModernSonicContext + 0x290);
     velocity[0] = 0.0f;
-    velocity[1] = NextGenSonic::m_bounced ? c_bouncePowerBig : c_bouncePower;
+    velocity[1] = NextGenSonic::m_bounced ? cSonic_bouncePowerBig : cSonic_bouncePower;
     if (flags->OnWater)
     {
         velocity[1] -= 5.0f;
@@ -730,7 +730,7 @@ bool __fastcall NextGenSonic::applySpindashImpulse(void* context)
 
     if (m_isSpindash)
     {
-        message.m_impulse *= c_spindashSpeed;
+        message.m_impulse *= cSonic_spindashSpeed;
     }
     else
     {
@@ -772,7 +772,7 @@ bool __fastcall NextGenSonic::applySlidingHorizontalTargetVel(void* context)
     }
     else if (m_isSpindash)
     {
-        playerDir *= c_spindashSpeed;
+        playerDir *= cSonic_spindashSpeed;
 
         // Double speed for super and normal physics
         if (superForm || !Configuration::m_physics)
