@@ -1360,6 +1360,9 @@ inline bool SetPlayerVelocity(Eigen::Vector3f const& velocity)
     pVel[1] = velocity.y();
     pVel[2] = velocity.z();
 
+	*(bool*)(result + 1512) = true; // velocity dirty
+	*(bool*)(result + 1513) = false; // horizontal dirty
+
     return true;
 }
 
