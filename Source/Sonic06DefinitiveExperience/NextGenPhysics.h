@@ -60,6 +60,7 @@ public:
 		float turnRate2 = c_funcMaxTurnRate
 	);
 
+	static void getActionButtonStates(bool& bDown, bool& bPressed, bool& bReleased);
 	static bool checkUseLightSpeedDash();
 
 	static void fixGenerationsLayout(char* pData);

@@ -1,6 +1,7 @@
 #include "NextGenPhysics.h"
 #include "Configuration.h"
 #include "AnimationSetPatcher.h"
+#include "Application.h"
 
 #include "NextGenSonic.h"
 
@@ -39,6 +40,19 @@ HOOK(void, __stdcall, NextGenSonic_CSonicRotationAdvance, 0xE310A0, void* a1, fl
 void NextGenPhysics::applyCSonicRotationAdvance(void* This, float* targetDir, float turnRate1, float turnRateMultiplier, bool noLockDirection, float turnRate2)
 {
     originalNextGenSonic_CSonicRotationAdvance(This, targetDir, turnRate1, turnRateMultiplier, noLockDirection, turnRate2);
+}
+
+void NextGenPhysics::getActionButtonStates(bool& bDown, bool& bPressed, bool& bReleased)
+{
+    Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
+    Sonic::EKeyState const actionButton = Sonic::EKeyState::eKeyState_X;
+
+    bDown = padState->IsDown(actionButton);
+    bPressed = padState->IsTapped(actionButton);
+
+    // Release button doesn't work for keyboard, get from Application.h
+    bReleased = Application::getKeyIsReleased(actionButton);
+    //bReleased = padState->IsReleased(actionButton);
 }
 
 //---------------------------------------------------

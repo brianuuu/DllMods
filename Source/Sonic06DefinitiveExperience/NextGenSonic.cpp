@@ -70,7 +70,7 @@ float const c_slidingSpeedMax = 16.0f;
 float const c_spindashTime = 3.0f;
 float const c_spindashSpeed = 30.0f;
 
-float NextGenSonic::m_bHeldTimer = 0.0f;
+float NextGenSonic::m_xHeldTimer = 0.0f;
 bool NextGenSonic::m_enableAutoRunAction = true;
 
 char const* ef_ch_sng_bound = "ef_ch_sng_bound";
@@ -104,12 +104,12 @@ HOOK(int, __fastcall, NextGenSonic_CSonicStateHomingAttackBegin, 0x1232040, void
 HOOK(void, __fastcall, NextGenSonic_CSonicStateHomingAttackAfterAdvance, 0x1118600, void* This)
 {
     bool bDown, bPressed, bReleased;
-    NextGenSonic::getActionButtonStates(bDown, bPressed, bReleased);
+    NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
 
     if (bPressed && !Common::GetSonicStateFlags()->OutOfControl)
     {
         StateManager::ChangeState(StateAction::Stomping, *PLAYER_CONTEXT);
-        NextGenSonic::m_bHeldTimer = 0.0f;
+        NextGenSonic::m_xHeldTimer = 0.0f;
         return;
     }
 
@@ -209,7 +209,7 @@ HOOK(void, __fastcall, NextGenSonic_CSonicStateSlidingAdvance, 0x11D69A0, void* 
     originalNextGenSonic_CSonicStateSlidingAdvance(This);
 
     bool bDown, bPressed, bReleased;
-    NextGenSonic::getActionButtonStates(bDown, bPressed, bReleased);
+    NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
     NextGenSonic::m_slidingTime -= Application::getDeltaTime();
     if (bPressed || NextGenSonic::m_slidingTime <= 0.0f)
     {
@@ -513,7 +513,7 @@ HOOK(int*, __fastcall, NextGenSonic_CSonicStateSquatKickEnd, 0x12527B0, void* Th
 }
 
 //---------------------------------------------------
-// B/X Button Action
+// X Button Action
 //---------------------------------------------------
 HOOK(bool, __stdcall, NextGenSonic_BActionHandler, 0xDFF660, CSonicContext* context, bool buttonHoldCheck)
 {
@@ -524,11 +524,11 @@ HOOK(bool, __stdcall, NextGenSonic_BActionHandler, 0xDFF660, CSonicContext* cont
     }
     NextGenSonic::m_isStomping = false;
 
-    // Handle B/X button action
+    // Handle X button action
     bool result = originalNextGenSonic_BActionHandler(context, buttonHoldCheck);
     if (result || Common::IsPlayerControlLocked())
     {
-        NextGenSonic::m_bHeldTimer = 0.0f;
+        NextGenSonic::m_xHeldTimer = 0.0f;
         return result;
     }
 
@@ -573,19 +573,6 @@ HOOK(void, __fastcall, NextGenSonic_MsgNotifyObjectEvent, 0xEA4F50, void* This, 
     originalNextGenSonic_MsgNotifyObjectEvent(This, Edx, a2);
 }
 
-void NextGenSonic::getActionButtonStates(bool& bDown, bool& bPressed, bool& bReleased)
-{
-    Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
-    Sonic::EKeyState const actionButton = Sonic::EKeyState::eKeyState_X;
-
-    bDown = padState->IsDown(actionButton);
-    bPressed = padState->IsTapped(actionButton);
-
-    // Release button doesn't work for keyboard, get from Application.h
-    bReleased = Application::getKeyIsReleased(actionButton);
-    //bReleased = padState->IsReleased(actionButton);
-}
-
 bool NextGenSonic::bActionHandlerImpl()
 {
     Eigen::Vector3f playerVelocity;
@@ -605,40 +592,40 @@ bool NextGenSonic::bActionHandlerImpl()
     bool canUseSpindash = !moving || (Configuration::m_rapidSpindash && !flags->KeepRunning);
 
     bool bDown, bPressed, bReleased; 
-    getActionButtonStates(bDown, bPressed, bReleased);
+    NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
     if (bDown)
     {
         // Standing still and held B for a while (Spin Dash)
-        if (canUseSpindash && m_bHeldTimer > c_squatKickPressMaxTime)
+        if (canUseSpindash && m_xHeldTimer > c_squatKickPressMaxTime)
         {
             if (!m_isElise)
             {
                 StateManager::ChangeState(StateAction::Squat, *PLAYER_CONTEXT);
-                m_bHeldTimer = 0.0f;
+                m_xHeldTimer = 0.0f;
                 return true;
             }
         }
 
-        // Remember how long we held B
+        // Remember how long we held X
         // NOTE: Apparently this code always runs at 60fps
         // If 30fps this will run twice per frame!
-        m_bHeldTimer += 1.0f / 60.0f;
+        m_xHeldTimer += 1.0f / 60.0f;
     }
     else
     {
         if (bReleased && !flags->OnWater)
         {
-            if (m_bHeldTimer <= c_squatKickPressMaxTime)
+            if (m_xHeldTimer <= c_squatKickPressMaxTime)
             {
                 if (!m_isElise)
                 {
-                    // Release B without holding it for too long (Squat Kick)
+                    // Release X without holding it for too long (Squat Kick)
                     StateManager::ChangeState(StateAction::SquatKick, *PLAYER_CONTEXT);
-                    m_bHeldTimer = 0.0f;
+                    m_xHeldTimer = 0.0f;
                     return true;
                 }
             }
-            else if (moving && !flags->KeepRunning && m_bHeldTimer > c_squatKickPressMaxTime)
+            else if (moving && !flags->KeepRunning && m_xHeldTimer > c_squatKickPressMaxTime)
             {
                 if (!m_isElise && Configuration::m_rapidSpindash)
                 {
@@ -646,15 +633,15 @@ bool NextGenSonic::bActionHandlerImpl()
                 }
                 else
                 {
-                    // Moving and released B (Anti-Gravity)
+                    // Moving and released X (Anti-Gravity)
                     StateManager::ChangeState(StateAction::Sliding, *PLAYER_CONTEXT);
-                    m_bHeldTimer = 0.0f;
+                    m_xHeldTimer = 0.0f;
                     return true;
                 }
             }
         }
 
-        m_bHeldTimer = 0.0f;
+        m_xHeldTimer = 0.0f;
     }
 
     return false;
@@ -1074,7 +1061,7 @@ void NextGenSonic::applyPatches()
     if (!Configuration::m_characterMoveset) return;
 
     //-------------------------------------------------------
-    // B-Action State handling
+    // X-Action State handling
     //-------------------------------------------------------
     {
         // Return 0 for Squat and Sliding, handle them ourselves

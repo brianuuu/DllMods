@@ -35,11 +35,10 @@ public:
 	static bool __fastcall applySpindashImpulse(void* context);
 	static bool __fastcall applySlidingHorizontalTargetVel(void* context);
 
-	// Action
-	static float m_bHeldTimer;
+	// X Action
+	static float m_xHeldTimer;
 	static bool m_enableAutoRunAction;
 	static bool bActionHandlerImpl();
-	static void getActionButtonStates(bool& bDown, bool& bPressed, bool& bReleased);
 
 	// Elise Shield
 	static bool m_isShield;
