@@ -70,5 +70,8 @@ public:
     static const char* volatile const SpinFallSpring;
     static const char* volatile const SpinFallLoop;
     static const char* volatile const HomingAttackLoop;
+    static const char* volatile const AccelJumpLoop;
+    static const char* volatile const FireTornadoLoop;
+    static const char* volatile const FireTornadoEnd;
 };
 

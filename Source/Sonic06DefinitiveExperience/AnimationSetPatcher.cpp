@@ -168,6 +168,9 @@ const char* volatile const AnimationSetPatcher::SpinFall = "SpinFall";
 const char* volatile const AnimationSetPatcher::SpinFallSpring = "SpinFallSpring";
 const char* volatile const AnimationSetPatcher::SpinFallLoop = "SpinFallLoop";
 const char* volatile const AnimationSetPatcher::HomingAttackLoop = "HomingAttackLoop";
+const char* volatile const AnimationSetPatcher::AccelJumpLoop = "AccelJumpLoop";
+const char* volatile const AnimationSetPatcher::FireTornadoLoop = "FireTornadoLoop";
+const char* volatile const AnimationSetPatcher::FireTornadoEnd = "FireTornadoEnd";
 
 void AnimationSetPatcher::applyPatches()
 {
@@ -290,6 +293,16 @@ void AnimationSetPatcher::applyPatches()
     {
         // Use unique animation for homing attack
         m_newAnimationData.emplace_back(HomingAttackLoop, "sn_homing_loop", 1.0f, true, nullptr);
+    }
+
+    if (Configuration::m_model == Configuration::ModelType::Blaze)
+    {
+        // Double Jump
+        m_newAnimationData.emplace_back(AccelJumpLoop, "sn_accel_jump_loop", 2.0f, true, nullptr);
+
+        // Fire Tornado
+        m_newAnimationData.emplace_back(FireTornadoLoop, "sn_spin_attack_loop", 1.0f, true, nullptr);
+        m_newAnimationData.emplace_back(FireTornadoEnd, "sn_spin_attack_e", 1.0f, false, nullptr);
     }
 
     if (!m_newAnimationData.empty())

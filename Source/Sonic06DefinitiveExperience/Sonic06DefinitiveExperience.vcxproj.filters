@@ -21,6 +21,7 @@
     <ClCompile Include="ChaosEnergy.cpp" />
     <ClCompile Include="CustomCamera.cpp" />
     <ClCompile Include="NextGenSonic.cpp" />
+    <ClCompile Include="NextGenBlaze.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pch.h" />
@@ -41,5 +42,6 @@
     <ClInclude Include="ChaosEnergy.h" />
     <ClInclude Include="CustomCamera.h" />
     <ClInclude Include="NextGenSonic.h" />
+    <ClInclude Include="NextGenBlaze.h" />
   </ItemGroup>
 </Project>

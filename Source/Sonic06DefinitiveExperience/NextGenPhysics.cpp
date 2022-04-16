@@ -4,6 +4,7 @@
 #include "Application.h"
 
 #include "NextGenSonic.h"
+#include "NextGenBlaze.h"
 
 //---------------------------------------------------
 // CSonicRotation
@@ -113,6 +114,23 @@ HOOK(void, __fastcall, NextGenPhysics_CSonicUpdate, 0xE6BF20, void* This, void* 
         }
     }
     originalNextGenPhysics_CSonicUpdate(This, Edx, dt);
+}
+
+//---------------------------------------------------
+// Utils
+//---------------------------------------------------
+void NextGenPhysics::keepConstantHorizontalVelocity(float hSpeed)
+{
+    Eigen::Vector3f velocity;
+    Common::GetPlayerVelocity(velocity);
+    float vSpeed = velocity.y();
+    Eigen::Vector3f hVel = velocity;
+    hVel.y() = 0.0f;
+
+    // Keep constant horizontal velocity
+    velocity = hVel.normalized() * hSpeed;
+    velocity.y() = vSpeed;
+    Common::SetPlayerVelocity(velocity);
 }
 
 //---------------------------------------------------
@@ -473,6 +491,11 @@ void NextGenPhysics::applyPatches()
         NextGenSonic::applyPatches();
         break;
     }
+    case Configuration::ModelType::Blaze:
+    {
+        NextGenBlaze::applyPatches();
+        break;
+    }
     }
 }
 
@@ -499,6 +522,11 @@ void NextGenPhysics::applyCharacterAnimationSpeed()
         case Configuration::ModelType::SonicElise:
         {
             NextGenSonic::setAnimationSpeed_Elise(m_animationData);
+            break;
+        }
+        case Configuration::ModelType::Blaze:
+        {
+            NextGenBlaze::setAnimationSpeed_Blaze(m_animationData);
             break;
         }
     }
