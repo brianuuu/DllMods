@@ -48,6 +48,9 @@ float NextGenBlaze::m_spinningClawTime = 0.0f;
 float const cBlaze_spinningClawMinTime = 3.0f;
 float const cBlaze_spinningClawMaxTime = 15.0f;
 
+char const* ef_ch_bl_firetornado = "ef_ch_bl_firetornado";
+char const* ef_ch_bl_axeljump = "ef_ch_bl_axeljump";
+
 //-------------------------------------------------------
 // Double Jump/Homing Attack
 //-------------------------------------------------------
@@ -116,6 +119,10 @@ bool NextGenBlaze::doubleJumpImpl(bool pressedJump)
         static SharedPtrTypeless sfxHandle;
         Common::SonicContextPlaySound(sfxHandle, 80041023, 1);
 
+        // Accel jump pfx
+        WRITE_MEMORY(0x11BCDA7, char**, &ef_ch_bl_axeljump);
+        WRITE_MEMORY(0x11BCCFC, char**, &ef_ch_bl_axeljump);
+
         // Change state
         Common::GetSonicStateFlags()->EnableAttenuateJump = true;
         StateManager::ChangeState(StateAction::Jump, *PLAYER_CONTEXT);
@@ -128,12 +135,16 @@ bool NextGenBlaze::doubleJumpImpl(bool pressedJump)
     return false;
 }
 
-HOOK(int, __fastcall, NextGenBlaze_DoSpinAttack, 0x1235250, void* This)
+HOOK(char*, __fastcall, NextGenBlaze_CSonicStateJumpBallBegin, 0x11BCBE0, void* This)
 {
-    int result = originalNextGenBlaze_DoSpinAttack(This);
+    char* result = originalNextGenBlaze_CSonicStateJumpBallBegin(This);
     {
         // Restore spin attack animation
         WRITE_MEMORY(0x1235263, uint32_t, 0x15F84F4);
+
+        // Restore jump pfx (nothing)
+        WRITE_MEMORY(0x11BCDA7, uint32_t, 0x1E61D6C);
+        WRITE_MEMORY(0x11BCCFC, uint32_t, 0x1E61D00);
     }
     return result;
 }
@@ -410,14 +421,18 @@ HOOK(int, __fastcall, NextGenBlaze_CSonicPosture3DSliding, 0x11D93B0, int This)
 //---------------------------------------------------
 void NextGenBlaze::applyPatches()
 {
-    // Always disable stomp voice and sfx
-    WRITE_MEMORY(0x1254E04, int, -1);
-    WRITE_MEMORY(0x1254F23, int, -1);
+    // Stomp uses fire tornado voice & sfx
+    WRITE_MEMORY(0x1254E02, uint8_t, 10);
+    WRITE_MEMORY(0x1254E04, uint32_t, 3002031);
+    WRITE_MEMORY(0x1254E73, char**, &ef_ch_bl_firetornado);
+    WRITE_MEMORY(0x1254E9A, char**, &ef_ch_bl_firetornado);
+    WRITE_MEMORY(0x12548FC, uint32_t, 80041022);
+    WRITE_MEMORY(0x12549D8, uint32_t, 80041022);
 
     // Replace homing attack animation with air boost
     WRITE_MEMORY(0x1232056, char*, "AirBoost");
 
-    // Don't use any lotus effect
+    // Don't use any lotus effect (homing attack/stomp)
     WRITE_JUMP(0xE5FDEA, (void*)0xE5FF03);
 
     // Fire tornado voice & sfx
@@ -426,10 +441,15 @@ void NextGenBlaze::applyPatches()
     WRITE_MEMORY(0x11D72DC, uint32_t, 3002031);
     INSTALL_HOOK(NextGenBlaze_CSonicStateSlidingEnd);
 
+    // Fire tornado animation
     WRITE_MEMORY(0x11D7124, char*, AnimationSetPatcher::FireTornadoLoop);
     WRITE_MEMORY(0x11D6E6A, char*, AnimationSetPatcher::FireTornadoLoop);
     WRITE_MEMORY(0x11D6EDB, char*, AnimationSetPatcher::FireTornadoLoop);
     WRITE_MEMORY(0x1230F88, char*, AnimationSetPatcher::FireTornadoEnd);
+
+    // Fire tornado pfx
+    WRITE_MEMORY(0x11D6A0A, char**, &ef_ch_bl_firetornado);
+    WRITE_MEMORY(0x11D6A80, char**, &ef_ch_bl_firetornado);
 
     if (!Configuration::m_characterMoveset) return;
 
@@ -438,7 +458,7 @@ void NextGenBlaze::applyPatches()
     //-------------------------------------------------------
     INSTALL_HOOK(NextGenBlaze_HomingAttackCheck);
     WRITE_JUMP(0xDFFEA3, NextGenBlaze_AirAction);
-    INSTALL_HOOK(NextGenBlaze_DoSpinAttack);
+    INSTALL_HOOK(NextGenBlaze_CSonicStateJumpBallBegin);
 
     // States that resets double jump
     INSTALL_HOOK(NextGenBlaze_MsgSpringImpulse);
