@@ -47,6 +47,7 @@ float NextGenBlaze::m_spinningClawSpeed = 0.0f;
 float NextGenBlaze::m_spinningClawTime = 0.0f;
 float const cBlaze_spinningClawMinTime = 3.0f;
 float const cBlaze_spinningClawMaxTime = 15.0f;
+float const cBlaze_spinningClawRadius = 1.5f;
 
 char const* ef_ch_bl_firetornado = "ef_ch_bl_firetornado";
 char const* ef_ch_bl_axeljump = "ef_ch_bl_axeljump";
@@ -416,6 +417,18 @@ HOOK(int, __fastcall, NextGenBlaze_CSonicPosture3DSliding, 0x11D93B0, int This)
     return result;
 }
 
+void __declspec(naked) NextGenBlaze_SlidingCollision()
+{
+    static uint32_t returnAddress = 0xE260D4;
+    __asm
+    {
+        movaps  xmm2, xmm0
+        lea     edx, [cBlaze_spinningClawRadius]
+        fld     dword ptr [edx]
+        jmp     [returnAddress]
+    }
+}
+
 //---------------------------------------------------
 // Main Apply Patches
 //---------------------------------------------------
@@ -515,4 +528,7 @@ void NextGenBlaze::applyPatches()
 
     // Change "Stomping" type object physics to "Normal"
     WRITE_MEMORY(0xE9FFC9, uint32_t, 5);
+
+    // Increase fire tornado collision radius
+    WRITE_JUMP(0xE260CD, NextGenBlaze_SlidingCollision);
 }
