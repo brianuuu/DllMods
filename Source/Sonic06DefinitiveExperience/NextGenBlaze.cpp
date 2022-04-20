@@ -464,6 +464,9 @@ void NextGenBlaze::applyPatches()
     WRITE_MEMORY(0x11D6A0A, char**, &ef_ch_bl_firetornado);
     WRITE_MEMORY(0x11D6A80, char**, &ef_ch_bl_firetornado);
 
+    // Increase fire tornado collision radius
+    WRITE_JUMP(0xE260CD, NextGenBlaze_SlidingCollision);
+
     if (!Configuration::m_characterMoveset) return;
 
     //-------------------------------------------------------
@@ -528,7 +531,4 @@ void NextGenBlaze::applyPatches()
 
     // Change "Stomping" type object physics to "Normal"
     WRITE_MEMORY(0xE9FFC9, uint32_t, 5);
-
-    // Increase fire tornado collision radius
-    WRITE_JUMP(0xE260CD, NextGenBlaze_SlidingCollision);
 }
