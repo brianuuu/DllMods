@@ -460,9 +460,10 @@ void NextGenBlaze::applyPatches()
     WRITE_MEMORY(0x11D6EDB, char*, AnimationSetPatcher::FireTornadoLoop);
     WRITE_MEMORY(0x1230F88, char*, AnimationSetPatcher::FireTornadoEnd);
 
-    // Fire tornado pfx
+    // Fire tornado pfx for sliding
     WRITE_MEMORY(0x11D6A0A, char**, &ef_ch_bl_firetornado);
     WRITE_MEMORY(0x11D6A80, char**, &ef_ch_bl_firetornado);
+    WRITE_MEMORY(0x11D6A97, char**, &ef_ch_bl_firetornado);
 
     // Increase fire tornado collision radius
     WRITE_JUMP(0xE260CD, NextGenBlaze_SlidingCollision);
