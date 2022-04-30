@@ -500,6 +500,10 @@ void NextGenBlaze::applyPatches()
     // Disable stomping
     WRITE_MEMORY(0xDFDDB3, uint8_t, 0xEB);
 
+    // Allow pushing down CObjCscLavaRide without stomp
+    WRITE_NOP(0xF1D7F4, 6);
+    WRITE_MEMORY(0xF1D7FE, uint16_t, 0x1C0);
+
     //-------------------------------------------------------
     // X-Action State handling
     //-------------------------------------------------------
