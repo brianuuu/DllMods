@@ -131,12 +131,9 @@ extern "C" __declspec(dllexport) void PostInit()
         WRITE_MEMORY(0x121EDA4, uint8_t, 0x0F, 0x84, 0xAC, 0x00, 0x00);
     }
 
-    // TODO: Mandatory when 06 HUD is ready
-    /*
     if (GetModuleHandle(TEXT("Sonic06HUD.dll")) == nullptr)
     {
         MessageBox(nullptr, TEXT("This mod requires the latest version of 'Sonic 06 HUD' enabled."), TEXT("Sonic 06 Definitive Experience"), MB_ICONERROR);
         exit(-1);
     }
-    */
 }
