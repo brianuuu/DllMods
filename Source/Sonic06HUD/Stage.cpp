@@ -66,6 +66,12 @@ HOOK(int*, __fastcall, Stage_CGameplayFlowStage_CStateBegin, 0xCFF2B0, void* Thi
     return originalStage_CGameplayFlowStage_CStateBegin(This);
 }
 
+HOOK(void, __fastcall, Stage_CGameplayFlowStage_CStateTitle, 0xCF8F40, void* This)
+{
+    UIContext::clearDraw();
+    originalStage_CGameplayFlowStage_CStateTitle(This);
+}
+
 //---------------------------------------------------
 // 3 digit milliseconds correction
 //---------------------------------------------------
@@ -209,6 +215,7 @@ void Stage::applyPatches()
     INSTALL_HOOK(MsgFadeInMtfx);
     INSTALL_HOOK(MsgFadeOutMtfx);
     INSTALL_HOOK(Stage_CGameplayFlowStage_CStateBegin);
+    INSTALL_HOOK(Stage_CGameplayFlowStage_CStateTitle);
 
     // Disable loading sfx
     WRITE_MEMORY(0x44A2E8, int, -1);
