@@ -107,6 +107,13 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     // Default enable subtitle in game settings
     WRITE_MEMORY(0x551F21, uint8_t, 0x37);
     WRITE_MEMORY(0xD20009, uint8_t, 0x37);
+
+    // Patch "1280x720 Media Player" by "N69"
+    WRITE_MEMORY(0xB210A1, uint16_t, 1280);
+    WRITE_MEMORY(0xB210B1, uint16_t, 720);
+
+    // Patch "Disable Title Outro" by "Skyth"
+    WRITE_MEMORY(0x57346F, uint32_t, 0x16A36CC);
 }
 
 extern "C" __declspec(dllexport) void PostInit()
