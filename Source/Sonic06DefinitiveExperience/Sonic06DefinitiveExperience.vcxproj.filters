@@ -22,6 +22,7 @@
     <ClCompile Include="CustomCamera.cpp" />
     <ClCompile Include="NextGenSonic.cpp" />
     <ClCompile Include="NextGenBlaze.cpp" />
+    <ClCompile Include="APIExport.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pch.h" />

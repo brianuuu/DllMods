@@ -177,6 +177,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AnimationSetPatcher.cpp" />
+    <ClCompile Include="APIExport.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="ArchiveTreePatcher.cpp" />
     <ClCompile Include="bbWriter.cpp" />
