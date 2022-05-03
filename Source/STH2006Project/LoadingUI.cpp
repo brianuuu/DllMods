@@ -9,6 +9,7 @@ int LoadingUI::m_frame = 0;
 bool LoadingUI::m_showNowLoading = false;
 PDIRECT3DTEXTURE9 LoadingUI::m_backgroundTexture = nullptr;
 PDIRECT3DTEXTURE9 LoadingUI::m_stageTexture = nullptr;
+PDIRECT3DTEXTURE9 LoadingUI::m_tipsTexture = nullptr;
 PDIRECT3DTEXTURE9 LoadingUI::m_nowLoadingTexture = nullptr;
 PDIRECT3DTEXTURE9 LoadingUI::m_arrowTexture = nullptr;
 uint32_t LoadingUI::m_stagePrevious;
@@ -22,6 +23,12 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 	{
 		LoadingUI::m_stageTexture->Release();
 		LoadingUI::m_stageTexture = nullptr;
+	}
+
+	if (LoadingUI::m_tipsTexture)
+	{
+		LoadingUI::m_tipsTexture->Release();
+		LoadingUI::m_tipsTexture = nullptr;
 	}
 
 	bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
@@ -84,6 +91,32 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 			LoadingUI::m_bottomText = reader.Get(currentStageStr, isJapanese ? "TextJP" : "Text", "MISSING TEXT");
 			LoadingUI::m_bottomText = std::regex_replace(LoadingUI::m_bottomText, std::regex(" "), "  ");
 			LoadingUI::m_bottomText = std::regex_replace(LoadingUI::m_bottomText, std::regex("\\\\n"), "\n");
+
+			// Character tips (For S06DE character movesets only)
+			if (currentStage >= SMT_ghz200 && currentStage <= SMT_pla200)
+			{
+				if (S06DE_API::IsUsingCharacterMoveset())
+				{
+					switch (S06DE_API::GetModelType())
+					{
+						case S06DE_API::ModelType::Sonic:
+						{
+							UIContext::loadTextureFromFile((dir + L"Assets\\Title\\tips_sonic" + std::to_wstring(std::rand() % 2) + L".dds").c_str(), &LoadingUI::m_tipsTexture);
+							break;
+						}
+						case S06DE_API::ModelType::SonicElise:
+						{
+							UIContext::loadTextureFromFile((dir + L"Assets\\Title\\tips_princess.dds").c_str(), &LoadingUI::m_tipsTexture);
+							break;
+						}
+						case S06DE_API::ModelType::Blaze:
+						{
+							UIContext::loadTextureFromFile((dir + L"Assets\\Title\\tips_blaze.dds").c_str(), &LoadingUI::m_tipsTexture);
+							break;
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -207,10 +240,17 @@ void LoadingUI::draw()
 			{
 				m_startCountdown = -1.0f;
 				m_drawEnabled = false;
-				if (LoadingUI::m_stageTexture)
+
+				if (m_stageTexture)
 				{
-					LoadingUI::m_stageTexture->Release();
-					LoadingUI::m_stageTexture = nullptr;
+					m_stageTexture->Release();
+					m_stageTexture = nullptr;
+				}
+
+				if (m_tipsTexture)
+				{
+					m_tipsTexture->Release();
+					m_tipsTexture = nullptr;
 				}
 			}
 		}
@@ -226,6 +266,13 @@ void LoadingUI::draw()
 				// Stage title
 				ImGui::SetCursorPos(ImVec2(5, 109 * scaleY));
 				ImGui::Image(m_stageTexture, ImVec2(1280 * scaleX, 512 * scaleY));
+
+				// Character movesets
+				if (m_tipsTexture)
+				{
+					ImGui::SetCursorPos(ImVec2(128 * scaleX, 109 * scaleY));
+					ImGui::Image(m_tipsTexture, ImVec2(1024 * scaleX, 512 * scaleY));
+				}
 
 				// Bottom text
 				if (!m_bottomText.empty())

@@ -29,12 +29,14 @@ public:
 	static bool initTextures();
 	static PDIRECT3DTEXTURE9 m_backgroundTexture;
 	static PDIRECT3DTEXTURE9 m_stageTexture;
+	static PDIRECT3DTEXTURE9 m_tipsTexture;
 	static PDIRECT3DTEXTURE9 m_nowLoadingTexture;
 	static PDIRECT3DTEXTURE9 m_arrowTexture;
 	~LoadingUI()
 	{
 		if (m_backgroundTexture)	m_backgroundTexture->Release();
 		if (m_stageTexture)			m_stageTexture->Release();
+		if (m_tipsTexture)			m_tipsTexture->Release();
 		if (m_nowLoadingTexture)	m_nowLoadingTexture->Release();
 		if (m_arrowTexture)			m_arrowTexture->Release();
 	}
