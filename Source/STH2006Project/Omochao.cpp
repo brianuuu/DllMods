@@ -9,7 +9,7 @@ HOOK(int, __fastcall, Omochao_MsgNotifyObjectEvent, 0x114FB60, void* This, void*
 	case 51:
 	{
 		// Elise specific dialogs
-		if (!Common::IsPlayerSuper() && Common::CheckPlayerNodeExist("ch_princess01_elise"))
+		if (!Common::IsPlayerSuper() && S06DE_API::GetModelType() == S06DE_API::ModelType::SonicElise)
 		{
 			*pEvent = 6;
 		}
@@ -18,7 +18,7 @@ HOOK(int, __fastcall, Omochao_MsgNotifyObjectEvent, 0x114FB60, void* This, void*
 	case 52:
 	{
 		// Non-Elise specific dialogs
-		if (Common::IsPlayerSuper() || !Common::CheckPlayerNodeExist("ch_princess01_elise"))
+		if (Common::IsPlayerSuper() || S06DE_API::GetModelType() != S06DE_API::ModelType::SonicElise)
 		{
 			*pEvent = 6;
 		}
