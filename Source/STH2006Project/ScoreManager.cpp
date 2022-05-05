@@ -131,14 +131,7 @@ HOOK(int*, __fastcall, ScoreManager_GameplayManagerInit, 0xD00F70, void* This, v
 		// Use fixed score HUD if not using external
 		if (!ScoreManager::m_externalHUD)
 		{
-			if (strcmp(*(char**)0x109D669, scoreHUD) == 0)
-			{
-				// TODO: For mission, use hud that move counter to bottom right
-			}
-			else
-			{
-				WRITE_MEMORY(0x109D669, char*, scoreHUD);
-			}
+			WRITE_MEMORY(0x109D669, char*, scoreHUD);
 		}
 
 		// Hook result custom result calculation

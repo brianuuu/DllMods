@@ -11,22 +11,21 @@ FUNCTION_PTR(void*, __stdcall, Mission_fpEventTrigger, 0xD5ED00, void* This, int
 //---------------------------------------------------
 HOOK(int*, __fastcall, Mission_GameplayManagerInit, 0xD00F70, void* This, void* Edx, int* a2)
 {
-	static char const* scoreHUD = "ui_gameplay_score";
-	static char const* defaultHUD = (char*)0x0168E328;
-
 	uint32_t stageID = Common::GetCurrentStageID();
 	switch (stageID)
 	{
 	case (SMT_ghz200 | SMT_Mission1):
 	{
-		// Use HUD with moved life icon for missions with counter
-		WRITE_MEMORY(0x109D669, char*, scoreHUD);
+		// Disable life UI
+		WRITE_MEMORY(0x1098C82, uint8_t, 0xEB);
+		WRITE_MEMORY(0x109B1A4, uint8_t, 0xE9, 0xDC, 0x02, 0x00, 0x00);
 		break;
 	}
 	default:
 	{
 		// Original code
-		WRITE_MEMORY(0x109D669, char*, defaultHUD);
+		WRITE_MEMORY(0x1098C82, uint8_t, 0x74);
+		WRITE_MEMORY(0x109B1A4, uint8_t, 0x0F, 0x84, 0xDB, 0x02, 0x00);
 		break;
 	}
 	}
@@ -355,11 +354,11 @@ void MissionManager::applyPatches()
 	WRITE_MEMORY(0x109ADEB, uint8_t, 0xEB);
 
 	// Enable life count change
-	WRITE_MEMORY(0xE761ED, uint8_t, 0xEB);
-	WRITE_MEMORY(0xD599CE, uint8_t, 0xEB);
+	//WRITE_MEMORY(0xE761ED, uint8_t, 0xEB);
+	//WRITE_MEMORY(0xD599CE, uint8_t, 0xEB);
 
 	// Don't allow restart at 0 life
-	WRITE_NOP(0x10A0FCA, 6);
+	//WRITE_NOP(0x10A0FCA, 6);
 
 	// Don't show mission objective at pause
 	WRITE_MEMORY(0xD00A46, uint8_t, 0);
