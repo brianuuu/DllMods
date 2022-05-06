@@ -893,7 +893,7 @@ HOOK(int*, __fastcall, NextGenSonic_CSonicStatePluginBoostBegin, 0x1117A20, void
 bool __fastcall NextGenSonic_CanActivateEliseShield()
 {
     float* currentBoost = Common::GetPlayerBoost();
-    Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
+    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 
     return !Common::IsPlayerControlLocked() &&
            !Common::IsPlayerSuper() &&
@@ -1018,7 +1018,7 @@ HOOK(void, __fastcall, NextGenSonic_CSonicUpdateEliseShield, 0xE6BF20, void* Thi
 
     // Handle boost gauge
     float* currentBoost = Common::GetPlayerBoost();
-    Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
+    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
     if (NextGenSonic::m_isShield || !Common::IsPlayerGrounded() || padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger))
     {
         NextGenSonic::m_shieldNoChargeTime = NextGenSonic::m_shieldNoChargeDelay;

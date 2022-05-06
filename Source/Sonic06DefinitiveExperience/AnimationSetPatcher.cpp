@@ -21,7 +21,7 @@ HOOK(int*, __fastcall, CSonic_AnimationBlending, 0xE14A90, void* This, void* Edx
 
 HOOK(void, __stdcall, CSonicContextChangeAnimation, 0xCDFC80, void* This, int a2, Hedgehog::Base::CSharedString& name)
 {
-    printf("[AnimationManager] Animation change: %s\n", name.m_pStr);
+    printf("[AnimationManager] Animation change: %s\n", name.c_str());
     originalCSonicContextChangeAnimation(This, a2, name);
 }
 

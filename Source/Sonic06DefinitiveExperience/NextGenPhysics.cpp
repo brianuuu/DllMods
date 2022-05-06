@@ -45,7 +45,7 @@ void NextGenPhysics::applyCSonicRotationAdvance(void* This, float* targetDir, fl
 
 void NextGenPhysics::getActionButtonStates(bool& bDown, bool& bPressed, bool& bReleased)
 {
-    Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
+    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
     Sonic::EKeyState const actionButton = Sonic::EKeyState::eKeyState_X;
 
     bDown = padState->IsDown(actionButton);

@@ -13,7 +13,7 @@ Sonic::EKeyState Application::keyReleasedState;
 HOOK(void, __fastcall, CSonicUpdate, 0xE6BF20, void* This, void* Edx, float* dt)
 {
     // Key release doesn't work for keyboard, check it here
-    Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
+    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 
     // Get released keys
     Application::keyReleasedState = Sonic::EKeyState((Application::keyHoldState ^ padState->DownState) & Application::keyHoldState);
