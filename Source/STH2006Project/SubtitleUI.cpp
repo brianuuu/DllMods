@@ -215,7 +215,7 @@ void SubtitleUI::draw()
         }
 
         // Goto next dialog when pressing A
-        Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
+        Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
         if (m_captionData.m_frame >= 5.0f && 
             (
                 padState->IsTapped(Sonic::EKeyState::eKeyState_A) ||

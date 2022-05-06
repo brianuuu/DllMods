@@ -138,7 +138,7 @@ HOOK(void, __fastcall, Itembox_GetSuperRing, 0x11F2F10, uint32_t* This, void* Ed
 const char* volatile const ObjectProductionItemboxLock = "ObjectProductionItemboxLock.phy.xml";
 HOOK(void, __stdcall, Itembox_LoadObjectProduction, 0xEA0450, void* a1, Hedgehog::Base::CSharedString* pName)
 {
-	if (strstr(pName->m_pStr, "ObjectProduction.phy.xml"))
+	if (strstr(pName->c_str(), "ObjectProduction.phy.xml"))
 	{
 		printf("[Itembox] Injecting %s\n", ObjectProductionItemboxLock);
 		static Hedgehog::Base::CSharedString pInjectName(ObjectProductionItemboxLock);

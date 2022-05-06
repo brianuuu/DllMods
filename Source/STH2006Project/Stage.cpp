@@ -187,7 +187,7 @@ HOOK(void, __stdcall, Stage_SonicChangeAnimation, 0xCDFC80, void* a1, int a2, co
     if (Stage::m_waterRunning)
     {
         // if still water running, do not use walk animation (boost)
-        if (strcmp(name.m_pStr, "Walk") == 0)
+        if (strcmp(name.c_str(), "Walk") == 0)
         {
             originalStage_SonicChangeAnimation(a1, a2, "Sliding");
             return;

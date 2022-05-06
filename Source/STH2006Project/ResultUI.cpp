@@ -669,7 +669,7 @@ void ResultUI::ResultUIData::countScore(ResultTextType type)
 	}
 
 	// Skip counting up if player pressed A
-	Sonic::SPadState* padState = Sonic::CInputState::GetPadState();
+	Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 	if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
 	{
 		m_scoreCount = m_scoreDestination;
