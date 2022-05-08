@@ -596,10 +596,11 @@ void Stage::applyPatches()
     WRITE_JUMP(0xE75565, (void*)0xE75630);
     WRITE_NOP(0xE75656, 9);
 
-    // Force 200% and 300% boost challenge to 100%, and allow rings to refill boost
+    // Force 200% and 300% boost challenge to 100%, and allow rings/enemies to refill boost
     WRITE_MEMORY(0x1104F29, uint32_t, 4);
     WRITE_MEMORY(0x1105000, uint32_t, 4);
     WRITE_MEMORY(0x1104DDA, uint32_t, 4);
+    WRITE_NOP(0x1125255, 6);
 
     //---------------------------------------------------
     // Custom HUD
