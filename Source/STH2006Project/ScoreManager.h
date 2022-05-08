@@ -77,14 +77,6 @@ struct ResultData
 	float m_timeProp;	// result progress bar (time prop)
 };
 
-struct MsgSetPinballHud
-{
-	INSERT_PADDING(0x10);
-	uint32_t m_flag;
-	uint32_t m_score;
-	INSERT_PADDING(0x8);
-};
-
 struct CScoreManager
 {
 	INSERT_PADDING(0xA8);

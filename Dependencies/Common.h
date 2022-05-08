@@ -72,6 +72,14 @@ struct MsgSetRotation
     Eigen::Quaternionf m_rotation;
 };
 
+struct MsgSetPinballHud
+{
+	INSERT_PADDING(0x10);
+	uint32_t m_flag;
+	uint32_t m_score;
+	INSERT_PADDING(0x8);
+};
+
 struct MsgGetAnimationInfo
 {
 	INSERT_PADDING(0x14);
