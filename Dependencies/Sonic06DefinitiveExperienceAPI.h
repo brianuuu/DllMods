@@ -22,16 +22,13 @@ public:
         return instance != nullptr ? instance : instance = new S06DE_API();
     }
 
-    static ModelType GetModelType();
-    static bool IsUsingCharacterMoveset();
+    static ModelType GetModelType()
+	{
+		ENUM_EXPORT(S06DE_API::ModelType, API_GetModelType);
+	}
+	
+    static bool IsUsingCharacterMoveset()
+	{
+		BOOL_EXPORT(API_IsUsingCharacterMoveset);
+	}
 };
-
-inline S06DE_API::ModelType S06DE_API::GetModelType()
-{
-    ENUM_EXPORT(S06DE_API::ModelType, API_GetModelType);
-}
-
-inline bool S06DE_API::IsUsingCharacterMoveset()
-{
-    BOOL_EXPORT(API_IsUsingCharacterMoveset);
-}
