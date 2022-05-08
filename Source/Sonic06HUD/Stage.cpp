@@ -167,27 +167,6 @@ HOOK(void, __fastcall, Stage_MsgNotifyLapTimeHud, 0x1097640, void* This, void* E
 }
 
 //---------------------------------------------------
-// HUD Update
-//---------------------------------------------------
-HOOK(void, __fastcall, Stage_CHudSonicStageUpdate, 0x1098A50, void* This, void* Edx, float* dt)
-{
-    // Always clamp boost to 100
-    *Common::GetPlayerBoost() = min(*Common::GetPlayerBoost(), 100.0f);
-
-    originalStage_CHudSonicStageUpdate(This, Edx, dt);
-}
-
-HOOK(int, __fastcall, Stage_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
-{
-    int result = originalStage_MsgRestartStage(This, Edx, message);
-
-    // Force disable extended boost
-    *(uint32_t*)((uint32_t)*PLAYER_CONTEXT + 0x680) = 1;
-
-    return result;
-}
-
-//---------------------------------------------------
 // Boost Particle
 //---------------------------------------------------
 HOOK(void, __fastcall, Stage_MsgGetHudPosition, 0x1096790, void* This, void* Edx, MsgGetHudPosition* message)
@@ -205,6 +184,346 @@ HOOK(void, __fastcall, Stage_MsgGetHudPosition, 0x1096790, void* This, void* Edx
     }
 
     originalStage_MsgGetHudPosition(This, Edx, message);
+}
+
+//---------------------------------------------------
+// Custom HUD
+//---------------------------------------------------
+bool Stage::m_scoreEnabled = false;
+float Stage::m_missionMaxTime = 0.0f;
+boost::shared_ptr<Sonic::CGameObjectCSD> m_spPlayScreen;
+Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectPlayScreen;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneLifeCount;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneLifeBG;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneTimeCount;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneRingCount;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneRingIcon;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneRingEffect;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePowerBG;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePowerBar;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePowerEffect;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePower;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneScore;
+
+boost::shared_ptr<Sonic::CGameObjectCSD> m_spCountdown;
+Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectCountdown;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneCountdown;
+
+
+void Stage::CreateScreen(Sonic::CGameObject* pParentGameObject)
+{
+    if (m_projectPlayScreen && !m_spPlayScreen)
+    {
+        m_spPlayScreen = boost::make_shared<Sonic::CGameObjectCSD>(m_projectPlayScreen, 0.5f, "HUD", false);
+        pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(m_spPlayScreen, "main", pParentGameObject);
+    }
+
+    if (m_projectCountdown && !m_spCountdown)
+    {
+        m_spCountdown = boost::make_shared<Sonic::CGameObjectCSD>(m_projectCountdown, 0.5f, "HUD", false);
+        pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(m_spCountdown, "main", pParentGameObject);
+    }
+}
+
+void Stage::KillScreen()
+{
+    if (m_spPlayScreen)
+    {
+        m_spPlayScreen->SendMessage(m_spPlayScreen->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+        m_spPlayScreen = nullptr;
+    }
+
+    if (m_spCountdown)
+    {
+        m_spCountdown->SendMessage(m_spCountdown->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+        m_spCountdown = nullptr;
+    }
+}
+
+void Stage::ToggleScreen(const bool visible, Sonic::CGameObject* pParentGameObject)
+{
+    if (visible)
+    {
+        CreateScreen(pParentGameObject);
+    }
+    else
+    {
+        KillScreen();
+    }
+}
+
+void __fastcall Stage::CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGameDocument* pGameDocument)
+{
+    KillScreen();
+
+    Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneLifeCount);
+    Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneLifeCount);
+    Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneLifeBG);
+    Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneTimeCount);
+    Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneRingCount);
+    Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneRingIcon);
+    Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneRingEffect);
+    Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_scenePowerBG);
+    Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_scenePowerBar);
+    Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_scenePowerEffect);
+    Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_scenePower);
+    Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneScore);
+
+    Chao::CSD::CProject::DestroyScene(m_projectCountdown.Get(), m_sceneCountdown);
+
+    m_projectPlayScreen = nullptr;
+    m_projectCountdown = nullptr;
+}
+
+HOOK(void, __fastcall, Stage_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObject* This)
+{
+    originalStage_CHudSonicStageInit(This);
+    Stage::CHudSonicStageRemoveCallback(This, nullptr, nullptr);
+
+    Sonic::CCsdDatabaseWrapper wrapper(This->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
+
+    boost::shared_ptr<Sonic::CCsdProject> spCsdProject;
+    wrapper.GetCsdProject(spCsdProject, "maindisplay");
+    m_projectPlayScreen = spCsdProject->m_rcProject;
+    wrapper.GetCsdProject(spCsdProject, "time");
+    m_projectCountdown = spCsdProject->m_rcProject;
+
+    size_t& flags = ((size_t*)This)[151];
+
+    if (flags & 0x1 || Common::IsCurrentStageMission())
+    {
+        m_sceneLifeCount = m_projectPlayScreen->CreateScene("life");
+        m_sceneLifeCount->m_MotionSpeed = 1.0f;
+        m_sceneLifeCount->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
+        int iconIndex = 0;
+        switch (S06DE_API::GetModelType())
+        {
+            case S06DE_API::ModelType::Blaze: iconIndex = 8;
+        }
+        m_sceneLifeCount->GetNode("character_icon")->SetPatternIndex(iconIndex);
+
+        m_sceneLifeBG = m_projectPlayScreen->CreateScene("life_ber_anime");
+        m_sceneLifeBG->SetMotionTime(m_sceneLifeBG->m_MotionEndTime);
+        m_sceneLifeBG->m_MotionSpeed = 0.0f;
+    }
+
+    if (flags & 0x2)
+    {
+        m_sceneTimeCount = m_projectPlayScreen->CreateScene("time");
+        m_sceneTimeCount->m_MotionSpeed = 0.0f;
+    }
+
+    if (flags & 0x4)
+    {
+        m_sceneRingCount = m_projectPlayScreen->CreateScene("ring");
+        m_sceneRingCount->m_MotionSpeed = 0.0f;
+
+        m_sceneRingIcon = m_projectPlayScreen->CreateScene("ring_anime");
+        m_sceneRingIcon->SetMotionTime(m_sceneRingIcon->m_MotionEndTime);
+        m_sceneRingIcon->m_MotionSpeed = 1.0f;
+        m_sceneRingIcon->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
+
+        m_sceneRingEffect = m_projectPlayScreen->CreateScene("ring_000_effect");
+        m_sceneRingEffect->m_MotionSpeed = 1.0f;
+        m_sceneRingEffect->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_Loop;
+    }
+
+    if (flags & 0x200) // Boost Gauge
+    {
+        m_scenePowerBG = m_projectPlayScreen->CreateScene("power");
+        m_scenePowerBG->m_MotionSpeed = 0.0f;
+
+        m_scenePowerBar = m_projectPlayScreen->CreateScene("bar_ue");
+        m_scenePowerBar->m_MotionSpeed = 0.0f;
+
+        m_scenePowerEffect = m_projectPlayScreen->CreateScene("power_bar_effect");
+        m_scenePowerEffect->m_MotionSpeed = 1.0f;
+        m_scenePowerEffect->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_Loop;
+
+        m_scenePower = m_projectPlayScreen->CreateScene("power_bar_anime");
+        m_scenePower->m_MotionSpeed = 0.0f;
+    }
+
+    if (flags & 0x2000) // Countdown
+    {
+        m_sceneCountdown = m_projectCountdown->CreateScene("Scene_0001");
+        m_sceneCountdown->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_Loop;
+    }
+
+    if (Stage::m_scoreEnabled) // score
+    {
+        m_sceneScore = m_projectPlayScreen->CreateScene("score");
+        m_sceneScore->m_MotionSpeed = 0.0f;
+    }
+
+    // Mask to prevent crash when game tries accessing the elements we disabled later on
+    flags &= ~(0x1 | 0x2 | 0x4 | 0x200 | 0x800);
+
+    Stage::CreateScreen(This);
+}
+
+void __declspec(naked) Stage_GetScoreEnabled()
+{
+    static uint32_t returnAddress = 0x109C254;
+    __asm
+    {
+        mov		Stage::m_scoreEnabled, 1
+        jmp     [returnAddress]
+    }
+}
+
+void Stage_GetTime(Sonic::CGameDocument* pGameDocument, size_t* minutes, size_t* seconds, size_t* milliseconds)
+{
+    static uint32_t returnAddress = 0xD61570;
+    __asm
+    {
+        mov     ecx, minutes
+        mov     edi, seconds
+        mov     esi, milliseconds
+        mov     eax, pGameDocument
+        call    [returnAddress]
+    }
+}
+
+HOOK(void, __fastcall, Stage_CHudSonicStageUpdate, 0x1098A50, Sonic::CGameObject* This, void* Edx, const hh::fnd::SUpdateInfo& in_rUpdateInfo)
+{
+    originalStage_CHudSonicStageUpdate(This, Edx, in_rUpdateInfo);
+
+    // Always clamp boost to 100
+    *Common::GetPlayerBoost() = min(*Common::GetPlayerBoost(), 100.0f);
+
+    Stage::ToggleScreen(*(bool*)0x1A430D8, This); // ms_IsRenderGameMainHud
+
+    if (!m_spPlayScreen)
+    {
+        return;
+    }
+
+    char text[256];
+
+    if (m_sceneLifeCount)
+    {
+        const size_t liveCountAddr = Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x9FDC });
+        if (liveCountAddr)
+        {
+            sprintf(text, "%d", *(size_t*)liveCountAddr);
+            m_sceneLifeCount->GetNode("life_text")->SetText(text);
+        }
+    }
+
+    if (m_sceneTimeCount)
+    {
+        size_t minutes, seconds, milliseconds;
+        Stage_GetTime(**This->m_pMember->m_pGameDocument, &minutes, &seconds, &milliseconds);
+
+        sprintf(text, "%02d'%02d\"%03d", minutes, seconds, milliseconds);
+        m_sceneTimeCount->GetNode("time_text")->SetText(text);
+    }
+
+    const auto playerContext = Sonic::Player::CPlayerSpeedContext::GetInstance();
+
+    if (m_sceneRingCount && playerContext)
+    {
+        if (playerContext->m_RingCount == 0)
+        {
+            m_sceneRingCount->GetNode("ring_text")->SetText("aaa");
+            m_sceneRingEffect->SetHideFlag(false);
+        }
+        else
+        {
+            sprintf(text, "%03d", playerContext->m_RingCount);
+            m_sceneRingCount->GetNode("ring_text")->SetText(text);
+            m_sceneRingEffect->SetHideFlag(true);
+        }
+
+        // Mission ring count
+        if (*(bool*)((uint32_t)This + 620))
+        {
+            uint32_t prevMissionRingCount = *(uint32_t*)((uint32_t)This + 768);
+            if (prevMissionRingCount != playerContext->m_RingCount)
+            {
+                *(uint32_t*)((uint32_t)This + 772) = prevMissionRingCount;
+                *(uint32_t*)((uint32_t)This + 768) = playerContext->m_RingCount;;
+                *(uint32_t*)((uint32_t)This + 764) = 1;
+            }
+        }
+    }
+
+    if (m_scenePower && playerContext)
+    {
+        float boost = min(100.0f, *Common::GetPlayerBoost());
+        m_scenePower->SetMotionTime(boost);
+
+        if (boost < 100.0f)
+        {
+            m_scenePowerEffect->SetHideFlag(true);
+            m_scenePowerEffect->SetMotionTime(0.0f);
+        }
+        else
+        {
+            m_scenePowerEffect->SetHideFlag(false);
+        }
+    }
+
+    if (m_sceneCountdown)
+    {
+        m_sceneCountdown->SetPosition(0.0f, -296.0f);
+        const auto pMember = (uint8_t*)This->m_pMember->m_pGameDocument->m_pMember;
+        const float elapsedTime = max(0, max(0, *(float*)(pMember + 0x184)) + *(float*)(pMember + 0x18C));
+        const float remainingTime = max(0, Stage::m_missionMaxTime - elapsedTime);
+
+        size_t minutes = (size_t)remainingTime / 60;
+        size_t seconds = (size_t)remainingTime % 60;
+        size_t milliseconds = (size_t)(remainingTime * 1000.0f) % 1000;
+
+        char text[16];
+        sprintf(text, "%02d'%02d\"%03d", minutes, seconds, milliseconds);
+        m_sceneCountdown->GetNode("Text_0001")->SetText(text);
+
+        if (minutes > 0 || seconds >= 10)
+        {
+            m_sceneCountdown->SetMotionTime(0.0f);
+            m_sceneCountdown->m_MotionSpeed = 0.0f;
+            m_sceneCountdown->m_MotionDisableFlag = true;
+        }
+        else if (m_sceneCountdown->m_MotionDisableFlag)
+        {
+            m_sceneCountdown->m_MotionSpeed = 1.0f;
+            m_sceneCountdown->m_MotionDisableFlag = false;
+        }
+    }
+}
+
+HOOK(void, __fastcall, Stage_MsgSetPinballHud, 0x1095D40, Sonic::CGameObject* This, void* Edx, MsgSetPinballHud const* message)
+{
+    // Update score
+    if ((message->m_flag & 1) && Stage::m_scoreEnabled)
+    {
+        char text[16];
+        sprintf(text, "%d", message->m_score);
+        m_sceneScore->GetNode("score_text")->SetText(text);
+    }
+
+    originalStage_MsgSetPinballHud(This, Edx, message);
+}
+
+HOOK(void, __fastcall, Stage_MsgNotifySonicHud, 0x1097400, Sonic::CGameObject* This, void* Edx, void* message)
+{
+    // Ring collect animation
+    if (m_sceneRingIcon && m_sceneRingIcon->m_MotionDisableFlag)
+    {
+        m_sceneRingIcon->SetMotionTime(0.0f);
+        m_sceneRingIcon->m_MotionDisableFlag = 0;
+        m_sceneRingIcon->Update(0.0f);
+    }
+
+    originalStage_MsgNotifySonicHud(This, Edx, message);
+}
+
+HOOK(void, __fastcall, Stage_MsgGetMissionLimitTime, 0xD0F0E0, Sonic::CGameObject* This, void* Edx, hh::fnd::Message& in_rMsg)
+{
+    originalStage_MsgGetMissionLimitTime(This, Edx, in_rMsg);
+    Stage::m_missionMaxTime = *(float*)((char*)&in_rMsg + 16);
 }
 
 void Stage::applyPatches()
@@ -270,10 +589,6 @@ void Stage::applyPatches()
     WRITE_MEMORY(0x10978E4, double*, (double*)0x1703970); // *100 -> *1000
     INSTALL_HOOK(Stage_MsgNotifyLapTimeHud);
 
-    // Install HUD update hook
-    INSTALL_HOOK(Stage_CHudSonicStageUpdate);
-    INSTALL_HOOK(Stage_MsgRestartStage);
-
     // Make boost particles goes to Sonic
     INSTALL_HOOK(Stage_MsgGetHudPosition);
 
@@ -285,6 +600,25 @@ void Stage::applyPatches()
     WRITE_MEMORY(0x1104F29, uint32_t, 4);
     WRITE_MEMORY(0x1105000, uint32_t, 4);
     WRITE_MEMORY(0x1104DDA, uint32_t, 4);
+
+    //---------------------------------------------------
+    // Custom HUD
+    //---------------------------------------------------
+    INSTALL_HOOK(Stage_CHudSonicStageInit);
+    INSTALL_HOOK(Stage_CHudSonicStageUpdate);
+    INSTALL_HOOK(Stage_MsgSetPinballHud);
+    INSTALL_HOOK(Stage_MsgNotifySonicHud);
+    INSTALL_HOOK(Stage_MsgGetMissionLimitTime);
+    WRITE_MEMORY(0x16A467C, void*, CHudSonicStageRemoveCallback);
+
+    // Disable original HUD
+    WRITE_JUMP(0x109B1AA, (void*)0x109B485); // life init
+    WRITE_JUMP(0x109B496, (void*)0x109B5A1); // time init
+    WRITE_JUMP(0x109B5B3, (void*)0x109B69B); // ring init
+    WRITE_JUMP(0x109B8FB, (void*)0x109BA9D); // boost gauge init
+    WRITE_JUMP(0x109BC8E, (void*)0x109BDF2); // boost button init
+    WRITE_JUMP(0x109C1DC, Stage_GetScoreEnabled); // score init
+    //WRITE_JUMP(0x109BEF6, (void*)0x109C05A); // countdown init
 }
 
 void Stage::draw()

@@ -434,9 +434,6 @@ void __declspec(naked) NextGenBlaze_SlidingCollision()
 //---------------------------------------------------
 void NextGenBlaze::applyPatches()
 {
-    // Use Blaze life icon
-    WRITE_MEMORY(0x109B1B8, char*, "info_life2");
-
     // Don't disable Boost barrier when facing camera
     // WRITE_MEMORY(0xDFBE33, uint8_t, 0xEB);
 

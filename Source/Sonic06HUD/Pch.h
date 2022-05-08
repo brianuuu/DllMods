@@ -38,3 +38,4 @@
 
 #include <Common.h>
 #include <ScoreGenerationsAPI.h>
+#include <Sonic06DefinitiveExperienceAPI.h>
