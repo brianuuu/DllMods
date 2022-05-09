@@ -19,7 +19,7 @@ uint32_t const CStringDestructor = 0x661550;
 const char* volatile const ObjectProductionChip = "ObjectProductionChip.phy.xml";
 HOOK(void, __stdcall, LoadObjectProduction, 0xEA0450, void* a1, Hedgehog::Base::CSharedString* pName)
 {
-    if (strstr(pName->m_pStr, "ObjectProduction.phy.xml"))
+    if (strstr(pName->c_str(), "ObjectProduction.phy.xml"))
     {
         printf("[Itembox] Injecting %s\n", ObjectProductionChip);
         static Hedgehog::Base::CSharedString pInjectName(ObjectProductionChip);
