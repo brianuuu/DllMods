@@ -3,6 +3,7 @@
 #include "Stage.h"
 #include "SubtitleUI.h"
 #include "UIContext.h"
+#include "CustomHUD.h"
 #include "SynchronizedObject.h"
 
 bool isScoreGenLowerPriority = false;
@@ -32,6 +33,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     // 06 dialog box
     SubtitleUI::applyPatches();
+
+    // Original 06 HUD
+    CustomHUD::applyPatches();
 }
 
 extern "C" __declspec(dllexport) void PostInit()

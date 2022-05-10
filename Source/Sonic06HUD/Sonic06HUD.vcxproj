@@ -193,6 +193,7 @@ xcopy /Y /E /I "$(MSBuildProjectDirectory)\Fonts" "$(MSBuildProjectDirectory)\bi
     <ClCompile Include="..\..\Dependencies\imgui\imgui_widgets.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="Configuration.cpp" />
+    <ClCompile Include="CustomHUD.cpp" />
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="ItemboxUI.cpp" />
     <ClCompile Include="Mod.cpp" />
@@ -216,6 +217,7 @@ xcopy /Y /E /I "$(MSBuildProjectDirectory)\Fonts" "$(MSBuildProjectDirectory)\bi
   <ItemGroup>
     <ClInclude Include="Application.h" />
     <ClInclude Include="Configuration.h" />
+    <ClInclude Include="CustomHUD.h" />
     <ClInclude Include="ItemboxUI.h" />
     <ClInclude Include="Pch.h" />
     <ClInclude Include="ResultUI.h" />
