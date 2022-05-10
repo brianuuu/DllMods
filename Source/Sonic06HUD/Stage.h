@@ -19,9 +19,29 @@ public:
 	// Custom HUD
 	static bool m_scoreEnabled;
 	static float m_missionMaxTime;
-	static void CreateScreen(Sonic::CGameObject* pParentGameObject);
-	static void KillScreen();
-	static void ToggleScreen(const bool visible, Sonic::CGameObject* pParentGameObject);
+	static void CreateScreen
+	(
+		Chao::CSD::RCPtr<Chao::CSD::CProject>& project, 
+		boost::shared_ptr<Sonic::CGameObjectCSD>& object, 
+		Hedgehog::Base::CStringSymbol const& in_RenderableCategory,
+		Sonic::CGameObject* parent = nullptr
+	);
+	static void KillScreen
+	(
+		boost::shared_ptr<Sonic::CGameObjectCSD>& object
+	);
+	static void ToggleScreen
+	(
+		Chao::CSD::RCPtr<Chao::CSD::CProject>& project,
+		boost::shared_ptr<Sonic::CGameObjectCSD>& object,
+		Hedgehog::Base::CStringSymbol const& in_RenderableCategory,
+		Sonic::CGameObject* parent
+	);
+	static void SetScreenVisible
+	(
+		bool const visible, 
+		boost::shared_ptr<Sonic::CGameObjectCSD>& object
+	);
 	static void __fastcall CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGameDocument* pGameDocument);
 };
 

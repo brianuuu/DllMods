@@ -191,8 +191,8 @@ HOOK(void, __fastcall, Stage_MsgGetHudPosition, 0x1096790, void* This, void* Edx
 //---------------------------------------------------
 bool Stage::m_scoreEnabled = false;
 float Stage::m_missionMaxTime = 0.0f;
-boost::shared_ptr<Sonic::CGameObjectCSD> m_spPlayScreen;
 Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectPlayScreen;
+boost::shared_ptr<Sonic::CGameObjectCSD> m_spPlayScreen;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneLifeCount;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneLifeBG;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneTimeCount;
@@ -205,56 +205,70 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePowerEffect;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePower;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneScore;
 
-boost::shared_ptr<Sonic::CGameObjectCSD> m_spCountdown;
 Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectCountdown;
+boost::shared_ptr<Sonic::CGameObjectCSD> m_spCountdown;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneCountdown;
 
 
-void Stage::CreateScreen(Sonic::CGameObject* pParentGameObject)
+void Stage::CreateScreen
+(
+    Chao::CSD::RCPtr<Chao::CSD::CProject>& project, 
+    boost::shared_ptr<Sonic::CGameObjectCSD>& object, 
+    Hedgehog::Base::CStringSymbol const& in_RenderableCategory,
+    Sonic::CGameObject* parent
+)
 {
-    if (m_projectPlayScreen && !m_spPlayScreen)
+    if (project && !object)
     {
-        m_spPlayScreen = boost::make_shared<Sonic::CGameObjectCSD>(m_projectPlayScreen, 0.5f, "HUD", false);
-        pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(m_spPlayScreen, "main", pParentGameObject);
-    }
-
-    if (m_projectCountdown && !m_spCountdown)
-    {
-        m_spCountdown = boost::make_shared<Sonic::CGameObjectCSD>(m_projectCountdown, 0.5f, "HUD", false);
-        pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(m_spCountdown, "main", pParentGameObject);
+        object = boost::make_shared<Sonic::CGameObjectCSD>(project, 0.5f, "HUD", false);
+        Sonic::CGameDocument::GetInstance()->AddGameObject(object, "main", parent);
     }
 }
 
-void Stage::KillScreen()
+void Stage::KillScreen(boost::shared_ptr<Sonic::CGameObjectCSD>& object)
 {
-    if (m_spPlayScreen)
+    if (object)
     {
-        m_spPlayScreen->SendMessage(m_spPlayScreen->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
-        m_spPlayScreen = nullptr;
-    }
-
-    if (m_spCountdown)
-    {
-        m_spCountdown->SendMessage(m_spCountdown->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
-        m_spCountdown = nullptr;
+        object->SendMessage(object->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+        object = nullptr;
     }
 }
 
-void Stage::ToggleScreen(const bool visible, Sonic::CGameObject* pParentGameObject)
+void Stage::ToggleScreen
+(
+    Chao::CSD::RCPtr<Chao::CSD::CProject>& project, 
+    boost::shared_ptr<Sonic::CGameObjectCSD>& object, 
+    Hedgehog::Base::CStringSymbol const& in_RenderableCategory,
+    Sonic::CGameObject* parent
+)
 {
-    if (visible)
+    // ms_IsRenderGameMainHud
+    if (*(bool*)0x1A430D8)
     {
-        CreateScreen(pParentGameObject);
+        CreateScreen(project, object, in_RenderableCategory, parent);
     }
     else
     {
-        KillScreen();
+        KillScreen(object);
+    }
+}
+
+void Stage::SetScreenVisible
+(
+    bool const visible, 
+    boost::shared_ptr<Sonic::CGameObjectCSD>& object
+)
+{
+    if (object)
+    {
+        object->SendMessage(object->m_ActorID, boost::make_shared<Sonic::Message::MsgSetVisible>(visible));
     }
 }
 
 void __fastcall Stage::CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGameDocument* pGameDocument)
 {
-    KillScreen();
+    KillScreen(m_spPlayScreen);
+    KillScreen(m_spCountdown);
 
     Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneLifeCount);
     Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneLifeCount);
@@ -293,6 +307,7 @@ HOOK(void, __fastcall, Stage_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObject* 
     if (flags & 0x1 || Common::IsCurrentStageMission())
     {
         m_sceneLifeCount = m_projectPlayScreen->CreateScene("life");
+        m_sceneLifeCount->SetMotionTime(m_sceneLifeCount->m_MotionEndTime);
         m_sceneLifeCount->m_MotionSpeed = 1.0f;
         m_sceneLifeCount->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
         int iconIndex = 0;
@@ -358,8 +373,6 @@ HOOK(void, __fastcall, Stage_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObject* 
 
     // Mask to prevent crash when game tries accessing the elements we disabled later on
     flags &= ~(0x1 | 0x2 | 0x4 | 0x200 | 0x800);
-
-    Stage::CreateScreen(This);
 }
 
 void __declspec(naked) Stage_GetScoreEnabled()
@@ -392,7 +405,8 @@ HOOK(void, __fastcall, Stage_CHudSonicStageUpdate, 0x1098A50, Sonic::CGameObject
     // Always clamp boost to 100
     *Common::GetPlayerBoost() = min(*Common::GetPlayerBoost(), 100.0f);
 
-    Stage::ToggleScreen(*(bool*)0x1A430D8, This); // ms_IsRenderGameMainHud
+    Stage::ToggleScreen(m_projectPlayScreen, m_spPlayScreen, "HUD", This); 
+    Stage::ToggleScreen(m_projectCountdown, m_spCountdown, "HUD", This);
 
     if (!m_spPlayScreen)
     {
