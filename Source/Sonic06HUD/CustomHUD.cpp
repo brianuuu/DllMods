@@ -365,6 +365,7 @@ Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectPause;
 boost::shared_ptr<Sonic::CGameObjectCSD> m_spPause;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePauseMenu;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePauseCursor;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePauseText;
 
 uint32_t CustomHUD::m_cursorPos = 0;
 char const* cursorAnimations[] =
@@ -394,6 +395,7 @@ void __fastcall CustomHUD::CPauseRemoveCallback(Sonic::CGameObject* This, void*,
 
     Chao::CSD::CProject::DestroyScene(m_projectPause.Get(), m_scenePauseMenu);
     Chao::CSD::CProject::DestroyScene(m_projectPause.Get(), m_scenePauseCursor);
+    Chao::CSD::CProject::DestroyScene(m_projectPause.Get(), m_scenePauseText);
 
     m_projectPause = nullptr;
 }
@@ -445,6 +447,13 @@ HOOK(bool, __fastcall, CustomHUD_CPauseVisualActInit, 0x109FAD0, uint32_t* This)
     m_scenePauseCursor = m_projectPause->CreateScene("pause_menu_cursor");
     m_scenePauseCursor->SetHideFlag(true);
 
+    bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
+    m_scenePauseText = m_projectPause->CreateScene("text");
+    m_scenePauseText->SetHideFlag(true);
+    m_scenePauseText->GetNode("text1")->SetPatternIndex(isJapanese);
+    m_scenePauseText->GetNode("text2")->SetPatternIndex(isJapanese * 2);
+    m_scenePauseText->GetNode("text3")->SetPatternIndex(isJapanese);
+
     CustomHUD::CreateScreen(m_projectPause, m_spPause, "HUD_Pause", true, gameObject);
 
     return result;
@@ -467,6 +476,21 @@ HOOK(int, __fastcall, CustomHUD_CPauseVisualActCase, 0x109F910, uint32_t* This, 
         m_scenePauseMenu->m_MotionSpeed = 1.0f;
         m_scenePauseMenu->Update(0.0f);
 
+        m_scenePauseText->SetHideFlag(false);
+        size_t* liveCountAddr = (size_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x9FDC });
+        if (liveCountAddr)
+        {
+            bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
+            if (*liveCountAddr == 0)
+            {
+                m_scenePauseText->GetNode("text2")->SetPatternIndex(isJapanese * 2 + 1);
+            }
+            else
+            {
+                m_scenePauseText->GetNode("text2")->SetPatternIndex(isJapanese * 2);
+            }
+        }
+
         CustomHUD::RefreshPauseCursor(true);
         break;
     }
@@ -481,6 +505,7 @@ HOOK(int, __fastcall, CustomHUD_CPauseVisualActCase, 0x109F910, uint32_t* This, 
         m_scenePauseMenu->Update(0.0f);
 
         m_scenePauseCursor->SetHideFlag(true);
+        m_scenePauseText->SetHideFlag(true);
         break;
     }
     case 3: // New cursor pos
@@ -569,4 +594,7 @@ void CustomHUD::applyPatches()
     INSTALL_HOOK(CustomHUD_CPauseVisualActCase);
     INSTALL_HOOK(CustomHUD_CPauseCStateSelect);
     WRITE_MEMORY(0x16A41A4, void*, CPauseRemoveCallback);
+
+    // Allow UI to goto Start Over even with 0 lives
+    WRITE_JUMP(0x10A0FCA, (void*)0x10A1131);
 }
