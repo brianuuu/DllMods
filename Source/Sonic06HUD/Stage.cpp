@@ -431,7 +431,7 @@ HOOK(void, __fastcall, Stage_CHudSonicStageUpdate, 0x1098A50, Sonic::CGameObject
         }
         else
         {
-            sprintf(text, "%03d", playerContext->m_RingCount);
+            sprintf(text, "%03d", min(999, playerContext->m_RingCount));
             m_sceneRingCount->GetNode("ring_text")->SetText(text);
             m_sceneRingEffect->SetHideFlag(true);
         }
