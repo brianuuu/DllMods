@@ -634,6 +634,10 @@ void Stage::applyPatches()
     WRITE_JUMP(0x109BC8E, (void*)0x109BDF2); // boost button init
     WRITE_JUMP(0x109C1DC, Stage_GetScoreEnabled); // score init
     //WRITE_JUMP(0x109BEF6, (void*)0x109C05A); // countdown init
+
+    // Don't hide HUD at pause, don't run MsgAppearActStageHud
+    WRITE_MEMORY(0x10BC141, uint8_t, 0xEB);
+    WRITE_JUMP(0x10A1596, (void*)0x10A168E);
 }
 
 void Stage::draw()
