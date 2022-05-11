@@ -401,6 +401,85 @@ void __fastcall CustomHUD::CPauseRemoveCallback(Sonic::CGameObject* This, void*,
     m_projectPause = nullptr;
 }
 
+void CustomHUD::CreatePauseScreen(uint32_t* This)
+{
+    Sonic::CGameObject* gameObject = (Sonic::CGameObject*)This[1];
+    CustomHUD::CPauseRemoveCallback(gameObject, nullptr, nullptr);
+
+    Sonic::CCsdDatabaseWrapper wrapper(gameObject->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
+
+    boost::shared_ptr<Sonic::CCsdProject> spCsdProject;
+    wrapper.GetCsdProject(spCsdProject, "pausemenu");
+    m_projectPause = spCsdProject->m_rcProject;
+
+    m_scenePauseMenu = m_projectPause->CreateScene("pause_menu");
+    m_scenePauseMenu->SetHideFlag(true);
+    m_scenePauseMenu->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
+
+    m_scenePauseCursor = m_projectPause->CreateScene("pause_menu_cursor");
+    m_scenePauseCursor->SetHideFlag(true);
+
+    bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
+    m_scenePauseText = m_projectPause->CreateScene("text");
+    m_scenePauseText->SetHideFlag(true);
+    m_scenePauseText->GetNode("text1")->SetPatternIndex(isJapanese);
+    m_scenePauseText->GetNode("text2")->SetPatternIndex(isJapanese * 2);
+    m_scenePauseText->GetNode("text3")->SetPatternIndex(isJapanese);
+
+    CustomHUD::CreateScreen(m_projectPause, m_spPause, "HUD_Pause", true, gameObject);
+}
+
+void CustomHUD::OpenPauseScreen()
+{
+    m_scenePauseMenu->SetHideFlag(false);
+    m_scenePauseMenu->SetMotion("pause3");
+    m_scenePauseMenu->SetMotionTime(0.0f);
+    m_scenePauseMenu->m_MotionDisableFlag = false;
+    m_scenePauseMenu->m_MotionSpeed = 1.0f;
+    m_scenePauseMenu->Update(0.0f);
+
+    m_scenePauseText->SetHideFlag(false);
+    size_t* liveCountAddr = (size_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x9FDC });
+    if (liveCountAddr)
+    {
+        CustomHUD::m_canRestart = (*liveCountAddr != 0);
+        bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
+        if (CustomHUD::m_canRestart)
+        {
+            m_scenePauseText->GetNode("text2")->SetPatternIndex(isJapanese * 2);
+        }
+        else
+        {
+            m_scenePauseText->GetNode("text2")->SetPatternIndex(isJapanese * 2 + 1);
+        }
+    }
+}
+
+void CustomHUD::ClosePauseScreen()
+{
+    m_scenePauseMenu->m_MotionDisableFlag = false;
+    m_scenePauseMenu->m_PrevMotionTime = m_scenePauseMenu->m_MotionEndTime;
+    m_scenePauseMenu->m_MotionTime = m_scenePauseMenu->m_MotionEndTime;
+    *(uint32_t*)((uint32_t)m_scenePauseMenu.Get() + 0xB0) = 0;
+    *(uint32_t*)((uint32_t)m_scenePauseMenu.Get() + 0xB4) = 0; // this stops the reverse animation
+    m_scenePauseMenu->m_MotionSpeed = -1.0f;
+    m_scenePauseMenu->Update(0.0f);
+
+    m_scenePauseCursor->SetHideFlag(true);
+    m_scenePauseText->SetHideFlag(true);
+}
+
+void CustomHUD::RefreshPauseCursor()
+{
+    m_scenePauseCursor->SetHideFlag(false);
+    m_scenePauseCursor->SetMotion(cursorAnimations[CustomHUD::m_cursorPos]);
+    m_scenePauseCursor->SetMotionTime(0.0f);
+    m_scenePauseCursor->m_MotionDisableFlag = false;
+    m_scenePauseCursor->m_MotionSpeed = 1.0f;
+    m_scenePauseCursor->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
+    m_scenePauseCursor->Update(0.0f);
+}
+
 HOOK(int*, __fastcall, CustomHUD_CPauseUpdate, 0x10A18D0, void* This, void* Edx, Hedgehog::Universe::SUpdateInfo* a2)
 {
     if (m_scenePauseMenu)
@@ -430,34 +509,13 @@ HOOK(int*, __fastcall, CustomHUD_CPauseUpdate, 0x10A18D0, void* This, void* Edx,
 
 HOOK(bool, __fastcall, CustomHUD_CPauseVisualActInit, 0x109FAD0, uint32_t* This)
 {
-    bool result = originalCustomHUD_CPauseVisualActInit(This);
+    CustomHUD::CreatePauseScreen(This);
+    return originalCustomHUD_CPauseVisualActInit(This);;
+}
 
-    Sonic::CGameObject* gameObject = (Sonic::CGameObject*)This[1];
-    CustomHUD::CPauseRemoveCallback(gameObject, nullptr, nullptr);
-
-    Sonic::CCsdDatabaseWrapper wrapper(gameObject->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
-
-    boost::shared_ptr<Sonic::CCsdProject> spCsdProject;
-    wrapper.GetCsdProject(spCsdProject, "pausemenu");
-    m_projectPause = spCsdProject->m_rcProject;
-
-    m_scenePauseMenu = m_projectPause->CreateScene("pause_menu");
-    m_scenePauseMenu->SetHideFlag(true);
-    m_scenePauseMenu->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
-
-    m_scenePauseCursor = m_projectPause->CreateScene("pause_menu_cursor");
-    m_scenePauseCursor->SetHideFlag(true);
-
-    bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
-    m_scenePauseText = m_projectPause->CreateScene("text");
-    m_scenePauseText->SetHideFlag(true);
-    m_scenePauseText->GetNode("text1")->SetPatternIndex(isJapanese);
-    m_scenePauseText->GetNode("text2")->SetPatternIndex(isJapanese * 2);
-    m_scenePauseText->GetNode("text3")->SetPatternIndex(isJapanese);
-
-    CustomHUD::CreateScreen(m_projectPause, m_spPause, "HUD_Pause", true, gameObject);
-
-    return result;
+HOOK(bool, __fastcall, CustomHUD_CPauseVisualActOpened, 0x109F8F0, uint32_t* This)
+{
+    return m_scenePauseMenu->m_MotionDisableFlag == 1;
 }
 
 HOOK(int, __fastcall, CustomHUD_CPauseVisualActCase, 0x109F910, uint32_t* This, void* Edx, int Case)
@@ -470,44 +528,17 @@ HOOK(int, __fastcall, CustomHUD_CPauseVisualActCase, 0x109F910, uint32_t* This, 
     case 0: // Start
     case 5: // Back from confirm dialog
     {
-        m_scenePauseMenu->SetHideFlag(false);
-        m_scenePauseMenu->SetMotion("pause3");
-        m_scenePauseMenu->SetMotionTime(0.0f);
-        m_scenePauseMenu->m_MotionDisableFlag = false;
-        m_scenePauseMenu->m_MotionSpeed = 1.0f;
-        m_scenePauseMenu->Update(0.0f);
-
-        m_scenePauseText->SetHideFlag(false);
-        size_t* liveCountAddr = (size_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x9FDC });
-        if (liveCountAddr)
-        {
-            CustomHUD::m_canRestart = (*liveCountAddr != 0);
-            bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
-            if (CustomHUD::m_canRestart)
-            {
-                m_scenePauseText->GetNode("text2")->SetPatternIndex(isJapanese * 2);
-            }
-            else
-            {
-                m_scenePauseText->GetNode("text2")->SetPatternIndex(isJapanese * 2 + 1);
-            }
-        }
-
-        CustomHUD::RefreshPauseCursor(true);
+        CustomHUD::OpenPauseScreen();
         break;
     }
     case 1: // End
     {
-        m_scenePauseMenu->m_MotionDisableFlag = false;
-        m_scenePauseMenu->m_PrevMotionTime = m_scenePauseMenu->m_MotionEndTime;
-        m_scenePauseMenu->m_MotionTime = m_scenePauseMenu->m_MotionEndTime;
-        *(uint32_t*)((uint32_t)m_scenePauseMenu.Get() + 0xB0) = 0;
-        *(uint32_t*)((uint32_t)m_scenePauseMenu.Get() + 0xB4) = 0; // this stops the reverse animation
-        m_scenePauseMenu->m_MotionSpeed = -1.0f;
-        m_scenePauseMenu->Update(0.0f);
-
-        m_scenePauseCursor->SetHideFlag(true);
-        m_scenePauseText->SetHideFlag(true);
+        CustomHUD::ClosePauseScreen();
+        break;
+    }
+    case 2: // Start animation complete
+    {
+        CustomHUD::RefreshPauseCursor();
         break;
     }
     case 3: // New cursor pos
@@ -525,7 +556,7 @@ HOOK(int, __fastcall, CustomHUD_CPauseVisualActCase, 0x109F910, uint32_t* This, 
             }
         }
         CustomHUD::m_cursorPos = This[3];
-        CustomHUD::RefreshPauseCursor(false);
+        CustomHUD::RefreshPauseCursor();
         break;
     }
     case 4: // Confirm
@@ -538,9 +569,51 @@ HOOK(int, __fastcall, CustomHUD_CPauseVisualActCase, 0x109F910, uint32_t* This, 
     return originalCustomHUD_CPauseVisualActCase(This, Edx, Case);
 }
 
-HOOK(bool, __fastcall, CustomHUD_CPauseVisualActOpened, 0x109F8F0, uint32_t* This)
+HOOK(bool, __fastcall, CustomHUD_CPauseVisualPamInit, 0x109E9D0, uint32_t* This)
+{
+    CustomHUD::CreatePauseScreen(This);
+    return originalCustomHUD_CPauseVisualPamInit(This);;
+}
+
+HOOK(bool, __fastcall, CustomHUD_CPauseVisualPamOpened, 0x109E720, uint32_t* This)
 {
     return m_scenePauseMenu->m_MotionDisableFlag == 1;
+}
+
+HOOK(int, __fastcall, CustomHUD_CPauseVisualPamCase, 0x109E740, uint32_t* This, void* Edx, int Case)
+{
+    CustomHUD::m_cursorPos = This[3];
+    switch (Case)
+    {
+    case 0: // Start
+    case 5: // Back from confirm dialog
+    {
+        CustomHUD::OpenPauseScreen();
+        break;
+    }
+    case 1: // End
+    {
+        CustomHUD::ClosePauseScreen();
+        break;
+    }
+    case 2: // Start animation complete
+    {
+        CustomHUD::RefreshPauseCursor();
+        break;
+    }
+    case 3: // New cursor pos
+    {
+        CustomHUD::RefreshPauseCursor();
+        break;
+    }
+    case 4: // Confirm
+    {
+        break;
+    }
+    default: break;
+    }
+
+    return originalCustomHUD_CPauseVisualPamCase(This, Edx, Case);
 }
 
 HOOK(void, __fastcall, CustomHUD_CPauseCStateSelectAdvance, 0x42A520, uint32_t* This)
@@ -598,17 +671,6 @@ HOOK(void, __fastcall, CustomHUD_CGameplayFlowStageCStateStageUpdating, 0xCFF280
     }
 }
 
-void CustomHUD::RefreshPauseCursor(bool bPauseStart)
-{
-    m_scenePauseCursor->SetHideFlag(false);
-    m_scenePauseCursor->SetMotion(cursorAnimations[CustomHUD::m_cursorPos]);
-    m_scenePauseCursor->SetMotionTime(bPauseStart ? -30.0f : 0.0f);
-    m_scenePauseCursor->m_MotionDisableFlag = false;
-    m_scenePauseCursor->m_MotionSpeed = 1.0f;
-    m_scenePauseCursor->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
-    m_scenePauseCursor->Update(0.0f);
-}
-
 void __declspec(naked) CustomHUD_PreventRestart()
 {
     static uint32_t failedAddress = 0x42A635;
@@ -663,9 +725,15 @@ void CustomHUD::applyPatches()
     // Pause
     //---------------------------------------------------
     INSTALL_HOOK(CustomHUD_CPauseUpdate);
+
     INSTALL_HOOK(CustomHUD_CPauseVisualActInit);
-    INSTALL_HOOK(CustomHUD_CPauseVisualActCase);
     INSTALL_HOOK(CustomHUD_CPauseVisualActOpened);
+    INSTALL_HOOK(CustomHUD_CPauseVisualActCase);
+
+    INSTALL_HOOK(CustomHUD_CPauseVisualPamInit);
+    INSTALL_HOOK(CustomHUD_CPauseVisualPamOpened);
+    INSTALL_HOOK(CustomHUD_CPauseVisualPamCase);
+
     INSTALL_HOOK(CustomHUD_CPauseCStateSelectAdvance);
     INSTALL_HOOK(CustomHUD_CPauseCStateCloseBegin);
     INSTALL_HOOK(CustomHUD_CGameplayFlowStageCStateStageUpdating);

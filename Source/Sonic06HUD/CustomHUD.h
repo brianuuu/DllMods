@@ -48,6 +48,9 @@ public:
 		Sonic::CGameObject* This, void*,
 		Sonic::CGameDocument* pGameDocument
 	);
-	static void RefreshPauseCursor(bool bPauseStart);
+	static void CreatePauseScreen(uint32_t* This);
+	static void OpenPauseScreen();
+	static void ClosePauseScreen();
+	static void RefreshPauseCursor();
 };
 
