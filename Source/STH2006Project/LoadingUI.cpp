@@ -31,7 +31,7 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 		LoadingUI::m_tipsTexture = nullptr;
 	}
 
-	bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
+	bool isJapanese = Common::GetUILanguageType() == LT_Japanese;
 	LoadingUI::m_bottomText.clear();
 
 	std::wstring const dir = Application::getModDirWString();

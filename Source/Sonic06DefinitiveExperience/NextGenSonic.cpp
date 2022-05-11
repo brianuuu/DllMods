@@ -406,7 +406,7 @@ HOOK(int*, __fastcall, NextGenSonic_CSonicStateSquatKickBegin, 0x12526D0, void* 
     WRITE_MEMORY(0x11D943D, uint8_t, 0xEB);
 
     // Don't play voice for Japanese
-    bool isJapaneseVoice = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x10 });
+    bool isJapaneseVoice = Common::GetVoiceLanguageType() == LT_Japanese;
     if (!isJapaneseVoice)
     {
         WRITE_MEMORY(0x1252740, uint32_t, 3002020);

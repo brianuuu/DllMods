@@ -205,7 +205,7 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
     uint32_t const length = (caption[2] - caption[1]) / 4;
     uint32_t* captionList = (uint32_t*)caption[1];
 
-    bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
+    bool isJapanese = Common::GetUILanguageType() == LT_Japanese;
     bool adjustLineBreak = !Configuration::m_usingSTH2006Project && !m_captionData.m_isCutscene;
 
     std::wstring str;

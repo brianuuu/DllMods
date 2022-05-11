@@ -131,7 +131,7 @@ void SubtitleUI::draw()
 
             ImGui::Begin("MissionYes", &visible, UIContext::m_hudFlags);
             {
-                bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
+                bool isJapanese = Common::GetUILanguageType() == LT_Japanese;
                 float blueGreenFactor = (m_captionData.m_yesNoColorTime < 0.5f) ? (1.0f - m_captionData.m_yesNoColorTime * 2.0f) : (m_captionData.m_yesNoColorTime - 0.5f) * 2.0f;
                 ImVec4 color(1.0f, blueGreenFactor, blueGreenFactor, 1.0f);
 

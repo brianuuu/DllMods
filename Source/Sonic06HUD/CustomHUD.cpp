@@ -425,7 +425,7 @@ void CustomHUD::CreatePauseScreen(uint32_t* This, bool isPamPause)
     m_scenePauseCursor = m_projectPause->CreateScene("pause_menu_cursor");
     m_scenePauseCursor->SetHideFlag(true);
 
-    bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
+    bool isJapanese = Common::GetUILanguageType() == LT_Japanese;
     m_scenePauseText = m_projectPause->CreateScene("text");
     m_scenePauseText->SetHideFlag(true);
     m_scenePauseText->GetNode("text1")->SetPatternIndex(isJapanese);
@@ -449,7 +449,7 @@ void CustomHUD::OpenPauseScreen()
     if (liveCountAddr)
     {
         CustomHUD::m_canRestart = (*liveCountAddr != 0) && !CustomHUD::m_isPamPause;
-        bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
+        bool isJapanese = Common::GetUILanguageType() == LT_Japanese;
         if (CustomHUD::m_canRestart)
         {
             m_scenePauseText->GetNode("text2")->SetPatternIndex(isJapanese * 2);

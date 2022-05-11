@@ -80,7 +80,7 @@ HOOK(void, __fastcall, Mission_CMissionManagerAdvance, 0xD10690, uint32_t This, 
 
 int MissionManager::getMissionDialog(std::vector<std::string>& captions, uint32_t stageID, std::string const& name, std::string* speaker)
 {
-	bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
+	bool isJapanese = Common::GetUILanguageType() == LT_Japanese;
 	std::string const currentStageStr = std::to_string(stageID);
 
 	const INIReader reader(Application::getModDirString() + NPC_DATA_FILE);

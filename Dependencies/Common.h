@@ -950,6 +950,16 @@ enum StageMissionType : uint32_t
 	SMT_BossHard = 0x100,
 };
 
+enum LanguageType : uint8_t
+{
+	LT_English,
+	LT_Japanese,
+	LT_French,
+	LT_German,
+	LT_Spanish,
+	LT_Italian
+};
+
 #ifndef XMLCheckResult
 #define XMLCheckResult(a_eResult) if (a_eResult != tinyxml2::XML_SUCCESS) { printf("XMLParse Error: %i\n", a_eResult); return a_eResult; }
 #endif
@@ -1558,6 +1568,16 @@ inline void ApplyObjectPhysicsRotation(void* pObject, Eigen::Quaternionf const& 
 	alignas(16) MsgSetRotation msgSetRotation {};
 	msgSetRotation.m_rotation = rot;
 	processObjectMsgSetRotation(pObject, &msgSetRotation);
+}
+
+inline LanguageType GetVoiceLanguageType()
+{
+	return *(LanguageType*)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x10 });
+}
+
+inline LanguageType GetUILanguageType()
+{
+	return *(LanguageType*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 });
 }
 
 inline bool IsFileExist(std::string const& file)
