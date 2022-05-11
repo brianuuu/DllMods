@@ -368,6 +368,7 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePauseCursor;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePauseText;
 
 uint32_t CustomHUD::m_cursorPos = 0;
+bool CustomHUD::m_isPamPause = false;
 bool CustomHUD::m_canRestart = true;
 char const* cursorAnimations[] =
 {
@@ -375,9 +376,6 @@ char const* cursorAnimations[] =
     "select_02",
     "select_02", // dummy for Controls
     "select_03",
-    "select_04",
-    "select_05",
-    "select_06"
 };
 char const* cursorLoopAnimations[] =
 {
@@ -385,9 +383,16 @@ char const* cursorLoopAnimations[] =
     "select02_loop",
     "select02_loop", // dummy for Controls
     "select03_loop",
-    "select04_loop",
-    "select05_loop",
-    "select06_loop"
+};
+char const* cursorPamAnimations[] =
+{
+    "select_01",
+    "select_03",
+};
+char const* cursorPamLoopAnimations[] =
+{
+    "select_01_loop",
+    "select03_loop",
 };
 
 void __fastcall CustomHUD::CPauseRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGameDocument* pGameDocument)
@@ -401,10 +406,11 @@ void __fastcall CustomHUD::CPauseRemoveCallback(Sonic::CGameObject* This, void*,
     m_projectPause = nullptr;
 }
 
-void CustomHUD::CreatePauseScreen(uint32_t* This)
+void CustomHUD::CreatePauseScreen(uint32_t* This, bool isPamPause)
 {
     Sonic::CGameObject* gameObject = (Sonic::CGameObject*)This[1];
     CustomHUD::CPauseRemoveCallback(gameObject, nullptr, nullptr);
+    CustomHUD::m_isPamPause = isPamPause;
 
     Sonic::CCsdDatabaseWrapper wrapper(gameObject->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
 
@@ -442,7 +448,7 @@ void CustomHUD::OpenPauseScreen()
     size_t* liveCountAddr = (size_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x9FDC });
     if (liveCountAddr)
     {
-        CustomHUD::m_canRestart = (*liveCountAddr != 0);
+        CustomHUD::m_canRestart = (*liveCountAddr != 0) && !CustomHUD::m_isPamPause;
         bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
         if (CustomHUD::m_canRestart)
         {
@@ -472,7 +478,7 @@ void CustomHUD::ClosePauseScreen()
 void CustomHUD::RefreshPauseCursor()
 {
     m_scenePauseCursor->SetHideFlag(false);
-    m_scenePauseCursor->SetMotion(cursorAnimations[CustomHUD::m_cursorPos]);
+    m_scenePauseCursor->SetMotion(CustomHUD::m_isPamPause ? cursorPamAnimations[CustomHUD::m_cursorPos] : cursorAnimations[CustomHUD::m_cursorPos]);
     m_scenePauseCursor->SetMotionTime(0.0f);
     m_scenePauseCursor->m_MotionDisableFlag = false;
     m_scenePauseCursor->m_MotionSpeed = 1.0f;
@@ -495,7 +501,7 @@ HOOK(int*, __fastcall, CustomHUD_CPauseUpdate, 0x10A18D0, void* This, void* Edx,
     {
         if (m_scenePauseCursor->m_MotionRepeatType == Chao::CSD::eMotionRepeatType_PlayOnce && m_scenePauseCursor->m_MotionTime >= m_scenePauseCursor->m_MotionEndTime)
         {
-            m_scenePauseCursor->SetMotion(cursorLoopAnimations[CustomHUD::m_cursorPos]);
+            m_scenePauseCursor->SetMotion(CustomHUD::m_isPamPause ? cursorPamLoopAnimations[CustomHUD::m_cursorPos] : cursorLoopAnimations[CustomHUD::m_cursorPos]);
             m_scenePauseCursor->SetMotionTime(0.0f);
             m_scenePauseCursor->m_MotionDisableFlag = false;
             m_scenePauseCursor->m_MotionSpeed = 1.0f;
@@ -509,7 +515,7 @@ HOOK(int*, __fastcall, CustomHUD_CPauseUpdate, 0x10A18D0, void* This, void* Edx,
 
 HOOK(bool, __fastcall, CustomHUD_CPauseVisualActInit, 0x109FAD0, uint32_t* This)
 {
-    CustomHUD::CreatePauseScreen(This);
+    CustomHUD::CreatePauseScreen(This, false);
     return originalCustomHUD_CPauseVisualActInit(This);;
 }
 
@@ -571,7 +577,7 @@ HOOK(int, __fastcall, CustomHUD_CPauseVisualActCase, 0x109F910, uint32_t* This, 
 
 HOOK(bool, __fastcall, CustomHUD_CPauseVisualPamInit, 0x109E9D0, uint32_t* This)
 {
-    CustomHUD::CreatePauseScreen(This);
+    CustomHUD::CreatePauseScreen(This, true);
     return originalCustomHUD_CPauseVisualPamInit(This);;
 }
 
@@ -679,6 +685,9 @@ void __declspec(naked) CustomHUD_PreventRestart()
     __asm
     {
         cmp     CustomHUD::m_cursorPos, 1
+        jne     jump
+
+        cmp     CustomHUD::m_isPamPause, 0
         jne     jump
 
         cmp     CustomHUD::m_canRestart, 0

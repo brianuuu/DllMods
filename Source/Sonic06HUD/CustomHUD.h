@@ -42,13 +42,14 @@ public:
 
 	// Pause
 	static uint32_t m_cursorPos;
+	static bool m_isPamPause;
 	static bool m_canRestart;
 	static void __fastcall CPauseRemoveCallback
 	(
 		Sonic::CGameObject* This, void*,
 		Sonic::CGameDocument* pGameDocument
 	);
-	static void CreatePauseScreen(uint32_t* This);
+	static void CreatePauseScreen(uint32_t* This, bool isPamPause);
 	static void OpenPauseScreen();
 	static void ClosePauseScreen();
 	static void RefreshPauseCursor();
