@@ -368,6 +368,7 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePauseCursor;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePauseText;
 
 uint32_t CustomHUD::m_cursorPos = 0;
+bool CustomHUD::m_canRestart = true;
 char const* cursorAnimations[] =
 {
     "select_01",
@@ -480,14 +481,15 @@ HOOK(int, __fastcall, CustomHUD_CPauseVisualActCase, 0x109F910, uint32_t* This, 
         size_t* liveCountAddr = (size_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x9FDC });
         if (liveCountAddr)
         {
+            CustomHUD::m_canRestart = (*liveCountAddr != 0);
             bool isJapanese = *(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 }) == 1;
-            if (*liveCountAddr == 0)
+            if (CustomHUD::m_canRestart)
             {
-                m_scenePauseText->GetNode("text2")->SetPatternIndex(isJapanese * 2 + 1);
+                m_scenePauseText->GetNode("text2")->SetPatternIndex(isJapanese * 2);
             }
             else
             {
-                m_scenePauseText->GetNode("text2")->SetPatternIndex(isJapanese * 2);
+                m_scenePauseText->GetNode("text2")->SetPatternIndex(isJapanese * 2 + 1);
             }
         }
 
@@ -607,6 +609,31 @@ void CustomHUD::RefreshPauseCursor(bool bPauseStart)
     m_scenePauseCursor->Update(0.0f);
 }
 
+void __declspec(naked) CustomHUD_PreventRestart()
+{
+    static uint32_t failedAddress = 0x42A635;
+    static uint32_t returnAddress = 0x42A5B3;
+    static uint32_t sub_11D1BF0 = 0x11D1BF0; // NG sfx
+    __asm
+    {
+        cmp     CustomHUD::m_cursorPos, 1
+        jne     jump
+
+        cmp     CustomHUD::m_canRestart, 0
+        jne     jump
+
+        // No life, can't restart
+        call    [sub_11D1BF0]
+        jmp     [failedAddress]
+
+    jump:
+        push    ecx
+        mov     ecx, esp
+        push    [0x168F940] // DECIDE
+        jmp     [returnAddress]
+    }
+}
+
 void CustomHUD::applyPatches()
 {
     //---------------------------------------------------
@@ -663,4 +690,7 @@ void CustomHUD::applyPatches()
     WRITE_NOP(0x42A41C, 2); // Open
     WRITE_NOP(0x42A75B, 2); // Close
     WRITE_MEMORY(0x11D1D7A, uint32_t, 1000003); // Cancel
+
+    // Prevent restarting when no life
+    WRITE_JUMP(0x42A5AB, CustomHUD_PreventRestart);
 }

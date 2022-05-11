@@ -42,6 +42,7 @@ public:
 
 	// Pause
 	static uint32_t m_cursorPos;
+	static bool m_canRestart;
 	static void __fastcall CPauseRemoveCallback
 	(
 		Sonic::CGameObject* This, void*,
