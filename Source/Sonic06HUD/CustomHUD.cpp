@@ -603,10 +603,6 @@ HOOK(int, __fastcall, CustomHUD_CPauseVisualPamCase, 0x109E740, uint32_t* This, 
         break;
     }
     case 2: // Start animation complete
-    {
-        CustomHUD::RefreshPauseCursor();
-        break;
-    }
     case 3: // New cursor pos
     {
         CustomHUD::RefreshPauseCursor();
@@ -766,8 +762,14 @@ void CustomHUD::applyPatches()
     // Use correct pause SFX
     WRITE_NOP(0x42A41C, 2); // Open
     WRITE_NOP(0x42A75B, 2); // Close
+    WRITE_MEMORY(0x11D219A, uint32_t, 1000002); // Menu oppen
+    WRITE_MEMORY(0x11D20EA, uint32_t, 1000003); // Menu close
     WRITE_MEMORY(0x11D1D7A, uint32_t, 1000003); // Cancel
+    WRITE_MEMORY(0x11D1E2A, uint32_t, 1000016); // Stage scroll
 
     // Prevent restarting when no life
     WRITE_JUMP(0x42A5AB, CustomHUD_PreventRestart);
+
+    // Use stage scroll stx for pause scroll
+    WRITE_MEMORY(0x42A630, uint8_t, 0xE8, 0xCB, 0x77, 0xDA, 0x00);
 }
