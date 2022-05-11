@@ -536,6 +536,11 @@ HOOK(int, __fastcall, CustomHUD_CPauseVisualActCase, 0x109F910, uint32_t* This, 
     return originalCustomHUD_CPauseVisualActCase(This, Edx, Case);
 }
 
+HOOK(bool, __fastcall, CustomHUD_CPauseVisualActOpened, 0x109F8F0, uint32_t* This)
+{
+    return m_scenePauseMenu->m_MotionDisableFlag == 1;
+}
+
 HOOK(void, __fastcall, CustomHUD_CPauseCStateSelect, 0x42A520, uint32_t* This)
 {
     originalCustomHUD_CPauseCStateSelect(This);
@@ -547,6 +552,27 @@ HOOK(void, __fastcall, CustomHUD_CPauseCStateSelect, 0x42A520, uint32_t* This)
         // internal cursor pos
         int* v4 = *(int**)(owner + 224);
         v4[5] = CustomHUD::m_cursorPos;
+    }
+}
+
+HOOK(void, __fastcall, CustomHUD_CGameplayFlowStageCStateStageUpdating, 0xCFF280, uint32_t* This)
+{
+    uint32_t* owner = (uint32_t*)(This[2]);
+    uint32_t prevPauseFlag = owner[61];
+
+    originalCustomHUD_CGameplayFlowStageCStateStageUpdating(This);
+
+    if (m_scenePauseMenu)
+    {
+        if (m_scenePauseMenu->m_MotionDisableFlag == 0)
+        {
+            owner[61] = 0;
+        }
+        else if (prevPauseFlag != owner[61] && prevPauseFlag == 0)
+        {
+            FUNCTION_PTR(void, __stdcall, UnpauseSound, 0x10A1480, int CPause);
+            UnpauseSound((owner[32]));
+        }
     }
 }
 
@@ -592,9 +618,21 @@ void CustomHUD::applyPatches()
     INSTALL_HOOK(CustomHUD_CPauseUpdate);
     INSTALL_HOOK(CustomHUD_CPauseVisualActInit);
     INSTALL_HOOK(CustomHUD_CPauseVisualActCase);
+    INSTALL_HOOK(CustomHUD_CPauseVisualActOpened);
     INSTALL_HOOK(CustomHUD_CPauseCStateSelect);
+    INSTALL_HOOK(CustomHUD_CGameplayFlowStageCStateStageUpdating);
     WRITE_MEMORY(0x16A41A4, void*, CPauseRemoveCallback);
 
     // Allow UI to goto Start Over even with 0 lives
     WRITE_JUMP(0x10A0FCA, (void*)0x10A1131);
+
+    // Don't unpause sound immediately when unpause
+    WRITE_NOP(0x42A6D6, 1);
+    WRITE_NOP(0x42A6DD, 5);
+    WRITE_NOP(0x10A19EB, 1);
+    WRITE_NOP(0x10A19F2, 5);
+
+    // Don't show mission objective at pause
+    WRITE_MEMORY(0xD00A46, uint8_t, 0);
+    WRITE_MEMORY(0xD07489, uint8_t, 0);
 }
