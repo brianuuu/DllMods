@@ -541,9 +541,9 @@ HOOK(bool, __fastcall, CustomHUD_CPauseVisualActOpened, 0x109F8F0, uint32_t* Thi
     return m_scenePauseMenu->m_MotionDisableFlag == 1;
 }
 
-HOOK(void, __fastcall, CustomHUD_CPauseCStateSelect, 0x42A520, uint32_t* This)
+HOOK(void, __fastcall, CustomHUD_CPauseCStateSelectAdvance, 0x42A520, uint32_t* This)
 {
-    originalCustomHUD_CPauseCStateSelect(This);
+    originalCustomHUD_CPauseCStateSelectAdvance(This);
 
     // 06 do not have Controls option
     uint32_t owner = This[2];
@@ -553,6 +553,26 @@ HOOK(void, __fastcall, CustomHUD_CPauseCStateSelect, 0x42A520, uint32_t* This)
         int* v4 = *(int**)(owner + 224);
         v4[5] = CustomHUD::m_cursorPos;
     }
+}
+
+HOOK(void, __fastcall, CustomHUD_CPauseCStateCloseBegin, 0x42A710, uint32_t* This)
+{
+    // Prevent playing two sounds when quiting pause
+    uint32_t owner = This[2];
+    if (owner)
+    {
+        int* v4 = *(int**)(owner + 224);
+        if (*((bool*)v4 + 92) || *((bool*)v4 + 93))
+        {
+            // Decide or Close
+            WRITE_MEMORY(0x11D1F8A, int, -1);
+        }
+    }
+
+    originalCustomHUD_CPauseCStateCloseBegin(This);
+
+    // Revert original sfx
+    WRITE_MEMORY(0x11D1F8A, uint32_t, 1000003);
 }
 
 HOOK(void, __fastcall, CustomHUD_CGameplayFlowStageCStateStageUpdating, 0xCFF280, uint32_t* This)
@@ -619,7 +639,8 @@ void CustomHUD::applyPatches()
     INSTALL_HOOK(CustomHUD_CPauseVisualActInit);
     INSTALL_HOOK(CustomHUD_CPauseVisualActCase);
     INSTALL_HOOK(CustomHUD_CPauseVisualActOpened);
-    INSTALL_HOOK(CustomHUD_CPauseCStateSelect);
+    INSTALL_HOOK(CustomHUD_CPauseCStateSelectAdvance);
+    INSTALL_HOOK(CustomHUD_CPauseCStateCloseBegin);
     INSTALL_HOOK(CustomHUD_CGameplayFlowStageCStateStageUpdating);
     WRITE_MEMORY(0x16A41A4, void*, CPauseRemoveCallback);
 
@@ -627,12 +648,19 @@ void CustomHUD::applyPatches()
     WRITE_JUMP(0x10A0FCA, (void*)0x10A1131);
 
     // Don't unpause sound immediately when unpause
-    WRITE_NOP(0x42A6D6, 1);
+    WRITE_NOP(0x42A5F3, 1); // Pressed B quit pause
+    WRITE_NOP(0x42A5FB, 5);
+    WRITE_NOP(0x42A6D6, 1); // Pressed A to continue
     WRITE_NOP(0x42A6DD, 5);
-    WRITE_NOP(0x10A19EB, 1);
+    WRITE_NOP(0x10A19EB, 1); // Pressed Start to quit pause
     WRITE_NOP(0x10A19F2, 5);
 
     // Don't show mission objective at pause
     WRITE_MEMORY(0xD00A46, uint8_t, 0);
     WRITE_MEMORY(0xD07489, uint8_t, 0);
+
+    // Use correct pause SFX
+    WRITE_NOP(0x42A41C, 2); // Open
+    WRITE_NOP(0x42A75B, 2); // Close
+    WRITE_MEMORY(0x11D1D7A, uint32_t, 1000003); // Cancel
 }
