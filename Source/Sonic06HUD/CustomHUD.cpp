@@ -782,14 +782,14 @@ HOOK(void, __fastcall, CustomHUD_CPauseCStateWindowBegin, 0x42ABA0, hh::fnd::CSt
         {
             CustomHUD::m_yesNoWindowText = isJapanese
                 ? u8"ステージの始めからプレイしなおします\n最後にセーブしたところから\nここまでの進行は保存されませんが\nそれでもよろしいですか？"
-                : "Restart  from  the  beginning  of  this  stage.\nThe  progress  of  the  game  from  the  last  saved\npoint  will  not  be  saved.  OK?";
+                : "Restart  from  the  beginning  of  the  stage.\nThe  progress  of  the  game  from  the  last  saved\npoint  will  not  be  saved.  OK?";
         }
     }
     else if (CustomHUD::m_cursorPos == 3)
     {
         CustomHUD::m_yesNoWindowText = isJapanese
             ? u8"ステージを終了します\n最後にセーブしたところから\nここまでの進行は保存されませんが\nそれでもよろしいですか？"
-            : "Exit  the  stage  and  go  back  to  the  HUB  World.\nThe  progress  of  the  game  from  the  last  saved\npoint  will  not  be  saved.  OK?";
+            : "Exit  the  stage.\nThe  progress  of  the  game  from  the  last  saved\npoint  will  not  be  saved.  OK?";
     }
 
     originalCustomHUD_CPauseCStateWindowBegin(This);
