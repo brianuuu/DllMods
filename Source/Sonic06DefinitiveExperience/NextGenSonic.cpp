@@ -108,8 +108,11 @@ HOOK(void, __fastcall, NextGenSonic_CSonicStateHomingAttackAfterAdvance, 0x11186
 
     if (bPressed && !Common::GetSonicStateFlags()->OutOfControl)
     {
-        StateManager::ChangeState(StateAction::Stomping, *PLAYER_CONTEXT);
-        NextGenSonic::m_xHeldTimer = 0.0f;
+        if (!NextGenPhysics::checkUseLightSpeedDash())
+        {
+            StateManager::ChangeState(StateAction::Stomping, *PLAYER_CONTEXT);
+            NextGenSonic::m_xHeldTimer = 0.0f;
+        }
         return;
     }
 
