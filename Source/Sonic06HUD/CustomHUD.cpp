@@ -621,7 +621,7 @@ HOOK(int*, __fastcall, CustomHUD_CPauseUpdate, 0x10A18D0, void* This, void* Edx,
 
     if (m_scenePauseCursor)
     {
-        if (m_scenePauseCursor->m_MotionRepeatType == Chao::CSD::eMotionRepeatType_PlayOnce && m_scenePauseCursor->m_MotionTime >= m_scenePauseCursor->m_MotionEndTime)
+        if (m_scenePauseCursor->m_MotionRepeatType == Chao::CSD::eMotionRepeatType_PlayOnce && m_scenePauseCursor->m_MotionDisableFlag)
         {
             m_scenePauseCursor->SetMotion(CustomHUD::m_isPamPause ? cursorPamLoopAnimations[CustomHUD::m_cursorPos] : cursorLoopAnimations[CustomHUD::m_cursorPos]);
             m_scenePauseCursor->SetMotionTime(0.0f);
@@ -961,7 +961,7 @@ HOOK(int*, __fastcall, CustomHUD_CPauseCStateWindowAdvance, 0x42AEE0, hh::fnd::C
 {
     if (m_sceneYesNoCursor)
     {
-        if (m_sceneYesNoCursor->m_MotionRepeatType == Chao::CSD::eMotionRepeatType_PlayOnce && m_sceneYesNoCursor->m_MotionTime >= m_sceneYesNoCursor->m_MotionEndTime)
+        if (m_sceneYesNoCursor->m_MotionRepeatType == Chao::CSD::eMotionRepeatType_PlayOnce && m_sceneYesNoCursor->m_MotionDisableFlag)
         {
             m_sceneYesNoCursor->SetMotion("cursor_set");
             m_sceneYesNoCursor->SetMotionTime(0.0f);
