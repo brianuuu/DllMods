@@ -78,6 +78,7 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePowerBar;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePowerEffect;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePower;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneScore;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneGem;
 
 Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectCountdown;
 boost::shared_ptr<Sonic::CGameObjectCSD> m_spCountdown;
@@ -85,6 +86,18 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneCountdown;
 
 bool CustomHUD::m_scoreEnabled = false;
 float CustomHUD::m_missionMaxTime = 0.0f;
+CustomHUD::SonicGemType CustomHUD::m_sonicGemType = SGT_COUNT;
+std::map<CustomHUD::SonicGemType, bool> CustomHUD::m_sonicGemEnabled =
+{
+    {SGT_Blue,      false},
+    {SGT_Red,       false},
+    {SGT_Green,     false},
+    {SGT_Purple,    false},
+    {SGT_Sky,       false},
+    {SGT_White,     false},
+    {SGT_Yellow,    false},
+    {SGT_COUNT,     false},
+};
 
 void __fastcall CustomHUD::CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGameDocument* pGameDocument)
 {
@@ -102,11 +115,99 @@ void __fastcall CustomHUD::CHudSonicStageRemoveCallback(Sonic::CGameObject* This
     Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_scenePowerEffect);
     Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_scenePower);
     Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneScore);
+    Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneGem);
 
     Chao::CSD::CProject::DestroyScene(m_projectCountdown.Get(), m_sceneCountdown);
 
     m_projectPlayScreen = nullptr;
     m_projectCountdown = nullptr;
+}
+
+void CustomHUD::ScrollSonicGem(bool toRight, bool ignoreNone)
+{
+    if (!m_sceneGem) return;
+    m_sonicGemEnabled[SGT_COUNT] = !ignoreNone;
+
+    // Do another sanity check if any gems are enabled
+    bool enabled = false;
+    for (auto const& iter : m_sonicGemEnabled)
+    {
+        if (iter.second)
+        {
+            enabled = true;
+            break;
+        }
+    }
+    if (!enabled)
+    {
+        m_sceneGem->SetHideFlag(true);
+        return;
+    }
+
+    // Scroll gems
+    do
+    {
+        if (toRight)
+        {
+            m_sonicGemType = (SonicGemType)((int)m_sonicGemType + 1);
+            if (m_sonicGemType > SGT_COUNT)
+            {
+                m_sonicGemType = (SonicGemType)0;
+            }
+        }
+        else
+        {
+            m_sonicGemType = (SonicGemType)((int)m_sonicGemType - 1);
+            if (m_sonicGemType < (SonicGemType)0)
+            {
+                m_sonicGemType = SGT_COUNT;
+            }
+        }
+    } while (m_sonicGemEnabled[m_sonicGemType] == false);
+
+    if (m_sonicGemType == SGT_COUNT)
+    {
+        m_sceneGem->SetHideFlag(true);
+        return;
+    }
+
+    m_sceneGem->SetHideFlag(false);
+    int patternIndex = 0;
+    switch (m_sonicGemType)
+    {
+    case SGT_Blue:   patternIndex = 2; break;
+    case SGT_Red:    patternIndex = 1; break;
+    case SGT_Green:  patternIndex = 0; break;
+    case SGT_Purple: patternIndex = 5; break;
+    case SGT_Sky:    patternIndex = 3; break;
+    case SGT_White:  patternIndex = 6; break;
+    case SGT_Yellow: patternIndex = 4; break;
+    default: return;
+    }
+
+    m_sceneGem->GetNode("custom_gem")->SetPatternIndex(patternIndex);
+}
+
+void CustomHUD::RestartSonicGem()
+{
+    // Reset Gem type when restarting stage/dying
+    m_sonicGemType = SGT_COUNT;
+    if (m_sceneGem)
+    {
+        m_sceneGem->SetHideFlag(true);
+    }
+
+    // Scroll to the first available gem
+    if (m_sonicGemEnabled[m_sonicGemType] == false)
+    {
+        ScrollSonicGem(true, true);
+    }
+}
+
+HOOK(int, __fastcall, CustomHUD_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
+{
+    CustomHUD::RestartSonicGem();
+    return originalCustomHUD_MsgRestartStage(This, Edx, message);
 }
 
 HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObject* This)
@@ -189,6 +290,25 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
     {
         m_sceneScore = m_projectPlayScreen->CreateScene("score");
         m_sceneScore->m_MotionSpeed = 0.0f;
+    }
+
+    if (S06DE_API::GetModelType() == S06DE_API::ModelType::Sonic)
+    {
+        bool enabled = false;
+        for (auto const& iter : CustomHUD::m_sonicGemEnabled)
+        {
+            if (iter.first != CustomHUD::SonicGemType::SGT_COUNT && iter.second)
+            {
+                enabled = true;
+                break;
+            }
+        }
+
+        if (enabled)
+        {
+            m_sceneGem = m_projectPlayScreen->CreateScene("custom_gem");
+            CustomHUD::RestartSonicGem();
+        }
     }
 
     // Mask to prevent crash when game tries accessing the elements we disabled later on
@@ -877,6 +997,7 @@ void CustomHUD::applyPatches()
     //---------------------------------------------------
     // Main Gameplay
     //---------------------------------------------------
+    INSTALL_HOOK(CustomHUD_MsgRestartStage);
     INSTALL_HOOK(CustomHUD_CHudSonicStageInit);
     INSTALL_HOOK(CustomHUD_CHudSonicStageUpdate);
     INSTALL_HOOK(CustomHUD_MsgSetPinballHud);

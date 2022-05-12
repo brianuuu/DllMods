@@ -24,7 +24,7 @@ public:
 
     static ModelType GetModelType()
 	{
-		ENUM_EXPORT(S06DE_API::ModelType, API_GetModelType);
+		ENUM_EXPORT(ModelType, API_GetModelType);
 	}
 	
     static bool IsUsingCharacterMoveset()

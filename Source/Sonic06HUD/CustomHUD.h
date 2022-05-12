@@ -2,6 +2,21 @@
 class CustomHUD
 {
 public:
+	// Must match API
+	enum SonicGemType : int
+	{
+		SGT_Blue = 0,
+		SGT_Red,
+		SGT_Green,
+		SGT_Purple,
+		SGT_Sky,
+		SGT_White,
+		SGT_Yellow,
+
+		SGT_COUNT,
+	};
+
+public:
 	static void applyPatches();
 
 	// Utilities
@@ -34,11 +49,15 @@ public:
 	// Main gameplay
 	static bool m_scoreEnabled;
 	static float m_missionMaxTime;
+	static SonicGemType m_sonicGemType;
+	static std::map<SonicGemType, bool> m_sonicGemEnabled;
 	static void __fastcall CHudSonicStageRemoveCallback
 	(
 		Sonic::CGameObject* This, void*, 
 		Sonic::CGameDocument* pGameDocument
 	);
+	static void ScrollSonicGem(bool toRight, bool ignoreNone);
+	static void RestartSonicGem();
 
 	// Pause
 	static int m_cursorPos;
@@ -66,7 +85,7 @@ public:
 	static void RefreshYesNoCursor();
 
 	// ImGui
-	static bool IsDrawing() { return !m_yesNoWindowText.empty(); }
+	static bool IsYesNoWindowDrawing() { return !m_yesNoWindowText.empty(); }
 	static void draw();
 };
 

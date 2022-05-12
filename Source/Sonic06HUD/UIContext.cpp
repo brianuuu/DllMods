@@ -95,7 +95,7 @@ void UIContext::update()
     if (*(bool*)0x1A430D7)
     {
         // Draw imgui here
-        if (!CustomHUD::IsDrawing())
+        if (!CustomHUD::IsYesNoWindowDrawing())
         {
             ItemboxUI::draw();
             Stage::draw();
