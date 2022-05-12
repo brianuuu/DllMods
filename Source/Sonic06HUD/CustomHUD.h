@@ -41,7 +41,7 @@ public:
 	);
 
 	// Pause
-	static uint32_t m_cursorPos;
+	static int m_cursorPos;
 	static bool m_isPamPause;
 	static bool m_canRestart;
 	static void __fastcall CPauseRemoveCallback
@@ -53,5 +53,20 @@ public:
 	static void OpenPauseScreen();
 	static void ClosePauseScreen();
 	static void RefreshPauseCursor();
+
+	// Yes & No Window
+	static int m_yesNoCursorPos;
+	static float m_yesNoColorTime;
+	static std::string m_yesNoWindowText;
+	static void __fastcall CWindowImplRemoveCallback
+	(
+		Sonic::CGameObject* This, void*,
+		Sonic::CGameDocument* pGameDocument
+	);
+	static void RefreshYesNoCursor();
+
+	// ImGui
+	static bool IsDrawing() { return !m_yesNoWindowText.empty(); }
+	static void draw();
 };
 

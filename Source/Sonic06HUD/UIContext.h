@@ -8,6 +8,7 @@ class UIContext
     static IDirect3DDevice9* device;
     static ImFont* font;
     static ImFont* fontSubtitle;
+    static ImFont* fontSubtitleBig;
 
 public:
     static bool isInitialized();

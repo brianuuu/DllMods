@@ -1,4 +1,6 @@
-#include "CustomHUD.h"
+﻿#include "CustomHUD.h"
+#include "UIContext.h"
+#include "Application.h"
 
 //---------------------------------------------------
 // Utilities
@@ -367,7 +369,7 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePauseMenu;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePauseCursor;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePauseText;
 
-uint32_t CustomHUD::m_cursorPos = 0;
+int CustomHUD::m_cursorPos = 0;
 bool CustomHUD::m_isPamPause = false;
 bool CustomHUD::m_canRestart = true;
 char const* cursorAnimations[] =
@@ -701,6 +703,175 @@ void __declspec(naked) CustomHUD_PreventRestart()
     }
 }
 
+//---------------------------------------------------
+// Yes & No Window
+//---------------------------------------------------
+Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectYesNo;
+boost::shared_ptr<Sonic::CGameObjectCSD> m_spYesNo;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneYesNoTop;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneYesNoBottom;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneYesNoCursor;
+
+int CustomHUD::m_yesNoCursorPos = 0;
+float CustomHUD::m_yesNoColorTime = 0.0f;
+std::string CustomHUD::m_yesNoWindowText;
+
+void __fastcall CustomHUD::CWindowImplRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGameDocument* pGameDocument)
+{
+    CustomHUD::m_yesNoColorTime = 0.0f;
+    CustomHUD::m_yesNoWindowText.clear();
+
+    KillScreen(m_spYesNo);
+
+    Chao::CSD::CProject::DestroyScene(m_projectYesNo.Get(), m_sceneYesNoTop);
+    Chao::CSD::CProject::DestroyScene(m_projectYesNo.Get(), m_sceneYesNoBottom);
+    Chao::CSD::CProject::DestroyScene(m_projectYesNo.Get(), m_sceneYesNoCursor);
+
+    m_projectYesNo = nullptr;
+}
+
+void CustomHUD::RefreshYesNoCursor()
+{
+    if (m_sceneYesNoCursor)
+    {
+        m_sceneYesNoCursor->SetPosition(-375.0f, 148.0f + m_yesNoCursorPos * 42.7f);
+        m_sceneYesNoCursor->SetMotion("cursor_select");
+        m_sceneYesNoCursor->SetMotionTime(0.0f);
+        m_sceneYesNoCursor->m_MotionDisableFlag = false;
+        m_sceneYesNoCursor->m_MotionSpeed = 1.0f;
+        m_sceneYesNoCursor->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
+        m_sceneYesNoCursor->Update(0.0f);
+    }
+}
+
+HOOK(int, __fastcall, CustomHUD_CWindowImplCState_Open, 0x439120, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    if (!CustomHUD::m_yesNoWindowText.empty())
+    {
+        uint32_t owner = (uint32_t)(This->GetContextBase());
+        Chao::CSD::RCPtr<Chao::CSD::CScene> scene = *(Chao::CSD::RCPtr<Chao::CSD::CScene>*)(owner + 936);
+        scene->SetPosition(0.0f, 800.0f);
+
+        // Don't play menu open sfx
+        WRITE_NOP(0x43921B, 5);
+    }
+
+    int result = originalCustomHUD_CWindowImplCState_Open(This);
+
+    // Restore sfx
+    WRITE_MEMORY(0x43921B, uint8_t, 0xE8, 0x50, 0x8F, 0xD9, 0x00);
+
+    return result;
+}
+
+HOOK(void, __fastcall, CustomHUD_CPauseCStateWindowBegin, 0x42ABA0, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    Sonic::CGameObject* parent = (Sonic::CGameObject*)(This->GetContextBase());
+    CustomHUD::CWindowImplRemoveCallback(parent, nullptr, nullptr);
+
+    bool isJapanese = Common::GetUILanguageType() == LT_Japanese;
+    if (CustomHUD::m_cursorPos == 1)
+    {
+        if (CustomHUD::m_isPamPause)
+        {
+            CustomHUD::m_yesNoWindowText = isJapanese
+                ? u8"ゲームを終了して、タイトルに戻ります\n最後にセーブしたところから\nここまでの進行は保存されませんが\nそれでもよろしいですか？"
+                : "Exit  the  game.\nThe  progress  of  the  game  from  the  last  saved\npoint  will  not  be  saved.  OK?";
+        }
+        else
+        {
+            CustomHUD::m_yesNoWindowText = isJapanese
+                ? u8"ステージの始めからプレイしなおします\n最後にセーブしたところから\nここまでの進行は保存されませんが\nそれでもよろしいですか？"
+                : "Restart  from  the  beginning  of  this  stage.\nThe  progress  of  the  game  from  the  last  saved\npoint  will  not  be  saved.  OK?";
+        }
+    }
+    else if (CustomHUD::m_cursorPos == 3)
+    {
+        CustomHUD::m_yesNoWindowText = isJapanese
+            ? u8"ゲームを終了します\n最後にセーブしたところから\nここまでの進行は保存されませんが\nそれでもよろしいですか？"
+            : "Exit  the  game  and  go  back  to  the  HUB  World.\nThe  progress  of  the  game  from  the  last  saved\npoint  will  not  be  saved.  OK?";
+    }
+
+    originalCustomHUD_CPauseCStateWindowBegin(This);
+    Sonic::CCsdDatabaseWrapper wrapper(parent->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
+
+    boost::shared_ptr<Sonic::CCsdProject> spCsdProject;
+    wrapper.GetCsdProject(spCsdProject, "windowtest");
+    m_projectYesNo = spCsdProject->m_rcProject;
+
+    m_sceneYesNoTop = m_projectYesNo->CreateScene("Scene_0000");
+    m_sceneYesNoTop->SetPosition(0.0f, -71.0f);
+    m_sceneYesNoTop->GetNode("kuro")->SetScale(8.5f, 3.0f);
+    m_sceneYesNoTop->GetNode("bou1")->SetScale(8.5f, 0.07f);
+    m_sceneYesNoTop->GetNode("bou1")->SetPosition(640.0f, 167.0f);
+    m_sceneYesNoTop->GetNode("bou2")->SetScale(8.5f, 0.07f);
+    m_sceneYesNoTop->GetNode("bou2")->SetPosition(640.0f, 556.0f);
+    m_sceneYesNoTop->GetNode("bou3")->SetScale(0.07f, 3.0f);
+    m_sceneYesNoTop->GetNode("bou3")->SetPosition(97.0f, 360.0f);
+    m_sceneYesNoTop->GetNode("bou4")->SetScale(0.07f, 3.0f);
+    m_sceneYesNoTop->GetNode("bou4")->SetPosition(1190.0f, 360.0f);
+    m_sceneYesNoTop->GetNode("kado1")->SetPosition(105.0f, 176.0f);
+    m_sceneYesNoTop->GetNode("kado2")->SetPosition(105.0f, 544.0f);
+    m_sceneYesNoTop->GetNode("kado3")->SetPosition(1176.0f, 176.0f);
+    m_sceneYesNoTop->GetNode("kado4")->SetPosition(1176.0f, 544.0f);
+
+    m_sceneYesNoBottom = m_projectYesNo->CreateScene("Scene_0000");
+    m_sceneYesNoBottom->SetPosition(0.0f, 232.0f);
+    m_sceneYesNoBottom->GetNode("kuro")->SetScale(8.5f, 1.0f);
+    m_sceneYesNoBottom->GetNode("bou1")->SetScale(8.5f, 0.07f);
+    m_sceneYesNoBottom->GetNode("bou1")->SetPosition(640.0f, 296.0f);
+    m_sceneYesNoBottom->GetNode("bou2")->SetScale(8.5f, 0.07f);
+    m_sceneYesNoBottom->GetNode("bou2")->SetPosition(640.0f, 429.0f);
+    m_sceneYesNoBottom->GetNode("bou3")->SetScale(0.07f, 1.0f);
+    m_sceneYesNoBottom->GetNode("bou3")->SetPosition(97.0f, 360.0f);
+    m_sceneYesNoBottom->GetNode("bou4")->SetScale(0.07f, 1.0f);
+    m_sceneYesNoBottom->GetNode("bou4")->SetPosition(1190.0f, 360.0f);
+    m_sceneYesNoBottom->GetNode("kado1")->SetPosition(105.0f, 305.0f);
+    m_sceneYesNoBottom->GetNode("kado2")->SetPosition(105.0f, 415.0f);
+    m_sceneYesNoBottom->GetNode("kado3")->SetPosition(1176.0f, 305.0f);
+    m_sceneYesNoBottom->GetNode("kado4")->SetPosition(1176.0f, 415.0f);
+
+    m_sceneYesNoCursor = m_projectYesNo->CreateScene("cursor");
+    CustomHUD::RefreshYesNoCursor();
+
+    CustomHUD::CreateScreen(m_projectYesNo, m_spYesNo, "HUD_Pause", true, parent);
+}
+
+HOOK(int*, __fastcall, CustomHUD_CPauseCStateWindowAdvance, 0x42AEE0, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    if (m_sceneYesNoCursor)
+    {
+        if (m_sceneYesNoCursor->m_MotionRepeatType == Chao::CSD::eMotionRepeatType_PlayOnce && m_sceneYesNoCursor->m_MotionTime >= m_sceneYesNoCursor->m_MotionEndTime)
+        {
+            m_sceneYesNoCursor->SetMotion("cursor_set");
+            m_sceneYesNoCursor->SetMotionTime(0.0f);
+            m_sceneYesNoCursor->m_MotionDisableFlag = false;
+            m_sceneYesNoCursor->m_MotionSpeed = 1.0f;
+            m_sceneYesNoCursor->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_Loop;
+            m_sceneYesNoCursor->Update(0.0f);
+        }
+    }
+
+    return originalCustomHUD_CPauseCStateWindowAdvance(This);
+}
+
+HOOK(void, __fastcall, CustomHUD_CPauseCStateWindowEnd, 0x42AED0, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    originalCustomHUD_CPauseCStateWindowEnd(This);
+
+    Sonic::CGameObject* parent = (Sonic::CGameObject*)(This->GetContextBase());
+    CustomHUD::CWindowImplRemoveCallback(parent, nullptr, nullptr);
+}
+
+HOOK(bool, __fastcall, CustomHUD_CWindowImplSetCursor, 0x438500, void* This, void* Edx, uint32_t pos)
+{
+    CustomHUD::m_yesNoCursorPos = pos;
+    CustomHUD::m_yesNoColorTime = 0.0f;
+    CustomHUD::RefreshYesNoCursor();
+
+    return originalCustomHUD_CWindowImplSetCursor(This, Edx, pos);
+}
+
 void CustomHUD::applyPatches()
 {
     //---------------------------------------------------
@@ -772,4 +943,66 @@ void CustomHUD::applyPatches()
 
     // Use stage scroll stx for pause scroll
     WRITE_MEMORY(0x42A630, uint8_t, 0xE8, 0xCB, 0x77, 0xDA, 0x00);
+
+    //---------------------------------------------------
+    // Yes & No Window
+    //---------------------------------------------------
+    INSTALL_HOOK(CustomHUD_CPauseCStateWindowBegin);
+    INSTALL_HOOK(CustomHUD_CPauseCStateWindowAdvance);
+    INSTALL_HOOK(CustomHUD_CPauseCStateWindowEnd);
+
+    INSTALL_HOOK(CustomHUD_CWindowImplSetCursor);
+    INSTALL_HOOK(CustomHUD_CWindowImplCState_Open);
+    WRITE_MEMORY(0x16A6D84, void*, CWindowImplRemoveCallback);
+
+}
+
+void CustomHUD::draw()
+{
+    if (!m_yesNoWindowText.empty())
+    {
+        static bool visible = true;
+        char const* captionTitle = m_isPamPause ? "Caption0" : (m_cursorPos == 1 ? "Caption1" : "Caption2");
+        ImGui::Begin(captionTitle, &visible, UIContext::m_hudFlags);
+        {
+            float sizeX = *BACKBUFFER_WIDTH * 1090.0f / 1280.0f;
+            float sizeY = *BACKBUFFER_HEIGHT * 382.0f / 720.0f;
+
+            ImVec2 textSize = ImGui::CalcTextSize(m_yesNoWindowText.c_str());
+
+            ImGui::SetWindowFocus();
+            ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
+            ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 0.9f), m_yesNoWindowText.c_str());
+            ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.5f - textSize.x / 2.0f, *BACKBUFFER_HEIGHT * 0.4024f - textSize.y / 2.0f));
+        }
+        ImGui::End();
+
+        bool isJapanese = Common::GetUILanguageType() == LT_Japanese;
+        float blueGreenFactor = (m_yesNoColorTime < 0.5f) ? (1.0f - m_yesNoColorTime * 2.0f) : (m_yesNoColorTime - 0.5f) * 2.0f;
+        ImVec4 color(1.0f, blueGreenFactor, blueGreenFactor, 1.0f);
+
+        ImGui::Begin("Yes", &visible, UIContext::m_hudFlags);
+        {
+            ImGui::SetWindowFocus();
+            char const* yes = isJapanese ? u8"はい" : "Yes";
+            ImGui::TextColored(m_yesNoCursorPos == 0 ? color : ImVec4(1.0f, 1.0f, 1.0f, 1.0f), yes);
+            ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.5f - ImGui::CalcTextSize(yes).x / 2.0f, *BACKBUFFER_HEIGHT * 0.7642f));
+        }
+        ImGui::End();
+
+        ImGui::Begin("No", &visible, UIContext::m_hudFlags);
+        {
+            ImGui::SetWindowFocus();
+            char const* no = isJapanese ? u8"いいえ" : "No";
+            ImGui::TextColored(m_yesNoCursorPos != 0 ? color : ImVec4(1.0f, 1.0f, 1.0f, 1.0f), no);
+            ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.5f - ImGui::CalcTextSize(no).x / 2.0f, *BACKBUFFER_HEIGHT * 0.8235f));
+        }
+        ImGui::End();
+
+        m_yesNoColorTime += Application::getDeltaTime();
+        if (m_yesNoColorTime >= 1.0f)
+        {
+            m_yesNoColorTime -= 1.0f;
+        }
+    }
 }

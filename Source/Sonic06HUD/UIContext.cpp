@@ -5,11 +5,13 @@
 #include "SubtitleUI.h"
 #include "ScoreUI.h"
 #include "ResultUI.h"
+#include "CustomHUD.h"
 
 HWND UIContext::window;
 IDirect3DDevice9* UIContext::device;
 ImFont* UIContext::font;
 ImFont* UIContext::fontSubtitle;
+ImFont* UIContext::fontSubtitleBig;
 
 bool UIContext::isInitialized()
 {
@@ -62,6 +64,14 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     }
     io.Fonts->Build();
 
+    const float fontSubtitleBigSize = 43.0f * (float)*BACKBUFFER_WIDTH / 1920.0f;
+    if ((fontSubtitleBig = io.Fonts->AddFontFromFileTTF((Application::getModDirString() + "Fonts\\FOT-RodinCattleyaPro-DB.otf").c_str(), fontSubtitleBigSize, nullptr, rangesTextbox.Data)) == nullptr)
+    {
+        MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-RodinCattleyaPro-DB.otf\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
+        fontSubtitleBig = io.Fonts->AddFontDefault();
+    }
+    io.Fonts->Build();
+
     // Initial textures
     ItemboxUI::initTextures();
     SubtitleUI::m_captionData.init();
@@ -85,13 +95,20 @@ void UIContext::update()
     if (*(bool*)0x1A430D7)
     {
         // Draw imgui here
-        ItemboxUI::draw();
-        Stage::draw();
-        ScoreUI::draw();
+        if (!CustomHUD::IsDrawing())
+        {
+            ItemboxUI::draw();
+            Stage::draw();
+            ScoreUI::draw();
 
-        ImGui::PushFont(fontSubtitle);
-        SubtitleUI::draw();
-        ResultUI::draw();
+            ImGui::PushFont(fontSubtitle);
+            SubtitleUI::draw();
+            ResultUI::draw();
+            ImGui::PopFont();
+        }
+
+        ImGui::PushFont(fontSubtitleBig);
+        CustomHUD::draw();
         ImGui::PopFont();
     }
 
