@@ -216,19 +216,15 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
     CustomHUD::CHudSonicStageRemoveCallback(This, nullptr, nullptr);
 
     Sonic::CCsdDatabaseWrapper wrapper(This->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
-
-    boost::shared_ptr<Sonic::CCsdProject> spCsdProject;
-    wrapper.GetCsdProject(spCsdProject, "maindisplay");
-    m_projectPlayScreen = spCsdProject->m_rcProject;
-    wrapper.GetCsdProject(spCsdProject, "time");
-    m_projectCountdown = spCsdProject->m_rcProject;
+    m_projectPlayScreen = wrapper.GetCsdProject("maindisplay")->m_rcProject;
+    m_projectCountdown = wrapper.GetCsdProject("time")->m_rcProject;
 
     size_t& flags = ((size_t*)This)[151];
 
     if (flags & 0x1 || Common::IsCurrentStageMission())
     {
         m_sceneLifeCount = m_projectPlayScreen->CreateScene("life");
-        m_sceneLifeCount->SetMotionTime(m_sceneLifeCount->m_MotionEndTime);
+        m_sceneLifeCount->SetMotionFrame(m_sceneLifeCount->m_MotionEndFrame);
         m_sceneLifeCount->m_MotionSpeed = 1.0f;
         m_sceneLifeCount->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
         int iconIndex = 0;
@@ -239,7 +235,7 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
         m_sceneLifeCount->GetNode("character_icon")->SetPatternIndex(iconIndex);
 
         m_sceneLifeBG = m_projectPlayScreen->CreateScene("life_ber_anime");
-        m_sceneLifeBG->SetMotionTime(m_sceneLifeBG->m_MotionEndTime);
+        m_sceneLifeBG->SetMotionFrame(m_sceneLifeBG->m_MotionEndFrame);
         m_sceneLifeBG->m_MotionSpeed = 0.0f;
     }
 
@@ -255,7 +251,7 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
         m_sceneRingCount->m_MotionSpeed = 0.0f;
 
         m_sceneRingIcon = m_projectPlayScreen->CreateScene("ring_anime");
-        m_sceneRingIcon->SetMotionTime(m_sceneRingIcon->m_MotionEndTime);
+        m_sceneRingIcon->SetMotionFrame(m_sceneRingIcon->m_MotionEndFrame);
         m_sceneRingIcon->m_MotionSpeed = 1.0f;
         m_sceneRingIcon->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
 
@@ -406,12 +402,12 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageUpdate, 0x1098A50, Sonic::CGameOb
     if (m_scenePower && playerContext)
     {
         float boost = min(100.0f, *Common::GetPlayerBoost());
-        m_scenePower->SetMotionTime(boost);
+        m_scenePower->SetMotionFrame(boost);
 
         if (boost < 100.0f)
         {
             m_scenePowerEffect->SetHideFlag(true);
-            m_scenePowerEffect->SetMotionTime(0.0f);
+            m_scenePowerEffect->SetMotionFrame(0.0f);
         }
         else
         {
@@ -436,7 +432,7 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageUpdate, 0x1098A50, Sonic::CGameOb
 
         if (minutes > 0 || seconds >= 10)
         {
-            m_sceneCountdown->SetMotionTime(0.0f);
+            m_sceneCountdown->SetMotionFrame(0.0f);
             m_sceneCountdown->m_MotionSpeed = 0.0f;
             m_sceneCountdown->m_MotionDisableFlag = true;
         }
@@ -466,7 +462,7 @@ HOOK(void, __fastcall, CustomHUD_MsgNotifySonicHud, 0x1097400, Sonic::CGameObjec
     // Ring collect animation
     if (m_sceneRingIcon && m_sceneRingIcon->m_MotionDisableFlag)
     {
-        m_sceneRingIcon->SetMotionTime(0.0f);
+        m_sceneRingIcon->SetMotionFrame(0.0f);
         m_sceneRingIcon->m_MotionDisableFlag = 0;
         m_sceneRingIcon->Update(0.0f);
     }
@@ -535,10 +531,7 @@ void CustomHUD::CreatePauseScreen(uint32_t* This, bool isPamPause)
     CustomHUD::m_isPamPause = isPamPause;
 
     Sonic::CCsdDatabaseWrapper wrapper(gameObject->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
-
-    boost::shared_ptr<Sonic::CCsdProject> spCsdProject;
-    wrapper.GetCsdProject(spCsdProject, "pausemenu");
-    m_projectPause = spCsdProject->m_rcProject;
+    m_projectPause = wrapper.GetCsdProject("pausemenu")->m_rcProject;
 
     m_scenePauseMenu = m_projectPause->CreateScene("pause_menu");
     m_scenePauseMenu->SetHideFlag(true);
@@ -561,7 +554,7 @@ void CustomHUD::OpenPauseScreen()
 {
     m_scenePauseMenu->SetHideFlag(false);
     m_scenePauseMenu->SetMotion("pause3");
-    m_scenePauseMenu->SetMotionTime(0.0f);
+    m_scenePauseMenu->SetMotionFrame(0.0f);
     m_scenePauseMenu->m_MotionDisableFlag = false;
     m_scenePauseMenu->m_MotionSpeed = 1.0f;
     m_scenePauseMenu->Update(0.0f);
@@ -586,8 +579,8 @@ void CustomHUD::OpenPauseScreen()
 void CustomHUD::ClosePauseScreen()
 {
     m_scenePauseMenu->m_MotionDisableFlag = false;
-    m_scenePauseMenu->m_PrevMotionTime = m_scenePauseMenu->m_MotionEndTime;
-    m_scenePauseMenu->m_MotionTime = m_scenePauseMenu->m_MotionEndTime;
+    m_scenePauseMenu->m_PrevMotionFrame = m_scenePauseMenu->m_MotionEndFrame;
+    m_scenePauseMenu->m_MotionFrame = m_scenePauseMenu->m_MotionEndFrame;
     *(uint32_t*)((uint32_t)m_scenePauseMenu.Get() + 0xB0) = 0;
     *(uint32_t*)((uint32_t)m_scenePauseMenu.Get() + 0xB4) = 0; // this stops the reverse animation
     m_scenePauseMenu->m_MotionSpeed = -1.0f;
@@ -601,7 +594,7 @@ void CustomHUD::RefreshPauseCursor()
 {
     m_scenePauseCursor->SetHideFlag(false);
     m_scenePauseCursor->SetMotion(CustomHUD::m_isPamPause ? cursorPamAnimations[CustomHUD::m_cursorPos] : cursorAnimations[CustomHUD::m_cursorPos]);
-    m_scenePauseCursor->SetMotionTime(0.0f);
+    m_scenePauseCursor->SetMotionFrame(0.0f);
     m_scenePauseCursor->m_MotionDisableFlag = false;
     m_scenePauseCursor->m_MotionSpeed = 1.0f;
     m_scenePauseCursor->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
@@ -613,7 +606,7 @@ HOOK(int*, __fastcall, CustomHUD_CPauseUpdate, 0x10A18D0, void* This, void* Edx,
     if (m_scenePauseMenu)
     {
         // Hide when pause is finished
-        if (m_scenePauseMenu->m_MotionSpeed == -1.0f && m_scenePauseMenu->m_MotionTime <= 0.0f)
+        if (m_scenePauseMenu->m_MotionSpeed == -1.0f && m_scenePauseMenu->m_MotionFrame <= 0.0f)
         {
             m_scenePauseMenu->SetHideFlag(true);
         }
@@ -624,7 +617,7 @@ HOOK(int*, __fastcall, CustomHUD_CPauseUpdate, 0x10A18D0, void* This, void* Edx,
         if (m_scenePauseCursor->m_MotionRepeatType == Chao::CSD::eMotionRepeatType_PlayOnce && m_scenePauseCursor->m_MotionDisableFlag)
         {
             m_scenePauseCursor->SetMotion(CustomHUD::m_isPamPause ? cursorPamLoopAnimations[CustomHUD::m_cursorPos] : cursorLoopAnimations[CustomHUD::m_cursorPos]);
-            m_scenePauseCursor->SetMotionTime(0.0f);
+            m_scenePauseCursor->SetMotionFrame(0.0f);
             m_scenePauseCursor->m_MotionDisableFlag = false;
             m_scenePauseCursor->m_MotionSpeed = 1.0f;
             m_scenePauseCursor->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_Loop;
@@ -856,7 +849,7 @@ void CustomHUD::RefreshYesNoCursor()
     {
         m_sceneYesNoCursor->SetPosition(-375.0f, 148.0f + m_yesNoCursorPos * 42.7f);
         m_sceneYesNoCursor->SetMotion("cursor_select");
-        m_sceneYesNoCursor->SetMotionTime(0.0f);
+        m_sceneYesNoCursor->SetMotionFrame(0.0f);
         m_sceneYesNoCursor->m_MotionDisableFlag = false;
         m_sceneYesNoCursor->m_MotionSpeed = 1.0f;
         m_sceneYesNoCursor->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
@@ -913,11 +906,9 @@ HOOK(void, __fastcall, CustomHUD_CPauseCStateWindowBegin, 0x42ABA0, hh::fnd::CSt
     }
 
     originalCustomHUD_CPauseCStateWindowBegin(This);
-    Sonic::CCsdDatabaseWrapper wrapper(parent->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
 
-    boost::shared_ptr<Sonic::CCsdProject> spCsdProject;
-    wrapper.GetCsdProject(spCsdProject, "windowtest");
-    m_projectYesNo = spCsdProject->m_rcProject;
+    Sonic::CCsdDatabaseWrapper wrapper(parent->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
+    m_projectYesNo = wrapper.GetCsdProject("windowtest")->m_rcProject;
 
     m_sceneYesNoTop = m_projectYesNo->CreateScene("Scene_0000");
     m_sceneYesNoTop->SetPosition(0.0f, -71.0f);
@@ -964,7 +955,7 @@ HOOK(int*, __fastcall, CustomHUD_CPauseCStateWindowAdvance, 0x42AEE0, hh::fnd::C
         if (m_sceneYesNoCursor->m_MotionRepeatType == Chao::CSD::eMotionRepeatType_PlayOnce && m_sceneYesNoCursor->m_MotionDisableFlag)
         {
             m_sceneYesNoCursor->SetMotion("cursor_set");
-            m_sceneYesNoCursor->SetMotionTime(0.0f);
+            m_sceneYesNoCursor->SetMotionFrame(0.0f);
             m_sceneYesNoCursor->m_MotionDisableFlag = false;
             m_sceneYesNoCursor->m_MotionSpeed = 1.0f;
             m_sceneYesNoCursor->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_Loop;
