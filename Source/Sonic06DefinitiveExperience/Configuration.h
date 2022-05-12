@@ -42,6 +42,8 @@ public:
     static bool m_rapidSpindash;
     static RunResultType m_run;
     static vector<string> m_runStages;
+    static bool m_gemsEnabled;
 
     static bool load(const std::string& rootPath);
+    static bool loadPostInit();
 };

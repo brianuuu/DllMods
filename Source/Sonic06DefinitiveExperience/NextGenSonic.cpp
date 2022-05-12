@@ -1041,6 +1041,33 @@ HOOK(void, __fastcall, NextGenSonic_CSonicUpdateEliseShield, 0xE6BF20, void* Thi
     originalNextGenSonic_CSonicUpdateEliseShield(This, Edx, dt);
 }
 
+//-------------------------------------------------------
+// Gems
+//-------------------------------------------------------
+HOOK(void, __fastcall, NextGenSonic_CSonicUpdateGems, 0xE6BF20, void* This, void* Edx, float* dt)
+{
+    bool playChangeSound = false;
+    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+    if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadRight))
+    {
+        S06HUD_API::ScrollSonicGem(true, true);
+        playChangeSound = true;
+    }
+    else if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadLeft))
+    {
+        S06HUD_API::ScrollSonicGem(false, true);
+        playChangeSound = true;
+    }
+
+    if (playChangeSound)
+    {
+        static SharedPtrTypeless soundHandle;
+        Common::SonicContextPlaySound(soundHandle, 80041028, 1);
+    }
+
+    originalNextGenSonic_CSonicUpdateGems(This, Edx, dt);
+}
+
 //---------------------------------------------------
 // Main Apply Patches
 //---------------------------------------------------
@@ -1238,5 +1265,16 @@ void NextGenSonic::applyPatches()
 
         // Fix Homing Attack getting locked after using it once on water
         WRITE_NOP(0x119C932, 7);
+    }
+}
+
+void NextGenSonic::applyPatchesPostInit()
+{
+    //-------------------------------------------------------
+    // Gems
+    //-------------------------------------------------------
+    if (!m_isElise && Configuration::m_gemsEnabled)
+    {
+        INSTALL_HOOK(NextGenSonic_CSonicUpdateGems);
     }
 }

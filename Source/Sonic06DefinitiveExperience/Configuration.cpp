@@ -14,10 +14,13 @@ bool Configuration::m_cameraInvertY = false;
 bool Configuration::m_rapidSpindash = false;
 Configuration::RunResultType Configuration::m_run = Configuration::RunResultType::Disable;
 vector<string> Configuration::m_runStages = {};
+bool Configuration::m_gemsEnabled = false;
 
+std::string iniPath;
 bool Configuration::load(const std::string& rootPath)
 {
-    const INIReader reader(rootPath + "Sonic06DefinitiveExperience.ini");
+    iniPath = rootPath + "Sonic06DefinitiveExperience.ini";
+    const INIReader reader(iniPath);
     if (reader.ParseError() != 0)
     {
         return false;
@@ -257,6 +260,35 @@ bool Configuration::load(const std::string& rootPath)
         WRITE_NOP(0x1053351, 16);
         WRITE_MEMORY(0x10538EB, uint8_t, 0xE9, 0x8F, 0x00, 0x00, 0x00, 0x90);
     }
+
+    return true;
+}
+
+bool Configuration::loadPostInit()
+{
+    const INIReader reader(iniPath); 
+    if (iniPath.empty() || reader.ParseError() != 0)
+    {
+        return false;
+    }
+
+    // --------------Sonic--------------
+    bool bGemRed = reader.GetBoolean("Main", "bGemRed", false);
+    bool bGemGreen = reader.GetBoolean("Main", "bGemGreen", false);
+    bool bGemPurple = reader.GetBoolean("Main", "bGemPurple", false);
+    bool bGemSky = reader.GetBoolean("Main", "bGemSky", false);
+    bool bGemWhite = reader.GetBoolean("Main", "bGemWhite", false);
+    bool bGemYellow = reader.GetBoolean("Main", "bGemYellow", false);
+    m_gemsEnabled = bGemRed || bGemGreen || bGemPurple || bGemSky || bGemWhite || bGemYellow;
+
+    S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Red, bGemRed);
+    S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Green, bGemGreen);
+    S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Purple, bGemPurple);
+    S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Sky, bGemSky);
+    S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_White, bGemWhite);
+    S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Yellow, bGemYellow);
+    S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Blue, m_gemsEnabled);
+    S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_None, !m_gemsEnabled);
 
     return true;
 }

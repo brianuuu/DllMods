@@ -136,4 +136,12 @@ extern "C" __declspec(dllexport) void PostInit()
         MessageBox(nullptr, TEXT("This mod requires the latest version of 'Sonic 06 HUD' enabled."), TEXT("Sonic 06 Definitive Experience"), MB_ICONERROR);
         exit(-1);
     }
+
+    if (!Configuration::loadPostInit())
+    {
+        MessageBox(NULL, L"Failed to parse Sonic06DefinitiveExperience.ini", NULL, MB_ICONERROR);
+    }
+
+    // Post init apply patches
+    NextGenPhysics::applyPatchesPostInit();
 }

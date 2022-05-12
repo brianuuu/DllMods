@@ -37,3 +37,4 @@
 
 #include <Common.h>
 #include <StateManager.h>
+#include "Sonic06HUDAPI.h"

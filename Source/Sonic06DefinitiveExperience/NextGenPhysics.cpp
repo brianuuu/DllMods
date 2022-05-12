@@ -499,6 +499,19 @@ void NextGenPhysics::applyPatches()
     }
 }
 
+void NextGenPhysics::applyPatchesPostInit()
+{
+    switch (Configuration::m_model)
+    {
+    case Configuration::ModelType::Sonic:
+    {
+        NextGenSonic::applyPatchesPostInit();
+        break;
+    }
+    default: break;
+    }
+}
+
 void NextGenPhysics::applyNoTrickPatches()
 {
     // No trick rainbow ring, but keep rainbow ring animation

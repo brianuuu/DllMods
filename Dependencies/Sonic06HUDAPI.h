@@ -19,9 +19,9 @@ public:
 
 private:
 	LIB_FUNCTION(bool, "Sonic06HUD.dll", API_IsYesNoWindowDrawing);
-	LIB_FUNCTION(SonicGemType, "Sonic06HUD.dll", API_ScrollSonicGem);
+	LIB_FUNCTION(SonicGemType, "Sonic06HUD.dll", API_ScrollSonicGem, bool toRight, bool ignoreNone);
 	LIB_FUNCTION(SonicGemType, "Sonic06HUD.dll", API_GetSonicGem);
-	LIB_FUNCTION(void, "Sonic06HUD.dll", API_SetSonicGemEnabled);
+	LIB_FUNCTION(void, "Sonic06HUD.dll", API_SetSonicGemEnabled, SonicGemType type, bool enabled);
 
 public:
     static S06HUD_API* GetInstance()

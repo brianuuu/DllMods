@@ -15,6 +15,7 @@ public:
 
 	static bool m_isElise;
 	static void applyPatches();
+	static void applyPatchesPostInit();
 
 	// Stomping
 	static bool m_bounced;
