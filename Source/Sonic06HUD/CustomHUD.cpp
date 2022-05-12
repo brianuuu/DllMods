@@ -997,13 +997,13 @@ void CustomHUD::applyPatches()
     //---------------------------------------------------
     // Main Gameplay
     //---------------------------------------------------
-    INSTALL_HOOK(CustomHUD_MsgRestartStage);
+    WRITE_MEMORY(0x16A467C, void*, CHudSonicStageRemoveCallback);
     INSTALL_HOOK(CustomHUD_CHudSonicStageInit);
     INSTALL_HOOK(CustomHUD_CHudSonicStageUpdate);
     INSTALL_HOOK(CustomHUD_MsgSetPinballHud);
     INSTALL_HOOK(CustomHUD_MsgNotifySonicHud);
     INSTALL_HOOK(CustomHUD_MsgGetMissionLimitTime);
-    WRITE_MEMORY(0x16A467C, void*, CHudSonicStageRemoveCallback);
+    INSTALL_HOOK(CustomHUD_MsgRestartStage);
 
     // Disable original HUD
     WRITE_JUMP(0x109B1AA, (void*)0x109B485); // life init
@@ -1023,6 +1023,7 @@ void CustomHUD::applyPatches()
     //---------------------------------------------------
     INSTALL_HOOK(CustomHUD_CPauseUpdate);
 
+    WRITE_MEMORY(0x16A41A4, void*, CPauseRemoveCallback);
     INSTALL_HOOK(CustomHUD_CPauseVisualActInit);
     INSTALL_HOOK(CustomHUD_CPauseVisualActOpened);
     INSTALL_HOOK(CustomHUD_CPauseVisualActCase);
@@ -1034,7 +1035,6 @@ void CustomHUD::applyPatches()
     INSTALL_HOOK(CustomHUD_CPauseCStateSelectAdvance);
     INSTALL_HOOK(CustomHUD_CPauseCStateCloseBegin);
     INSTALL_HOOK(CustomHUD_CGameplayFlowStageCStateStageUpdating);
-    WRITE_MEMORY(0x16A41A4, void*, CPauseRemoveCallback);
 
     // Allow UI to goto Start Over even with 0 lives
     WRITE_JUMP(0x10A0FCA, (void*)0x10A1131);
