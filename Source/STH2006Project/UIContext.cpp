@@ -114,13 +114,16 @@ void UIContext::update()
     if (*(bool*)0x1A430D7)
     {
         // Draw imgui here
-        Itembox::draw();
-        ScoreManager::draw();
+        if (!S06HUD_API::IsYesNoWindowDrawing())
+        {
+            Itembox::draw();
+            ScoreManager::draw();
 
-        ImGui::PushFont(fontSubtitle);
-        SubtitleUI::draw();
-        LoadingUI::draw();
-        ImGui::PopFont();
+            ImGui::PushFont(fontSubtitle);
+            SubtitleUI::draw();
+            LoadingUI::draw();
+            ImGui::PopFont();
+        }
     }
 
     ImGui::PopFont();
