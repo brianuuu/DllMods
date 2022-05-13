@@ -1,6 +1,7 @@
 ﻿#include "CustomHUD.h"
 #include "UIContext.h"
 #include "Application.h"
+#include "Configuration.h"
 
 //---------------------------------------------------
 // Utilities
@@ -221,34 +222,55 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
 
     size_t& flags = ((size_t*)This)[151];
 
-    if (flags & 0x1 || Common::IsCurrentStageMission())
+    int iconIndex = Configuration::m_characterIcon;
+    if (flags & 0x1 || Common::IsCurrentStageMission()) // Life
     {
         m_sceneLifeCount = m_projectPlayScreen->CreateScene("life");
         m_sceneLifeCount->SetMotionFrame(m_sceneLifeCount->m_MotionEndFrame);
         m_sceneLifeCount->m_MotionSpeed = 1.0f;
         m_sceneLifeCount->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
-        int iconIndex = 0;
         switch (S06DE_API::GetModelType())
         {
-        case S06DE_API::ModelType::Blaze: iconIndex = 8;
+        case S06DE_API::ModelType::Sonic:       iconIndex = 0; break;
+        case S06DE_API::ModelType::SonicElise:  iconIndex = 0; break;
+        case S06DE_API::ModelType::Blaze:       iconIndex = 8; break;
         }
         m_sceneLifeCount->GetNode("character_icon")->SetPatternIndex(iconIndex);
 
         m_sceneLifeBG = m_projectPlayScreen->CreateScene("life_ber_anime");
+        if (Configuration::m_uiColor)
+        {
+            if (iconIndex == 1)
+            {
+                m_sceneLifeBG->SetMotion("shadow_in");
+            }
+            else if (iconIndex == 2)
+            {
+                m_sceneLifeBG->SetMotion("silver_in");
+            }
+        }
         m_sceneLifeBG->SetMotionFrame(m_sceneLifeBG->m_MotionEndFrame);
         m_sceneLifeBG->m_MotionSpeed = 0.0f;
     }
 
-    if (flags & 0x2)
+    if (flags & 0x2) // Time
     {
         m_sceneTimeCount = m_projectPlayScreen->CreateScene("time");
         m_sceneTimeCount->m_MotionSpeed = 0.0f;
+        if (Configuration::m_uiColor && iconIndex <= 2)
+        {
+            m_sceneTimeCount->m_MotionFrame = (float)iconIndex;
+        }
     }
 
-    if (flags & 0x4)
+    if (flags & 0x4) // Ring
     {
         m_sceneRingCount = m_projectPlayScreen->CreateScene("ring");
-        m_sceneRingCount->m_MotionSpeed = 0.0f;
+        m_sceneRingCount->m_MotionSpeed = 0.0f; 
+        if (Configuration::m_uiColor && iconIndex <= 2)
+        {
+            m_sceneRingCount->m_MotionFrame = (float)iconIndex;
+        }
 
         m_sceneRingIcon = m_projectPlayScreen->CreateScene("ring_anime");
         m_sceneRingIcon->SetMotionFrame(m_sceneRingIcon->m_MotionEndFrame);
@@ -264,6 +286,10 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
     {
         m_scenePowerBG = m_projectPlayScreen->CreateScene("power");
         m_scenePowerBG->m_MotionSpeed = 0.0f;
+        if (Configuration::m_uiColor && iconIndex <= 2)
+        {
+            m_scenePowerBG->m_MotionFrame = (float)iconIndex;
+        }
 
         m_scenePowerBar = m_projectPlayScreen->CreateScene("bar_ue");
         m_scenePowerBar->m_MotionSpeed = 0.0f;
@@ -286,6 +312,10 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
     {
         m_sceneScore = m_projectPlayScreen->CreateScene("score");
         m_sceneScore->m_MotionSpeed = 0.0f;
+        if (Configuration::m_uiColor && iconIndex <= 2)
+        {
+            m_sceneScore->m_MotionFrame = (float)iconIndex;
+        }
     }
 
     if (S06DE_API::GetModelType() == S06DE_API::ModelType::Sonic)
