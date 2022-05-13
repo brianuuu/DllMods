@@ -47,5 +47,9 @@ public:
 	static float m_shieldRechargeRate;
 	static float m_shieldNoChargeTime;
 	static float m_shieldNoChargeDelay;
+
+	// Sonic's Gems
+	static S06HUD_API::SonicGemType m_sonicGemType;
+	static void ChangeGems(S06HUD_API::SonicGemType oldType, S06HUD_API::SonicGemType newType);
 };
 

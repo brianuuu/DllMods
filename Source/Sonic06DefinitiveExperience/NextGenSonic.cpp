@@ -1047,30 +1047,132 @@ HOOK(void, __fastcall, NextGenSonic_CSonicUpdateEliseShield, 0xE6BF20, void* Thi
 //-------------------------------------------------------
 // Gems
 //-------------------------------------------------------
+S06HUD_API::SonicGemType NextGenSonic::m_sonicGemType = S06HUD_API::SonicGemType::SGT_None;
 FUNCTION_PTR(bool*, __thiscall, CSingleElementChangeMaterial, 0x701CC0, Hedgehog::Mirage::CSingleElement* singleElement, hh::mr::CMaterialData* from, boost::shared_ptr<hh::mr::CMaterialData>& to);
 FUNCTION_PTR(bool*, __thiscall, CSingleElementResetMaterial, 0x701830, Hedgehog::Mirage::CSingleElement* singleElement, hh::mr::CMaterialData* mat);
-HOOK(void, __fastcall, NextGenSonic_CSonicUpdateGems, 0xE6BF20, void* This, void* Edx, float* dt)
+
+float const cSonic_redGemDrainRate = 10.0f;
+void NextGenSonic::ChangeGems(S06HUD_API::SonicGemType oldType, S06HUD_API::SonicGemType newType)
 {
-    bool playChangeSound = false;
-    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-    if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadRight))
+    m_sonicGemType = newType;
+    if (newType == S06HUD_API::SonicGemType::SGT_None || newType == S06HUD_API::SonicGemType::SGT_Blue)
     {
-        S06HUD_API::ScrollSonicGem(true, false);
-        playChangeSound = true;
+        WRITE_MEMORY(0xDFF268, uint8_t, 0xF3, 0x0F, 0x10, 0x83, 0xBC);
+        WRITE_MEMORY(0xDFE05F, uint8_t, 0xF3, 0x0F, 0x10, 0x86, 0xBC);
     }
-    else if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadLeft))
+    else
     {
-        S06HUD_API::ScrollSonicGem(false, false);
-        playChangeSound = true;
+        // Disable boost for normal Sonic only
+        WRITE_JUMP(0xDFF268, NextGenSonic_groundBoostSuperSonicOnly);
+        WRITE_JUMP(0xDFE05F, NextGenSonic_airBoostSuperSonicOnly);
     }
 
-    if (playChangeSound)
+    // Reverts for previous Gem abilities
+    switch (oldType)
     {
+    case S06HUD_API::SonicGemType::SGT_Red:
+    {
+        *(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19D }) = false;
+        *(float*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x1A4 }) = 1.0f;
+        break;
+    }
+    }
+
+    // Hooks for Gem abilities
+    switch (newType)
+    {
+    case S06HUD_API::SonicGemType::SGT_Red:
+    {
+        *(float*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x1A4 }) = 0.5f;
+        break;
+    }
+    }
+
+    // Handle mesh/material change
+    auto const& model = Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_spCharacterModel;
+    model->m_spModel->m_NodeGroupModels[4]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_None);
+    model->m_spModel->m_NodeGroupModels[5]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_None);
+    model->m_spModel->m_NodeGroupModels[6]->m_Visible = (m_sonicGemType != S06HUD_API::SonicGemType::SGT_None);
+    model->m_spModel->m_NodeGroupModels[7]->m_Visible = (m_sonicGemType != S06HUD_API::SonicGemType::SGT_None);
+
+    /*hh::mr::CMirageDatabaseWrapper wrapper(Sonic::CGameDocument::GetInstance()->m_pMember->m_spDatabase.get());
+    boost::shared_ptr<hh::mr::CMaterialData> m1 = wrapper.GetMaterialData("ch_06_sonic_cloth");
+    boost::shared_ptr<hh::mr::CMaterialData> m2 = wrapper.GetMaterialData("ch_06_sonic_belt");
+    boost::shared_ptr<hh::mr::CMaterialData> m3 = wrapper.GetMaterialData("ch_06_sonic_red");
+    boost::shared_ptr<hh::mr::CMaterialData> m4 = wrapper.GetMaterialData("ch_06_sonic_sole");
+    boost::shared_ptr<hh::mr::CMaterialData> m5 = wrapper.GetMaterialData("invisible", 1);
+    CSingleElementChangeMaterial(model.get(), m1.get(), m5);
+    CSingleElementChangeMaterial(model.get(), m2.get(), m5);
+    CSingleElementChangeMaterial(model.get(), m3.get(), m5);
+    CSingleElementChangeMaterial(model.get(), m4.get(), m5);*/
+}
+
+HOOK(int, __fastcall, NextGenSonicGems_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
+{
+    NextGenSonic::ChangeGems(NextGenSonic::m_sonicGemType, S06HUD_API::SonicGemType::SGT_None);
+    return originalNextGenSonicGems_MsgRestartStage(This, Edx, message);
+}
+
+HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, void* This, void* Edx, float* dt)
+{
+    bool outOfControl = Common::GetSonicStateFlags()->OutOfControl;
+    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+    if (!outOfControl)
+    {
+        if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadRight))
+        {
+            S06HUD_API::ScrollSonicGem(true, false);
+        }
+        else if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadLeft))
+        {
+            S06HUD_API::ScrollSonicGem(false, false);
+        }
+    }
+
+    S06HUD_API::SonicGemType newGemType = S06HUD_API::GetSonicGem();
+    if (NextGenSonic::m_sonicGemType != newGemType)
+    {
+        // Play gem change sfx
         static SharedPtrTypeless soundHandle;
         Common::SonicContextPlaySound(soundHandle, 80041028, 1);
+
+        NextGenSonic::ChangeGems(NextGenSonic::m_sonicGemType, newGemType);
     }
 
-    originalNextGenSonic_CSonicUpdateGems(This, Edx, dt);
+    if (!outOfControl)
+    {
+        switch (NextGenSonic::m_sonicGemType)
+        {
+        case S06HUD_API::SonicGemType::SGT_Red:
+        {
+            float* boost = Common::GetPlayerBoost();
+            bool enabled = padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && *boost > 0.0f;
+
+            // Enable slowdown
+            *(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19D }) = enabled;
+
+            // Drain gauge
+            if (enabled)
+            {
+                *boost = max(0.0f, *boost - cSonic_redGemDrainRate * *dt);
+            }
+            break;
+        }
+        }
+    }
+
+    originalNextGenSonicGems_CSonicUpdate(This, Edx, dt);
+}
+
+HOOK(int, __fastcall, NextGenSonicGems_CGameplayFlowAdvance, 0xD02E00, uint32_t* This, void* Edx, float dt)
+{
+    float scale = 1.0f;
+    if (NextGenSonic::m_sonicGemType == S06HUD_API::SonicGemType::SGT_Red
+    && *(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19D }))
+    {
+        scale = 0.5f;
+    }
+    return originalNextGenSonicGems_CGameplayFlowAdvance(This, Edx, dt * scale);
 }
 
 //---------------------------------------------------
@@ -1278,14 +1380,19 @@ void NextGenSonic::applyPatches()
 
 void NextGenSonic::applyPatchesPostInit()
 {
+    if (!Configuration::m_characterMoveset) return;
+
     //-------------------------------------------------------
     // Gems
     //-------------------------------------------------------
     if (!m_isElise && Configuration::m_gemsEnabled)
     {
-        INSTALL_HOOK(NextGenSonic_CSonicUpdateGems);
+        INSTALL_HOOK(NextGenSonicGems_CSonicUpdate);
+        INSTALL_HOOK(NextGenSonicGems_MsgRestartStage);
 
         // Ignore D-pad input for Sonic's control
         WRITE_JUMP(0xD97B56, (void*)0xD97B9E);
+
+        INSTALL_HOOK(NextGenSonicGems_CGameplayFlowAdvance);
     }
 }
