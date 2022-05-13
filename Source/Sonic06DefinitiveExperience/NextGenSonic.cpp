@@ -1088,6 +1088,9 @@ void NextGenSonic::applyPatches()
         // Always disable stomp voice and sfx for Sonic
         WRITE_MEMORY(0x1254E04, int, -1);
         WRITE_MEMORY(0x1254F23, int, -1);
+
+        // Don't change to ball model during drift
+        WRITE_NOP(0xDF30AB, 0xD);
     }
 
     if (!Configuration::m_characterMoveset) return;
