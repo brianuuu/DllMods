@@ -273,22 +273,23 @@ bool Configuration::loadPostInit()
     }
 
     // --------------Sonic--------------
+    bool bGemBlue = reader.GetBoolean("Main", "bGemBlue", false);
     bool bGemRed = reader.GetBoolean("Main", "bGemRed", false);
     bool bGemGreen = reader.GetBoolean("Main", "bGemGreen", false);
     bool bGemPurple = reader.GetBoolean("Main", "bGemPurple", false);
     bool bGemSky = reader.GetBoolean("Main", "bGemSky", false);
     bool bGemWhite = reader.GetBoolean("Main", "bGemWhite", false);
     bool bGemYellow = reader.GetBoolean("Main", "bGemYellow", false);
-    m_gemsEnabled = bGemRed || bGemGreen || bGemPurple || bGemSky || bGemWhite || bGemYellow;
+    m_gemsEnabled = bGemBlue || bGemRed || bGemGreen || bGemPurple || bGemSky || bGemWhite || bGemYellow;
 
+    S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Blue, bGemBlue);
     S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Red, bGemRed);
     S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Green, bGemGreen);
     S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Purple, bGemPurple);
     S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Sky, bGemSky);
     S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_White, bGemWhite);
     S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Yellow, bGemYellow);
-    S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Blue, m_gemsEnabled);
-    S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_None, !m_gemsEnabled);
+    S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_None, m_gemsEnabled);
 
     return true;
 }

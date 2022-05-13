@@ -1047,18 +1047,20 @@ HOOK(void, __fastcall, NextGenSonic_CSonicUpdateEliseShield, 0xE6BF20, void* Thi
 //-------------------------------------------------------
 // Gems
 //-------------------------------------------------------
+FUNCTION_PTR(bool*, __thiscall, CSingleElementChangeMaterial, 0x701CC0, Hedgehog::Mirage::CSingleElement* singleElement, hh::mr::CMaterialData* from, boost::shared_ptr<hh::mr::CMaterialData>& to);
+FUNCTION_PTR(bool*, __thiscall, CSingleElementResetMaterial, 0x701830, Hedgehog::Mirage::CSingleElement* singleElement, hh::mr::CMaterialData* mat);
 HOOK(void, __fastcall, NextGenSonic_CSonicUpdateGems, 0xE6BF20, void* This, void* Edx, float* dt)
 {
     bool playChangeSound = false;
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
     if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadRight))
     {
-        S06HUD_API::ScrollSonicGem(true, true);
+        S06HUD_API::ScrollSonicGem(true, false);
         playChangeSound = true;
     }
     else if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadLeft))
     {
-        S06HUD_API::ScrollSonicGem(false, true);
+        S06HUD_API::ScrollSonicGem(false, false);
         playChangeSound = true;
     }
 
@@ -1279,5 +1281,8 @@ void NextGenSonic::applyPatchesPostInit()
     if (!m_isElise && Configuration::m_gemsEnabled)
     {
         INSTALL_HOOK(NextGenSonic_CSonicUpdateGems);
+
+        // Ignore D-pad input for Sonic's control
+        WRITE_JUMP(0xD97B56, (void*)0xD97B9E);
     }
 }
