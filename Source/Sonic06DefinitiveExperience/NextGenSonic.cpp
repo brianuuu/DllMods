@@ -1050,9 +1050,54 @@ FUNCTION_PTR(bool*, __thiscall, CSingleElementResetMaterial, 0x701830, Hedgehog:
 
 float const cSonic_gemDrainRate = 10.0f;
 float const cSonic_yellowGemCost = 100.0f;
+float const cSonic_whiteGemCost = 10.0f;
+float const cSonic_whiteGemSpeed = 100.0f;
+bool NextGenSonic::m_whiteGemEnabled = false;
+Eigen::Vector3f NextGenSonic::m_whiteGemPosition = Eigen::Vector3f::Zero();
+
+bool NextGenSonicGems_WhiteGemEnergyCheck()
+{
+    return Sonic::Player::CPlayerSpeedContext::GetInstance()->m_ChaosEnergy >= cSonic_whiteGemCost;
+}
+
+void __declspec(naked) NextGenSonicGems_WhiteGemAirAction()
+{
+    static uint32_t successAddress = 0xDFFEBA;
+    static uint32_t returnAddress = 0xDFFEAD;
+    static uint32_t fnButtonPress = 0xD97E00;
+    __asm
+    {
+        // White Gem
+        mov     eax, [esi + 11Ch]
+        push    edi
+        mov     edi, 20h // Right Trigger
+        call    [fnButtonPress]
+        pop     edi
+
+        test    al, al
+        jz      original
+
+        // Check if we have enough juice
+        call    NextGenSonicGems_WhiteGemEnergyCheck
+        test    al, al
+        jnz     jump
+
+        // original function
+        original:
+        mov     eax, [esi + 11Ch]
+        jmp     [returnAddress]
+
+        jump:
+        mov     NextGenSonic::m_whiteGemEnabled, 1
+        jmp     [successAddress]
+    }
+}
+
 void NextGenSonic::ChangeGems(S06HUD_API::SonicGemType oldType, S06HUD_API::SonicGemType newType)
 {
     m_sonicGemType = newType;
+
+    // Blue/No Gem
     if (newType == S06HUD_API::SonicGemType::SGT_None || newType == S06HUD_API::SonicGemType::SGT_Blue)
     {
         WRITE_MEMORY(0xDFF268, uint8_t, 0xF3, 0x0F, 0x10, 0x83, 0xBC);
@@ -1065,25 +1110,26 @@ void NextGenSonic::ChangeGems(S06HUD_API::SonicGemType oldType, S06HUD_API::Soni
         WRITE_JUMP(0xDFE05F, NextGenSonic_airBoostSuperSonicOnly);
     }
 
-    // Reverts for previous Gem abilities
-    switch (oldType)
-    {
-    case S06HUD_API::SonicGemType::SGT_Red:
-    {
-        *(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19D }) = false;
-        *(float*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x1A4 }) = 1.0f;
-        break;
-    }
-    }
-
-    // Hooks for Gem abilities
-    switch (newType)
-    {
-    case S06HUD_API::SonicGemType::SGT_Red:
+    // Red Gem
+    *(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19D }) = false;
+    if (newType == S06HUD_API::SonicGemType::SGT_Red)
     {
         *(float*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x1A4 }) = 0.5f;
-        break;
     }
+    else
+    {
+        *(float*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x1A4 }) = 1.0f;
+    }
+
+    // White Gem
+    m_whiteGemEnabled = false;
+    if (newType == S06HUD_API::SonicGemType::SGT_White)
+    {
+        WRITE_JUMP(0xDFFEA3, NextGenSonicGems_WhiteGemAirAction);
+    }
+    else
+    {
+        WRITE_MEMORY(0xDFFEA3, uint8_t, 0x84, 0xC0, 0x74, 0x3C, 0x8B);
     }
 
     // Handle mesh/material change
@@ -1184,7 +1230,7 @@ HOOK(int, __fastcall, NextGenSonicGems_CGameplayFlowAdvance, 0xD02E00, uint32_t*
     return originalNextGenSonicGems_CGameplayFlowAdvance(This, Edx, dt * scale);
 }
 
-static SharedPtrTypeless soundHandle_thunderShield;
+SharedPtrTypeless soundHandle_thunderShield;
 HOOK(bool*, __fastcall, NextGenSonicGems_CPlayerSpeedStatePluginThunderBarrierBegin, 0x11DD970, void* This)
 {
     // Play 06 yellow gem sfx (loops)
@@ -1208,6 +1254,111 @@ HOOK(int, __fastcall, NextGenSonicGems_CPlayerSpeedStatePluginThunderBarrierEnd,
     soundHandle_thunderShield.reset();
     return originalNextGenSonicGems_CPlayerSpeedStatePluginThunderBarrierEnd(This);
 }
+
+HOOK(int, __stdcall, NextGenSonicGems_HomingUpdate, 0xE5FF10, Sonic::Player::CPlayerSpeedContext* context)
+{
+    return originalNextGenSonicGems_HomingUpdate(context);
+}
+
+HOOK(int, __fastcall, NextGenSonicGems_CSonicStateHomingAttackBegin, 0x1232040, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+
+    // Play white gem charge
+    if (NextGenSonic::m_whiteGemEnabled)
+    {
+        static SharedPtrTypeless soundHandle;
+        Common::SonicContextPlaySound(soundHandle, 80041025, 1);
+
+        // Skip initial speed change, out of control and lotus effect
+        WRITE_JUMP(0x1232083, (void*)0x1232450);
+        WRITE_JUMP(0x1232508, (void*)0x1232511);
+
+        // Need to set to prevent Sonic moving in Y-axis?
+        *(uint32_t*)((uint32_t)context + 1968) = 0xCCBEBC20;
+        Common::GetSonicStateFlags()->EnableHomingAttack = false;
+
+        // Remember position
+        NextGenSonic::m_whiteGemPosition = context->m_spMatrixNode->m_Transform.m_Position;
+
+        // Deduct chaos energy
+        context->m_ChaosEnergy = max(0.0f, context->m_ChaosEnergy - cSonic_whiteGemCost);
+    }
+
+    int result = originalNextGenSonicGems_CSonicStateHomingAttackBegin(This);
+
+    // Revert original code
+    WRITE_MEMORY(0x1232083, uint8_t, 0x83, 0xBB, 0x98, 0x0E, 0x00);
+    WRITE_MEMORY(0x1232508, uint8_t, 0x6A, 0x00, 0x8B, 0xC3, 0xE8);
+
+    return result;
+}
+
+HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAdvance, 0x1231C60, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+    if (NextGenSonic::m_whiteGemEnabled)
+    {
+        Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+        if (padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger))
+        {
+            originalNextGenSonicGems_HomingUpdate(context);
+
+            Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+            Common::SetPlayerPosition(NextGenSonic::m_whiteGemPosition);
+            This->m_Time = 0.0f;
+
+            return;
+        }
+        else
+        {
+            NextGenSonic::m_whiteGemEnabled = false;
+
+            // Release sfx/pfx
+            static SharedPtrTypeless soundHandle;
+            Common::SonicContextPlaySound(soundHandle, 80041026, 1);
+            Common::SonicContextRequestLocusEffect();
+
+            // Get homing target position and apply initial velocity
+            if (context->m_HomingAttackTargetActorID)
+            {
+                context->m_pPlayer->SendMessage(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&context->m_HomingAttackPosition));
+                Eigen::Vector3f velocity = (context->m_HomingAttackPosition - context->m_spMatrixNode->m_Transform.m_Position).normalized() * cSonic_whiteGemSpeed;
+                Common::SetPlayerVelocity(velocity);
+
+                // Set OutOfControl
+                FUNCTION_PTR(int, __stdcall, SetOutOfControl, 0xE5AC00, Sonic::Player::CPlayerSpeedContext * context, float duration);
+                *(int*)((uint32_t)context + 0x80) = SetOutOfControl(context, -1.0f);
+            }
+            else
+            {
+                Eigen::Vector3f dir;
+                Common::GetPlayerWorldDirection(dir, true);
+                Common::SetPlayerVelocity(dir * 30.0f);
+            }
+
+            // Send MsgStartHomingChase message to homing target actor
+            context->m_pPlayer->SendMessage(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgStartHomingChase>());
+
+            // Don't stop by ground on homing attack
+            WRITE_MEMORY(0x1231E36, uint8_t, 0xEB, 0x5E);
+        }
+    }
+
+    originalNextGenSonicGems_CSonicStateHomingAttackAdvance(This);
+}
+
+HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackEnd, 0x1231F80, void* This)
+{
+    NextGenSonic::m_whiteGemEnabled = false;
+    Common::GetSonicStateFlags()->OutOfControl = false;
+
+    // Revert stop by ground
+    WRITE_MEMORY(0x1231E36, uint8_t, 0x74, 0x17);
+
+    originalNextGenSonicGems_CSonicStateHomingAttackEnd(This);
+}
+
 
 //---------------------------------------------------
 // Main Apply Patches
@@ -1433,5 +1584,10 @@ void NextGenSonic::applyPatchesPostInit()
         // Yellow Gem
         INSTALL_HOOK(NextGenSonicGems_CPlayerSpeedStatePluginThunderBarrierBegin);
         INSTALL_HOOK(NextGenSonicGems_CPlayerSpeedStatePluginThunderBarrierEnd);
+
+        // White Gem
+        INSTALL_HOOK(NextGenSonicGems_CSonicStateHomingAttackBegin);
+        INSTALL_HOOK(NextGenSonicGems_CSonicStateHomingAttackAdvance);
+        INSTALL_HOOK(NextGenSonicGems_CSonicStateHomingAttackEnd);
     }
 }
