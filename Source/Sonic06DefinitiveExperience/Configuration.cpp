@@ -50,20 +50,20 @@ bool Configuration::load(const std::string& rootPath)
     }
 
     // --------------Camera--------------
-    m_camera = reader.GetBoolean("Main", "bCamera", false);
-    m_cameraInvertX = reader.GetBoolean("Main", "bCameraInvertX", false);
-    m_cameraInvertY = reader.GetBoolean("Main", "bCameraInvertY", false);
+    m_camera = reader.GetBoolean("Camera", "bCamera", false);
+    m_cameraInvertX = reader.GetBoolean("Camera", "bCameraInvertX", false);
+    m_cameraInvertY = reader.GetBoolean("Camera", "bCameraInvertY", false);
 
     // --------------Physics--------------
-    m_physics = reader.GetBoolean("Main", "bPhysics", false);
-    m_characterMoveset = reader.GetBoolean("Main", "bCharacterMoveset", false);
-    m_noTrick = reader.GetBoolean("Main", "bNoTrick", false);
+    m_physics = reader.GetBoolean("Physics", "bPhysics", false);
+    m_characterMoveset = reader.GetBoolean("Physics", "bCharacterMoveset", false);
+    m_noTrick = reader.GetBoolean("Physics", "bNoTrick", false);
 
     // --------------Sonic--------------
-    m_rapidSpindash = reader.GetBoolean("Main", "bRapidSpindash", false);
+    m_rapidSpindash = reader.GetBoolean("Sonic", "bRapidSpindash", false);
 
     // Get running goal custom stage list
-    string runStages = reader.Get("Main", "sRunStages", "");
+    string runStages = reader.Get("Sonic", "sRunStages", "");
     string delimiter = ",";
     size_t pos = 0;
     string token;
@@ -74,7 +74,7 @@ bool Configuration::load(const std::string& rootPath)
         runStages.erase(0, pos + delimiter.length());
     }
     m_runStages.push_back(runStages);
-    m_run = (RunResultType)reader.GetInteger("Main", "nRun", 0);
+    m_run = (RunResultType)reader.GetInteger("Sonic", "nRun", 0);
 
     string str;
 
@@ -239,14 +239,14 @@ bool Configuration::load(const std::string& rootPath)
 
     // Optional codes
     // Patch "Disable Homing Reticle" by "Hyper"
-    if (reader.GetBoolean("Main", "bNoCursor", false))
+    if (reader.GetBoolean("Physics", "bNoCursor", false))
     {
         WRITE_MEMORY(0xB6AB8C, uint8_t, 0xE9, 0xF7, 0x01, 0x00, 0x00);
         WRITE_MEMORY(0xDEBC36, uint8_t, 0x00);
     }
 
     // Patch "Boost Gauge Starts Empty" by "PTKickass"
-    if (reader.GetBoolean("Main", "bNoBoost", false))
+    if (reader.GetBoolean("Physics", "bNoBoost", false))
     {
         WRITE_MEMORY(0xE64F2F, uint32_t, 0x90C9570F);
         WRITE_NOP(0xE64F33, 4);
@@ -254,7 +254,7 @@ bool Configuration::load(const std::string& rootPath)
 
     // Patch "All Rings Can Be Light Dashed" by "Skyth"
     // Patch "Disable Light Dash Particles" by "Hyper"
-    if (reader.GetBoolean("Main", "bLightdashAll", false))
+    if (reader.GetBoolean("Physics", "bLightdashAll", false))
     {
         WRITE_MEMORY(0x105334D, uint32_t, 0x10C47C6);
         WRITE_NOP(0x1053351, 16);
@@ -273,13 +273,13 @@ bool Configuration::loadPostInit()
     }
 
     // --------------Sonic--------------
-    bool bGemBlue = reader.GetBoolean("Main", "bGemBlue", false);
-    bool bGemRed = reader.GetBoolean("Main", "bGemRed", false);
-    bool bGemGreen = reader.GetBoolean("Main", "bGemGreen", false);
-    bool bGemPurple = reader.GetBoolean("Main", "bGemPurple", false);
-    bool bGemSky = reader.GetBoolean("Main", "bGemSky", false);
-    bool bGemWhite = reader.GetBoolean("Main", "bGemWhite", false);
-    bool bGemYellow = reader.GetBoolean("Main", "bGemYellow", false);
+    bool bGemBlue   = reader.GetBoolean("Sonic", "bGemBlue",    false);
+    bool bGemRed    = reader.GetBoolean("Sonic", "bGemRed",     false);
+    bool bGemGreen  = reader.GetBoolean("Sonic", "bGemGreen",   false);
+    bool bGemPurple = reader.GetBoolean("Sonic", "bGemPurple",  false);
+    bool bGemSky    = reader.GetBoolean("Sonic", "bGemSky",     false);
+    bool bGemWhite  = reader.GetBoolean("Sonic", "bGemWhite",   false);
+    bool bGemYellow = reader.GetBoolean("Sonic", "bGemYellow",  false);
     m_gemsEnabled = bGemBlue || bGemRed || bGemGreen || bGemPurple || bGemSky || bGemWhite || bGemYellow;
 
     S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Blue, bGemBlue);
