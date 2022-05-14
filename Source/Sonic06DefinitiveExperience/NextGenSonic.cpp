@@ -1055,9 +1055,10 @@ float const cSonic_whiteGemSpeed = 100.0f;
 bool NextGenSonic::m_whiteGemEnabled = false;
 Eigen::Vector3f NextGenSonic::m_whiteGemPosition = Eigen::Vector3f::Zero();
 
-bool NextGenSonicGems_WhiteGemEnergyCheck()
+bool NextGenSonicGems_WhiteGemCheck()
 {
-    return Sonic::Player::CPlayerSpeedContext::GetInstance()->m_ChaosEnergy >= cSonic_whiteGemCost;
+    return Sonic::Player::CPlayerSpeedContext::GetInstance()->m_ChaosEnergy >= cSonic_whiteGemCost
+        && !Common::GetSonicStateFlags()->KeepRunning;
 }
 
 void __declspec(naked) NextGenSonicGems_WhiteGemAirAction()
@@ -1077,8 +1078,8 @@ void __declspec(naked) NextGenSonicGems_WhiteGemAirAction()
         test    al, al
         jz      original
 
-        // Check if we have enough juice
-        call    NextGenSonicGems_WhiteGemEnergyCheck
+        // Check if we can use white gem
+        call    NextGenSonicGems_WhiteGemCheck
         test    al, al
         jnz     jump
 
@@ -1209,6 +1210,18 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, void* This, void
                 Common::SonicContextGetItemType(10); // ThunberBarrier
                 *boost = max(0.0f, *boost - cSonic_yellowGemCost);
             }
+            break;
+        }
+        }
+    }
+    else
+    {
+        switch (NextGenSonic::m_sonicGemType)
+        {
+        case S06HUD_API::SonicGemType::SGT_Red:
+        {
+            // Disable slowdown
+            *(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19D }) = false;
             break;
         }
         }
