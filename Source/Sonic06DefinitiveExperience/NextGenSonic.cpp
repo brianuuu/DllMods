@@ -1613,6 +1613,9 @@ void NextGenSonic::applyPatchesPostInit()
         // Ignore D-pad input for Sonic's control
         WRITE_JUMP(0xD97B56, (void*)0xD97B9E);
 
+        // Never for land if staying in air for >1s
+        WRITE_MEMORY(0xE33A72, uint8_t, 0xE9, 0x9D, 0x00, 0x00, 0x00);
+
         // Red gem
         INSTALL_HOOK(NextGenSonicGems_CGameplayFlowAdvance);
 
