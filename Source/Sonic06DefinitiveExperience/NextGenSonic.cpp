@@ -1296,6 +1296,9 @@ HOOK(int, __fastcall, NextGenSonicGems_CSonicStateHomingAttackBegin, 0x1232040, 
         // Skip initial speed change, out of control
         WRITE_JUMP(0x1232083, (void*)0x1232450);
 
+        // Skip initial rotation modification
+        WRITE_JUMP(0x123248D, (void*)0x12324A7);
+
         // Skip locus effect
         WRITE_JUMP(0x1232508, (void*)0x1232511);
 
@@ -1314,6 +1317,7 @@ HOOK(int, __fastcall, NextGenSonicGems_CSonicStateHomingAttackBegin, 0x1232040, 
 
     // Revert original code
     WRITE_MEMORY(0x1232083, uint8_t, 0x83, 0xBB, 0x98, 0x0E, 0x00);
+    WRITE_MEMORY(0x123248D, uint8_t, 0x0F, 0x28, 0x83, 0x90, 0x02);
     WRITE_MEMORY(0x1232508, uint8_t, 0x6A, 0x00, 0x8B, 0xC3, 0xE8);
 
     return result;
@@ -1361,6 +1365,9 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAdvance, 0x1231C6
                 Common::GetPlayerWorldDirection(dir, true);
                 Common::SetPlayerVelocity(dir * cSonic_whiteGemDummySpeed);
             }
+
+            // Update rotation
+            Common::SonicContextUpdateRotationToVelocity(context, &context->m_Velocity, true);
 
             // Send MsgStartHomingChase message to homing target actor
             context->m_pPlayer->SendMessage(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgStartHomingChase>());

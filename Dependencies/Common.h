@@ -1553,6 +1553,24 @@ static void* SonicContextSetCollision(SonicCollision collisionType, bool enabled
 	}
 }
 
+static void SonicContextUpdateRotationToVelocity
+(
+	void* pContext,
+	Hedgehog::Math::CVector* pVelocity,
+	bool updateMatrix
+)
+{
+	static void* const pUpdateRotationToVelocity = (void*)0xE56860;
+	__asm
+	{
+		push	updateMatrix
+		push	pVelocity
+		mov		ebx, pContext
+		mov		esi, ebx
+		call	[pUpdateRotationToVelocity]
+	}
+}
+
 inline void PlaySoundStatic(SharedPtrTypeless& soundHandle, uint32_t cueID)
 {
     uint32_t* syncObject = *(uint32_t**)0x1E79044;
