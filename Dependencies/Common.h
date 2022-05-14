@@ -1346,6 +1346,17 @@ inline bool GetPlayerTransform(Eigen::Vector3f& position, Eigen::Quaternionf& ro
     return true;
 }
 
+inline void SetPlayerPosition(Eigen::Vector3f const& position)
+{
+	if (!*PLAYER_CONTEXT) return;
+
+	alignas(16) MsgSetPosition message;
+	message.m_position = position;
+
+	FUNCTION_PTR(void*, __thiscall, playerProcessMsgSetPosition, 0xE772D0, void* This, void* message);
+	playerProcessMsgSetPosition(Common::GetPlayer(), &message);
+}
+
 inline bool GetPlayerVelocity(Eigen::Vector3f& velocity)
 {
     if (!*PLAYER_CONTEXT) return false;
