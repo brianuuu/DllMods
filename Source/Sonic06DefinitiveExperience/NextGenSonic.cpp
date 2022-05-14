@@ -1051,7 +1051,8 @@ FUNCTION_PTR(bool*, __thiscall, CSingleElementResetMaterial, 0x701830, Hedgehog:
 float const cSonic_gemDrainRate = 10.0f;
 float const cSonic_yellowGemCost = 100.0f;
 float const cSonic_whiteGemCost = 10.0f;
-float const cSonic_whiteGemSpeed = 100.0f;
+float const cSonic_whiteGemSpeed = 110.0f;
+float const cSonic_whiteGemDummySpeed = 60.0f;
 bool NextGenSonic::m_whiteGemEnabled = false;
 Eigen::Vector3f NextGenSonic::m_whiteGemPosition = Eigen::Vector3f::Zero();
 char const* homingAttackAnim[] =
@@ -1292,8 +1293,10 @@ HOOK(int, __fastcall, NextGenSonicGems_CSonicStateHomingAttackBegin, 0x1232040, 
         static SharedPtrTypeless soundHandle;
         Common::SonicContextPlaySound(soundHandle, 80041025, 1);
 
-        // Skip initial speed change, out of control and lotus effect
+        // Skip initial speed change, out of control
         WRITE_JUMP(0x1232083, (void*)0x1232450);
+
+        // Skip locus effect
         WRITE_JUMP(0x1232508, (void*)0x1232511);
 
         // Need to set to prevent Sonic moving in Y-axis?
@@ -1356,7 +1359,7 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAdvance, 0x1231C6
             {
                 Eigen::Vector3f dir;
                 Common::GetPlayerWorldDirection(dir, true);
-                Common::SetPlayerVelocity(dir * 30.0f);
+                Common::SetPlayerVelocity(dir * cSonic_whiteGemDummySpeed);
             }
 
             // Send MsgStartHomingChase message to homing target actor
