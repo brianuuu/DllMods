@@ -1008,10 +1008,7 @@ HOOK(void, __fastcall, NextGenSonic_CSonicUpdateEliseShield, 0xE6BF20, void* Thi
         if (!NextGenSonic::m_isShield)
         {
             NextGenSonic::m_isShield = true;
-
-            FUNCTION_PTR(void, __thiscall, addPlayerPlugin, 0xE77D80, Hedgehog::Base::CSharedString* plugin, void* player);
-            static Hedgehog::Base::CSharedString boost("Boost");
-            addPlayerPlugin(&boost, Common::GetPlayer());
+            Common::SonicContextAddPlugin("Boost");
         }
     }
     else
@@ -1051,7 +1048,8 @@ S06HUD_API::SonicGemType NextGenSonic::m_sonicGemType = S06HUD_API::SonicGemType
 FUNCTION_PTR(bool*, __thiscall, CSingleElementChangeMaterial, 0x701CC0, Hedgehog::Mirage::CSingleElement* singleElement, hh::mr::CMaterialData* from, boost::shared_ptr<hh::mr::CMaterialData>& to);
 FUNCTION_PTR(bool*, __thiscall, CSingleElementResetMaterial, 0x701830, Hedgehog::Mirage::CSingleElement* singleElement, hh::mr::CMaterialData* mat);
 
-float const cSonic_redGemDrainRate = 10.0f;
+float const cSonic_gemDrainRate = 10.0f;
+float const cSonic_yellowGemCost = 100.0f;
 void NextGenSonic::ChangeGems(S06HUD_API::SonicGemType oldType, S06HUD_API::SonicGemType newType)
 {
     m_sonicGemType = newType;
@@ -1115,9 +1113,9 @@ HOOK(int, __fastcall, NextGenSonicGems_MsgRestartStage, 0xE76810, uint32_t* This
 
 HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, void* This, void* Edx, float* dt)
 {
-    bool outOfControl = Common::GetSonicStateFlags()->OutOfControl;
+    CSonicStateFlags const* flags = Common::GetSonicStateFlags();
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-    if (!outOfControl)
+    if (!flags->OutOfControl)
     {
         if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadRight))
         {
@@ -1139,13 +1137,13 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, void* This, void
         NextGenSonic::ChangeGems(NextGenSonic::m_sonicGemType, newGemType);
     }
 
-    if (!outOfControl)
+    if (!flags->OutOfControl)
     {
+        float* boost = Common::GetPlayerBoost();
         switch (NextGenSonic::m_sonicGemType)
         {
         case S06HUD_API::SonicGemType::SGT_Red:
         {
-            float* boost = Common::GetPlayerBoost();
             bool enabled = padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && *boost > 0.0f;
 
             // Enable slowdown
@@ -1154,7 +1152,16 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, void* This, void
             // Drain gauge
             if (enabled)
             {
-                *boost = max(0.0f, *boost - cSonic_redGemDrainRate * *dt);
+                *boost = max(0.0f, *boost - cSonic_gemDrainRate * *dt);
+            }
+            break;
+        }
+        case S06HUD_API::SonicGemType::SGT_Yellow:
+        {
+            if (!flags->InvokeThunderBarrier && padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger) && *boost >= cSonic_yellowGemCost)
+            {
+                Common::SonicContextGetItemType(10); // ThunberBarrier
+                *boost = max(0.0f, *boost - cSonic_yellowGemCost);
             }
             break;
         }
@@ -1166,13 +1173,40 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, void* This, void
 
 HOOK(int, __fastcall, NextGenSonicGems_CGameplayFlowAdvance, 0xD02E00, uint32_t* This, void* Edx, float dt)
 {
+    // Slowdown actual timer
     float scale = 1.0f;
     if (NextGenSonic::m_sonicGemType == S06HUD_API::SonicGemType::SGT_Red
     && *(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19D }))
     {
         scale = 0.5f;
     }
+
     return originalNextGenSonicGems_CGameplayFlowAdvance(This, Edx, dt * scale);
+}
+
+static SharedPtrTypeless soundHandle_thunderShield;
+HOOK(bool*, __fastcall, NextGenSonicGems_CPlayerSpeedStatePluginThunderBarrierBegin, 0x11DD970, void* This)
+{
+    // Play 06 yellow gem sfx (loops)
+    Common::SonicContextPlaySound(soundHandle_thunderShield, 80041033, 1);
+
+    // Disable original sound for modern
+    if (*pModernSonicContext)
+    {
+        WRITE_MEMORY(0x11DD9A8, int, -1);
+    }
+    else
+    {
+        WRITE_MEMORY(0x11DD9A8, uint32_t, 6001008);
+    }
+
+    return originalNextGenSonicGems_CPlayerSpeedStatePluginThunderBarrierBegin(This);
+}
+
+HOOK(int, __fastcall, NextGenSonicGems_CPlayerSpeedStatePluginThunderBarrierEnd, 0x11DD900, void* This)
+{
+    soundHandle_thunderShield.reset();
+    return originalNextGenSonicGems_CPlayerSpeedStatePluginThunderBarrierEnd(This);
 }
 
 //---------------------------------------------------
@@ -1393,6 +1427,11 @@ void NextGenSonic::applyPatchesPostInit()
         // Ignore D-pad input for Sonic's control
         WRITE_JUMP(0xD97B56, (void*)0xD97B9E);
 
+        // Red gem
         INSTALL_HOOK(NextGenSonicGems_CGameplayFlowAdvance);
+
+        // Yellow Gem
+        INSTALL_HOOK(NextGenSonicGems_CPlayerSpeedStatePluginThunderBarrierBegin);
+        INSTALL_HOOK(NextGenSonicGems_CPlayerSpeedStatePluginThunderBarrierEnd);
     }
 }
