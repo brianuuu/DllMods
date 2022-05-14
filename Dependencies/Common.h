@@ -92,6 +92,16 @@ struct MsgGetAnimationInfo
 	}
 };
 
+struct MsgGetItemType
+{
+	INSERT_PADDING(0x10);
+	uint32_t m_type;
+	bool m_unknown0x14; // related to get on board velocity
+	INSERT_PADDING(0xB);
+	Eigen::Vector3f m_unknown0x20;
+	INSERT_PADDING(0x4);
+};
+
 enum ImpulseType : uint32_t
 {
 	None,
@@ -1456,7 +1466,6 @@ inline void SonicContextPlayVoice(SharedPtrTypeless& soundHandle, uint32_t cueID
 
 inline void SonicContextGetAnimationInfo(MsgGetAnimationInfo& message)
 {
-	// Note: This doesn't work at result screen, use PlaySoundStatic instead
 	void* pSonicContext = *PLAYER_CONTEXT;
 	if (!pSonicContext) return;
 
@@ -1464,6 +1473,20 @@ inline void SonicContextGetAnimationInfo(MsgGetAnimationInfo& message)
 	FUNCTION_PTR(void, __thiscall, CSonicSpeedProcMsgGetAnimationInfo, 0xE6A370, void* This, void* pMessage);
 	void* player = *(void**)((uint32_t)*PLAYER_CONTEXT + 0x110);
 	CSonicSpeedProcMsgGetAnimationInfo(player, &message);
+}
+
+inline void SonicContextGetItemType(uint32_t type)
+{
+	void* pSonicContext = *PLAYER_CONTEXT;
+	if (!pSonicContext) return;
+
+	alignas(16) MsgGetItemType message {};
+	message.m_type = type; // ThunberBarrier
+
+	// Original code by Skyth: https://github.com/blueskythlikesclouds
+	FUNCTION_PTR(void, __thiscall, CSonicSpeedProcMsgGetItemType, 0xE6D7D0, void* This, void* pMessage);
+	void* player = *(void**)((uint32_t)*PLAYER_CONTEXT + 0x110);
+	CSonicSpeedProcMsgGetItemType(player, &message);
 }
 
 inline void SonicContextRequestLocusEffect()
@@ -1485,6 +1508,12 @@ inline void SonicContextRequestLocusEffect()
 	FUNCTION_PTR(int, __thiscall, processMsgRequestLocusEffect, 0xE178D0, void* This, void* pMessage);
 	void* player = *(void**)((uint32_t)*PLAYER_CONTEXT + 0x110);
 	processMsgRequestLocusEffect(player, &message);
+}
+
+inline void SonicContextAddPlugin(Hedgehog::Base::CSharedString const& plugin)
+{
+	FUNCTION_PTR(void, __thiscall, addPlayerPlugin, 0xE77D80, Hedgehog::Base::CSharedString const* plugin, void* player);
+	addPlayerPlugin(&plugin, Common::GetPlayer());
 }
 
 static void* SonicContextSetCollision(SonicCollision collisionType, bool enabled)
