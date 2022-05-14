@@ -287,6 +287,13 @@ void AnimationSetPatcher::applyPatches()
         // Squat Kick and Brake Flip for Super Sonic
         m_newAnimationDataSuper.emplace_back("SquatKick", "ssn_squat_kick", 1.0f, false, nullptr);
         m_newAnimationDataSuper.emplace_back(BrakeFlip, "ssn_brake_flip", 1.0f, false, nullptr);
+
+        // Use same animation for homing attack
+        WRITE_MEMORY(0x111832D + 6, uint32_t, 0x15F8F04);
+        WRITE_MEMORY(0x1118337 + 6, uint32_t, 0x15F8F04);
+        WRITE_MEMORY(0x1118341 + 6, uint32_t, 0x15F8F04);
+        WRITE_MEMORY(0x111834B + 6, uint32_t, 0x15F8F04);
+        WRITE_MEMORY(0x1118355 + 6, uint32_t, 0x15F8F04);
     }
     
     if (Configuration::m_model == Configuration::ModelType::SonicElise)

@@ -1054,6 +1054,15 @@ float const cSonic_whiteGemCost = 10.0f;
 float const cSonic_whiteGemSpeed = 100.0f;
 bool NextGenSonic::m_whiteGemEnabled = false;
 Eigen::Vector3f NextGenSonic::m_whiteGemPosition = Eigen::Vector3f::Zero();
+char const* homingAttackAnim[] =
+{
+    "HomingAttackAfter1",
+    "HomingAttackAfter2",
+    "HomingAttackAfter3",
+    "HomingAttackAfter4",
+    "HomingAttackAfter5",
+    "HomingAttackAfter6"
+};
 
 bool NextGenSonicGems_WhiteGemCheck()
 {
@@ -1355,6 +1364,9 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAdvance, 0x1231C6
 
             // Don't stop by ground on homing attack
             WRITE_MEMORY(0x1231E36, uint8_t, 0xEB, 0x5E);
+
+            // Use different Homing Attack After animation table
+            WRITE_MEMORY(0x111838F, char const**, homingAttackAnim);
         }
     }
 
@@ -1370,6 +1382,16 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackEnd, 0x1231F80, v
     WRITE_MEMORY(0x1231E36, uint8_t, 0x74, 0x17);
 
     originalNextGenSonicGems_CSonicStateHomingAttackEnd(This);
+}
+
+HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAfterBegin, 0x1118300, void* This)
+{
+    int* result = originalNextGenSonicGems_CSonicStateHomingAttackAfterBegin(This);
+
+    // Revert using original Homing Attack After animation table
+    WRITE_MEMORY(0x111838F, uint32_t, 0x1E75E18);
+
+    return result;
 }
 
 
@@ -1602,5 +1624,6 @@ void NextGenSonic::applyPatchesPostInit()
         INSTALL_HOOK(NextGenSonicGems_CSonicStateHomingAttackBegin);
         INSTALL_HOOK(NextGenSonicGems_CSonicStateHomingAttackAdvance);
         INSTALL_HOOK(NextGenSonicGems_CSonicStateHomingAttackEnd);
+        INSTALL_HOOK(NextGenSonicGems_CSonicStateHomingAttackAfterBegin);
     }
 }
