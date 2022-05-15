@@ -58,6 +58,7 @@ public:
 	);
 	static void ScrollSonicGem(bool toRight, bool ignoreNone);
 	static void RestartSonicGem();
+	static void PlayInfoHUD(bool intro, bool instantStart);
 
 	// Pause
 	static int m_cursorPos;

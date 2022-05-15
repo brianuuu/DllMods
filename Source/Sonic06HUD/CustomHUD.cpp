@@ -74,6 +74,7 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneTimeCount;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneRingCount;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneRingIcon;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneRingEffect;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneInfo;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePowerBG;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePowerBar;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePowerEffect;
@@ -111,6 +112,7 @@ void __fastcall CustomHUD::CHudSonicStageRemoveCallback(Sonic::CGameObject* This
     Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneRingCount);
     Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneRingIcon);
     Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneRingEffect);
+    Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneInfo);
     Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_scenePowerBG);
     Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_scenePowerBar);
     Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_scenePowerEffect);
@@ -205,12 +207,18 @@ void CustomHUD::RestartSonicGem()
     }
 }
 
-HOOK(int, __fastcall, CustomHUD_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
+HOOK(int, __fastcall, CustomHUD_MsgRestartStage, 0x1096A40, uint32_t* This, void* Edx, void* message)
 {
     CustomHUD::RestartSonicGem();
+    if (m_sceneInfo)
+    {
+        m_sceneInfo->SetHideFlag(true);
+    }
+
     return originalCustomHUD_MsgRestartStage(This, Edx, message);
 }
 
+int iconIndex = 0;
 HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObject* This)
 {
     originalCustomHUD_CHudSonicStageInit(This);
@@ -222,7 +230,7 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
 
     size_t& flags = ((size_t*)This)[151];
 
-    int iconIndex = Configuration::m_characterIcon;
+    iconIndex = Configuration::m_characterIcon;
     if (flags & 0x1 || Common::IsCurrentStageMission()) // Life
     {
         m_sceneLifeCount = m_projectPlayScreen->CreateScene("life");
@@ -308,6 +316,31 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
         m_sceneCountdown->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_Loop;
     }
 
+    // info_custom, info_custom_wisp, info_custom_chao, pin_medal
+    if (flags & 0x40 || flags & 0x80 || flags & 0x100 || flags & 0x10000)
+    {
+        m_sceneInfo = m_projectPlayScreen->CreateScene("life_ber_anime");
+        if (Configuration::m_uiColor)
+        {
+            if (iconIndex == 1)
+            {
+                m_sceneInfo->SetMotion("shadow_in");
+            }
+            else if (iconIndex == 2)
+            {
+                m_sceneInfo->SetMotion("silver_in");
+            }
+        }
+        m_sceneInfo->SetPosition(0.0f, (flags & 0x10000) ? -100.0f : 50.0f);
+
+        // Don't play animation immediately for info_custom and info_custom_wisp
+        m_sceneInfo->m_MotionSpeed = 0.0f;
+        if (flags & 0x100 || flags & 0x10000)
+        {
+            m_sceneInfo->SetMotionFrame(m_sceneInfo->m_MotionEndFrame);
+        }
+    }
+
     if (CustomHUD::m_scoreEnabled) // score
     {
         m_sceneScore = m_projectPlayScreen->CreateScene("score");
@@ -371,7 +404,7 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageUpdate, 0x1098A50, Sonic::CGameOb
     // Always clamp boost to 100
     *Common::GetPlayerBoost() = min(*Common::GetPlayerBoost(), 100.0f);
 
-    CustomHUD::ToggleScreen(m_projectPlayScreen, m_spPlayScreen, "HUD", false, This);
+    CustomHUD::ToggleScreen(m_projectPlayScreen, m_spPlayScreen, "HUD_B1", false, This);
     CustomHUD::ToggleScreen(m_projectCountdown, m_spCountdown, "HUD", false, This);
 
     if (!m_spPlayScreen)
@@ -498,6 +531,85 @@ HOOK(void, __fastcall, CustomHUD_MsgNotifySonicHud, 0x1097400, Sonic::CGameObjec
     }
 
     originalCustomHUD_MsgNotifySonicHud(This, Edx, message);
+}
+
+void CustomHUD::PlayInfoHUD(bool intro, bool instantStart)
+{
+    if (!m_sceneInfo) return;
+
+    m_sceneInfo->SetMotion(intro ? "sonic_in" : "sonic_out");
+    if (Configuration::m_uiColor)
+    {
+        if (iconIndex == 1)
+        {
+            m_sceneInfo->SetMotion(intro ? "shadow_in" : "shadow_out");
+        }
+        else if (iconIndex == 2)
+        {
+            m_sceneInfo->SetMotion(intro ? "silver_in" : "silver_out");
+        }
+    }
+    m_sceneInfo->SetHideFlag(false);
+    m_sceneInfo->SetMotionFrame(instantStart ? 0.0f : (intro ? -5.0f : -10.0f));
+    m_sceneInfo->m_MotionSpeed = 1.0f;
+    m_sceneInfo->m_MotionDisableFlag = false;
+    m_sceneInfo->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
+    m_sceneInfo->Update(0.0f);
+}
+
+HOOK(void, __fastcall, CustomHUD_MsgChangeWispHud, 0x1096050, uint32_t* This, void* Edx, uint32_t* message)
+{
+    int spriteCount = This[143];
+    if (spriteCount == 0)
+    {
+        int type = message[4];
+        bool isSpike = message[5];
+        switch (type)
+        {
+        case 0: // get_wisp
+            CustomHUD::PlayInfoHUD(true, true);
+            break;
+        case 1: // use_wisp
+            if (!isSpike)
+                CustomHUD::PlayInfoHUD(false, true);
+            break;
+        case 2: // release_wisp_spike
+        case 3: // outro
+            CustomHUD::PlayInfoHUD(false, true);
+            break;
+        }
+    }
+
+    originalCustomHUD_MsgChangeWispHud(This, Edx, message);
+}
+
+HOOK(void, __fastcall, CustomHUD_MsgChangeCustomHud, 0x1096FF0, uint32_t* This, void* Edx, uint32_t* message)
+{
+    bool hasWisp = This[145];
+    if (m_sceneInfo && *(uint32_t*)((uint32_t)This + 0x1CC) && !hasWisp)
+    {
+        int spriteIndex = message[4];
+        int spriteCount = message[5];
+        int spriteCountPrev = This[143];
+
+        if (spriteCount > 0)
+        {
+            if (*((bool*)This + 580) || spriteCount > spriteCountPrev)
+            {
+                CustomHUD::PlayInfoHUD(true, false);
+            }
+        }
+        else
+        {
+            // Run out of info_custom or info_custom_chao
+            if (spriteCountPrev > 0)
+            {
+                CustomHUD::PlayInfoHUD(false, false);
+            }
+        }
+    }
+
+    originalCustomHUD_MsgChangeCustomHud(This, Edx, message);
 }
 
 HOOK(void, __fastcall, CustomHUD_MsgGetMissionLimitTime, 0xD0F0E0, Sonic::CGameObject* This, void* Edx, hh::fnd::Message& in_rMsg)
@@ -1023,6 +1135,8 @@ void CustomHUD::applyPatches()
     INSTALL_HOOK(CustomHUD_CHudSonicStageUpdate);
     INSTALL_HOOK(CustomHUD_MsgSetPinballHud);
     INSTALL_HOOK(CustomHUD_MsgNotifySonicHud);
+    INSTALL_HOOK(CustomHUD_MsgChangeCustomHud);
+    INSTALL_HOOK(CustomHUD_MsgChangeWispHud);
     INSTALL_HOOK(CustomHUD_MsgGetMissionLimitTime);
     INSTALL_HOOK(CustomHUD_MsgRestartStage);
 
