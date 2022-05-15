@@ -1444,6 +1444,24 @@ inline bool GetPlayerWorldDirection(Eigen::Vector3f& direction, bool normalize)
     return true;
 }
 
+inline float GetPlayerModelScale()
+{
+	if (!*PLAYER_CONTEXT) return 1.0f;
+
+	Sonic::Player::CPlayer const* player = Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer;
+	float* animationPose = *(float**)((uint32_t)player + 0x23C);
+	return animationPose[31];
+}
+
+inline void SetPlayerModelScale(float scale)
+{
+	if (!*PLAYER_CONTEXT) return;
+
+	Sonic::Player::CPlayer const* player = Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer;
+	float* animationPose = *(float**)((uint32_t)player + 0x23C);
+	animationPose[31] = scale;
+}
+
 inline void SonicContextChangeAnimation(const Hedgehog::Base::CSharedString& name)
 {
 	void* pSonicContext = *PLAYER_CONTEXT;
