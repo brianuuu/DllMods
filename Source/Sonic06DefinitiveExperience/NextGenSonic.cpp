@@ -1055,6 +1055,12 @@ float const cSonic_whiteGemSpeed = 110.0f;
 float const cSonic_whiteGemDummySpeed = 60.0f;
 bool NextGenSonic::m_whiteGemEnabled = false;
 Eigen::Vector3f NextGenSonic::m_whiteGemPosition = Eigen::Vector3f::Zero();
+bool NextGenSonic::m_purpleGemEnabled = false;
+float NextGenSonic::m_purpleGemBlockTimer = 0.0f;
+float const cSonic_purpleGemModelScale = 0.1f;
+float const cSonic_purpleGemSpeedScale = 1.2f;
+float const cSonic_purpleGemBlockTime = 0.5f;
+float const cSonic_purpleGemJumpPower = 12.0f; // in 06 is 0.5x (9.0f) due to slow gravity, so we do 0.667x here instead
 char const* homingAttackAnim[] =
 {
     "HomingAttackAfter1",
@@ -1104,11 +1110,55 @@ void __declspec(naked) NextGenSonicGems_WhiteGemAirAction()
     }
 }
 
+bool NextGenSonicGems_PurpleGemAction()
+{
+    if (NextGenSonic::m_purpleGemBlockTimer <= 0.0f)
+    {
+        Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+        if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
+        {
+            NextGenSonic::m_purpleGemBlockTimer = cSonic_purpleGemBlockTime;
+
+            // Set velocity
+            Eigen::Vector3f velocity;
+            Common::GetPlayerVelocity(velocity);
+            velocity.y() = cSonic_purpleGemJumpPower;
+            if (Common::GetSonicStateFlags()->OnWater)
+            {
+                velocity.y() -= 5.0f;
+            }
+            Common::SetPlayerVelocity(velocity);
+
+            // Change state
+            Common::GetSonicStateFlags()->EnableAttenuateJump = true;
+            StateManager::ChangeState(StateAction::Jump, *PLAYER_CONTEXT);
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void __declspec(naked) NextGenSonicGems_PuepleGemAirAction()
+{
+    static uint32_t returnAddress = 0xDFFEE5;
+    __asm
+    {
+        call    NextGenSonicGems_PurpleGemAction
+        jmp     [returnAddress]
+    }
+}
+
 void NextGenSonic::ChangeGems(S06HUD_API::SonicGemType oldType, S06HUD_API::SonicGemType newType)
 {
+    if (!*pModernSonicContext) return;
+
     m_sonicGemType = newType;
 
     // Blue/No Gem
+    DisableGem(S06HUD_API::SonicGemType::SGT_None);
+    DisableGem(S06HUD_API::SonicGemType::SGT_Blue);
     if (newType == S06HUD_API::SonicGemType::SGT_None || newType == S06HUD_API::SonicGemType::SGT_Blue)
     {
         WRITE_MEMORY(0xDFF268, uint8_t, 0xF3, 0x0F, 0x10, 0x83, 0xBC);
@@ -1122,7 +1172,7 @@ void NextGenSonic::ChangeGems(S06HUD_API::SonicGemType oldType, S06HUD_API::Soni
     }
 
     // Red Gem
-    *(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19D }) = false;
+    DisableGem(S06HUD_API::SonicGemType::SGT_Red);
     if (newType == S06HUD_API::SonicGemType::SGT_Red)
     {
         *(float*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x1A4 }) = 0.5f;
@@ -1133,7 +1183,7 @@ void NextGenSonic::ChangeGems(S06HUD_API::SonicGemType oldType, S06HUD_API::Soni
     }
 
     // White Gem
-    m_whiteGemEnabled = false;
+    DisableGem(S06HUD_API::SonicGemType::SGT_White);
     if (newType == S06HUD_API::SonicGemType::SGT_White)
     {
         WRITE_JUMP(0xDFFEA3, NextGenSonicGems_WhiteGemAirAction);
@@ -1143,12 +1193,15 @@ void NextGenSonic::ChangeGems(S06HUD_API::SonicGemType oldType, S06HUD_API::Soni
         WRITE_MEMORY(0xDFFEA3, uint8_t, 0x84, 0xC0, 0x74, 0x3C, 0x8B);
     }
 
+    // Purple Gem
+    DisableGem(S06HUD_API::SonicGemType::SGT_Purple);
+
     // Handle mesh/material change
     auto const& model = Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_spCharacterModel;
     model->m_spModel->m_NodeGroupModels[4]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_None);
     model->m_spModel->m_NodeGroupModels[5]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_None);
-    model->m_spModel->m_NodeGroupModels[6]->m_Visible = (m_sonicGemType != S06HUD_API::SonicGemType::SGT_None);
     model->m_spModel->m_NodeGroupModels[7]->m_Visible = (m_sonicGemType != S06HUD_API::SonicGemType::SGT_None);
+    model->m_spModel->m_NodeGroupModels[8]->m_Visible = (m_sonicGemType != S06HUD_API::SonicGemType::SGT_None);
 
     /*hh::mr::CMirageDatabaseWrapper wrapper(Sonic::CGameDocument::GetInstance()->m_pMember->m_spDatabase.get());
     boost::shared_ptr<hh::mr::CMaterialData> m1 = wrapper.GetMaterialData("ch_06_sonic_cloth");
@@ -1162,6 +1215,40 @@ void NextGenSonic::ChangeGems(S06HUD_API::SonicGemType oldType, S06HUD_API::Soni
     CSingleElementChangeMaterial(model.get(), m4.get(), m5);*/
 }
 
+void NextGenSonic::DisableGem(S06HUD_API::SonicGemType type)
+{
+    switch (type)
+    {
+    case S06HUD_API::SonicGemType::SGT_Red:
+    {
+        // Disable slowdown
+        *(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19D }) = false;
+        break;
+    }
+    case S06HUD_API::SonicGemType::SGT_White:
+    {
+        m_whiteGemEnabled = false;
+        break;
+    }
+    case S06HUD_API::SonicGemType::SGT_Purple:
+    {
+        m_purpleGemEnabled = false;
+        if (Common::GetPlayerModelScale() != 1.0f)
+        {
+            // Play increase size pfx
+            static SharedPtrTypeless pfxHandle;
+            void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
+            Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle, matrixNode, "ef_ch_sng_purpleend", 1);
+        }
+        Common::SetPlayerModelScale(1.0f);
+
+        // Revert air action code
+        WRITE_MEMORY(0xDFFE76, uint8_t, 0x56, 0xE8, 0x94, 0x00, 0x06);
+        break;
+    }
+    }
+}
+
 HOOK(int, __fastcall, NextGenSonicGems_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
 {
     NextGenSonic::ChangeGems(NextGenSonic::m_sonicGemType, S06HUD_API::SonicGemType::SGT_None);
@@ -1170,6 +1257,13 @@ HOOK(int, __fastcall, NextGenSonicGems_MsgRestartStage, 0xE76810, uint32_t* This
 
 HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, void* This, void* Edx, float* dt)
 {
+    // No gems for classic Sonic
+    if (!*pModernSonicContext)
+    {
+        originalNextGenSonicGems_CSonicUpdate(This, Edx, dt);
+        return;
+    }
+
     CSonicStateFlags const* flags = Common::GetSonicStateFlags();
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
     if (!flags->OutOfControl)
@@ -1222,19 +1316,44 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, void* This, void
             }
             break;
         }
+        case S06HUD_API::SonicGemType::SGT_Purple:
+        {
+            NextGenSonic::m_purpleGemEnabled = padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && *boost > 0.0f;
+            if (NextGenSonic::m_purpleGemEnabled)
+            {
+                // Drain gauge
+                *boost = max(0.0f, *boost - cSonic_gemDrainRate * *dt);
+                NextGenSonic::m_purpleGemBlockTimer = max(0.0f, NextGenSonic::m_purpleGemBlockTimer - *dt);
+
+                if (Common::GetPlayerModelScale() != cSonic_purpleGemModelScale)
+                {
+                    // Override air action
+                    WRITE_JUMP(0xDFFE76, NextGenSonicGems_PuepleGemAirAction);
+
+                    // Scale Sonic
+                    Common::SetPlayerModelScale(cSonic_purpleGemModelScale);
+
+                    // Shrink sfx
+                    static SharedPtrTypeless soundHandle;
+                    Common::SonicContextPlaySound(soundHandle, 80041029, 1);
+
+                    // Shrink pfx
+                    static SharedPtrTypeless pfxHandle;
+                    void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x10);
+                    Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle, matrixNode, "ef_ch_sng_purplestart", 1);
+                }
+            }
+            else
+            {
+                NextGenSonic::DisableGem(S06HUD_API::SonicGemType::SGT_Purple);
+            }
+            break;
+        }
         }
     }
     else
     {
-        switch (NextGenSonic::m_sonicGemType)
-        {
-        case S06HUD_API::SonicGemType::SGT_Red:
-        {
-            // Disable slowdown
-            *(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19D }) = false;
-            break;
-        }
-        }
+        NextGenSonic::DisableGem(NextGenSonic::m_sonicGemType);
     }
 
     originalNextGenSonicGems_CSonicUpdate(This, Edx, dt);

@@ -1,6 +1,7 @@
 #include "CustomCamera.h"
 #include "Application.h"
 #include "Configuration.h"
+#include "NextGenSonic.h"
 
 bool m_blockByTerrainMode = false;
 float const cCamera_pitchMin = -20.0f * DEG_TO_RAD;
@@ -8,6 +9,7 @@ float const cCamera_pitchMax = 50.0f * DEG_TO_RAD;
 float const cCamera_pitchDefault = 6.0f * DEG_TO_RAD;
 float const cCamera_pitchCorrection = 2.0f * DEG_TO_RAD;
 float const cCamera_pitchCorrectionMachSpeed = cCamera_pitchCorrection + 5.0f * DEG_TO_RAD;
+float const cCamera_pitchCorrectionPurpleGem = cCamera_pitchCorrection + 5.0f * DEG_TO_RAD;
 float const cCamera_pitchDistanceUp = 20.0f * DEG_TO_RAD;
 float const cCamera_pitchDistanceUpScale = 1.2f;
 float const cCamera_pitchDistanceDown = 1.0f * DEG_TO_RAD;
@@ -15,9 +17,11 @@ float const cCamera_pitchDistanceDownScale = 0.03f;
 float const cCamera_rotateRate = 100.0f * DEG_TO_RAD;
 float const cCamera_lerpRate = 10.0f;
 float const cCamera_toPlayerDistFixed = 6.0f;
+float const cCamera_toPlayerDistPurpleGem = 1.3f;
 float const cCamera_toPlayerDistMin = 6.5f;
 float const cCamera_toPlayerDistMax = 8.0f;
 float const cCamera_targetOffset = 1.05f;
+float const cCamera_targetOffsetPurpleGem = 0.45f;
 float const cCamera_inAirVelocitySensitivePositive = 0.5f;
 float const cCamera_inAirVelocitySensitiveNegative = 0.2f;
 float targetYawAdd = 0.0f;
@@ -54,13 +58,15 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     Eigen::Vector3f playerPosition;
     Eigen::Quaternionf playerRotation;
     Common::GetPlayerTransform(playerPosition, playerRotation);
+
+    float targetOffset = NextGenSonic::m_purpleGemEnabled ? cCamera_targetOffsetPurpleGem : cCamera_targetOffset;
     if (Common::IsPlayerGrounded())
     {
-        playerPosition += playerRotation * Eigen::Vector3f(0, cCamera_targetOffset, 0);
+        playerPosition += playerRotation * Eigen::Vector3f(0, targetOffset, 0);
     }
     else
     {
-        playerPosition += Eigen::Vector3f(0, cCamera_targetOffset, 0);
+        playerPosition += Eigen::Vector3f(0, targetOffset, 0);
     }
 
     Eigen::Vector3f playerVelocity;
@@ -72,7 +78,16 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     bool isReset = !Common::IsPlayerControlLocked() && padState->IsTapped(Sonic::EKeyState::eKeyState_LeftTrigger);
 
     // Calculate current pitch correction
-    float pitchCorrection = flags->KeepRunning ? cCamera_pitchCorrectionMachSpeed : cCamera_pitchCorrection;
+    float pitchCorrection = cCamera_pitchCorrection;
+    if (NextGenSonic::m_purpleGemEnabled)
+    {
+        pitchCorrection = cCamera_pitchCorrectionPurpleGem;
+    }
+    else if (flags->KeepRunning)
+    {
+        pitchCorrection = cCamera_pitchCorrectionMachSpeed;
+    }
+
     targetPitchCorrection += (pitchCorrection - targetPitchCorrection) * cCamera_lerpRate * dt;
     if (!m_usedCustomCameraLastFrame)
     {
@@ -151,7 +166,11 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     Common::ClampFloat(cameraToPlayerDist, cCamera_toPlayerDistMin, cCamera_toPlayerDistMax);
 
     // Override distance when auto run or on board
-    if (flags->KeepRunning || Common::IsPlayerOnBoard())
+    if (NextGenSonic::m_purpleGemEnabled)
+    {
+        cameraToPlayerDist = cCamera_toPlayerDistPurpleGem;
+    }
+    else if (flags->KeepRunning || Common::IsPlayerOnBoard())
     {
         cameraToPlayerDist = cCamera_toPlayerDistFixed;
     }
@@ -164,7 +183,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
 
     // Interpolate target camera distance
     targetCameraToPlayerDist += (cameraToPlayerDist - targetCameraToPlayerDist) * cCamera_lerpRate * dt;
-    Common::ClampFloat(targetCameraToPlayerDist, 2.0f, 30.0f);
+    Common::ClampFloat(targetCameraToPlayerDist, NextGenSonic::m_purpleGemEnabled ? 1.0f : 2.0f, 30.0f);
 
     // Get camera pos before/after pitch correction
     dir = CustomCamera::calculateCameraPos(playerPosition, playerUpAxis, pitchAxis, pitch, targetPitch);
