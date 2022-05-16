@@ -7,33 +7,6 @@
 FUNCTION_PTR(void*, __stdcall, Mission_fpEventTrigger, 0xD5ED00, void* This, int Event);
 
 //---------------------------------------------------
-// Mission Gameplay HUD (injected for Gens HUD only)
-//---------------------------------------------------
-HOOK(int*, __fastcall, Mission_GameplayManagerInit, 0xD00F70, void* This, void* Edx, int* a2)
-{
-	uint32_t stageID = Common::GetCurrentStageID();
-	switch (stageID)
-	{
-	case (SMT_ghz200 | SMT_Mission1):
-	{
-		// Disable life UI
-		WRITE_MEMORY(0x1098C82, uint8_t, 0xEB);
-		WRITE_MEMORY(0x109B1A4, uint8_t, 0xE9, 0xDC, 0x02, 0x00, 0x00);
-		break;
-	}
-	default:
-	{
-		// Original code
-		WRITE_MEMORY(0x1098C82, uint8_t, 0x74);
-		WRITE_MEMORY(0x109B1A4, uint8_t, 0x0F, 0x84, 0xDB, 0x02, 0x00);
-		break;
-	}
-	}
-
-	return originalMission_GameplayManagerInit(This, Edx, a2);
-}
-
-//---------------------------------------------------
 // Mission Complete Result HUD
 //---------------------------------------------------
 HOOK(void, __fastcall, Mission_CMissionManagerAdvance, 0xD10690, uint32_t This, void* Edx, float* a2)
@@ -344,14 +317,8 @@ HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateIntroBegin, 0x1080110, uin
 
 void MissionManager::applyPatches()
 {
-	// Fix Generations HUD
-	if (!ScoreManager::m_externalHUD)
-	{
-		INSTALL_HOOK(Mission_GameplayManagerInit);
-	}
-
-	// Use normal stage HUD (with life count)
-	WRITE_MEMORY(0x109ADEB, uint8_t, 0xEB);
+	// Disable rank display in missions
+	WRITE_NOP(0x109ADFE, 0xA);
 
 	// Enable life count change
 	//WRITE_MEMORY(0xE761ED, uint8_t, 0xEB);
