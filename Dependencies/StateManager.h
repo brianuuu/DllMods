@@ -31,7 +31,7 @@ enum class StateAction
 	ShoesSliding,
 	GoalAir,
 	Goal,
-	ExternalControl_Crash,
+	ExternalControl,
 	TrickJumpSuccess,
 	FinishExternalControlAir,
 	PushingWall,
@@ -362,9 +362,9 @@ inline const char* StringFromActionEnum(StateAction state)
 		result = "Goal";
 		break;
 	}
-	case StateAction::ExternalControl_Crash:
+	case StateAction::ExternalControl:
 	{
-		result = "ExternalControl_Crash";
+		result = "ExternalControl";
 		break;
 	}
 	case StateAction::TrickJumpSuccess:

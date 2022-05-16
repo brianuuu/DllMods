@@ -1364,7 +1364,8 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, Sonic::Player::C
                 *boost = max(0.0f, *boost - cSonic_gemDrainRate * *dt);
                 NextGenSonic::m_purpleGemBlockTimer = max(0.0f, NextGenSonic::m_purpleGemBlockTimer - *dt);
 
-                if (Common::GetPlayerModelScale() != cSonic_purpleGemModelScale)
+                if (Common::GetPlayerModelScale() != cSonic_purpleGemModelScale
+                && !StateManager::isCurrentAction(StateAction::ExternalControl) && !StateManager::isCurrentAction(StateAction::FinishExternalControlAir))
                 {
                     // Override air action
                     WRITE_JUMP(0xDFFE76, NextGenSonicGems_PuepleGemAirAction);
@@ -1390,7 +1391,9 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, Sonic::Player::C
         }
         case S06HUD_API::SonicGemType::SGT_Green:
         {
-            if (padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger) && *boost >= cSonic_greenGemCost)
+            if (!NextGenSonic::m_greenGemEnabled && !flags->KeepRunning && !Common::IsPlayerGrinding()
+             && !StateManager::isCurrentAction(StateAction::ExternalControl) && !StateManager::isCurrentAction(StateAction::FinishExternalControlAir)
+             && padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger) && *boost >= cSonic_greenGemCost)
             {
                 // Hijack squat kick state
                 NextGenSonic::m_greenGemEnabled = true;
