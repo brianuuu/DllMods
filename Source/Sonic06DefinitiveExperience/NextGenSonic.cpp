@@ -1061,6 +1061,11 @@ float const cSonic_purpleGemModelScale = 0.1f;
 float const cSonic_purpleGemSpeedScale = 1.2f;
 float const cSonic_purpleGemBlockTime = 0.5f;
 float const cSonic_purpleGemJumpPower = 12.0f; // in 06 is 0.5x (9.0f) due to slow gravity, so we do 0.667x here instead
+float const cSonic_greenGemCost = 10.0f; 
+float const cSonic_greenGemHeight = 4.0f; 
+float const cSonic_greenGemRadius = 8.0f;
+bool NextGenSonic::m_greenGemEnabled = false;
+Eigen::Vector3f NextGenSonic::m_greenGemPosition = Eigen::Vector3f::Zero();
 char const* homingAttackAnim[] =
 {
     "HomingAttackAfter1",
@@ -1363,6 +1368,16 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, Sonic::Player::C
             }
             break;
         }
+        case S06HUD_API::SonicGemType::SGT_Green:
+        {
+            if (padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger) && *boost >= cSonic_greenGemCost)
+            {
+                // Hijack squat kick state
+                NextGenSonic::m_greenGemEnabled = true;
+                StateManager::ChangeState(StateAction::SquatKick, (void*)This->m_spContext.get());
+            }
+            break;
+        }
         }
     }
     else
@@ -1530,6 +1545,73 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackEnd, 0x1231F80, v
     WRITE_MEMORY(0x1231E36, uint8_t, 0x74, 0x17);
 
     originalNextGenSonicGems_CSonicStateHomingAttackEnd(This);
+}
+
+bool greenGemShockWaveCreated = false;
+HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickBegin, 0x12526D0, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+    if (NextGenSonic::m_greenGemEnabled)
+    {
+        greenGemShockWaveCreated = false;
+
+        // Change Sonic's animation
+        Common::SonicContextChangeAnimation(context->m_Grounded ? AnimationSetPatcher::GreenGemGround : AnimationSetPatcher::GreenGemAir);
+
+        // Tornado sfx
+        static SharedPtrTypeless soundHandle;
+        Common::SonicContextPlaySound(soundHandle, 80041027, 1);
+
+        // Tornado pfx
+        // TODO:
+
+        // Remember position
+        NextGenSonic::m_greenGemPosition = context->m_spMatrixNode->m_Transform.m_Position;
+
+        // Deduct chaos energy
+        context->m_ChaosEnergy = max(0.0f, context->m_ChaosEnergy - cSonic_greenGemCost);
+
+        return nullptr;
+    }
+
+    return originalNextGenSonicGems_CSonicStateSquatKickBegin(This);
+}
+
+HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+    if (NextGenSonic::m_greenGemEnabled)
+    {
+        // Create shock wave
+        if (!greenGemShockWaveCreated && This->m_Time >= (context->m_Grounded ? 0.65f : 0.0f))
+        {
+            greenGemShockWaveCreated = true;
+            Common::CreatePlayerSupportShockWave(context->m_spMatrixNode->m_Transform.m_Position, cSonic_greenGemHeight, cSonic_greenGemRadius, 1.0f);
+        }
+
+        // Force stay in position (even in air)
+        Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+        Common::SetPlayerPosition(NextGenSonic::m_greenGemPosition);
+
+        if (This->m_Time > (context->m_Grounded ? 2.95f : 1.05f))
+        {
+            StateManager::ChangeState(context->m_Grounded ? StateAction::Walk : StateAction::Fall, context);
+        }
+        return;
+    }
+
+    originalNextGenSonicGems_CSonicStateSquatKickAdvance(This);
+}
+
+HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickEnd, 0x12527B0, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    if (NextGenSonic::m_greenGemEnabled)
+    {
+        NextGenSonic::m_greenGemEnabled = false;
+        return nullptr;
+    }
+
+    return originalNextGenSonicGems_CSonicStateSquatKickEnd(This);
 }
 
 //---------------------------------------------------
@@ -1764,5 +1846,10 @@ void NextGenSonic::applyPatchesPostInit()
         INSTALL_HOOK(NextGenSonicGems_CSonicStateHomingAttackBegin);
         INSTALL_HOOK(NextGenSonicGems_CSonicStateHomingAttackAdvance);
         INSTALL_HOOK(NextGenSonicGems_CSonicStateHomingAttackEnd);
+
+        // Green Gem
+        INSTALL_HOOK(NextGenSonicGems_CSonicStateSquatKickBegin);
+        INSTALL_HOOK(NextGenSonicGems_CSonicStateSquatKickAdvance);
+        INSTALL_HOOK(NextGenSonicGems_CSonicStateSquatKickEnd);
     }
 }

@@ -171,6 +171,8 @@ const char* volatile const AnimationSetPatcher::HomingAttackLoop = "HomingAttack
 const char* volatile const AnimationSetPatcher::AccelJumpLoop = "AccelJumpLoop";
 const char* volatile const AnimationSetPatcher::FireTornadoLoop = "FireTornadoLoop";
 const char* volatile const AnimationSetPatcher::FireTornadoEnd = "FireTornadoEnd";
+const char* volatile const AnimationSetPatcher::GreenGemGround = "GreenGemGround";
+const char* volatile const AnimationSetPatcher::GreenGemAir = "GreenGemAir";
 
 void AnimationSetPatcher::applyPatches()
 {
@@ -294,6 +296,10 @@ void AnimationSetPatcher::applyPatches()
         WRITE_MEMORY(0x1118341 + 6, uint32_t, 0x15F8F04);
         WRITE_MEMORY(0x111834B + 6, uint32_t, 0x15F8F04);
         WRITE_MEMORY(0x1118355 + 6, uint32_t, 0x15F8F04);
+
+        // Green Gem
+        m_newAnimationData.emplace_back(GreenGemGround, "sn_tornado_ground", 1.0f, false, nullptr);
+        m_newAnimationData.emplace_back(GreenGemAir, "sn_tornado_air", 1.0f, false, nullptr);
     }
     
     if (Configuration::m_model == Configuration::ModelType::SonicElise)

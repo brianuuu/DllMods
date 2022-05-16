@@ -73,5 +73,7 @@ public:
     static const char* volatile const AccelJumpLoop;
     static const char* volatile const FireTornadoLoop;
     static const char* volatile const FireTornadoEnd;
+    static const char* volatile const GreenGemGround;
+    static const char* volatile const GreenGemAir;
 };
 

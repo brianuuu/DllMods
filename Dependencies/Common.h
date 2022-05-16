@@ -1646,6 +1646,21 @@ inline void ApplyObjectPhysicsRotation(void* pObject, Eigen::Quaternionf const& 
 	processObjectMsgSetRotation(pObject, &msgSetRotation);
 }
 
+inline void CreatePlayerSupportShockWave(hh::math::CVector const pos, float height, float radius, float duration)
+{
+	struct ShockWaveParam
+	{
+		float m_height;
+		float m_radius;
+		float m_duration;
+		size_t m_actorID;
+	};
+	FUNCTION_PTR(void*, __cdecl, fCreatePlayerSupportShockWave, 0x123D090, boost::shared_ptr<Sonic::CGameObject>& spObject, hh::math::CVector const* pos, ShockWaveParam const& param);
+	boost::shared_ptr<Sonic::CGameObject> spObject;
+	fCreatePlayerSupportShockWave(spObject, &pos, { height, radius, duration, Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_ActorID });
+	Sonic::CGameDocument::GetInstance()->AddGameObject(spObject, "main");
+}
+
 inline LanguageType GetVoiceLanguageType()
 {
 	return *(LanguageType*)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x10 });
