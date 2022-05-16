@@ -456,7 +456,7 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageUpdate, 0x1098A50, Sonic::CGameOb
             if (prevMissionRingCount != playerContext->m_RingCount)
             {
                 *(uint32_t*)((uint32_t)This + 772) = prevMissionRingCount;
-                *(uint32_t*)((uint32_t)This + 768) = playerContext->m_RingCount;;
+                *(uint32_t*)((uint32_t)This + 768) = playerContext->m_RingCount;
                 *(uint32_t*)((uint32_t)This + 764) = 1;
             }
         }
