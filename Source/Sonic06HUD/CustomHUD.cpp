@@ -335,7 +335,7 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
 
         // Don't play animation immediately for info_custom and info_custom_wisp
         m_sceneInfo->m_MotionSpeed = 0.0f;
-        if (flags & 0x100 || flags & 0x10000 || Common::GetCurrentStageID() == SMT_blb)
+        if (flags & 0x100 || flags & 0x10000)
         {
             m_sceneInfo->SetMotionFrame(m_sceneInfo->m_MotionEndFrame);
         }
@@ -617,6 +617,12 @@ HOOK(void, __fastcall, CustomHUD_MsgGetMissionLimitTime, 0xD0F0E0, Sonic::CGameO
 {
     originalCustomHUD_MsgGetMissionLimitTime(This, Edx, in_rMsg);
     CustomHUD::m_missionMaxTime = *(float*)((char*)&in_rMsg + 16);
+}
+
+HOOK(void, __fastcall, CustomHUD_GpSonicSafeCLastBossGaugeNew, 0x124EA10, void* This)
+{
+    CustomHUD::PlayInfoHUD(true, false);
+    originalCustomHUD_GpSonicSafeCLastBossGaugeNew(This);
 }
 
 //---------------------------------------------------
@@ -1149,6 +1155,9 @@ void CustomHUD::applyPatches()
     WRITE_JUMP(0x109BC8E, (void*)0x109BDF2); // boost button init
     WRITE_JUMP(0x109C1DC, CustomHUD_GetScoreEnabled); // score init
     //WRITE_JUMP(0x109BEF6, (void*)0x109C05A); // countdown init
+
+    // Final Boss
+    INSTALL_HOOK(CustomHUD_GpSonicSafeCLastBossGaugeNew);
 
     // Don't hide HUD at pause, don't run MsgAppearActStageHud
     WRITE_MEMORY(0x10BC141, uint8_t, 0xEB);
