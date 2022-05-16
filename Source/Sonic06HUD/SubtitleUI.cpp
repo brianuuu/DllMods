@@ -140,6 +140,20 @@ HOOK(bool, __fastcall, SubtitleUI_CEventSceneAdvance, 0xB24A40, uint32_t* This, 
     return originalSubtitleUI_CEventSceneAdvance(This, Edx, a2);
 }
 
+HOOK(int, __fastcall, SubtitleUI_CLastBossCaptionKill, 0xB16490, uint32_t This, void* Edx, int a2)
+{
+    if (!SubtitleUI::m_captionData.m_captions.empty())
+    {
+        if (SubtitleUI::m_captionData.m_timer * 60.0f > 5.0f)
+        {
+            Caption& caption = SubtitleUI::m_captionData.m_captions.front();
+            SubtitleUI::m_captionData.m_timer = caption.m_duration - 5.0f / 60.0f;
+        }
+    }
+
+    return originalSubtitleUI_CLastBossCaptionKill(This, Edx, a2);
+}
+
 void SubtitleUI::applyPatches()
 {
     if (initFontDatabase())
@@ -155,6 +169,7 @@ void SubtitleUI::applyPatches()
         WRITE_JUMP(0x6AE09D, addCaption_Cutscene);
         INSTALL_HOOK(SubtitleUI_CEventSceneStart);
         INSTALL_HOOK(SubtitleUI_CEventSceneAdvance);
+        INSTALL_HOOK(SubtitleUI_CLastBossCaptionKill);
     }
 }
 
@@ -196,7 +211,7 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
         m_captionData.clear();
     }
     m_captionData.m_owner = owner;
-    m_captionData.m_isCutscene = isCutscene && !Common::CheckCurrentStage("blb");
+    m_captionData.m_isCutscene = isCutscene && Common::GetCurrentStageID() != SMT_blb;
 
     Caption newCaption;
     newCaption.m_duration = duration;
