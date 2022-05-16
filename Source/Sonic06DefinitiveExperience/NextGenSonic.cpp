@@ -1388,19 +1388,6 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, Sonic::Player::C
     originalNextGenSonicGems_CSonicUpdate(This, Edx, dt);
 }
 
-HOOK(int, __fastcall, NextGenSonicGems_CGameplayFlowAdvance, 0xD02E00, uint32_t* This, void* Edx, float dt)
-{
-    // Slowdown actual timer
-    float scale = 1.0f;
-    if (NextGenSonic::m_sonicGemType == S06HUD_API::SonicGemType::SGT_Red
-    && *(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19D }))
-    {
-        scale = 0.5f;
-    }
-
-    return originalNextGenSonicGems_CGameplayFlowAdvance(This, Edx, dt * scale);
-}
-
 SharedPtrTypeless soundHandle_thunderShield;
 HOOK(bool*, __fastcall, NextGenSonicGems_CPlayerSpeedStatePluginThunderBarrierBegin, 0x11DD970, void* This)
 {
@@ -1834,9 +1821,6 @@ void NextGenSonic::applyPatchesPostInit()
 
         // Never for land if staying in air for >1s
         WRITE_MEMORY(0xE33A72, uint8_t, 0xE9, 0x9D, 0x00, 0x00, 0x00);
-
-        // Red gem
-        INSTALL_HOOK(NextGenSonicGems_CGameplayFlowAdvance);
 
         // Yellow Gem
         INSTALL_HOOK(NextGenSonicGems_CPlayerSpeedStatePluginThunderBarrierBegin);
