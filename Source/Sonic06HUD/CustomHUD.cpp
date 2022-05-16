@@ -210,7 +210,7 @@ void CustomHUD::RestartSonicGem()
 HOOK(int, __fastcall, CustomHUD_MsgRestartStage, 0x1096A40, uint32_t* This, void* Edx, void* message)
 {
     CustomHUD::RestartSonicGem();
-    if (m_sceneInfo && Common::GetCurrentStageID() != SMT_blb)
+    if (m_sceneInfo)
     {
         m_sceneInfo->SetHideFlag(true);
     }
@@ -623,6 +623,19 @@ HOOK(void, __fastcall, CustomHUD_GpSonicSafeCLastBossGaugeNew, 0x124EA10, void* 
 {
     CustomHUD::PlayInfoHUD(true, false);
     originalCustomHUD_GpSonicSafeCLastBossGaugeNew(This);
+}
+
+HOOK(bool, __fastcall, CustomHUD_CLastBossCaptionCreationCallback, 0xB16860, uint32_t This, void* Edx, int a2, int a3, int a4)
+{
+    bool result = originalCustomHUD_CLastBossCaptionCreationCallback(This, Edx, a2, a3, a4);
+
+    Chao::CSD::RCPtr<Chao::CSD::CScene>* captionScene = (Chao::CSD::RCPtr<Chao::CSD::CScene>*)(This + 280);
+    if (captionScene->Get())
+    {
+        captionScene->Get()->GetNode("Null_bg")->SetHideFlag(true);
+    }
+
+    return result;
 }
 
 //---------------------------------------------------
@@ -1158,6 +1171,7 @@ void CustomHUD::applyPatches()
 
     // Final Boss
     INSTALL_HOOK(CustomHUD_GpSonicSafeCLastBossGaugeNew);
+    INSTALL_HOOK(CustomHUD_CLastBossCaptionCreationCallback);
 
     // Don't hide HUD at pause, don't run MsgAppearActStageHud
     WRITE_MEMORY(0x10BC141, uint8_t, 0xEB);
