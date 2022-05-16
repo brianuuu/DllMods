@@ -140,7 +140,6 @@ public:
 	static std::unordered_set<uint32_t*> m_savedObjects;
 
 	// Internal system members
-	static bool m_externalHUD;
 	static uint32_t m_scoreLimit;
 	static std::string m_scoreFormat;
 	static CScoreManager* m_pCScoreManager;

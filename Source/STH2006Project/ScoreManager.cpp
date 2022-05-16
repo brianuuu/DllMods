@@ -8,7 +8,6 @@ bool ScoreManager::m_enabled = false;
 bool ScoreManager::m_internalSystem = true;
 std::unordered_set<uint32_t*> ScoreManager::m_savedObjects;
 
-bool ScoreManager::m_externalHUD = false;
 uint32_t ScoreManager::m_scoreLimit = 999999;
 std::string ScoreManager::m_scoreFormat = "%06d";
 CScoreManager* ScoreManager::m_pCScoreManager = nullptr;
@@ -41,6 +40,31 @@ HOOK(uint32_t*, __fastcall, CScoreManager_Destructor, 0x588AF0, uint32_t* This, 
 {
 	ScoreManager::m_pCScoreManager = nullptr;
 	return originalCScoreManager_Destructor(This, Edx, a2);
+}
+
+HOOK(void, __fastcall, ScoreManager_CHudSonicStageInit, 0x109A8D0, uint32_t This)
+{
+	originalScoreManager_CHudSonicStageInit(This);
+
+	// Don't change 06 HUD
+	if (Configuration::m_using06HUD) return;
+
+	// Fix up Generations' life icon
+	Chao::CSD::RCPtr<Chao::CSD::CScene>* gensLifeScene = (Chao::CSD::RCPtr<Chao::CSD::CScene>*)(This + 200);
+	if (gensLifeScene->Get())
+	{
+		gensLifeScene->Get()->SetPosition(0.0f, 61.0f);
+	}
+
+	// Fix mission count & get effect position
+	for (int i = 0; i < 2; i++)
+	{
+		Chao::CSD::RCPtr<Chao::CSD::CScene>* gensMissionCountScene = (Chao::CSD::RCPtr<Chao::CSD::CScene>*)(This + 304 + i * 8);
+		if (gensMissionCountScene->Get())
+		{
+			gensMissionCountScene->Get()->SetPosition(0.0f, 61.0f);
+		}
+	}
 }
 
 FUNCTION_PTR(void, __thiscall, processMsgSetPinballHud, 0x1095D40, void* This, MsgSetPinballHud const& message);
@@ -110,11 +134,8 @@ void __declspec(naked) ScoreManager_CalculateResult()
 	}
 }
 
-HOOK(int*, __fastcall, ScoreManager_GameplayManagerInit, 0xD00F70, void* This, void* Edx, int* a2)
+HOOK(int*, __fastcall, ScoreManager_GameplayManagerInit, 0xD00F70, uint32_t This, void* Edx, int* a2)
 {
-	static char const* scoreHUD = "ui_gameplay_score";
-	static char const* defaultHUD = (char*)0x0168E328;
-
 	uint8_t stageID = Common::GetCurrentStageID() & 0xFF;
 	if 
 	(
@@ -128,12 +149,6 @@ HOOK(int*, __fastcall, ScoreManager_GameplayManagerInit, 0xD00F70, void* This, v
 		WRITE_MEMORY(0xD017A7, uint8_t, (uint8_t)stageID);
 		WRITE_MEMORY(0x109C1DA, uint8_t, 0x90, 0x90);
 
-		// Use fixed score HUD if not using external
-		if (!ScoreManager::m_externalHUD)
-		{
-			WRITE_MEMORY(0x109D669, char*, scoreHUD);
-		}
-
 		// Hook result custom result calculation
 		WRITE_JUMP(0xD5A18C, ScoreManager_CalculateResult);
 	}
@@ -142,7 +157,6 @@ HOOK(int*, __fastcall, ScoreManager_GameplayManagerInit, 0xD00F70, void* This, v
 		// Original code
 		WRITE_MEMORY(0xD017A7, uint8_t, 0x12);
 		WRITE_MEMORY(0x109C1DA, uint8_t, 0x74, 0x78);
-		WRITE_MEMORY(0x109D669, char*, defaultHUD);
 		WRITE_MEMORY(0xD5A18C, uint8_t, 0xE8, 0x1F, 0x9C, 0x35, 0x00);
 	}
 
@@ -437,11 +451,6 @@ void ScoreManager::applyPatches()
 			INIReader configReader(scoreGenerationsConfig);
 			m_scoreLimit = configReader.GetInteger("Behaviour", "scoreLimit", 999999);
 			m_scoreFormat = configReader.Get("Appearance", "scoreFormat", "%01d");
-			if (configReader.GetBoolean("Developer", "customXNCP", false))
-			{
-				m_externalHUD = true;
-				break;
-			}
 		}
 	}
 
@@ -524,6 +533,7 @@ void ScoreManager::applyPatches_InternalSystem()
 	// CScoreManager score handling
 	INSTALL_HOOK(CScoreManager_MsgRestartStage);
 	INSTALL_HOOK(CScoreManager_Destructor);
+	INSTALL_HOOK(ScoreManager_CHudSonicStageInit);
 	INSTALL_HOOK(CScoreManager_CHudSonicStageUpdate);
 	
 	// Hijack next rank time as next rank score
