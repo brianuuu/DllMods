@@ -1255,11 +1255,25 @@ HOOK(int, __fastcall, NextGenSonicGems_MsgRestartStage, 0xE76810, uint32_t* This
     return originalNextGenSonicGems_MsgRestartStage(This, Edx, message);
 }
 
-HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, void* This, void* Edx, float* dt)
+HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, Sonic::Player::CPlayerSpeed* This, void* Edx, float* dt)
 {
     // No gems for classic Sonic
     if (!*pModernSonicContext)
     {
+        originalNextGenSonicGems_CSonicUpdate(This, Edx, dt);
+        return;
+    }
+
+    // No gems for Super Sonic
+    if (Common::IsPlayerSuper())
+    {
+        if (NextGenSonic::m_sonicGemType != S06HUD_API::SonicGemType::SGT_None)
+        {
+            // Force reset to no gem
+            while (S06HUD_API::ScrollSonicGem(true, false) != S06HUD_API::SonicGemType::SGT_None) {}
+            NextGenSonic::ChangeGems(NextGenSonic::m_sonicGemType, S06HUD_API::SonicGemType::SGT_None);
+        }
+
         originalNextGenSonicGems_CSonicUpdate(This, Edx, dt);
         return;
     }
