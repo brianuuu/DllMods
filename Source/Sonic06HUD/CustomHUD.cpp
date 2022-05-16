@@ -210,7 +210,7 @@ void CustomHUD::RestartSonicGem()
 HOOK(int, __fastcall, CustomHUD_MsgRestartStage, 0x1096A40, uint32_t* This, void* Edx, void* message)
 {
     CustomHUD::RestartSonicGem();
-    if (m_sceneInfo)
+    if (m_sceneInfo && Common::GetCurrentStageID() != SMT_blb)
     {
         m_sceneInfo->SetHideFlag(true);
     }
@@ -271,7 +271,7 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
         }
     }
 
-    if (flags & 0x4) // Ring
+    if (flags & 0x4 || flags & 0x400000) // Ring
     {
         m_sceneRingCount = m_projectPlayScreen->CreateScene("ring");
         m_sceneRingCount->m_MotionSpeed = 0.0f; 
@@ -316,8 +316,8 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
         m_sceneCountdown->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_Loop;
     }
 
-    // info_custom, info_custom_wisp, info_custom_chao, pin_medal
-    if (flags & 0x40 || flags & 0x80 || flags & 0x100 || flags & 0x10000)
+    // info_custom, info_custom_wisp, info_custom_chao, pin_medal, final boss
+    if (flags & 0x40 || flags & 0x80 || flags & 0x100 || flags & 0x10000 || Common::GetCurrentStageID() == SMT_blb)
     {
         m_sceneInfo = m_projectPlayScreen->CreateScene("life_ber_anime");
         if (Configuration::m_uiColor)
@@ -335,7 +335,7 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
 
         // Don't play animation immediately for info_custom and info_custom_wisp
         m_sceneInfo->m_MotionSpeed = 0.0f;
-        if (flags & 0x100 || flags & 0x10000)
+        if (flags & 0x100 || flags & 0x10000 || Common::GetCurrentStageID() == SMT_blb)
         {
             m_sceneInfo->SetMotionFrame(m_sceneInfo->m_MotionEndFrame);
         }
@@ -371,7 +371,7 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
     }
 
     // Mask to prevent crash when game tries accessing the elements we disabled later on
-    flags &= ~(0x1 | 0x2 | 0x4 | 0x200 | 0x800);
+    flags &= ~(0x1 | 0x2 | 0x4 | 0x200 | 0x800 | 0x400000);
 }
 
 void __declspec(naked) CustomHUD_GetScoreEnabled()
