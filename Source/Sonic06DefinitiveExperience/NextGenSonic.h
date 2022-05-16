@@ -49,11 +49,11 @@ public:
 	static float m_shieldNoChargeDelay;
 
 	// Sonic's Gems
+	static S06HUD_API::SonicGemType m_sonicGemType;
 	static bool m_whiteGemEnabled;
 	static Eigen::Vector3f m_whiteGemPosition;
 	static bool m_purpleGemEnabled;
 	static float m_purpleGemBlockTimer;
-	static S06HUD_API::SonicGemType m_sonicGemType;
 	static bool m_greenGemEnabled;
 	static Eigen::Vector3f m_greenGemPosition;
 	static void ChangeGems(S06HUD_API::SonicGemType oldType, S06HUD_API::SonicGemType newType);

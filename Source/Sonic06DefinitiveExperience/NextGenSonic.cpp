@@ -1203,10 +1203,30 @@ void NextGenSonic::ChangeGems(S06HUD_API::SonicGemType oldType, S06HUD_API::Soni
 
     // Handle mesh/material change
     auto const& model = Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_spCharacterModel;
+   
     model->m_spModel->m_NodeGroupModels[4]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_None);
     model->m_spModel->m_NodeGroupModels[5]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_None);
-    model->m_spModel->m_NodeGroupModels[7]->m_Visible = (m_sonicGemType != S06HUD_API::SonicGemType::SGT_None);
-    model->m_spModel->m_NodeGroupModels[8]->m_Visible = (m_sonicGemType != S06HUD_API::SonicGemType::SGT_None);
+    
+    model->m_spModel->m_NodeGroupModels[7]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_White);
+    model->m_spModel->m_NodeGroupModels[8]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_White);
+    
+    model->m_spModel->m_NodeGroupModels[9]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_Green);
+    model->m_spModel->m_NodeGroupModels[10]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_Green);
+    
+    model->m_spModel->m_NodeGroupModels[11]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_Blue);
+    model->m_spModel->m_NodeGroupModels[12]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_Blue);
+    
+    model->m_spModel->m_NodeGroupModels[13]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_Purple);
+    model->m_spModel->m_NodeGroupModels[14]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_Purple);
+    
+    model->m_spModel->m_NodeGroupModels[15]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_Sky);
+    model->m_spModel->m_NodeGroupModels[16]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_Sky);
+    
+    model->m_spModel->m_NodeGroupModels[17]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_Yellow);
+    model->m_spModel->m_NodeGroupModels[18]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_Yellow);
+    
+    model->m_spModel->m_NodeGroupModels[19]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_Red);
+    model->m_spModel->m_NodeGroupModels[20]->m_Visible = (m_sonicGemType == S06HUD_API::SonicGemType::SGT_Red);
 
     /*hh::mr::CMirageDatabaseWrapper wrapper(Sonic::CGameDocument::GetInstance()->m_pMember->m_spDatabase.get());
     boost::shared_ptr<hh::mr::CMaterialData> m1 = wrapper.GetMaterialData("ch_06_sonic_cloth");
