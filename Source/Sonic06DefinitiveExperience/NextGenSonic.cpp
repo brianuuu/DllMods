@@ -1644,6 +1644,15 @@ void NextGenSonic::applyPatches()
         WRITE_NOP(0xDF30AB, 0xD);
     }
 
+    // Fix Super Sonic pfx bone location
+    static float const spineAuraOffset = -50.0f;
+    WRITE_MEMORY(0xDA2689, float*, &spineAuraOffset);
+    WRITE_MEMORY(0xDA26EA, char*, "TopHair1");
+    WRITE_MEMORY(0xDA273B, char*, "LeftHand");
+    WRITE_MEMORY(0xDA278C, char*, "RightHand");
+    WRITE_MEMORY(0xDA27DD, char*, "LeftFoot");
+    WRITE_MEMORY(0xDA285E, char*, "RightFoot");
+
     if (!Configuration::m_characterMoveset) return;
 
     //-------------------------------------------------------
