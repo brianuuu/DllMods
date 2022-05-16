@@ -515,6 +515,7 @@ HOOK(void, __fastcall, CustomHUD_MsgSetPinballHud, 0x1095D40, Sonic::CGameObject
         char text[16];
         sprintf(text, "%d", message->m_score);
         m_sceneScore->GetNode("score_text")->SetText(text);
+        m_sceneScore->Update();
     }
 
     originalCustomHUD_MsgSetPinballHud(This, Edx, message);
@@ -527,7 +528,7 @@ HOOK(void, __fastcall, CustomHUD_MsgNotifySonicHud, 0x1097400, Sonic::CGameObjec
     {
         m_sceneRingIcon->SetMotionFrame(0.0f);
         m_sceneRingIcon->m_MotionDisableFlag = 0;
-        m_sceneRingIcon->Update(0.0f);
+        m_sceneRingIcon->Update();
     }
 
     originalCustomHUD_MsgNotifySonicHud(This, Edx, message);
@@ -554,7 +555,7 @@ void CustomHUD::PlayInfoHUD(bool intro, bool instantStart)
     m_sceneInfo->m_MotionSpeed = 1.0f;
     m_sceneInfo->m_MotionDisableFlag = false;
     m_sceneInfo->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
-    m_sceneInfo->Update(0.0f);
+    m_sceneInfo->Update();
 }
 
 HOOK(void, __fastcall, CustomHUD_MsgChangeWispHud, 0x1096050, uint32_t* This, void* Edx, uint32_t* message)
@@ -699,7 +700,7 @@ void CustomHUD::OpenPauseScreen()
     m_scenePauseMenu->SetMotionFrame(0.0f);
     m_scenePauseMenu->m_MotionDisableFlag = false;
     m_scenePauseMenu->m_MotionSpeed = 1.0f;
-    m_scenePauseMenu->Update(0.0f);
+    m_scenePauseMenu->Update();
 
     m_scenePauseText->SetHideFlag(false);
     size_t* liveCountAddr = (size_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x9FDC });
@@ -726,7 +727,7 @@ void CustomHUD::ClosePauseScreen()
     *(uint32_t*)((uint32_t)m_scenePauseMenu.Get() + 0xB0) = 0;
     *(uint32_t*)((uint32_t)m_scenePauseMenu.Get() + 0xB4) = 0; // this stops the reverse animation
     m_scenePauseMenu->m_MotionSpeed = -1.0f;
-    m_scenePauseMenu->Update(0.0f);
+    m_scenePauseMenu->Update();
 
     m_scenePauseCursor->SetHideFlag(true);
     m_scenePauseText->SetHideFlag(true);
@@ -740,7 +741,7 @@ void CustomHUD::RefreshPauseCursor()
     m_scenePauseCursor->m_MotionDisableFlag = false;
     m_scenePauseCursor->m_MotionSpeed = 1.0f;
     m_scenePauseCursor->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
-    m_scenePauseCursor->Update(0.0f);
+    m_scenePauseCursor->Update();
 }
 
 HOOK(int*, __fastcall, CustomHUD_CPauseUpdate, 0x10A18D0, void* This, void* Edx, Hedgehog::Universe::SUpdateInfo* a2)
@@ -763,7 +764,7 @@ HOOK(int*, __fastcall, CustomHUD_CPauseUpdate, 0x10A18D0, void* This, void* Edx,
             m_scenePauseCursor->m_MotionDisableFlag = false;
             m_scenePauseCursor->m_MotionSpeed = 1.0f;
             m_scenePauseCursor->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_Loop;
-            m_scenePauseCursor->Update(0.0f);
+            m_scenePauseCursor->Update();
         }
     }
 
@@ -995,7 +996,7 @@ void CustomHUD::RefreshYesNoCursor()
         m_sceneYesNoCursor->m_MotionDisableFlag = false;
         m_sceneYesNoCursor->m_MotionSpeed = 1.0f;
         m_sceneYesNoCursor->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
-        m_sceneYesNoCursor->Update(0.0f);
+        m_sceneYesNoCursor->Update();
     }
 }
 
@@ -1101,7 +1102,7 @@ HOOK(int*, __fastcall, CustomHUD_CPauseCStateWindowAdvance, 0x42AEE0, hh::fnd::C
             m_sceneYesNoCursor->m_MotionDisableFlag = false;
             m_sceneYesNoCursor->m_MotionSpeed = 1.0f;
             m_sceneYesNoCursor->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_Loop;
-            m_sceneYesNoCursor->Update(0.0f);
+            m_sceneYesNoCursor->Update();
         }
     }
 
