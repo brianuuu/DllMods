@@ -1588,12 +1588,16 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackEnd, 0x1231F80, h
     WRITE_MEMORY(0x1231E36, uint8_t, 0x74, 0x17);
 
     // Revert homing attack param
-    *HomingLockonCollisionFovy2D = HomingLockonCollisionFovy2DPrev;
-    *HomingLockonCollisionFovyN2D = HomingLockonCollisionFovyN2DPrev;
-    *HomingLockonCollisionFovy3D = HomingLockonCollisionFovy3DPrev;
-    *HomingLockonCollisionFovyN3D = HomingLockonCollisionFovyN3DPrev;
-    UpdateHomingCollision2D(context);
-    UpdateHomingCollision3D(context);
+    if (HomingLockonCollisionFovy2D && HomingLockonCollisionFovyN2D && HomingLockonCollisionFovy3D && HomingLockonCollisionFovyN3D)
+    {
+        *HomingLockonCollisionFovy2D = HomingLockonCollisionFovy2DPrev;
+        *HomingLockonCollisionFovyN2D = HomingLockonCollisionFovyN2DPrev;
+        *HomingLockonCollisionFovy3D = HomingLockonCollisionFovy3DPrev;
+        *HomingLockonCollisionFovyN3D = HomingLockonCollisionFovyN3DPrev;
+
+        UpdateHomingCollision2D(context);
+        UpdateHomingCollision3D(context);
+    }
 
     originalNextGenSonicGems_CSonicStateHomingAttackEnd(This);
 }
