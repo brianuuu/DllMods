@@ -1072,7 +1072,7 @@ static void fCGlitterEnd
 	}
 }
 
-static float fGetParameter
+static float fGetPlayerParameter
 (
 	EPlayerParameter enumID
 )
@@ -1086,6 +1086,34 @@ static float fGetParameter
 		push	enumID
 		call	[pGetParameter]
 	}
+}
+
+static bool fGetPlayerParameterPtr
+(
+	EPlayerParameter enumID,
+	void* pTable,
+	float*& pValue
+)
+{
+	uint32_t* ppValue = nullptr;
+	float unknownScale = 0.0f;
+	static void* const pGetParameterPtr = (void*)0xD975B0;
+	__asm
+	{
+		push	pTable
+		mov		eax, enumID
+		lea		edx, [ppValue]
+		lea		edi, [unknownScale]
+		call	[pGetParameterPtr]
+	}
+	
+	if (ppValue)
+	{
+		pValue = (float*)(*ppValue + 4);
+		return true;
+	}
+
+	return false;
 }
 
 static bool fRaycast

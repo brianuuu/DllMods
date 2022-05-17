@@ -1053,6 +1053,7 @@ float const cSonic_yellowGemCost = 100.0f;
 float const cSonic_whiteGemCost = 10.0f;
 float const cSonic_whiteGemSpeed = 110.0f;
 float const cSonic_whiteGemDummySpeed = 60.0f;
+float const cSonic_whiteGemHomingRange = 25.0f;
 bool NextGenSonic::m_whiteGemEnabled = false;
 Eigen::Vector3f NextGenSonic::m_whiteGemPosition = Eigen::Vector3f::Zero();
 bool NextGenSonic::m_purpleGemEnabled = false;
@@ -1442,6 +1443,16 @@ HOOK(int, __stdcall, NextGenSonicGems_HomingUpdate, 0xE5FF10, Sonic::Player::CPl
     return originalNextGenSonicGems_HomingUpdate(context);
 }
 
+FUNCTION_PTR(void, __thiscall, UpdateHomingCollision2D, 0xE642F0, Sonic::Player::CPlayerSpeedContext* This);
+FUNCTION_PTR(void, __thiscall, UpdateHomingCollision3D, 0xE64410, Sonic::Player::CPlayerSpeedContext* This);
+float HomingLockonCollisionFovy2DPrev = 0.0f;
+float HomingLockonCollisionFovyN2DPrev = 0.0f;
+float HomingLockonCollisionFovy3DPrev = 0.0f;
+float HomingLockonCollisionFovyN3DPrev = 0.0f;
+float* HomingLockonCollisionFovy2D = nullptr;
+float* HomingLockonCollisionFovyN2D = nullptr;
+float* HomingLockonCollisionFovy3D = nullptr;
+float* HomingLockonCollisionFovyN3D = nullptr;
 HOOK(int, __fastcall, NextGenSonicGems_CSonicStateHomingAttackBegin, 0x1232040, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
@@ -1449,6 +1460,25 @@ HOOK(int, __fastcall, NextGenSonicGems_CSonicStateHomingAttackBegin, 0x1232040, 
     // Play white gem charge
     if (NextGenSonic::m_whiteGemEnabled)
     {
+        if (Common::fGetPlayerParameterPtr(EPlayerParameter::HomingLockonCollisionFar, *(void**)0x1E61C5C, HomingLockonCollisionFovy2D)
+        && Common::fGetPlayerParameterPtr(EPlayerParameter::HomingLockonCollisionFarN, *(void**)0x1E61C5C, HomingLockonCollisionFovyN2D)
+        && Common::fGetPlayerParameterPtr(EPlayerParameter::HomingLockonCollisionFar, *(void**)0x1E61C54, HomingLockonCollisionFovy3D)
+        && Common::fGetPlayerParameterPtr(EPlayerParameter::HomingLockonCollisionFarN, *(void**)0x1E61C54, HomingLockonCollisionFovyN3D))
+        {
+            HomingLockonCollisionFovy2DPrev = *HomingLockonCollisionFovy2D;
+            HomingLockonCollisionFovyN2DPrev = *HomingLockonCollisionFovyN2D;
+            HomingLockonCollisionFovy3DPrev= *HomingLockonCollisionFovy3D;
+            HomingLockonCollisionFovyN3DPrev = *HomingLockonCollisionFovyN3D;
+
+            *HomingLockonCollisionFovy2D = cSonic_whiteGemHomingRange;
+            *HomingLockonCollisionFovyN2D = cSonic_whiteGemHomingRange;
+            *HomingLockonCollisionFovy3D = cSonic_whiteGemHomingRange;
+            *HomingLockonCollisionFovyN3D = cSonic_whiteGemHomingRange;
+
+            UpdateHomingCollision2D(context);
+            UpdateHomingCollision3D(context);
+        }
+
         static SharedPtrTypeless soundHandle;
         Common::SonicContextPlaySound(soundHandle, 80041025, 1);
 
@@ -1547,13 +1577,23 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAdvance, 0x1231C6
     originalNextGenSonicGems_CSonicStateHomingAttackAdvance(This);
 }
 
-HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackEnd, 0x1231F80, void* This)
+HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackEnd, 0x1231F80, hh::fnd::CStateMachineBase::CStateBase* This)
 {
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+
     NextGenSonic::m_whiteGemEnabled = false;
     Common::GetSonicStateFlags()->OutOfControl = false;
 
     // Revert stop by ground
     WRITE_MEMORY(0x1231E36, uint8_t, 0x74, 0x17);
+
+    // Revert homing attack param
+    *HomingLockonCollisionFovy2D = HomingLockonCollisionFovy2DPrev;
+    *HomingLockonCollisionFovyN2D = HomingLockonCollisionFovyN2DPrev;
+    *HomingLockonCollisionFovy3D = HomingLockonCollisionFovy3DPrev;
+    *HomingLockonCollisionFovyN3D = HomingLockonCollisionFovyN3DPrev;
+    UpdateHomingCollision2D(context);
+    UpdateHomingCollision3D(context);
 
     originalNextGenSonicGems_CSonicStateHomingAttackEnd(This);
 }
