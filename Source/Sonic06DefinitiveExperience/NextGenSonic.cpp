@@ -1327,7 +1327,7 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, Sonic::Player::C
         NextGenSonic::ChangeGems(NextGenSonic::m_sonicGemType, newGemType);
     }
 
-    if (!flags->OutOfControl)
+    if (!flags->OutOfControl && !flags->Dead)
     {
         bool isStateForbidden = StateManager::isCurrentAction(StateAction::ExternalControl)
                              || StateManager::isCurrentAction(StateAction::FinishExternalControlAir)
@@ -1573,9 +1573,6 @@ HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickBegin, 0x12526D0, hh
         static SharedPtrTypeless soundHandle;
         Common::SonicContextPlaySound(soundHandle, 80041027, 1);
 
-        // Tornado pfx
-        // TODO:
-
         // Remember position
         NextGenSonic::m_greenGemPosition = context->m_spMatrixNode->m_Transform.m_Position;
 
@@ -1598,6 +1595,11 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
         {
             greenGemShockWaveCreated = true;
             Common::CreatePlayerSupportShockWave(context->m_spMatrixNode->m_Transform.m_Position, cSonic_greenGemHeight, cSonic_greenGemRadius, 1.0f);
+        
+            // Tornado pfx
+            static SharedPtrTypeless pfxHandle;
+            void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x10);
+            Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle, matrixNode, "ef_ch_sng_tornado", 1);
         }
 
         // Force stay in position (even in air)
