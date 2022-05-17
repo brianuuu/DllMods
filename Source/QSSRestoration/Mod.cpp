@@ -12,7 +12,7 @@ void IncreaseSpeed(char const* targetState)
 	{
 		Eigen::Vector3f velocity;
 		Common::GetPlayerVelocity(velocity);
-		velocity = (velocity.norm() + 15.0f) * velocity.normalized();
+		velocity = (velocity.norm() + 12.0f) * velocity.normalized();
 		Common::SetPlayerVelocity(velocity);
 	}
 }
