@@ -1080,9 +1080,9 @@ float const cSonic_purpleGemSpeedScale = 1.2f;
 float const cSonic_purpleGemBlockTime = 0.5f;
 float const cSonic_purpleGemJumpPower = 12.0f; // in 06 is 0.5x (9.0f) due to slow gravity, so we do 0.667x here instead
 
-float const cSonic_greenGemCost = 50.0f; 
-float const cSonic_greenGemHeight = 4.0f; 
-float const cSonic_greenGemRadius = 8.0f;
+float const cSonic_greenGemCost = 30.0f; 
+float const cSonic_greenGemHeight = 8.0f; // 06: 4.0f
+float const cSonic_greenGemRadius = 16.0f; // 06: 8.0f
 bool NextGenSonic::m_greenGemEnabled = false;
 Eigen::Vector3f NextGenSonic::m_greenGemPosition = Eigen::Vector3f::Zero();
 
