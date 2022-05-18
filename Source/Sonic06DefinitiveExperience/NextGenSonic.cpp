@@ -1619,6 +1619,18 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAdvance, 0x1231C6
             Common::SetPlayerPosition(NextGenSonic::m_whiteGemPosition);
             This->m_Time = 0.0f;
 
+            // Cancel with normal dummy homing attack
+            if (!context->m_HomingAttackTargetActorID && padState->IsTapped(Sonic::EKeyState::eKeyState_A))
+            {
+                StateManager::ChangeState(StateAction::HomingAttack, context);
+            }
+
+            // Cancel with bounce bracelet
+            if (!context->m_Grounded && padState->IsTapped(Sonic::EKeyState::eKeyState_X))
+            {
+                StateManager::ChangeState(StateAction::Stomping, context);
+            }
+
             return;
         }
         else
@@ -1746,6 +1758,8 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
     {
         if (This->m_Time >= (context->m_Grounded ? 0.65f : 0.0f))
         {
+            greenGemShockWaveTimer -= This->m_pStateMachine->m_UpdateInfo.DeltaTime;
+
             // Create shock wave per interval
             if (greenGemShockWaveTimer <= 0.0f)
             {
@@ -1765,7 +1779,6 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
                 }
             }
 
-            greenGemShockWaveTimer -= This->m_pStateMachine->m_UpdateInfo.DeltaTime;
             // Tornado pfx
             if (!greenGemShockWaveCreated)
             {
