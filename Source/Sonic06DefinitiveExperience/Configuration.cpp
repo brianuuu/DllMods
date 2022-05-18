@@ -14,6 +14,7 @@ bool Configuration::m_cameraInvertY = false;
 bool Configuration::m_rapidSpindash = false;
 Configuration::RunResultType Configuration::m_run = Configuration::RunResultType::Disable;
 vector<string> Configuration::m_runStages = {};
+bool Configuration::m_unlimitedGauge = false;
 bool Configuration::m_gemsEnabled = false;
 
 std::string iniPath;
@@ -61,6 +62,7 @@ bool Configuration::load(const std::string& rootPath)
 
     // --------------Sonic--------------
     m_rapidSpindash = reader.GetBoolean("Sonic", "bRapidSpindash", false);
+    m_unlimitedGauge = reader.GetBoolean("Sonic", "bUnlimitedGauge", false);
 
     // Get running goal custom stage list
     string runStages = reader.Get("Sonic", "sRunStages", "");

@@ -81,6 +81,16 @@ char const* ef_ch_sng_bound_strong = "ef_ch_sng_bound_strong";
 char const* ef_ch_sng_spindash = "ef_ch_sng_spindash";
 
 //---------------------------------------------------
+// Unlimited Gauge
+//---------------------------------------------------
+HOOK(void, __fastcall, NextGenSonic_CHudSonicStageUpdate, 0x1098A50, Sonic::CGameObject* This, void* Edx, const hh::fnd::SUpdateInfo& in_rUpdateInfo)
+{
+    // Always clamp boost to 100
+    *Common::GetPlayerBoost() = 100.0f;
+    originalNextGenSonic_CHudSonicStageUpdate(This, Edx, in_rUpdateInfo);
+}
+
+//---------------------------------------------------
 // CSonicStateHomingAttack
 //---------------------------------------------------
 HOOK(int, __fastcall, NextGenSonic_CSonicStateHomingAttackBegin, 0x1232040, void* This)
@@ -1766,6 +1776,11 @@ void NextGenSonic::applyPatches()
 
         // Don't change to ball model during drift
         WRITE_NOP(0xDF30AB, 0xD);
+
+        if (Configuration::m_unlimitedGauge)
+        {
+            INSTALL_HOOK(NextGenSonic_CHudSonicStageUpdate);
+        }
     }
 
     // Fix Super Sonic pfx bone location
