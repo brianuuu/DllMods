@@ -1445,7 +1445,8 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, Sonic::Player::C
                 NextGenSonic::m_purpleGemJumpCount = 0;
             }
 
-            NextGenSonic::m_purpleGemEnabled = padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && *boost > 0.0f && !isStateForbidden;
+            NextGenSonic::m_purpleGemEnabled = padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && *boost > 0.0f 
+                && !isStateForbidden && !Common::IsPlayerOnBoard();
             if (NextGenSonic::m_purpleGemEnabled)
             {
                 // Drain gauge
