@@ -1477,7 +1477,8 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, Sonic::Player::C
         }
         case S06HUD_API::SonicGemType::SGT_Green:
         {
-            if (!NextGenSonic::m_greenGemEnabled && !flags->KeepRunning && !Common::IsPlayerGrinding() && !isStateForbidden
+            if (!NextGenSonic::m_greenGemEnabled && !flags->KeepRunning && !Common::IsPlayerGrinding()
+            && !isStateForbidden && !StateManager::isCurrentAction(StateAction::SquatKick)
             && padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger) && *boost >= cSonic_greenGemCost)
             {
                 // Hijack squat kick state
