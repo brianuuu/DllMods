@@ -138,7 +138,7 @@ void SendMsgDamageSuccess(Sonic::CGameObject3D* This, void* Edx, uint32_t messag
 {
 	// sender should be Sonic?
 	uint32_t senderID = *(uint32_t*)(message + 4);
-	This->SendMessage(senderID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(This->m_spMatrixNodeTransform->m_Transform.m_Position, true));
+	This->SendMessage(senderID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(This->m_spMatrixNodeTransform->m_Transform.m_Position, true, true, 8));
 }
 
 HOOK(bool, __fastcall, Itembox_CObjItemProcessMessage, 0xFFFD70, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
