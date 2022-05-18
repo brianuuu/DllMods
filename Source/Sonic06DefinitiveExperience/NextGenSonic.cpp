@@ -1061,7 +1061,7 @@ FUNCTION_PTR(bool*, __thiscall, CSingleElementResetMaterial, 0x701830, Hedgehog:
 
 float const cSonic_gemDrainRate = 10.0f;
 
-float const cSonic_blueGemCost = 10.0f;
+float const cSonic_blueGemCost = 15.0f;
 float const cSonic_blueGemHomingDelay = 0.15f;
 
 float const cSonic_yellowGemCost = 100.0f;
