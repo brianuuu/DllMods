@@ -2,6 +2,7 @@
 #include "Configuration.h"
 #include "Application.h"
 #include "AnimationSetPatcher.h"
+#include "VoiceOver.h"
 
 //---------------------------------------------------
 // Animation
@@ -1073,6 +1074,7 @@ Eigen::Vector3f NextGenSonic::m_whiteGemPosition = Eigen::Vector3f::Zero();
 
 bool NextGenSonic::m_purpleGemEnabled = false;
 float NextGenSonic::m_purpleGemBlockTimer = 0.0f;
+int NextGenSonic::m_purpleGemJumpCount = 0;
 float const cSonic_purpleGemModelScale = 0.1f;
 float const cSonic_purpleGemSpeedScale = 1.2f;
 float const cSonic_purpleGemBlockTime = 0.5f;
@@ -1184,23 +1186,34 @@ bool NextGenSonicGems_PurpleGemAction()
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
         if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
         {
-            NextGenSonic::m_purpleGemBlockTimer = cSonic_purpleGemBlockTime;
-
-            // Set velocity
             Eigen::Vector3f velocity;
             Common::GetPlayerVelocity(velocity);
-            velocity.y() = cSonic_purpleGemJumpPower;
-            if (Common::GetSonicStateFlags()->OnWater)
+            if (velocity.y() < 0.0f)
             {
-                velocity.y() -= 5.0f;
+                NextGenSonic::m_purpleGemBlockTimer = cSonic_purpleGemBlockTime;
+
+                // Set velocity
+                velocity.y() = cSonic_purpleGemJumpPower;
+                if (Common::GetSonicStateFlags()->OnWater)
+                {
+                    velocity.y() -= 5.0f;
+                }
+                Common::SetPlayerVelocity(velocity);
+
+                // Change state
+                Common::GetSonicStateFlags()->EnableAttenuateJump = true;
+                StateManager::ChangeState(StateAction::Jump, *PLAYER_CONTEXT);
+
+                // Manually play jump sfx and voice
+                if (NextGenSonic::m_purpleGemJumpCount++ < 2)
+                {
+                    static SharedPtrTypeless soundHandle;
+                    Common::SonicContextPlaySound(soundHandle, 2002027, 1);
+                    VoiceOver::playJumpVoice();
+                }
+
+                return true;
             }
-            Common::SetPlayerVelocity(velocity);
-
-            // Change state
-            Common::GetSonicStateFlags()->EnableAttenuateJump = true;
-            StateManager::ChangeState(StateAction::Jump, *PLAYER_CONTEXT);
-
-            return true;
         }
     }
 
@@ -1425,6 +1438,12 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, Sonic::Player::C
         }
         case S06HUD_API::SonicGemType::SGT_Purple:
         {
+            // Reset jump count
+            if (Common::IsPlayerGrounded())
+            {
+                NextGenSonic::m_purpleGemJumpCount = 0;
+            }
+
             NextGenSonic::m_purpleGemEnabled = padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && *boost > 0.0f && !isStateForbidden;
             if (NextGenSonic::m_purpleGemEnabled)
             {

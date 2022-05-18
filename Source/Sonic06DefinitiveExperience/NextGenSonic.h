@@ -54,6 +54,7 @@ public:
 	static Eigen::Vector3f m_whiteGemPosition;
 	static bool m_purpleGemEnabled;
 	static float m_purpleGemBlockTimer;
+	static int m_purpleGemJumpCount;
 	static bool m_greenGemEnabled;
 	static Eigen::Vector3f m_greenGemPosition;
 	static void ChangeGems(S06HUD_API::SonicGemType oldType, S06HUD_API::SonicGemType newType);
