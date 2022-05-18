@@ -367,6 +367,38 @@ HOOK(bool, __fastcall, NextGenPhysics_CSonicStateFallAdvance, 0x1118C50, void* T
 }
 
 //---------------------------------------------------
+// Fix Generations layout
+//---------------------------------------------------
+std::string m_setdataLayer;
+HOOK(bool, __stdcall, NextGenPhysics_ParseSetdata, 0xEB5050, void* a1, char** pFileName, void* a3, void* a4, uint8_t a5, uint8_t a6)
+{
+    m_setdataLayer = std::string(*(char**)pFileName);
+    bool result = originalNextGenPhysics_ParseSetdata(a1, pFileName, a3, a4, a5, a6);
+    m_setdataLayer.clear();
+
+    return result;
+}
+
+HOOK(uint32_t*, __fastcall, NextGenPhysics_ReadXmlData, 0xCE5FC0, uint32_t size, char* pData, void* a3, uint32_t* a4)
+{
+    if (!m_setdataLayer.empty())
+    {
+        // Move EnemyTaker3D at beginning of Crisis City Act 2 so 06 physics can reach it
+        if (Common::GetCurrentStageID() == SMT_csc200)
+        {
+            char* pEnemyTaker3DPosX = strstr(pData, "<x>-1026</x>\n      <y>9</y>\n      <z>-1</z>");
+            if (pEnemyTaker3DPosX)
+            {
+                pEnemyTaker3DPosX[6] = '3';
+                pEnemyTaker3DPosX[7] = '3';
+            }
+        }
+    }
+
+    return originalNextGenPhysics_ReadXmlData(size, pData, a3, a4);
+}
+
+//---------------------------------------------------
 // Main Apply Patches
 //---------------------------------------------------
 void NextGenPhysics::applyPatches()
@@ -497,6 +529,13 @@ void NextGenPhysics::applyPatches()
         break;
     }
     }
+
+    // Fix Generations layout
+    if (Configuration::m_physics)
+    {
+        INSTALL_HOOK(NextGenPhysics_ParseSetdata);
+        INSTALL_HOOK(NextGenPhysics_ReadXmlData);
+    }
 }
 
 void NextGenPhysics::applyPatchesPostInit()
@@ -592,20 +631,4 @@ void NextGenPhysics::applyCharacterAnimationSpeed()
     WRITE_MEMORY(0x1272CA5, float*, &m_animationData.boost_speedFactor);
     WRITE_MEMORY(0x1272D14, float*, &m_animationData.boostWall_speedFactor);
     WRITE_MEMORY(0x1272D83, float*, &m_animationData.boostWall_speedFactor);
-}
-
-void NextGenPhysics::fixGenerationsLayout(char* pData)
-{
-    uint8_t stageID = Common::GetCurrentStageID();
-
-    // Move EnemyTaker3D at beginning of Crisis City Act 2 so 06 physics can reach it
-    if (stageID == SMT_csc200 && Configuration::m_physics)
-    {
-        char* pEnemyTaker3DPosX = strstr(pData, "<x>-1026</x>\n      <y>9</y>\n      <z>-1</z>");
-        if (pEnemyTaker3DPosX)
-        {
-            pEnemyTaker3DPosX[6] = '3';
-            pEnemyTaker3DPosX[7] = '3';
-        }
-    }
 }

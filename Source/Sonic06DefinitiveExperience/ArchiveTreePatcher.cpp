@@ -58,7 +58,10 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* A1, char* pData, const s
 
 void ArchiveTreePatcher::applyPatches()
 {
-    m_archiveDependencies.push_back(ArchiveDependency("ItemboxLock", { "ActionCommon" }));
-    m_archiveDependencies.push_back(ArchiveDependency("SystemCommonItemboxLock", { "SystemCommon" }));
-    INSTALL_HOOK(ParseArchiveTree);
+    // Usage: m_archiveDependencies.push_back(ArchiveDependency( ARCHIVE, { DEPEND_ON_1, DEPEND_ON_2, ... }));
+
+    if (!m_archiveDependencies.empty())
+    {
+        INSTALL_HOOK(ParseArchiveTree);
+    }
 }

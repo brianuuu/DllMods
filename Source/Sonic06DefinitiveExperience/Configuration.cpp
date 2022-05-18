@@ -91,8 +91,6 @@ bool Configuration::load(const std::string& rootPath)
         // common
         bb.addAR("cmn200", 1);
         bb.addAR("ssz202", 1);
-        bb.addAR("#SystemCommonItemboxLock", 1);
-        bb.addAR("ItemboxLock", 1);
 
         // languages
         bb.addName("Languages\\English");
