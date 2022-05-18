@@ -1049,6 +1049,10 @@ FUNCTION_PTR(bool*, __thiscall, CSingleElementChangeMaterial, 0x701CC0, Hedgehog
 FUNCTION_PTR(bool*, __thiscall, CSingleElementResetMaterial, 0x701830, Hedgehog::Mirage::CSingleElement* singleElement, hh::mr::CMaterialData* mat);
 
 float const cSonic_gemDrainRate = 10.0f;
+
+float const cSonic_blueGemCost = 10.0f;
+float const cSonic_blueGemHomingDelay = 0.15f;
+
 float const cSonic_yellowGemCost = 100.0f;
 float const cSonic_whiteGemCost = 10.0f;
 float const cSonic_whiteGemSpeed = 110.0f;
@@ -1056,17 +1060,20 @@ float const cSonic_whiteGemDummySpeed = 60.0f;
 float const cSonic_whiteGemHomingRange = 25.0f;
 bool NextGenSonic::m_whiteGemEnabled = false;
 Eigen::Vector3f NextGenSonic::m_whiteGemPosition = Eigen::Vector3f::Zero();
+
 bool NextGenSonic::m_purpleGemEnabled = false;
 float NextGenSonic::m_purpleGemBlockTimer = 0.0f;
 float const cSonic_purpleGemModelScale = 0.1f;
 float const cSonic_purpleGemSpeedScale = 1.2f;
 float const cSonic_purpleGemBlockTime = 0.5f;
 float const cSonic_purpleGemJumpPower = 12.0f; // in 06 is 0.5x (9.0f) due to slow gravity, so we do 0.667x here instead
+
 float const cSonic_greenGemCost = 50.0f; 
 float const cSonic_greenGemHeight = 4.0f; 
 float const cSonic_greenGemRadius = 8.0f;
 bool NextGenSonic::m_greenGemEnabled = false;
 Eigen::Vector3f NextGenSonic::m_greenGemPosition = Eigen::Vector3f::Zero();
+
 char const* homingAttackAnim[] =
 {
     "HomingAttackAfter1",
@@ -1076,6 +1083,50 @@ char const* homingAttackAnim[] =
     "HomingAttackAfter5",
     "HomingAttackAfter6"
 };
+
+bool NextGenSonicGems_BlueGemCheck()
+{
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+    if (context->m_ChaosEnergy >= cSonic_blueGemCost && context->m_HomingAttackTargetActorID)
+    {
+        context->m_ChaosEnergy -= cSonic_blueGemCost;
+        return true;
+    }
+
+    return  false;
+}
+
+void __declspec(naked) NextGenSonicGems_BlueGemAirAction()
+{
+    static uint32_t successAddress = 0xDFFEBA;
+    static uint32_t returnAddress = 0xDFFEAD;
+    static uint32_t fnButtonHold = 0xD97DA0;
+    __asm
+    {
+        // Holding Right Trigger auto homing attack
+        push    esi
+        mov     esi, [esi + 11Ch]
+        mov     edi, 20h // Right Trigger
+        call    [fnButtonHold]
+        pop     esi
+
+        test    al, al
+        jz      original
+
+        // Check if we can use blue gem
+        call    NextGenSonicGems_BlueGemCheck
+        test    al, al
+        jnz     jump
+
+        // original function
+        original:
+        mov     eax, [esi + 11Ch]
+        jmp     [returnAddress]
+
+        jump:
+        jmp     [successAddress]
+    }
+}
 
 bool NextGenSonicGems_WhiteGemCheck()
 {
@@ -1164,8 +1215,7 @@ void NextGenSonic::ChangeGems(S06HUD_API::SonicGemType oldType, S06HUD_API::Soni
 
     // Blue/No Gem
     DisableGem(S06HUD_API::SonicGemType::SGT_None);
-    DisableGem(S06HUD_API::SonicGemType::SGT_Blue);
-    if (newType == S06HUD_API::SonicGemType::SGT_None || newType == S06HUD_API::SonicGemType::SGT_Blue)
+    if (newType == S06HUD_API::SonicGemType::SGT_None)
     {
         WRITE_MEMORY(0xDFF268, uint8_t, 0xF3, 0x0F, 0x10, 0x83, 0xBC);
         WRITE_MEMORY(0xDFE05F, uint8_t, 0xF3, 0x0F, 0x10, 0x86, 0xBC);
@@ -1188,9 +1238,13 @@ void NextGenSonic::ChangeGems(S06HUD_API::SonicGemType oldType, S06HUD_API::Soni
         *(float*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x1A4 }) = 1.0f;
     }
 
-    // White Gem
-    DisableGem(S06HUD_API::SonicGemType::SGT_White);
-    if (newType == S06HUD_API::SonicGemType::SGT_White)
+    // White Gem/Blue Gem
+    DisableGem(S06HUD_API::SonicGemType::SGT_White); 
+    if (newType == S06HUD_API::SonicGemType::SGT_Blue)
+    {
+        WRITE_JUMP(0xDFFEA3, NextGenSonicGems_BlueGemAirAction);
+    }
+    else if (newType == S06HUD_API::SonicGemType::SGT_White)
     {
         WRITE_JUMP(0xDFFEA3, NextGenSonicGems_WhiteGemAirAction);
     }
@@ -1602,6 +1656,29 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackEnd, 0x1231F80, h
     originalNextGenSonicGems_CSonicStateHomingAttackEnd(This);
 }
 
+HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAfterAdvance, 0x1118600, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    // Blue Gem as light attack
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+    if (This->m_Time > cSonic_blueGemHomingDelay && context->m_ChaosEnergy >= cSonic_blueGemCost
+    && NextGenSonic::m_sonicGemType == S06HUD_API::SonicGemType::SGT_Blue)
+    {
+        Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+        if (padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger))
+        {
+            originalNextGenSonicGems_HomingUpdate(context);
+            if (context->m_HomingAttackTargetActorID)
+            {
+                context->m_ChaosEnergy -= cSonic_blueGemCost;
+                StateManager::ChangeState(StateAction::HomingAttack, context);
+                return;
+            }
+        }
+    }
+
+    originalNextGenSonicGems_CSonicStateHomingAttackAfterAdvance(This);
+}
+
 bool greenGemShockWaveCreated = false;
 HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickBegin, 0x12526D0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
@@ -1914,5 +1991,8 @@ void NextGenSonic::applyPatchesPostInit()
         INSTALL_HOOK(NextGenSonicGems_CSonicStateSquatKickBegin);
         INSTALL_HOOK(NextGenSonicGems_CSonicStateSquatKickAdvance);
         INSTALL_HOOK(NextGenSonicGems_CSonicStateSquatKickEnd);
+
+        // Blue Gem
+        INSTALL_HOOK(NextGenSonicGems_CSonicStateHomingAttackAfterAdvance);
     }
 }
