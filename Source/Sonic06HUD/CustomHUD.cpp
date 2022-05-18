@@ -221,6 +221,7 @@ HOOK(int, __fastcall, CustomHUD_MsgRestartStage, 0x1096A40, uint32_t* This, void
 int iconIndex = 0;
 HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObject* This)
 {
+    CustomHUD::m_scoreEnabled = false;
     originalCustomHUD_CHudSonicStageInit(This);
     CustomHUD::CHudSonicStageRemoveCallback(This, nullptr, nullptr);
 
