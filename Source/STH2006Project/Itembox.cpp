@@ -17,41 +17,7 @@ PDIRECT3DTEXTURE9 Itembox::m_item_gauge = nullptr;
 PDIRECT3DTEXTURE9 Itembox::m_item_shield = nullptr;
 PDIRECT3DTEXTURE9 Itembox::m_item_fire = nullptr;
 
-std::string m_setdataLayer;
-HOOK(bool, __stdcall, ParseSetdata, 0xEB5050, void* a1, char** pFileName, void* a3, void* a4, uint8_t a5, uint8_t a6)
-{
-	m_setdataLayer = std::string(*(char**)pFileName);
-	bool result = originalParseSetdata(a1, pFileName, a3, a4, a5, a6);
-	m_setdataLayer.clear();
-
-	return result;
-}
-
-HOOK(uint32_t*, __fastcall, ReadXmlData, 0xCE5FC0, uint32_t size, char* pData, void* a3, uint32_t* a4)
-{
-    // Get all 1up and 10ring objects, add cmn_itembox_lock at the same position
-    std::string injectStr;
-	if (!m_setdataLayer.empty())
-	{
-		if (Itembox::getInjectStr(pData, size, injectStr) == tinyxml2::XML_SUCCESS && !injectStr.empty())
-		{
-			const size_t newSize = size + injectStr.size();
-			const std::unique_ptr<char[]> pBuffer = std::make_unique<char[]>(newSize);
-			memcpy(pBuffer.get(), pData, size);
-
-			char* pInsertionPos = strstr(pBuffer.get(), "</SetObject>");
-
-			memmove(pInsertionPos + injectStr.size(), pInsertionPos, size - (size_t)(pInsertionPos - pBuffer.get()));
-			memcpy(pInsertionPos, injectStr.c_str(), injectStr.size());
-
-			return originalReadXmlData(newSize, pBuffer.get(), a3, a4);
-		}
-	}
-    
-	return originalReadXmlData(size, pData, a3, a4);
-}
-
-HOOK(void, __fastcall, ItemMsgHitEventCollision, 0xFFF810, uint32_t* This, void* Edx, void* message)
+HOOK(void, __fastcall, Itembox_GetItem, 0xFFF810, uint32_t* This, void* Edx, void* message)
 {
 	uint32_t type = 0;
 	ItemboxType enumType = IT_COUNT;
@@ -75,7 +41,7 @@ HOOK(void, __fastcall, ItemMsgHitEventCollision, 0xFFF810, uint32_t* This, void*
 	// Draw ImGui
 	Itembox::addItemToGui(enumType);
 
-	originalItemMsgHitEventCollision(This, Edx, message);
+	originalItembox_GetItem(This, Edx, message);
 }
 
 struct MsgTakeObject
@@ -135,19 +101,6 @@ HOOK(void, __fastcall, Itembox_GetSuperRing, 0x11F2F10, uint32_t* This, void* Ed
 	originalItembox_GetSuperRing(This, Edx, message);
 }
 
-const char* volatile const ObjectProductionItemboxLock = "ObjectProductionItemboxLock.phy.xml";
-HOOK(void, __stdcall, Itembox_LoadObjectProduction, 0xEA0450, void* a1, Hedgehog::Base::CSharedString* pName)
-{
-	if (strstr(pName->c_str(), "ObjectProduction.phy.xml"))
-	{
-		printf("[Itembox] Injecting %s\n", ObjectProductionItemboxLock);
-		static Hedgehog::Base::CSharedString pInjectName(ObjectProductionItemboxLock);
-		originalItembox_LoadObjectProduction(a1, &pInjectName);
-	}
-
-	originalItembox_LoadObjectProduction(a1, pName);
-}
-
 // Have to use ASM to prevent double playing sfx
 void __declspec(naked) objItemPlaySfx()
 {
@@ -162,6 +115,63 @@ void __declspec(naked) objItemPlaySfx()
 		call	[sub_D5D940]
 		jmp		[returnAddress]
 	}
+}
+
+bool HandleHomingAttackMessageCommon(hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message)
+{
+	if (message.Is<Sonic::Message::MsgGetHomingAttackPriority>())
+	{
+		auto& msg = static_cast<Sonic::Message::MsgGetHomingAttackPriority&>(message);
+		*msg.m_pPriority = 10;
+		return true;
+	}
+	else if (message.Is<Sonic::Message::MsgGetHomingAttackPosition>())
+	{
+		auto& msg = static_cast<Sonic::Message::MsgGetHomingAttackPosition&>(message);
+		auto* obj = static_cast<Sonic::CGameObject3D*>(This);
+		*msg.m_pPosition = obj->m_spMatrixNodeTransform->m_Transform.m_Position;
+		return true;
+	}
+}
+
+void SendMsgDamageSuccess(Sonic::CGameObject3D* This, void* Edx, uint32_t message)
+{
+	// sender should be Sonic?
+	uint32_t senderID = *(uint32_t*)(message + 4);
+	This->SendMessage(senderID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(This->m_spMatrixNodeTransform->m_Transform.m_Position, true));
+}
+
+HOOK(bool, __fastcall, Itembox_CObjItemProcessMessage, 0xFFFD70, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
+{
+	if (flag && HandleHomingAttackMessageCommon(This, Edx, message))
+	{
+		return true;
+	}
+
+	return originalItembox_CObjItemProcessMessage(This, Edx, message, flag);
+}
+
+HOOK(void, __fastcall, Itembox_CObjItemMsgHitEventCollision, 0xFFF810, Sonic::CGameObject3D* This, void* Edx, uint32_t message)
+{
+	SendMsgDamageSuccess(This, Edx, message);
+	originalItembox_CObjItemMsgHitEventCollision(This, Edx, message);
+}
+
+
+HOOK(bool, __fastcall, Itembox_CObjSuperRingProcessMessage, 0x11F3680, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
+{
+	if (flag && HandleHomingAttackMessageCommon(This, Edx, message))
+	{
+		return true;
+	}
+
+	return originalItembox_CObjSuperRingProcessMessage(This, Edx, message, flag);
+}
+
+HOOK(void, __fastcall, Itembox_CObjSuperRingMsgHitEventCollision, 0x11F2F10, Sonic::CGameObject3D* This, void* Edx, uint32_t message)
+{
+	SendMsgDamageSuccess(This, Edx, message);
+	originalItembox_CObjSuperRingMsgHitEventCollision(This, Edx, message);
 }
 
 void Itembox::applyPatches()
@@ -183,15 +193,18 @@ void Itembox::applyPatches()
 	// Disable ef_ob_com_yh1_1up effect on 1up
 	WRITE_JUMP(0xFFFA5E, (void*)0xFFFB15);
 
-	// Load itembox lock-on object physics
-	INSTALL_HOOK(Itembox_LoadObjectProduction);
-
 	// Disable Item always facing screen
 	WRITE_NOP(0xFFF4E3, 3);
 
-	// Inject lock-on object
-	INSTALL_HOOK(ParseSetdata);
-	INSTALL_HOOK(ReadXmlData);
+	// Handle homing lock-on for Item
+	WRITE_MEMORY(0xFFFA3C, uint32_t, 0x1E0AF34);
+	INSTALL_HOOK(Itembox_CObjItemProcessMessage);
+	INSTALL_HOOK(Itembox_CObjItemMsgHitEventCollision);
+
+	// Handle homing lock-on for SuperRing
+	WRITE_MEMORY(0x11F336D, uint32_t, 0x1E0AF34);
+	INSTALL_HOOK(Itembox_CObjSuperRingProcessMessage);
+	INSTALL_HOOK(Itembox_CObjSuperRingMsgHitEventCollision);
 
 	//---------------------------------------
 	// Inject new types to Item
@@ -210,7 +223,7 @@ void Itembox::applyPatches()
 		"cmn_obj_20ring_HD"
 	};
 	WRITE_MEMORY(0xFFF566, char**, itemNames);
-	INSTALL_HOOK(ItemMsgHitEventCollision);
+	INSTALL_HOOK(Itembox_GetItem);
 	INSTALL_HOOK(Itembox_MsgGetItemType);
 	INSTALL_HOOK(Itembox_MsgTakeObject);
 
@@ -242,102 +255,6 @@ void Itembox::playItemboxSfx()
 void __fastcall Itembox::playItemboxPfx(void* This)
 {
 	Common::ObjectCGlitterPlayerOneShot(This, "ef_ch_sns_yh1_1upget_s");
-}
-
-tinyxml2::XMLError Itembox::getInjectStr(char const* pData, uint32_t size, std::string& injectStr)
-{
-	injectStr.clear();
-
-	tinyxml2::XMLDocument pathXml;
-	tinyxml2::XMLError result = pathXml.Parse(pData, size);
-	XMLCheckResult(result);
-
-	tinyxml2::XMLNode* pRoot = pathXml.FirstChildElement("SetObject");
-	if (pRoot == nullptr) return tinyxml2::XML_ERROR_FILE_READ_ERROR;
-
-	struct PositionStr
-	{
-		std::string x, y, z;
-	};
-	typedef std::map<uint32_t, PositionStr> ItemboxData;
-
-	std::set<uint32_t> setObjectIDs;
-	ItemboxData itemboxData;
-	for (tinyxml2::XMLElement* pObjectElement = pRoot->FirstChildElement(); pObjectElement != nullptr; pObjectElement = pObjectElement->NextSiblingElement())
-	{
-		// Grab all the object ID to check if we have already injected this code
-		tinyxml2::XMLElement* pSetObjectIDElement = pObjectElement->FirstChildElement("SetObjectID");
-		if (pSetObjectIDElement)
-		{
-			char const* setObjectIDChar = pSetObjectIDElement->GetText();
-			if (!setObjectIDChar) continue;
-
-			uint32_t setObjectID = std::stoul(setObjectIDChar);
-			setObjectIDs.insert(setObjectID);
-
-			std::string objName = pObjectElement->Name();
-			if (objName != "Item" && objName != "SuperRing") continue;
-
-			PositionStr positionStr;
-			tinyxml2::XMLElement* pPositionElement = pObjectElement->FirstChildElement("Position");
-			positionStr.x = pPositionElement->FirstChildElement("x")->GetText();
-			positionStr.y = pPositionElement->FirstChildElement("y")->GetText();
-			positionStr.z = pPositionElement->FirstChildElement("z")->GetText();
-
-			itemboxData[setObjectID] = positionStr;
-		}
-	}
-
-	if (!itemboxData.empty())
-	{
-		printf("[Itembox] Current layer: %s\n", m_setdataLayer.c_str());
-		for (auto const& iter : itemboxData)
-		{
-			uint32_t const newSetObjectID = iter.first * 100;
-			PositionStr const& positionStr = iter.second;
-
-			// Only inject if ID not exist already
-			if (setObjectIDs.find(newSetObjectID) != setObjectIDs.end())
-			{
-				printf("[Itembox] WARNING: cmn_itembox_lock already injected!\n");
-				return tinyxml2::XML_ERROR_COUNT;
-			}
-
-			printf("[Itembox] Injecting cmn_itembox_lock (%u) at pos: %s, %s, %s\n", newSetObjectID, positionStr.x.c_str(), positionStr.y.c_str(), positionStr.z.c_str());
-			injectStr += "<ObjectPhysics>\n";
-			injectStr += "    <AddRange>0</AddRange>\n";
-			injectStr += "    <CullingRange>15</CullingRange>\n";
-			injectStr += "    <DebrisTarget>\n";
-			injectStr += "        <x>0</x>\n";
-			injectStr += "        <y>0</y>\n";
-			injectStr += "        <z>0</z>\n";
-			injectStr += "    </DebrisTarget>\n";
-			injectStr += "    <GroundOffset>0</GroundOffset>\n";
-			injectStr += "    <IsCastShadow>true</IsCastShadow>\n";
-			injectStr += "    <IsDynamic>false</IsDynamic>\n";
-			injectStr += "    <IsReset>false</IsReset>\n";
-			injectStr += "    <Range>100</Range>\n";
-			injectStr += "    <SetObjectID>" + std::to_string(newSetObjectID) + "</SetObjectID>\n";
-			injectStr += "    <Type>cmn_itembox_lock</Type>\n";
-			injectStr += "    <WrappedObjectID>\n";
-			injectStr += "        <SetObjectID>0</SetObjectID>\n";
-			injectStr += "    </WrappedObjectID>\n";
-			injectStr += "    <Position>\n";
-			injectStr += "        <x>" + positionStr.x + "</x>\n";
-			injectStr += "        <y>" + positionStr.y + "</y>\n";
-			injectStr += "        <z>" + positionStr.z + "</z>\n";
-			injectStr += "    </Position>\n";
-			injectStr += "    <Rotation>\n";
-			injectStr += "        <x>0</x>";
-			injectStr += "        <y>0</y>";
-			injectStr += "        <z>0</z>";
-			injectStr += "        <w>1</w>";
-			injectStr += "    </Rotation>\n";
-			injectStr += "</ObjectPhysics>\n";
-		}
-	}
-
-	return tinyxml2::XML_SUCCESS;
 }
 
 void Itembox::addItemToGui(ItemboxType type)
