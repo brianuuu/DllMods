@@ -1083,6 +1083,7 @@ float const cSonic_purpleGemJumpPower = 12.0f; // in 06 is 0.5x (9.0f) due to sl
 float const cSonic_greenGemCost = 30.0f; 
 float const cSonic_greenGemHeight = 8.0f; // 06: 4.0f
 float const cSonic_greenGemRadius = 16.0f; // 06: 8.0f
+float const cSonic_greenGemShockWaveInterval = 0.5f;
 bool NextGenSonic::m_greenGemEnabled = false;
 Eigen::Vector3f NextGenSonic::m_greenGemPosition = Eigen::Vector3f::Zero();
 
@@ -1710,12 +1711,14 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAfterAdvance, 0x1
 }
 
 bool greenGemShockWaveCreated = false;
+float greenGemShockWaveTimer = 0.0f;
 HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickBegin, 0x12526D0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
     if (NextGenSonic::m_greenGemEnabled)
     {
         greenGemShockWaveCreated = false;
+        greenGemShockWaveTimer = 0.0f;
 
         // Change Sonic's animation
         Common::SonicContextChangeAnimation(context->m_Grounded ? AnimationSetPatcher::GreenGemGround : AnimationSetPatcher::GreenGemAir);
@@ -1741,16 +1744,37 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
     if (NextGenSonic::m_greenGemEnabled)
     {
-        // Create shock wave
-        if (!greenGemShockWaveCreated && This->m_Time >= (context->m_Grounded ? 0.65f : 0.0f))
+        if (This->m_Time >= (context->m_Grounded ? 0.65f : 0.0f))
         {
-            greenGemShockWaveCreated = true;
-            Common::CreatePlayerSupportShockWave(context->m_spMatrixNode->m_Transform.m_Position, cSonic_greenGemHeight, cSonic_greenGemRadius, 1.0f);
-        
+            // Create shock wave per interval
+            if (greenGemShockWaveTimer <= 0.0f)
+            {
+                greenGemShockWaveTimer = cSonic_greenGemShockWaveInterval;
+
+                Hedgehog::Math::CVector pos = context->m_spMatrixNode->m_Transform.m_Position;
+                pos.y() -= 2.0f;
+
+                // After first one, create smaller shock waves to protect Sonic
+                if (greenGemShockWaveCreated)
+                {
+                    Common::CreatePlayerSupportShockWave(pos, 4.0f, 4.0f, cSonic_greenGemShockWaveInterval);
+                }
+                else
+                {
+                    Common::CreatePlayerSupportShockWave(pos, cSonic_greenGemHeight, cSonic_greenGemRadius, 0.1f);
+                }
+            }
+
+            greenGemShockWaveTimer -= This->m_pStateMachine->m_UpdateInfo.DeltaTime;
             // Tornado pfx
-            static SharedPtrTypeless pfxHandle;
-            void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x10);
-            Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle, matrixNode, "ef_ch_sng_tornado", 1);
+            if (!greenGemShockWaveCreated)
+            {
+                greenGemShockWaveCreated = true;
+
+                static SharedPtrTypeless pfxHandle;
+                void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x10);
+                Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle, matrixNode, "ef_ch_sng_tornado", 1);
+            }
         }
 
         // Force stay in position (even in air)
