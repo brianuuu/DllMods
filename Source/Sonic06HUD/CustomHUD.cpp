@@ -419,7 +419,7 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageUpdate, 0x1098A50, Sonic::CGameOb
         const size_t liveCountAddr = Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x9FDC });
         if (liveCountAddr)
         {
-            sprintf(text, "%d", *(size_t*)liveCountAddr);
+            sprintf(text, "%d", min(99, max(0, *(int*)liveCountAddr)));
             m_sceneLifeCount->GetNode("life_text")->SetText(text);
         }
     }
