@@ -1060,6 +1060,7 @@ FUNCTION_PTR(bool*, __thiscall, CSingleElementChangeMaterial, 0x701CC0, Hedgehog
 FUNCTION_PTR(bool*, __thiscall, CSingleElementResetMaterial, 0x701830, Hedgehog::Mirage::CSingleElement* singleElement, hh::mr::CMaterialData* mat);
 
 float const cSonic_gemDrainRate = 10.0f;
+Eigen::Vector3f NextGenSonic::m_gemHoldPosition = Eigen::Vector3f::Zero();
 
 float const cSonic_blueGemCost = 15.0f;
 float const cSonic_blueGemHomingDelay = 0.15f;
@@ -1070,7 +1071,6 @@ float const cSonic_whiteGemSpeed = 110.0f;
 float const cSonic_whiteGemDummySpeed = 60.0f;
 float const cSonic_whiteGemHomingRange = 25.0f;
 bool NextGenSonic::m_whiteGemEnabled = false;
-Eigen::Vector3f NextGenSonic::m_whiteGemPosition = Eigen::Vector3f::Zero();
 
 bool NextGenSonic::m_purpleGemEnabled = false;
 float NextGenSonic::m_purpleGemBlockTimer = 0.0f;
@@ -1085,7 +1085,9 @@ float const cSonic_greenGemHeight = 8.0f; // 06: 4.0f
 float const cSonic_greenGemRadius = 16.0f; // 06: 8.0f
 float const cSonic_greenGemShockWaveInterval = 0.5f;
 bool NextGenSonic::m_greenGemEnabled = false;
-Eigen::Vector3f NextGenSonic::m_greenGemPosition = Eigen::Vector3f::Zero();
+
+float const cSonic_skyGemCost = 30.0f;
+bool NextGenSonic::m_skyGemEnabled = false;
 
 char const* homingAttackAnim[] =
 {
@@ -1486,6 +1488,19 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, Sonic::Player::C
                 // Hijack squat kick state
                 NextGenSonic::m_greenGemEnabled = true;
                 StateManager::ChangeState(StateAction::SquatKick, (void*)This->m_spContext.get());
+                *boost = max(0.0f, *boost - cSonic_greenGemCost);
+            }
+            break;
+        }
+        case S06HUD_API::SonicGemType::SGT_Sky:
+        {
+            if (!NextGenSonic::m_skyGemEnabled && !flags->KeepRunning && Common::IsPlayerGrounded() && !Common::IsPlayerGrinding()
+            && !isStateForbidden && !StateManager::isCurrentAction(StateAction::SquatKick)
+            && padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger) && *boost >= cSonic_skyGemCost)
+            {
+                // Hijack squat kick state
+                NextGenSonic::m_skyGemEnabled = true;
+                StateManager::ChangeState(StateAction::SquatKick, (void*)This->m_spContext.get());
             }
             break;
         }
@@ -1582,7 +1597,7 @@ HOOK(int, __fastcall, NextGenSonicGems_CSonicStateHomingAttackBegin, 0x1232040, 
         Common::GetSonicStateFlags()->EnableHomingAttack = false;
 
         // Remember position
-        NextGenSonic::m_whiteGemPosition = context->m_spMatrixNode->m_Transform.m_Position;
+        NextGenSonic::m_gemHoldPosition = context->m_spMatrixNode->m_Transform.m_Position;
 
         // Deduct chaos energy
         context->m_ChaosEnergy = max(0.0f, context->m_ChaosEnergy - cSonic_whiteGemCost);
@@ -1620,7 +1635,7 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAdvance, 0x1231C6
             originalNextGenSonicGems_HomingUpdate(context);
 
             Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
-            Common::SetPlayerPosition(NextGenSonic::m_whiteGemPosition);
+            Common::SetPlayerPosition(NextGenSonic::m_gemHoldPosition);
             This->m_Time = 0.0f;
 
             // Cancel with normal dummy homing attack
@@ -1742,6 +1757,8 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAfterAdvance, 0x1
 
 bool greenGemShockWaveCreated = false;
 float greenGemShockWaveTimer = 0.0f;
+SharedPtrTypeless skyGemSoundHandle;
+bool skyGemLaunched = false;
 HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickBegin, 0x12526D0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
@@ -1758,10 +1775,22 @@ HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickBegin, 0x12526D0, hh
         Common::SonicContextPlaySound(soundHandle, 80041027, 1);
 
         // Remember position
-        NextGenSonic::m_greenGemPosition = context->m_spMatrixNode->m_Transform.m_Position;
+        NextGenSonic::m_gemHoldPosition = context->m_spMatrixNode->m_Transform.m_Position;
 
-        // Deduct chaos energy
-        context->m_ChaosEnergy = max(0.0f, context->m_ChaosEnergy - cSonic_greenGemCost);
+        return nullptr;
+    }
+    else if (NextGenSonic::m_skyGemEnabled)
+    {
+        skyGemLaunched = false;
+
+        // Change Sonic's animation
+        Common::SonicContextChangeAnimation(AnimationSetPatcher::SkyGem);
+
+        // Sky gem charge sfx
+        Common::SonicContextPlaySound(skyGemSoundHandle, 80041030, 1);
+
+        // Remember position
+        NextGenSonic::m_gemHoldPosition = context->m_spMatrixNode->m_Transform.m_Position;
 
         return nullptr;
     }
@@ -1810,12 +1839,45 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
 
         // Force stay in position (even in air)
         Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
-        Common::SetPlayerPosition(NextGenSonic::m_greenGemPosition);
+        Common::SetPlayerPosition(NextGenSonic::m_gemHoldPosition);
 
         if (This->m_Time > (context->m_Grounded ? 2.95f : 1.05f))
         {
             StateManager::ChangeState(context->m_Grounded ? StateAction::Walk : StateAction::Fall, context);
         }
+        return;
+    }
+    else if (NextGenSonic::m_skyGemEnabled)
+    {
+        Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+        if (skyGemLaunched)
+        {
+            Common::GetSonicStateFlags()->OutOfControl = true;
+            if (This->m_Time > 20.0f / 60.0f)
+            {
+                StateManager::ChangeState(StateAction::Walk, context);
+            }
+        }
+        else if (!padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && This->m_Time > 16.0f / 60.0f)
+        {
+            This->m_Time = 0.0f;
+            skyGemLaunched = true;
+            skyGemSoundHandle.reset();
+
+            // throw animation
+            Common::SonicContextChangeAnimation(AnimationSetPatcher::SkyGemEnd);
+
+            // launch sfx
+            static SharedPtrTypeless soundHandle;
+            Common::SonicContextPlaySound(soundHandle, 80041031, 1);
+
+            // Deduct chaos energy
+            context->m_ChaosEnergy = max(0.0f, context->m_ChaosEnergy - cSonic_skyGemCost);
+        }
+
+        // Force stay in position
+        Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+        Common::SetPlayerPosition(NextGenSonic::m_gemHoldPosition);
         return;
     }
 
@@ -1827,6 +1889,13 @@ HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickEnd, 0x12527B0, hh::
     if (NextGenSonic::m_greenGemEnabled)
     {
         NextGenSonic::m_greenGemEnabled = false;
+        return nullptr;
+    }
+    else if (NextGenSonic::m_skyGemEnabled)
+    {
+        NextGenSonic::m_skyGemEnabled = false;
+        Common::GetSonicStateFlags()->OutOfControl = false;
+        skyGemSoundHandle.reset();
         return nullptr;
     }
 

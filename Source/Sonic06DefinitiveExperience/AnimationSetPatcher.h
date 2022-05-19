@@ -75,5 +75,8 @@ public:
     static const char* volatile const FireTornadoEnd;
     static const char* volatile const GreenGemGround;
     static const char* volatile const GreenGemAir;
+    static const char* volatile const SkyGem;
+    static const char* volatile const SkyGemLoop;
+    static const char* volatile const SkyGemEnd;
 };
 

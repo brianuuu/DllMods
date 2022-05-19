@@ -173,6 +173,9 @@ const char* volatile const AnimationSetPatcher::FireTornadoLoop = "FireTornadoLo
 const char* volatile const AnimationSetPatcher::FireTornadoEnd = "FireTornadoEnd";
 const char* volatile const AnimationSetPatcher::GreenGemGround = "GreenGemGround";
 const char* volatile const AnimationSetPatcher::GreenGemAir = "GreenGemAir";
+const char* volatile const AnimationSetPatcher::SkyGem = "SkyGem";
+const char* volatile const AnimationSetPatcher::SkyGemLoop = "SkyGemLoop";
+const char* volatile const AnimationSetPatcher::SkyGemEnd = "SkyGemEnd";
 
 void AnimationSetPatcher::applyPatches()
 {
@@ -300,6 +303,11 @@ void AnimationSetPatcher::applyPatches()
         // Green Gem
         m_newAnimationData.emplace_back(GreenGemGround, "sn_tornado_ground", 1.0f, false, nullptr);
         m_newAnimationData.emplace_back(GreenGemAir, "sn_tornado_air", 1.0f, false, nullptr);
+
+        // Sky Gem
+        m_newAnimationData.emplace_back(SkyGem, "sn_sky_gem_s", 1.0f, false, SkyGemLoop);
+        m_newAnimationData.emplace_back(SkyGemLoop, "sn_sky_gem_loop", 1.0f, true, nullptr);
+        m_newAnimationData.emplace_back(SkyGemEnd, "sn_sky_gem_e", 1.0f, false, nullptr);
     }
     
     if (Configuration::m_model == Configuration::ModelType::SonicElise)
