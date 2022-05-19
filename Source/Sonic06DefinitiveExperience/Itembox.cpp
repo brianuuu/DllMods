@@ -37,11 +37,20 @@ bool HandleHomingAttackMessageCommon(hh::fnd::CMessageActor* This, void* Edx, hh
 	}
 }
 
-void SendMsgDamageSuccess(Sonic::CGameObject3D* This, void* Edx, uint32_t message)
+void SendMsgDamageSuccess(Sonic::CGameObject3D* This, void* Edx, hh::fnd::Message& message)
 {
-	// sender should be Sonic?
-	uint32_t senderID = *(uint32_t*)(message + 4);
-	This->SendMessage(senderID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(This->m_spMatrixNodeTransform->m_Transform.m_Position, true, true, 8));
+	// Send MsgDamageSuccess back to sender
+	This->SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamageSuccess>
+		(
+			This->m_spMatrixNodeTransform->m_Transform.m_Position, true, true, true, 8
+		)
+	);
+}
+
+HOOK(bool, __fastcall, Itembox_CStateLandJumpShortMsgDamageSuccess, 0x111CC20, Sonic::CGameObject3D* This, void* Edx, Sonic::Message::MsgDamageSuccess& message)
+{
+	if (message.m_DisableBounce) return false;
+	return originalItembox_CStateLandJumpShortMsgDamageSuccess(This, Edx, message);
 }
 
 HOOK(bool, __fastcall, Itembox_CObjItemProcessMessage, 0xFFFD70, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
@@ -54,7 +63,7 @@ HOOK(bool, __fastcall, Itembox_CObjItemProcessMessage, 0xFFFD70, hh::fnd::CMessa
 	return originalItembox_CObjItemProcessMessage(This, Edx, message, flag);
 }
 
-HOOK(void, __fastcall, Itembox_CObjItemMsgHitEventCollision, 0xFFF810, Sonic::CGameObject3D* This, void* Edx, uint32_t message)
+HOOK(void, __fastcall, Itembox_CObjItemMsgHitEventCollision, 0xFFF810, Sonic::CGameObject3D* This, void* Edx, hh::fnd::Message& message)
 {
 	SendMsgDamageSuccess(This, Edx, message);
 	originalItembox_CObjItemMsgHitEventCollision(This, Edx, message);
@@ -71,7 +80,7 @@ HOOK(bool, __fastcall, Itembox_CObjSuperRingProcessMessage, 0x11F3680, hh::fnd::
 	return originalItembox_CObjSuperRingProcessMessage(This, Edx, message, flag);
 }
 
-HOOK(void, __fastcall, Itembox_CObjSuperRingMsgHitEventCollision, 0x11F2F10, Sonic::CGameObject3D* This, void* Edx, uint32_t message)
+HOOK(void, __fastcall, Itembox_CObjSuperRingMsgHitEventCollision, 0x11F2F10, Sonic::CGameObject3D* This, void* Edx, hh::fnd::Message& message)
 {
 	SendMsgDamageSuccess(This, Edx, message);
 	originalItembox_CObjSuperRingMsgHitEventCollision(This, Edx, message);
@@ -108,6 +117,9 @@ void Itembox::applyPatches()
 	WRITE_MEMORY(0x11F336D, uint32_t, 0x1E0AF34);
 	INSTALL_HOOK(Itembox_CObjSuperRingProcessMessage);
 	INSTALL_HOOK(Itembox_CObjSuperRingMsgHitEventCollision);
+
+	// Prevent bouncing off Itembox right as you land
+	INSTALL_HOOK(Itembox_CStateLandJumpShortMsgDamageSuccess);
 }
 
 void Itembox::playItemboxSfx()
