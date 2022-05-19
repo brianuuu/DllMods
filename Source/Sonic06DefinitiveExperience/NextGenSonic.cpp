@@ -1606,11 +1606,14 @@ HOOK(int, __fastcall, NextGenSonicGems_CSonicStateHomingAttackBegin, 0x1232040, 
     return result;
 }
 
+bool greenGemLaunched = false;
 HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAdvance, 0x1231C60, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
     if (NextGenSonic::m_whiteGemEnabled)
     {
+        greenGemLaunched = false;
+
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
         if (padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger))
         {
@@ -1637,7 +1640,13 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAdvance, 0x1231C6
         else
         {
             NextGenSonic::m_whiteGemEnabled = false;
-            Common::GetSonicStateFlags()->NoDamage = true;
+
+            // Increment NoDamage
+            greenGemLaunched = true;
+            if (context->StateFlag(eStateFlag_NoDamage) != 0xFF)
+            {
+                context->StateFlag(eStateFlag_NoDamage)++;
+            }
 
             // Release sfx/pfx
             static SharedPtrTypeless soundHandle;
@@ -1681,9 +1690,14 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackEnd, 0x1231F80, h
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
 
     NextGenSonic::m_whiteGemEnabled = false;
-    auto* flags = Common::GetSonicStateFlags();
-    flags->OutOfControl = false;
-    flags->NoDamage = false;
+    context->StateFlag(eStateFlag_OutOfControl) = false;
+
+    // Decrement NoDamage
+    if (greenGemLaunched && context->StateFlag(eStateFlag_NoDamage) > 0)
+    {
+        context->StateFlag(eStateFlag_NoDamage)--;
+    }
+    greenGemLaunched = false;
 
     // Revert stop by ground
     WRITE_MEMORY(0x1231E36, uint8_t, 0x74, 0x17);
