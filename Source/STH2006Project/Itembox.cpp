@@ -3,9 +3,6 @@
 #include "Application.h"
 #include "Configuration.h"
 
-float const c_10ringRadius = 0.57f;
-float const c_1upRadius = 0.70f;
-
 std::deque<ItemboxGUI> Itembox::m_guiData;
 PDIRECT3DTEXTURE9 Itembox::m_item_5ring = nullptr;
 PDIRECT3DTEXTURE9 Itembox::m_item_10ring = nullptr;
@@ -190,8 +187,9 @@ void Itembox::applyPatches()
 	WRITE_JUMP(0xFFF99F, objItemPlaySfx);
 
 	// Set itembox radius
-	WRITE_MEMORY(0x11F3353, float*, &c_10ringRadius);
-	WRITE_MEMORY(0xFFF9E8, float*, &c_1upRadius);
+	static float const c_itemboxRadius = 0.57f;
+	WRITE_MEMORY(0x11F3353, float*, &c_itemboxRadius);
+	WRITE_MEMORY(0xFFF9E8, float*, &c_itemboxRadius);
 
 	// Disable ef_ch_sns_yh1_ringget on 10ring
 	WRITE_STRING(0x166E4CC, "");
