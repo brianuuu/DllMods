@@ -1755,6 +1755,103 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAfterAdvance, 0x1
     originalNextGenSonicGems_CSonicStateHomingAttackAfterAdvance(This);
 }
 
+class CObjSkyGem : public Sonic::CGameObject
+{
+    boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
+    Hedgehog::Math::CVector m_StartPosition;
+    Hedgehog::Math::CVector m_Velocity;
+    float m_Gravity;
+    float m_LifeTime;
+    
+public:
+    CObjSkyGem
+    (
+        Hedgehog::Math::CVector const& _Position,
+        Hedgehog::Math::CVector const& _Direction,
+        float _Gravity = -9.81f,
+        float _Speed = 30.0f
+    )
+        : m_StartPosition(_Position)
+        , m_Velocity(_Direction.normalized() * _Speed)
+        , m_Gravity(_Gravity)
+        , m_LifeTime(0.0f)
+    {}
+
+    void AddCallback
+    (
+        const Hedgehog::Base::THolder<Sonic::CWorld>& worldHolder, 
+        Sonic::CGameDocument* pGameDocument,
+        const boost::shared_ptr<Hedgehog::Database::CDatabase>& spDatabase
+    ) override
+    {
+        Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
+        pGameDocument->AddUpdateUnit("0", this);
+
+        m_spModel = boost::make_shared<hh::mr::CSingleElement>(hh::mr::CMirageDatabaseWrapper(spDatabase.get()).GetModelData("chr_Sonic_HD"));
+        AddRenderable("Object", m_spModel, false);
+
+        m_spModel->m_spInstanceInfo->m_Transform.translate(m_StartPosition);
+    }
+
+    void RemoveCallback
+    (
+        Sonic::CGameDocument* pGameDocument
+    ) override
+    {
+
+    }
+
+    void UpdateParallel
+    (
+        const Hedgehog::Universe::SUpdateInfo& updateInfo
+    ) override
+    {
+        bool kill = false;
+
+        // Do equation of motion manually
+        Hedgehog::Math::CVector const velPrev = m_Velocity;
+        m_Velocity += Hedgehog::Math::CVector::UnitY() * m_Gravity * updateInfo.DeltaTime;
+        Hedgehog::Math::CVector const posPrev = m_spModel->m_spInstanceInfo->m_Transform.translation();
+        m_spModel->m_spInstanceInfo->m_Transform.translate((velPrev + m_Velocity) * 0.5f * updateInfo.DeltaTime);
+        Hedgehog::Math::CVector const posNew = m_spModel->m_spInstanceInfo->m_Transform.translation();
+
+        // Raycast for wall detection
+        Eigen::Vector4f const rayStartPos(posPrev.x(), posPrev.y(), posPrev.z(), 1.0f);
+        Eigen::Vector4f const rayEndPos(posNew.x(), posNew.y(), posNew.z(), 1.0f);
+        Eigen::Vector4f outPos;
+        Eigen::Vector4f outNormal;
+        if (Common::fRaycast(rayStartPos, rayEndPos, outPos, outNormal, *(uint32_t*)0x1E0AFB4))
+        {
+            kill = true;
+            auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+            if (context)
+            {
+                alignas(16) MsgApplyImpulse message {};
+                message.m_position = context->m_spMatrixNode->m_Transform.m_Position;
+                message.m_impulse = (posNew - message.m_position).normalized() * 100.0f;
+                message.m_impulseType = ImpulseType::JumpBoard;
+                message.m_outOfControl = 1.0f;
+                message.m_notRelative = true;
+                message.m_snapPosition = false;
+                message.m_pathInterpolate = false;
+                message.m_alwaysMinusOne = -1.0f;
+                Common::ApplyPlayerApplyImpulse(message);
+            }
+        }
+
+        m_LifeTime += updateInfo.DeltaTime;
+        if (m_LifeTime >= 5.0f)
+        {
+            kill = true;
+        }
+
+        if (kill)
+        {
+            SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+        }
+    }
+};
+
 bool greenGemShockWaveCreated = false;
 float greenGemShockWaveTimer = 0.0f;
 SharedPtrTypeless skyGemSoundHandle;
@@ -1873,6 +1970,12 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
 
             // Deduct chaos energy
             context->m_ChaosEnergy = max(0.0f, context->m_ChaosEnergy - cSonic_skyGemCost);
+
+            // Throw CObjSkyGem
+            Hedgehog::Math::CVector position = context->m_spMatrixNode->m_Transform.m_Position;
+            position.y() += 0.5f;
+            Hedgehog::Math::CVector direction = context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector(0, 0.3f, 1.0f);
+            context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjSkyGem>(position, direction));
         }
 
         // Force stay in position
