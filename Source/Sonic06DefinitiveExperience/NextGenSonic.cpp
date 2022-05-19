@@ -1637,6 +1637,7 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAdvance, 0x1231C6
         else
         {
             NextGenSonic::m_whiteGemEnabled = false;
+            Common::GetSonicStateFlags()->NoDamage = true;
 
             // Release sfx/pfx
             static SharedPtrTypeless soundHandle;
@@ -1680,7 +1681,9 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackEnd, 0x1231F80, h
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
 
     NextGenSonic::m_whiteGemEnabled = false;
-    Common::GetSonicStateFlags()->OutOfControl = false;
+    auto* flags = Common::GetSonicStateFlags();
+    flags->OutOfControl = false;
+    flags->NoDamage = false;
 
     // Revert stop by ground
     WRITE_MEMORY(0x1231E36, uint8_t, 0x74, 0x17);
