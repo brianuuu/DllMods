@@ -1608,9 +1608,6 @@ HOOK(int, __fastcall, NextGenSonicGems_CSonicStateHomingAttackBegin, 0x1232040, 
         // Remember position
         NextGenSonic::m_gemHoldPosition = context->m_spMatrixNode->m_Transform.m_Position;
 
-        // Deduct chaos energy
-        context->m_ChaosEnergy = max(0.0f, context->m_ChaosEnergy - cSonic_whiteGemCost);
-
         // Use different Homing Attack After animation table
         WRITE_MEMORY(0x111838F, char const**, homingAttackAnim);
     }
@@ -1704,6 +1701,9 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAdvance, 0x1231C6
 
             // Send MsgStartHomingChase message to homing target actor
             context->m_pPlayer->SendMessage(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgStartHomingChase>());
+
+            // Deduct chaos energy
+            context->m_ChaosEnergy = max(0.0f, context->m_ChaosEnergy - cSonic_whiteGemCost);
 
             // Don't stop by ground on homing attack
             WRITE_MEMORY(0x1231E36, uint8_t, 0xEB, 0x5E);
