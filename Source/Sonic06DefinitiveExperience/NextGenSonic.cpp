@@ -1088,6 +1088,7 @@ bool NextGenSonic::m_greenGemEnabled = false;
 
 float const cSonic_skyGemCost = 30.0f;
 bool NextGenSonic::m_skyGemEnabled = false;
+boost::shared_ptr<Sonic::CGameObject> m_spSkyGemSingleton;
 
 char const* homingAttackAnim[] =
 {
@@ -1355,10 +1356,18 @@ void NextGenSonic::DisableGem(S06HUD_API::SonicGemType type)
     }
 }
 
-HOOK(int, __fastcall, NextGenSonicGems_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
+HOOK(int, __fastcall, NextGenSonicGems_MsgRestartStage, 0xE76810, Sonic::Player::CPlayer* player, void* Edx, void* message)
 {
     NextGenSonic::ChangeGems(NextGenSonic::m_sonicGemType, S06HUD_API::SonicGemType::SGT_None);
-    return originalNextGenSonicGems_MsgRestartStage(This, Edx, message);
+
+    // Delete previous CObjSkyGem
+    if (m_spSkyGemSingleton)
+    {
+        player->SendMessage(m_spSkyGemSingleton->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+        m_spSkyGemSingleton = nullptr;
+    }
+
+    return originalNextGenSonicGems_MsgRestartStage(player, Edx, message);
 }
 
 HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, Sonic::Player::CPlayerSpeed* This, void* Edx, float* dt)
@@ -1793,14 +1802,6 @@ public:
         m_spModel->m_spInstanceInfo->m_Transform.translate(m_StartPosition);
     }
 
-    void RemoveCallback
-    (
-        Sonic::CGameDocument* pGameDocument
-    ) override
-    {
-
-    }
-
     void UpdateParallel
     (
         const Hedgehog::Universe::SUpdateInfo& updateInfo
@@ -1971,11 +1972,19 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
             // Deduct chaos energy
             context->m_ChaosEnergy = max(0.0f, context->m_ChaosEnergy - cSonic_skyGemCost);
 
+            // Delete previous CObjSkyGem
+            if (m_spSkyGemSingleton)
+            {
+                context->m_pPlayer->SendMessage(m_spSkyGemSingleton->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+                m_spSkyGemSingleton = nullptr;
+            }
+
             // Throw CObjSkyGem
             Hedgehog::Math::CVector position = context->m_spMatrixNode->m_Transform.m_Position;
             position.y() += 0.5f;
             Hedgehog::Math::CVector direction = context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector(0, 0.3f, 1.0f);
-            context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjSkyGem>(position, direction));
+            m_spSkyGemSingleton = boost::make_shared<CObjSkyGem>(position, direction);
+            context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(m_spSkyGemSingleton);
         }
 
         // Force stay in position
