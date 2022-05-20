@@ -1647,15 +1647,19 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAdvance, 0x1231C6
             Common::SetPlayerPosition(NextGenSonic::m_gemHoldPosition);
             This->m_Time = 0.0f;
 
-            // Cancel with normal dummy homing attack
-            if (!context->m_HomingAttackTargetActorID && padState->IsTapped(Sonic::EKeyState::eKeyState_A))
+            if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
             {
+                // Cancel with B button
+                StateManager::ChangeState(StateAction::Walk, context);
+            }
+            else if (!context->m_HomingAttackTargetActorID && padState->IsTapped(Sonic::EKeyState::eKeyState_A))
+            {
+                // Cancel with normal dummy homing attack
                 StateManager::ChangeState(StateAction::HomingAttack, context);
             }
-
-            // Cancel with bounce bracelet
-            if (!context->m_Grounded && padState->IsTapped(Sonic::EKeyState::eKeyState_X))
+            else if (!context->m_Grounded && padState->IsTapped(Sonic::EKeyState::eKeyState_X))
             {
+                // Cancel with bounce bracelet
                 StateManager::ChangeState(StateAction::Stomping, context);
             }
 
@@ -1955,6 +1959,11 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
             {
                 StateManager::ChangeState(StateAction::Walk, context);
             }
+        }
+        else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
+        {
+            // Cancel with B button
+            StateManager::ChangeState(StateAction::Walk, context);
         }
         else if (!padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && This->m_Time > 16.0f / 60.0f)
         {
