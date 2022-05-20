@@ -1699,6 +1699,52 @@ inline LanguageType GetUILanguageType()
 	return *(LanguageType*)Common::GetMultiLevelAddress(0x1E66B34, { 0x8 });
 }
 
+inline bool SolveBallisticArc
+(
+	const Eigen::Vector3f& start, 
+	const Eigen::Vector3f& end,
+	const float speed, 
+	const float gravity,
+	const bool bUseHighArc, 
+	Eigen::Vector3f& outTrajectory,
+	float& outTime
+)
+{
+	Eigen::Vector3f diff = end - start;
+	Eigen::Vector3f diffXZ(diff.x(), 0.0f, diff.z());
+	float groundDist = diffXZ.norm();
+
+	float speed2 = speed * speed;
+	float speed4 = speed2 * speed2;
+	float y = diff.y();
+	float x = groundDist;
+	float gx = gravity * x;
+
+	float root = speed4 - gravity * (gravity * x * x + 2 * y * speed2);
+
+	// No solution
+	if (root < 0) return false;
+
+	root = std::sqrt(root);
+	float lowAng = std::atan2f(speed2 - root, gx);
+	float highAng = std::atan2f(speed2 + root, gx);
+
+	Eigen::Vector3f groundDir = diffXZ.normalized();
+	if (bUseHighArc)
+	{
+		outTrajectory = groundDir * std::cos(highAng) * speed + Eigen::Vector3f::UnitY() * std::sin(highAng) * speed;
+	}
+	else
+	{
+		outTrajectory = groundDir * std::cos(lowAng) * speed + Eigen::Vector3f::UnitY() * std::sin(lowAng) * speed;
+	}
+
+	float speedXZ = Eigen::Vector3f(outTrajectory.x(), 0.0f, outTrajectory.z()).norm();
+	outTime = groundDist / speedXZ;
+
+	return true;
+}
+
 inline bool IsFileExist(std::string const& file)
 {
 	struct stat buffer;

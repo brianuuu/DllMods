@@ -1087,6 +1087,7 @@ float const cSonic_greenGemShockWaveInterval = 0.5f;
 bool NextGenSonic::m_greenGemEnabled = false;
 
 float const cSonic_skyGemCost = 30.0f;
+float const cSonic_skyGemLaunchSpeed = 50.0f;
 bool NextGenSonic::m_skyGemEnabled = false;
 boost::shared_ptr<Sonic::CGameObject> m_spSkyGemSingleton;
 
@@ -1359,14 +1360,6 @@ void NextGenSonic::DisableGem(S06HUD_API::SonicGemType type)
 HOOK(int, __fastcall, NextGenSonicGems_MsgRestartStage, 0xE76810, Sonic::Player::CPlayer* player, void* Edx, void* message)
 {
     NextGenSonic::ChangeGems(NextGenSonic::m_sonicGemType, S06HUD_API::SonicGemType::SGT_None);
-
-    // Delete previous CObjSkyGem
-    if (m_spSkyGemSingleton)
-    {
-        player->SendMessage(m_spSkyGemSingleton->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
-        m_spSkyGemSingleton = nullptr;
-    }
-
     return originalNextGenSonicGems_MsgRestartStage(player, Edx, message);
 }
 
@@ -1806,6 +1799,26 @@ public:
         m_spModel->m_spInstanceInfo->m_Transform.translate(m_StartPosition);
     }
 
+    bool ProcessMessage
+    (
+        Hedgehog::Universe::Message& message, 
+        bool flag
+    ) override
+    {
+        //printf("[Sky Gem] Recieved message type %s\n", message.GetType());
+        if (flag)
+        {
+            if (std::strstr(message.GetType(), "MsgRestartStage") != nullptr
+             || std::strstr(message.GetType(), "MsgStageClear") != nullptr)
+            {
+                Kill();
+                return true;
+            }
+        }
+
+        return Sonic::CGameObject::ProcessMessage(message, flag);
+    }
+
     void UpdateParallel
     (
         const Hedgehog::Universe::SUpdateInfo& updateInfo
@@ -1827,33 +1840,56 @@ public:
         Eigen::Vector4f outNormal;
         if (Common::fRaycast(rayStartPos, rayEndPos, outPos, outNormal, *(uint32_t*)0x1E0AFB4))
         {
-            kill = true;
+            Eigen::Vector3f impulse;
+            float outOfControl = 0.0f;
             auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-            if (context)
+            if (context && !context->StateFlag(eStateFlag_Dead)
+            && Common::SolveBallisticArc
+                (
+                    context->m_spMatrixNode->m_Transform.m_Position,
+                    outPos.head<3>(),
+                    cSonic_skyGemLaunchSpeed,
+                    context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_Gravity),
+                    false,
+                    impulse,
+                    outOfControl
+                )
+            )
             {
+                printf("[Sky Gem] Launch velocity {%.2f, %.2f, %.2f}, OutOfControl = %.2fs\n", DEBUG_VECTOR3(impulse), outOfControl);
                 alignas(16) MsgApplyImpulse message {};
                 message.m_position = context->m_spMatrixNode->m_Transform.m_Position;
-                message.m_impulse = (posNew - message.m_position).normalized() * 100.0f;
+                message.m_impulse = impulse;
                 message.m_impulseType = ImpulseType::JumpBoard;
-                message.m_outOfControl = 1.0f;
+                message.m_outOfControl = outOfControl;
                 message.m_notRelative = true;
                 message.m_snapPosition = false;
                 message.m_pathInterpolate = false;
                 message.m_alwaysMinusOne = -1.0f;
                 Common::ApplyPlayerApplyImpulse(message);
+
+                // Sky gem launch sfx
+                SharedPtrTypeless soundHandle;
+                Common::SonicContextPlaySound(soundHandle, 80041032, 1);
+            }
+
+            Kill();
+        }
+        else
+        {
+            m_LifeTime += updateInfo.DeltaTime;
+            if (m_LifeTime >= 5.0f)
+            {
+                Kill();
             }
         }
+    }
 
-        m_LifeTime += updateInfo.DeltaTime;
-        if (m_LifeTime >= 5.0f)
-        {
-            kill = true;
-        }
-
-        if (kill)
-        {
-            SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
-        }
+    void Kill()
+    {
+        printf("[Sky Gem] Killed\n");
+        SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+        m_spSkyGemSingleton = nullptr;
     }
 };
 
@@ -1984,8 +2020,7 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
             // Delete previous CObjSkyGem
             if (m_spSkyGemSingleton)
             {
-                context->m_pPlayer->SendMessage(m_spSkyGemSingleton->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
-                m_spSkyGemSingleton = nullptr;
+                ((CObjSkyGem*)m_spSkyGemSingleton.get())->Kill();
             }
 
             // Throw CObjSkyGem
