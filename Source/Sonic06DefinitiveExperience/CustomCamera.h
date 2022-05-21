@@ -13,5 +13,7 @@ public:
 		float const& pitch,
 		float const& targetPitch
 	);
+
+	static float m_skyGemCameraPitch;
 };
 

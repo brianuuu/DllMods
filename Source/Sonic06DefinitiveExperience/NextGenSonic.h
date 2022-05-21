@@ -57,6 +57,7 @@ public:
 	static int m_purpleGemJumpCount;
 	static bool m_greenGemEnabled;
 	static bool m_skyGemEnabled;
+	static bool m_skyGemLaunched;
 	static void ChangeGems(S06HUD_API::SonicGemType oldType, S06HUD_API::SonicGemType newType);
 	static void DisableGem(S06HUD_API::SonicGemType type);
 };

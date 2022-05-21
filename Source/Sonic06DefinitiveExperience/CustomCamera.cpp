@@ -49,7 +49,8 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     if (!*PLAYER_CONTEXT) return result;
 
     // Use default camera on quick step path
-    if (Common::IsPlayerInForwardPath())
+    bool skyGemCameraEnabled = NextGenSonic::m_skyGemEnabled && !NextGenSonic::m_skyGemLaunched;
+    if (Common::IsPlayerInForwardPath() || skyGemCameraEnabled)
     {
         cameraPosCached = *pCameraPos;
         return result;
@@ -232,6 +233,87 @@ HOOK(int, __fastcall, CustomCamera_MsgFinishPause, 0x010BC110, void* This, void*
     return originalCustomCamera_MsgFinishPause(This, Edx, a2);
 }
 
+
+float const cCamera_skyGemToPlayerDist = 1.3f;
+float const cCamera_skyGemtargetOffset = 0.95f;
+float const cCamera_skyGemRotateRate = 50.0f * DEG_TO_RAD;
+float const cCamera_skyGemPitchMax = 50.0f * DEG_TO_RAD;
+float const cCamera_skyGemPitchMin = -50.0f * DEG_TO_RAD;
+float const cCamera_skyGemFactorRate = 2.0f;
+float CustomCamera::m_skyGemCameraPitch = 0.0f;
+float m_skyGemCameraFactor = 0.0f;
+bool m_skyGemCameraUpdated = false;
+Hedgehog::Math::CVector m_skyGemCameraReleasedPosition;
+Hedgehog::Math::CQuaternion m_skyGemCameraReleasedRotation;
+HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCamera* This, void* Edx, const hh::fnd::SUpdateInfo& in_rUpdateInfo)
+{
+    originalCustomCamera_CCameraUpdateParallel(This, Edx, in_rUpdateInfo);
+
+    // TODO: don't run if it's paused
+    if (m_skyGemCameraUpdated) return;
+
+    bool skyGemCameraEnabled = NextGenSonic::m_skyGemEnabled && !NextGenSonic::m_skyGemLaunched;
+
+    // Change factor to interpolate camera
+    if (skyGemCameraEnabled)
+    {
+        m_skyGemCameraFactor = min(1.0f, m_skyGemCameraFactor + in_rUpdateInfo.DeltaTime * cCamera_skyGemFactorRate);
+    }
+    else
+    {
+        m_skyGemCameraFactor = max(0.0f, m_skyGemCameraFactor - in_rUpdateInfo.DeltaTime * cCamera_skyGemFactorRate);
+        if (m_skyGemCameraFactor == 0.0f)
+        {
+            CustomCamera::m_skyGemCameraPitch = 0.0f;
+        }
+    }
+
+    auto& camera = This->m_MyCamera;
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+    if (m_skyGemCameraFactor > 0.0f)
+    {
+        Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+
+        // Pitch
+        CustomCamera::m_skyGemCameraPitch -= padState->LeftStickVertical * cCamera_skyGemRotateRate * in_rUpdateInfo.DeltaTime;
+        Common::ClampFloat(CustomCamera::m_skyGemCameraPitch, cCamera_skyGemPitchMin, cCamera_skyGemPitchMax);
+
+        // Player vectors
+        Hedgehog::Math::CVector playerRight = context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitX();
+        Hedgehog::Math::CVector playerUp = context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitY();
+        Hedgehog::Math::CVector playerForward = context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitZ();
+        Hedgehog::Math::CVector playerPosition = context->m_spMatrixNode->m_Transform.m_Position + playerUp * cCamera_skyGemtargetOffset;
+
+        // Rotate player
+        float yawAdd = -padState->LeftStickHorizontal * cCamera_skyGemRotateRate * in_rUpdateInfo.DeltaTime;
+        context->m_HorizontalRotation = Eigen::AngleAxisf(yawAdd, playerUp) * context->m_HorizontalRotation;
+        
+        // Camera vectors
+        const Eigen::AngleAxisf rotPitch(CustomCamera::m_skyGemCameraPitch, playerRight);
+        const Eigen::AngleAxisf rotYaw(180 * DEG_TO_RAD, playerUp);
+        Hedgehog::Math::CVector cameraForward = rotPitch * rotYaw * playerForward;
+        Hedgehog::Math::CQuaternion cameraRotation = skyGemCameraEnabled ? rotPitch * rotYaw * context->m_spMatrixNode->m_Transform.m_Rotation : m_skyGemCameraReleasedRotation;
+
+        // Interpolate position
+        Hedgehog::Math::CVector targetPosition = skyGemCameraEnabled ? playerPosition + cameraForward * cCamera_skyGemToPlayerDist : m_skyGemCameraReleasedPosition;
+        camera.m_Position += (targetPosition - camera.m_Position) * m_skyGemCameraFactor;
+        camera.m_Direction = cameraForward;
+
+        // Interpolate rotation
+        Hedgehog::Math::CQuaternion rotationSlerp = Hedgehog::Math::CQuaternion(camera.m_View.rotation().inverse()).slerp(m_skyGemCameraFactor, cameraRotation);
+        camera.m_View = (Eigen::Translation3f(camera.m_Position) * rotationSlerp).inverse().matrix();
+        camera.m_InputView = camera.m_View;
+
+        if (skyGemCameraEnabled)
+        {
+            m_skyGemCameraReleasedPosition = targetPosition;
+            m_skyGemCameraReleasedRotation = cameraRotation;
+        }
+    }
+
+    m_skyGemCameraUpdated = true;
+}
+
 void CustomCamera::applyPatches()
 {
     if (Configuration::m_camera)
@@ -257,6 +339,9 @@ void CustomCamera::applyPatches()
         static float const HOMING_ATTACK_TARGET_SENSITIVE = 0.0f;
         WRITE_MEMORY(0x10EEB92, float*, &HOMING_ATTACK_TARGET_SENSITIVE);
     }
+
+    // Override camera for Gems
+    INSTALL_HOOK(CustomCamera_CCameraUpdateParallel);
 }
 
 void CustomCamera::advance()
@@ -273,6 +358,7 @@ void CustomCamera::advance()
         }
     }
     m_usedCustomCamera = false;
+    m_skyGemCameraUpdated = false;
 }
 
 Eigen::Vector3f CustomCamera::calculateCameraPos

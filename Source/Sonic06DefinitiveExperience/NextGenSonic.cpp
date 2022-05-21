@@ -3,6 +3,7 @@
 #include "Application.h"
 #include "AnimationSetPatcher.h"
 #include "VoiceOver.h"
+#include "CustomCamera.h"
 
 //---------------------------------------------------
 // Animation
@@ -1087,8 +1088,12 @@ float const cSonic_greenGemShockWaveInterval = 0.5f;
 bool NextGenSonic::m_greenGemEnabled = false;
 
 float const cSonic_skyGemCost = 30.0f;
+float const cSonic_skyGemThrowSpeed = 40.0f;
+float const cSonic_skyGemGravity = -15.0f;
+float const cSonic_skyGemLaunchSpeedDummy = 20.0f;
 float const cSonic_skyGemLaunchSpeed = 50.0f;
 bool NextGenSonic::m_skyGemEnabled = false;
+bool NextGenSonic::m_skyGemLaunched = false;
 boost::shared_ptr<Sonic::CGameObject> m_spSkyGemSingleton;
 
 char const* homingAttackAnim[] =
@@ -1774,8 +1779,8 @@ public:
     (
         Hedgehog::Math::CVector const& _Position,
         Hedgehog::Math::CVector const& _Direction,
-        float _Gravity = -9.81f,
-        float _Speed = 30.0f
+        float _Speed = cSonic_skyGemThrowSpeed,
+        float _Gravity = cSonic_skyGemGravity
     )
         : m_StartPosition(_Position)
         , m_Velocity(_Direction.normalized() * _Speed)
@@ -1824,8 +1829,6 @@ public:
         const Hedgehog::Universe::SUpdateInfo& updateInfo
     ) override
     {
-        bool kill = false;
-
         // Do equation of motion manually
         Hedgehog::Math::CVector const velPrev = m_Velocity;
         m_Velocity += Hedgehog::Math::CVector::UnitY() * m_Gravity * updateInfo.DeltaTime;
@@ -1843,34 +1846,46 @@ public:
             Eigen::Vector3f impulse;
             float outOfControl = 0.0f;
             auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-            if (context && !context->StateFlag(eStateFlag_Dead)
-            && Common::SolveBallisticArc
-                (
-                    context->m_spMatrixNode->m_Transform.m_Position,
-                    outPos.head<3>(),
-                    cSonic_skyGemLaunchSpeed,
-                    context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_Gravity),
-                    false,
-                    impulse,
-                    outOfControl
-                )
-            )
+            if (context && !context->StateFlag(eStateFlag_Dead))
             {
-                printf("[Sky Gem] Launch velocity {%.2f, %.2f, %.2f}, OutOfControl = %.2fs\n", DEBUG_VECTOR3(impulse), outOfControl);
-                alignas(16) MsgApplyImpulse message {};
-                message.m_position = context->m_spMatrixNode->m_Transform.m_Position;
-                message.m_impulse = impulse;
-                message.m_impulseType = ImpulseType::JumpBoard;
-                message.m_outOfControl = outOfControl;
-                message.m_notRelative = true;
-                message.m_snapPosition = false;
-                message.m_pathInterpolate = false;
-                message.m_alwaysMinusOne = -1.0f;
-                Common::ApplyPlayerApplyImpulse(message);
+                float launchSpeed = cSonic_skyGemLaunchSpeed;
+                for (int i = 0; i < 5; i++)
+                {
+                    if (Common::SolveBallisticArc
+                        (
+                            context->m_spMatrixNode->m_Transform.m_Position,
+                            outPos.head<3>(),
+                            launchSpeed,
+                            context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_Gravity),
+                            false,
+                            impulse,
+                            outOfControl
+                        )
+                    )
+                    {
+                        printf("[Sky Gem] Launch velocity {%.2f, %.2f, %.2f}, Speed = %.f, OutOfControl = %.2fs\n", DEBUG_VECTOR3(impulse), launchSpeed, outOfControl);
+                        alignas(16) MsgApplyImpulse message {};
+                        message.m_position = context->m_spMatrixNode->m_Transform.m_Position;
+                        message.m_impulse = impulse;
+                        message.m_impulseType = ImpulseType::JumpBoard;
+                        message.m_outOfControl = outOfControl;
+                        message.m_notRelative = true;
+                        message.m_snapPosition = false;
+                        message.m_pathInterpolate = false;
+                        message.m_alwaysMinusOne = -1.0f;
+                        Common::ApplyPlayerApplyImpulse(message);
 
-                // Sky gem launch sfx
-                SharedPtrTypeless soundHandle;
-                Common::SonicContextPlaySound(soundHandle, 80041032, 1);
+                        // Sky gem move sfx
+                        SharedPtrTypeless soundHandle;
+                        Common::SonicContextPlaySound(soundHandle, 80041032, 1);
+                        break;
+                    }
+                    else
+                    {
+                        printf("[Sky Gem] No solution for launch speed %.f\n", launchSpeed);
+                        launchSpeed += 10.0f;
+                    }
+                }
             }
 
             Kill();
@@ -1880,6 +1895,7 @@ public:
             m_LifeTime += updateInfo.DeltaTime;
             if (m_LifeTime >= 5.0f)
             {
+                printf("[Sky Gem] Timeout\n");
                 Kill();
             }
         }
@@ -1896,7 +1912,6 @@ public:
 bool greenGemShockWaveCreated = false;
 float greenGemShockWaveTimer = 0.0f;
 SharedPtrTypeless skyGemSoundHandle;
-bool skyGemLaunched = false;
 HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickBegin, 0x12526D0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
@@ -1919,7 +1934,8 @@ HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickBegin, 0x12526D0, hh
     }
     else if (NextGenSonic::m_skyGemEnabled)
     {
-        skyGemLaunched = false;
+        NextGenSonic::m_skyGemLaunched = false;
+        Common::GetSonicStateFlags()->OutOfControl = true;
 
         // Change Sonic's animation
         Common::SonicContextChangeAnimation(AnimationSetPatcher::SkyGem);
@@ -1988,9 +2004,8 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
     else if (NextGenSonic::m_skyGemEnabled)
     {
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-        if (skyGemLaunched)
+        if (NextGenSonic::m_skyGemLaunched)
         {
-            Common::GetSonicStateFlags()->OutOfControl = true;
             if (This->m_Time > 20.0f / 60.0f)
             {
                 StateManager::ChangeState(StateAction::Walk, context);
@@ -2003,8 +2018,7 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
         }
         else if (!padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && This->m_Time > 16.0f / 60.0f)
         {
-            This->m_Time = 0.0f;
-            skyGemLaunched = true;
+            NextGenSonic::m_skyGemLaunched = true;
             skyGemSoundHandle.reset();
 
             // throw animation
@@ -2024,11 +2038,13 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
             }
 
             // Throw CObjSkyGem
-            Hedgehog::Math::CVector position = context->m_spMatrixNode->m_Transform.m_Position;
-            position.y() += 0.5f;
-            Hedgehog::Math::CVector direction = context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector(0, 0.3f, 1.0f);
-            m_spSkyGemSingleton = boost::make_shared<CObjSkyGem>(position, direction);
+            Hedgehog::Math::CVector position = context->m_spMatrixNode->m_Transform.m_Position + Hedgehog::Math::CVector::UnitY() * 0.8f;
+            Hedgehog::Math::CVector playerRight = context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitX();
+            Hedgehog::Math::CVector direction = Eigen::AngleAxisf(CustomCamera::m_skyGemCameraPitch, playerRight) * context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitZ();
+            m_spSkyGemSingleton = boost::make_shared<CObjSkyGem>(position, direction, This->m_Time <= 18.0f / 60.0f ? cSonic_skyGemLaunchSpeedDummy : cSonic_skyGemLaunchSpeed);
             context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(m_spSkyGemSingleton);
+
+            This->m_Time = 0.0f;
         }
 
         // Force stay in position
