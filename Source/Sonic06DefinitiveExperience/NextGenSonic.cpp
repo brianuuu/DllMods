@@ -1391,6 +1391,10 @@ bool NextGenSonicGems_SkyGemCheck()
     auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
     if (context->m_ChaosEnergy >= cSonic_skyGemCost)
     {
+        // launch sfx
+        static SharedPtrTypeless soundHandle;
+        Common::SonicContextPlaySound(soundHandle, 80041031, 1);
+
         context->m_ChaosEnergy -= cSonic_skyGemCost;
         if (m_spSkyGemSingleton)
         {
