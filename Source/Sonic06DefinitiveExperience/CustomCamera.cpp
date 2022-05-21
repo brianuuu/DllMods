@@ -38,12 +38,15 @@ Eigen::Quaternionf targetPlayerRotation(1, 0, 0, 0);
 
 // Sky Gem
 float const cCamera_skyGemToPlayerDist = 1.3f;
-float const cCamera_skyGemtargetOffset = 0.95f;
+float const cCamera_skyGemtargetOffset = 0.85f;
 float const cCamera_skyGemRotateRate = 50.0f * DEG_TO_RAD;
 float const cCamera_skyGemPitchMax = 50.0f * DEG_TO_RAD;
 float const cCamera_skyGemPitchMin = -50.0f * DEG_TO_RAD;
+float const cCamera_skyGemPitchAdjust = 7.5f * DEG_TO_RAD;
 float const cCamera_skyGemFactorRate = 3.0f;
+float const cCamera_skyGemUpOffsetScale = 0.5f;
 float CustomCamera::m_skyGemCameraPitch = 0.0f;
+bool CustomCamera::m_skyGemCameraEnabled = false;
 float m_skyGemCameraFactor = 0.0f;
 bool m_skyGemCameraUpdated = false;
 Hedgehog::Math::CVector m_skyGemCameraReleasedPosition;
@@ -252,18 +255,16 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
 {
     originalCustomCamera_CCameraUpdateParallel(This, Edx, in_rUpdateInfo);
 
-    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-    bool skyGemCameraEnabled = NextGenSonic::m_skyGemEnabled && !NextGenSonic::m_skyGemLaunched && padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger);
-
     // Change factor to interpolate camera
     if (!m_skyGemCameraUpdated)
     {
-        if (skyGemCameraEnabled)
+        if (CustomCamera::m_skyGemCameraEnabled)
         {
             m_skyGemCameraFactor = min(1.0f, m_skyGemCameraFactor + in_rUpdateInfo.DeltaTime * cCamera_skyGemFactorRate);
         }
         else
         {
+            // [-0.5, 0] is buffer to not change camera if using Sky Gem too quickly
             m_skyGemCameraFactor = max(-0.5f, m_skyGemCameraFactor - in_rUpdateInfo.DeltaTime * cCamera_skyGemFactorRate);
             if (m_skyGemCameraFactor <= -0.5f)
             {
@@ -276,7 +277,8 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
     auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
     if (m_skyGemCameraFactor > 0.0f)
     {
-        bool updateCamera = skyGemCameraEnabled && !m_skyGemCameraUpdated;
+        Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+        bool updateCamera = CustomCamera::m_skyGemCameraEnabled && !m_skyGemCameraUpdated;
 
         // Pitch
         if (!m_wasPaused)
@@ -290,6 +292,10 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
         Hedgehog::Math::CVector playerUp = context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitY();
         Hedgehog::Math::CVector playerForward = context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitZ();
         Hedgehog::Math::CVector playerPosition = context->m_spMatrixNode->m_Transform.m_Position + playerUp * cCamera_skyGemtargetOffset;
+        if (CustomCamera::m_skyGemCameraPitch < 0.0f)
+        {
+            playerPosition -= playerUp * CustomCamera::m_skyGemCameraPitch * cCamera_skyGemUpOffsetScale;
+        }
 
         // Rotate player
         if (!m_wasPaused)
@@ -299,7 +305,7 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
         }
         
         // Camera vectors
-        const Eigen::AngleAxisf rotPitch(CustomCamera::m_skyGemCameraPitch, playerRight);
+        const Eigen::AngleAxisf rotPitch(CustomCamera::m_skyGemCameraPitch + cCamera_skyGemPitchAdjust, playerRight);
         const Eigen::AngleAxisf rotYaw(180 * DEG_TO_RAD, playerUp);
         Hedgehog::Math::CVector cameraForward = rotPitch * rotYaw * playerForward;
         Hedgehog::Math::CQuaternion cameraRotation = updateCamera ? rotPitch * rotYaw * context->m_spMatrixNode->m_Transform.m_Rotation : m_skyGemCameraReleasedRotation;
@@ -314,7 +320,7 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
         camera.m_View = (Eigen::Translation3f(camera.m_Position) * rotationSlerp).inverse().matrix();
         camera.m_InputView = camera.m_View;
 
-        if (skyGemCameraEnabled)
+        if (CustomCamera::m_skyGemCameraEnabled)
         {
             m_skyGemCameraReleasedPosition = targetPosition;
             m_skyGemCameraReleasedRotation = cameraRotation;

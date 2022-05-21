@@ -1135,13 +1135,17 @@ public:
         const boost::shared_ptr<Hedgehog::Database::CDatabase>& spDatabase
     ) override
     {
+        // launch sfx
+        static SharedPtrTypeless soundHandle;
+        Common::SonicContextPlaySound(soundHandle, 80041031, 1);
+
         Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
         pGameDocument->AddUpdateUnit("0", this);
 
         m_spModel = boost::make_shared<hh::mr::CSingleElement>(hh::mr::CMirageDatabaseWrapper(spDatabase.get()).GetModelData("so_itm_gemSky"));
         AddRenderable("Object", m_spModel, false);
 
-        m_spModel->m_spInstanceInfo->m_Transform.translate(m_Position);
+        UpdateTransform();
     }
 
     bool ProcessMessage
@@ -1175,12 +1179,7 @@ public:
         Hedgehog::Math::CVector const posPrev = m_Position;
         m_Position += (velPrev + m_Velocity) * 0.5f * updateInfo.DeltaTime;
 
-        // Rotate gem to correct rotation
-        Hedgehog::Math::CVector const dir = (m_Position - posPrev).normalized();
-        Hedgehog::Math::CVector dirXZ = dir; dirXZ.y() = 0.0f;
-        Hedgehog::Math::CQuaternion rotYaw = Hedgehog::Math::CQuaternion::FromTwoVectors(Hedgehog::Math::CVector::UnitZ(), dirXZ.head<3>());
-        Hedgehog::Math::CQuaternion rotPitch = Hedgehog::Math::CQuaternion::FromTwoVectors(dirXZ.head<3>(), dir.head<3>());
-        m_spModel->m_spInstanceInfo->m_Transform = (Eigen::Translation3f(m_Position) * rotPitch * rotYaw ).matrix();
+        UpdateTransform();
 
         // Raycast for wall detection
         Eigen::Vector4f const rayStartPos(posPrev.x(), posPrev.y(), posPrev.z(), 1.0f);
@@ -1255,6 +1254,16 @@ public:
         printf("[Sky Gem] Killed\n");
         SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
         m_spSkyGemSingleton = nullptr;
+    }
+
+    void UpdateTransform()
+    {
+        // Rotate gem to correct rotation
+        Hedgehog::Math::CVector const dir = m_Velocity.normalized();
+        Hedgehog::Math::CVector dirXZ = dir; dirXZ.y() = 0.0f;
+        Hedgehog::Math::CQuaternion rotYaw = Hedgehog::Math::CQuaternion::FromTwoVectors(Hedgehog::Math::CVector::UnitZ(), dirXZ.head<3>());
+        Hedgehog::Math::CQuaternion rotPitch = Hedgehog::Math::CQuaternion::FromTwoVectors(dirXZ.head<3>(), dir.head<3>());
+        m_spModel->m_spInstanceInfo->m_Transform = (Eigen::Translation3f(m_Position) * rotPitch * rotYaw).matrix();
     }
 };
 
@@ -1397,10 +1406,6 @@ bool NextGenSonicGems_SkyGemCheck()
     auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
     if (context->m_ChaosEnergy >= cSonic_skyGemCost)
     {
-        // launch sfx
-        static SharedPtrTypeless soundHandle;
-        Common::SonicContextPlaySound(soundHandle, 80041031, 1);
-
         context->m_ChaosEnergy -= cSonic_skyGemCost;
         if (m_spSkyGemSingleton)
         {
@@ -1984,6 +1989,8 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAfterAdvance, 0x1
 bool greenGemShockWaveCreated = false;
 float greenGemShockWaveTimer = 0.0f;
 SharedPtrTypeless skyGemSoundHandle;
+bool skyGemThrowAnimationStarted = false;
+bool skyGemThrowDummy = false;
 HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickBegin, 0x12526D0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
@@ -2076,8 +2083,30 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
     else if (NextGenSonic::m_skyGemEnabled)
     {
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-        if (NextGenSonic::m_skyGemLaunched)
+        if (skyGemThrowAnimationStarted)
         {
+            if (!NextGenSonic::m_skyGemLaunched && This->m_Time > 4.0f / 60.0f)
+            {
+                NextGenSonic::m_skyGemLaunched = true;
+                skyGemSoundHandle.reset();
+
+                // Deduct chaos energy
+                context->m_ChaosEnergy = max(0.0f, context->m_ChaosEnergy - cSonic_skyGemCost);
+
+                // Delete previous CObjSkyGem
+                if (m_spSkyGemSingleton)
+                {
+                    ((CObjSkyGem*)m_spSkyGemSingleton.get())->Kill();
+                }
+
+                // Throw CObjSkyGem
+                Hedgehog::Math::CVector position = context->m_spMatrixNode->m_Transform.m_Position + Hedgehog::Math::CVector::UnitY() * 1.0f;
+                Hedgehog::Math::CVector playerRight = context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitX();
+                Hedgehog::Math::CVector direction = Eigen::AngleAxisf(CustomCamera::m_skyGemCameraPitch, playerRight) * context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitZ();
+                m_spSkyGemSingleton = boost::make_shared<CObjSkyGem>(position, direction, skyGemThrowDummy ? cSonic_skyGemLaunchSpeedDummy : cSonic_skyGemLaunchSpeed);
+                context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(m_spSkyGemSingleton);
+            }
+
             if (This->m_Time > 20.0f / 60.0f)
             {
                 StateManager::ChangeState(StateAction::Walk, context);
@@ -2088,35 +2117,26 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
             // Cancel with B button
             StateManager::ChangeState(StateAction::Walk, context);
         }
-        else if (!padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && This->m_Time > 16.0f / 60.0f)
+        else if (!padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger))
         {
-            NextGenSonic::m_skyGemLaunched = true;
-            skyGemSoundHandle.reset();
-
-            // throw animation
-            Common::SonicContextChangeAnimation(AnimationSetPatcher::SkyGemEnd);
-
-            // launch sfx
-            static SharedPtrTypeless soundHandle;
-            Common::SonicContextPlaySound(soundHandle, 80041031, 1);
-
-            // Deduct chaos energy
-            context->m_ChaosEnergy = max(0.0f, context->m_ChaosEnergy - cSonic_skyGemCost);
-
-            // Delete previous CObjSkyGem
-            if (m_spSkyGemSingleton)
+            skyGemThrowDummy = (This->m_Time <= 18.0f / 60.0f);
+            if (skyGemThrowDummy)
             {
-                ((CObjSkyGem*)m_spSkyGemSingleton.get())->Kill();
+                CustomCamera::m_skyGemCameraEnabled = false;
             }
 
-            // Throw CObjSkyGem
-            Hedgehog::Math::CVector position = context->m_spMatrixNode->m_Transform.m_Position + Hedgehog::Math::CVector::UnitY() * 0.8f;
-            Hedgehog::Math::CVector playerRight = context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitX();
-            Hedgehog::Math::CVector direction = Eigen::AngleAxisf(CustomCamera::m_skyGemCameraPitch, playerRight) * context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitZ();
-            m_spSkyGemSingleton = boost::make_shared<CObjSkyGem>(position, direction, This->m_Time <= 18.0f / 60.0f ? cSonic_skyGemLaunchSpeedDummy : cSonic_skyGemLaunchSpeed);
-            context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(m_spSkyGemSingleton);
+            if (This->m_Time > 16.0f / 60.0f)
+            {
+                // throw animation
+                skyGemThrowAnimationStarted = true;
+                Common::SonicContextChangeAnimation(AnimationSetPatcher::SkyGemEnd);
 
-            This->m_Time = 0.0f;
+                This->m_Time = 0.0f;
+            }
+        }
+        else
+        {
+            CustomCamera::m_skyGemCameraEnabled = true;
         }
 
         // Force stay in position
@@ -2137,7 +2157,10 @@ HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickEnd, 0x12527B0, hh::
     }
     else if (NextGenSonic::m_skyGemEnabled)
     {
+        CustomCamera::m_skyGemCameraEnabled = false;
         NextGenSonic::m_skyGemEnabled = false;
+        NextGenSonic::m_skyGemLaunched = false;
+        skyGemThrowAnimationStarted = false;
         Common::GetSonicStateFlags()->OutOfControl = false;
         skyGemSoundHandle.reset();
         return nullptr;

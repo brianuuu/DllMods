@@ -15,5 +15,6 @@ public:
 	);
 
 	static float m_skyGemCameraPitch;
+	static bool m_skyGemCameraEnabled;
 };
 
