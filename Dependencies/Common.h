@@ -1149,7 +1149,7 @@ inline void ObjectCGlitterPlayerOneShot(void* pObject, Hedgehog::Base::CSharedSt
 {
 	uint32_t* CGlitterPlayer = *(uint32_t**)((uint32_t)pObject + 0xF8);
 	void* matrixNode = (void*)((uint32_t)pObject + 0xB8);
-	if (*CGlitterPlayer == 0x16D0514)
+	if (CGlitterPlayer && *CGlitterPlayer == 0x16D0514)
 	{
 		FUNCTION_PTR(void, __thiscall, CGlitterPlayerOneShot, 0xE85F00, void* This, void* pMatrixTransformNode, Hedgehog::Base::CSharedString const& name, float a4, int a5);
 		CGlitterPlayerOneShot(CGlitterPlayer, matrixNode, name, 1.0, 1);

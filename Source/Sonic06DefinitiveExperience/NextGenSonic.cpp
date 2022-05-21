@@ -1107,13 +1107,17 @@ char const* homingAttackAnim[] =
     "HomingAttackAfter6"
 }; 
 
-class CObjSkyGem : public Sonic::CGameObject
+SharedPtrTypeless skyGemWaitPfxHandle;
+class CObjSkyGem : public Sonic::CGameObject3D
 {
+    INSERT_PADDING(0x4);
+    SharedPtrTypeless m_GlitterPlayer;
     boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
     Hedgehog::Math::CVector m_Position;
     Hedgehog::Math::CVector m_Velocity;
     float m_Gravity;
     float m_LifeTime;
+    SharedPtrTypeless trailPfxHandle;
     
 public:
     CObjSkyGem
@@ -1136,6 +1140,30 @@ public:
         const boost::shared_ptr<Hedgehog::Database::CDatabase>& spDatabase
     ) override
     {
+
+        FUNCTION_PTR(void, __thiscall, AddCallbackObjectBase, 0x1058B00, 
+            void* This, 
+            const Hedgehog::Base::THolder<Sonic::CWorld>&worldHolder,
+            Sonic::CGameDocument * pGameDocument,
+            const boost::shared_ptr<Hedgehog::Database::CDatabase>&spDatabase);
+        WRITE_JUMP(0x1058BDC, (void*)0x1058C63);
+        AddCallbackObjectBase(this, worldHolder, pGameDocument, spDatabase);
+        WRITE_MEMORY(0x1058BDC, uint8_t, 0x8B, 0x17, 0x8B, 0x42, 0x60);
+
+        // Prevent fpCGameObject3DMatrixNodeChangedCallback crashing
+        *(uint32_t*)((uint32_t)this + 0x1C) = 0;
+
+        // Thrown pfx
+        static SharedPtrTypeless pfxHandle;
+        void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
+        Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle, matrixNode, "ef_ch_sng_skythown", 1);
+
+        // Wait pfx
+        Common::fCGlitterCreate(*PLAYER_CONTEXT, skyGemWaitPfxHandle, matrixNode, "ef_ch_sng_skywait", 1);
+
+        // Trail pfx
+        Common::ObjectCGlitterPlayerOneShot(this, "ef_ch_sng_skytrail");
+
         // launch sfx
         static SharedPtrTypeless soundHandle;
         Common::SonicContextPlaySound(soundHandle, 80041031, 1);
@@ -1255,6 +1283,7 @@ public:
         printf("[Sky Gem] Killed\n");
         SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
         m_spSkyGemSingleton = nullptr;
+        Common::fCGlitterEnd(*PLAYER_CONTEXT, skyGemWaitPfxHandle, true);
     }
 
     void UpdateTransform()
@@ -1265,6 +1294,9 @@ public:
         Hedgehog::Math::CQuaternion rotYaw = Hedgehog::Math::CQuaternion::FromTwoVectors(Hedgehog::Math::CVector::UnitZ(), dirXZ.head<3>());
         Hedgehog::Math::CQuaternion rotPitch = Hedgehog::Math::CQuaternion::FromTwoVectors(dirXZ.head<3>(), dir.head<3>());
         m_spModel->m_spInstanceInfo->m_Transform = (Eigen::Translation3f(m_Position) * rotPitch * rotYaw).matrix();
+
+        m_spMatrixNodeTransform->m_Transform.SetPosition(m_Position);
+        m_spMatrixNodeTransform->NotifyChanged();
     }
 };
 
@@ -2108,8 +2140,9 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
                 // Throw CObjSkyGem
                 Hedgehog::Math::CVector position = context->m_spMatrixNode->m_Transform.m_Position + Hedgehog::Math::CVector::UnitY() * 1.0f;
                 Hedgehog::Math::CVector playerRight = context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitX();
+                Hedgehog::Math::CVector playerFoward = context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitZ();
                 Hedgehog::Math::CVector direction = Eigen::AngleAxisf(CustomCamera::m_skyGemCameraPitch, playerRight) * context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitZ();
-                m_spSkyGemSingleton = boost::make_shared<CObjSkyGem>(position, direction, skyGemThrowDummy ? cSonic_skyGemLaunchSpeedDummy : cSonic_skyGemLaunchSpeed);
+                m_spSkyGemSingleton = boost::make_shared<CObjSkyGem>(position + playerFoward * 0.4f, direction, skyGemThrowDummy ? cSonic_skyGemLaunchSpeedDummy : cSonic_skyGemLaunchSpeed);
                 context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(m_spSkyGemSingleton);
             }
 
