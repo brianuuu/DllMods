@@ -1094,6 +1094,7 @@ float const cSonic_skyGemLaunchSpeedDummy = 20.0f;
 float const cSonic_skyGemLaunchSpeed = 50.0f;
 bool NextGenSonic::m_skyGemEnabled = false;
 bool NextGenSonic::m_skyGemLaunched = false;
+bool NextGenSonic::m_skyGemCancelled = false;
 boost::shared_ptr<Sonic::CGameObject> m_spSkyGemSingleton;
 
 char const* homingAttackAnim[] =
@@ -1721,9 +1722,14 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, Sonic::Player::C
         }
         case S06HUD_API::SonicGemType::SGT_Sky:
         {
+            if (!padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger))
+            {
+                NextGenSonic::m_skyGemCancelled = false;
+            }
+
             if (!NextGenSonic::m_skyGemEnabled && !flags->KeepRunning && Common::IsPlayerGrounded() && !Common::IsPlayerGrinding()
-            && !isStateForbidden && !StateManager::isCurrentAction(StateAction::SquatKick)
-            && padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger) && *boost >= cSonic_skyGemCost)
+            && !NextGenSonic::m_skyGemCancelled && !isStateForbidden && !StateManager::isCurrentAction(StateAction::SquatKick)
+            && padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && *boost >= cSonic_skyGemCost)
             {
                 // Hijack squat kick state
                 NextGenSonic::m_skyGemEnabled = true;
@@ -2115,6 +2121,7 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
         else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B) || !context->m_Grounded)
         {
             // Cancel with B button
+            NextGenSonic::m_skyGemCancelled = true;
             StateManager::ChangeState(StateAction::Walk, context);
         }
         else if (!padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger))
