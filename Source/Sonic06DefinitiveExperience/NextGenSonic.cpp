@@ -1109,7 +1109,7 @@ char const* homingAttackAnim[] =
 class CObjSkyGem : public Sonic::CGameObject
 {
     boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
-    Hedgehog::Math::CVector m_StartPosition;
+    Hedgehog::Math::CVector m_Position;
     Hedgehog::Math::CVector m_Velocity;
     float m_Gravity;
     float m_LifeTime;
@@ -1122,7 +1122,7 @@ public:
         float _Speed = cSonic_skyGemThrowSpeed,
         float _Gravity = cSonic_skyGemGravity
     )
-        : m_StartPosition(_Position)
+        : m_Position(_Position)
         , m_Velocity(_Direction.normalized() * _Speed)
         , m_Gravity(_Gravity)
         , m_LifeTime(0.0f)
@@ -1138,10 +1138,10 @@ public:
         Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
         pGameDocument->AddUpdateUnit("0", this);
 
-        m_spModel = boost::make_shared<hh::mr::CSingleElement>(hh::mr::CMirageDatabaseWrapper(spDatabase.get()).GetModelData("chr_Sonic_HD"));
+        m_spModel = boost::make_shared<hh::mr::CSingleElement>(hh::mr::CMirageDatabaseWrapper(spDatabase.get()).GetModelData("so_itm_gemSky"));
         AddRenderable("Object", m_spModel, false);
 
-        m_spModel->m_spInstanceInfo->m_Transform.translate(m_StartPosition);
+        m_spModel->m_spInstanceInfo->m_Transform.translate(m_Position);
     }
 
     bool ProcessMessage
@@ -1172,13 +1172,19 @@ public:
         // Do equation of motion manually
         Hedgehog::Math::CVector const velPrev = m_Velocity;
         m_Velocity += Hedgehog::Math::CVector::UnitY() * m_Gravity * updateInfo.DeltaTime;
-        Hedgehog::Math::CVector const posPrev = m_spModel->m_spInstanceInfo->m_Transform.translation();
-        m_spModel->m_spInstanceInfo->m_Transform.translate((velPrev + m_Velocity) * 0.5f * updateInfo.DeltaTime);
-        Hedgehog::Math::CVector const posNew = m_spModel->m_spInstanceInfo->m_Transform.translation();
+        Hedgehog::Math::CVector const posPrev = m_Position;
+        m_Position += (velPrev + m_Velocity) * 0.5f * updateInfo.DeltaTime;
+
+        // Rotate gem to correct rotation
+        Hedgehog::Math::CVector const dir = (m_Position - posPrev).normalized();
+        Hedgehog::Math::CVector dirXZ = dir; dirXZ.y() = 0.0f;
+        Hedgehog::Math::CQuaternion rotYaw = Hedgehog::Math::CQuaternion::FromTwoVectors(Hedgehog::Math::CVector::UnitZ(), dirXZ.head<3>());
+        Hedgehog::Math::CQuaternion rotPitch = Hedgehog::Math::CQuaternion::FromTwoVectors(dirXZ.head<3>(), dir.head<3>());
+        m_spModel->m_spInstanceInfo->m_Transform = (Eigen::Translation3f(m_Position) * rotPitch * rotYaw ).matrix();
 
         // Raycast for wall detection
         Eigen::Vector4f const rayStartPos(posPrev.x(), posPrev.y(), posPrev.z(), 1.0f);
-        Eigen::Vector4f const rayEndPos(posNew.x(), posNew.y(), posNew.z(), 1.0f);
+        Eigen::Vector4f const rayEndPos(m_Position.x(), m_Position.y(), m_Position.z(), 1.0f);
         Eigen::Vector4f outPos;
         Eigen::Vector4f outNormal;
         if (Common::fRaycast(rayStartPos, rayEndPos, outPos, outNormal, *(uint32_t*)0x1E0AFB4))
