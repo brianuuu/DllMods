@@ -1218,6 +1218,9 @@ public:
                         // Sky gem move sfx
                         SharedPtrTypeless soundHandle;
                         Common::SonicContextPlaySound(soundHandle, 80041032, 1);
+
+                        // Prevent using Sky Gem in air
+                        Common::GetSonicStateFlags()->EnableAirOnceAction = false;
                         break;
                     }
                     else
