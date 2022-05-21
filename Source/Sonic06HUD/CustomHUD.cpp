@@ -231,19 +231,21 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
 
     size_t& flags = ((size_t*)This)[151];
 
+    // Change character life icon, overrided by S06DE
     iconIndex = Configuration::m_characterIcon;
-    if (flags & 0x1 || Common::IsCurrentStageMission()) // Life
+    switch (S06DE_API::GetModelType())
+    {
+    case S06DE_API::ModelType::Sonic:       iconIndex = 0; break;
+    case S06DE_API::ModelType::SonicElise:  iconIndex = 0; break;
+    case S06DE_API::ModelType::Blaze:       iconIndex = 8; break;
+    }
+
+    if (flags & 0x1 || (Common::IsCurrentStageMission() && (flags & 0x8) == 0)) // Life
     {
         m_sceneLifeCount = m_projectPlayScreen->CreateScene("life");
         m_sceneLifeCount->SetMotionFrame(m_sceneLifeCount->m_MotionEndFrame);
         m_sceneLifeCount->m_MotionSpeed = 1.0f;
         m_sceneLifeCount->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
-        switch (S06DE_API::GetModelType())
-        {
-        case S06DE_API::ModelType::Sonic:       iconIndex = 0; break;
-        case S06DE_API::ModelType::SonicElise:  iconIndex = 0; break;
-        case S06DE_API::ModelType::Blaze:       iconIndex = 8; break;
-        }
         m_sceneLifeCount->GetNode("character_icon")->SetPatternIndex(iconIndex);
 
         m_sceneLifeBG = m_projectPlayScreen->CreateScene("life_ber_anime");
