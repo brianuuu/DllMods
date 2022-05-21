@@ -3,6 +3,7 @@
 #include "Configuration.h"
 #include "NextGenSonic.h"
 
+// Normal Camera
 bool m_blockByTerrainMode = false;
 float const cCamera_pitchMin = -20.0f * DEG_TO_RAD;
 float const cCamera_pitchMax = 50.0f * DEG_TO_RAD;
@@ -34,6 +35,20 @@ int m_usedCustomCameraLastFrame = false;
 Eigen::Vector3f cameraPosCached(0, 0, 0);
 Eigen::Vector3f cameraPosPitchCorrected(0, 0, 0);
 Eigen::Quaternionf targetPlayerRotation(1, 0, 0, 0);
+
+// Sky Gem
+float const cCamera_skyGemToPlayerDist = 1.3f;
+float const cCamera_skyGemtargetOffset = 0.95f;
+float const cCamera_skyGemRotateRate = 50.0f * DEG_TO_RAD;
+float const cCamera_skyGemPitchMax = 50.0f * DEG_TO_RAD;
+float const cCamera_skyGemPitchMin = -50.0f * DEG_TO_RAD;
+float const cCamera_skyGemFactorRate = 2.0f;
+float CustomCamera::m_skyGemCameraPitch = 0.0f;
+float m_skyGemCameraFactor = 0.0f;
+bool m_skyGemCameraUpdated = false;
+Hedgehog::Math::CVector m_skyGemCameraReleasedPosition;
+Hedgehog::Math::CQuaternion m_skyGemCameraReleasedRotation;
+
 HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
 {
     uint32_t offset = (uint32_t)This;
@@ -49,8 +64,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     if (!*PLAYER_CONTEXT) return result;
 
     // Use default camera on quick step path
-    bool skyGemCameraEnabled = NextGenSonic::m_skyGemEnabled && !NextGenSonic::m_skyGemLaunched;
-    if (Common::IsPlayerInForwardPath() || skyGemCameraEnabled)
+    if (Common::IsPlayerInForwardPath())
     {
         cameraPosCached = *pCameraPos;
         return result;
@@ -77,6 +91,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
 
     float const dt = 1.0f / 60.0f; // this always run at 60fps
     bool isReset = !Common::IsPlayerControlLocked() && padState->IsTapped(Sonic::EKeyState::eKeyState_LeftTrigger);
+    isReset |= NextGenSonic::m_skyGemEnabled && !NextGenSonic::m_skyGemLaunched && m_skyGemCameraFactor >= 1.0f;
 
     // Calculate current pitch correction
     float pitchCorrection = cCamera_pitchCorrection;
@@ -233,38 +248,26 @@ HOOK(int, __fastcall, CustomCamera_MsgFinishPause, 0x010BC110, void* This, void*
     return originalCustomCamera_MsgFinishPause(This, Edx, a2);
 }
 
-
-float const cCamera_skyGemToPlayerDist = 1.3f;
-float const cCamera_skyGemtargetOffset = 0.95f;
-float const cCamera_skyGemRotateRate = 50.0f * DEG_TO_RAD;
-float const cCamera_skyGemPitchMax = 50.0f * DEG_TO_RAD;
-float const cCamera_skyGemPitchMin = -50.0f * DEG_TO_RAD;
-float const cCamera_skyGemFactorRate = 2.0f;
-float CustomCamera::m_skyGemCameraPitch = 0.0f;
-float m_skyGemCameraFactor = 0.0f;
-bool m_skyGemCameraUpdated = false;
-Hedgehog::Math::CVector m_skyGemCameraReleasedPosition;
-Hedgehog::Math::CQuaternion m_skyGemCameraReleasedRotation;
 HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCamera* This, void* Edx, const hh::fnd::SUpdateInfo& in_rUpdateInfo)
 {
     originalCustomCamera_CCameraUpdateParallel(This, Edx, in_rUpdateInfo);
 
-    // TODO: don't run if it's paused
-    if (m_skyGemCameraUpdated) return;
-
     bool skyGemCameraEnabled = NextGenSonic::m_skyGemEnabled && !NextGenSonic::m_skyGemLaunched;
 
     // Change factor to interpolate camera
-    if (skyGemCameraEnabled)
+    if (!m_skyGemCameraUpdated)
     {
-        m_skyGemCameraFactor = min(1.0f, m_skyGemCameraFactor + in_rUpdateInfo.DeltaTime * cCamera_skyGemFactorRate);
-    }
-    else
-    {
-        m_skyGemCameraFactor = max(0.0f, m_skyGemCameraFactor - in_rUpdateInfo.DeltaTime * cCamera_skyGemFactorRate);
-        if (m_skyGemCameraFactor == 0.0f)
+        if (skyGemCameraEnabled)
         {
-            CustomCamera::m_skyGemCameraPitch = 0.0f;
+            m_skyGemCameraFactor = min(1.0f, m_skyGemCameraFactor + in_rUpdateInfo.DeltaTime * cCamera_skyGemFactorRate);
+        }
+        else
+        {
+            m_skyGemCameraFactor = max(0.0f, m_skyGemCameraFactor - in_rUpdateInfo.DeltaTime * cCamera_skyGemFactorRate);
+            if (m_skyGemCameraFactor == 0.0f)
+            {
+                CustomCamera::m_skyGemCameraPitch = 0.0f;
+            }
         }
     }
 
@@ -275,8 +278,11 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 
         // Pitch
-        CustomCamera::m_skyGemCameraPitch -= padState->LeftStickVertical * cCamera_skyGemRotateRate * in_rUpdateInfo.DeltaTime;
-        Common::ClampFloat(CustomCamera::m_skyGemCameraPitch, cCamera_skyGemPitchMin, cCamera_skyGemPitchMax);
+        if (!m_wasPaused)
+        {
+            CustomCamera::m_skyGemCameraPitch -= padState->LeftStickVertical * cCamera_skyGemRotateRate * in_rUpdateInfo.DeltaTime;
+            Common::ClampFloat(CustomCamera::m_skyGemCameraPitch, cCamera_skyGemPitchMin, cCamera_skyGemPitchMax);
+        }
 
         // Player vectors
         Hedgehog::Math::CVector playerRight = context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitX();
@@ -285,17 +291,20 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
         Hedgehog::Math::CVector playerPosition = context->m_spMatrixNode->m_Transform.m_Position + playerUp * cCamera_skyGemtargetOffset;
 
         // Rotate player
-        float yawAdd = -padState->LeftStickHorizontal * cCamera_skyGemRotateRate * in_rUpdateInfo.DeltaTime;
-        context->m_HorizontalRotation = Eigen::AngleAxisf(yawAdd, playerUp) * context->m_HorizontalRotation;
+        if (!m_wasPaused)
+        {
+            float yawAdd = -padState->LeftStickHorizontal * cCamera_skyGemRotateRate * in_rUpdateInfo.DeltaTime;
+            context->m_HorizontalRotation = Eigen::AngleAxisf(yawAdd, playerUp) * context->m_HorizontalRotation;
+        }
         
         // Camera vectors
         const Eigen::AngleAxisf rotPitch(CustomCamera::m_skyGemCameraPitch, playerRight);
         const Eigen::AngleAxisf rotYaw(180 * DEG_TO_RAD, playerUp);
         Hedgehog::Math::CVector cameraForward = rotPitch * rotYaw * playerForward;
-        Hedgehog::Math::CQuaternion cameraRotation = skyGemCameraEnabled ? rotPitch * rotYaw * context->m_spMatrixNode->m_Transform.m_Rotation : m_skyGemCameraReleasedRotation;
+        Hedgehog::Math::CQuaternion cameraRotation = skyGemCameraEnabled && !m_skyGemCameraUpdated ? rotPitch * rotYaw * context->m_spMatrixNode->m_Transform.m_Rotation : m_skyGemCameraReleasedRotation;
 
         // Interpolate position
-        Hedgehog::Math::CVector targetPosition = skyGemCameraEnabled ? playerPosition + cameraForward * cCamera_skyGemToPlayerDist : m_skyGemCameraReleasedPosition;
+        Hedgehog::Math::CVector targetPosition = skyGemCameraEnabled && !m_skyGemCameraUpdated ? playerPosition + cameraForward * cCamera_skyGemToPlayerDist : m_skyGemCameraReleasedPosition;
         camera.m_Position += (targetPosition - camera.m_Position) * m_skyGemCameraFactor;
         camera.m_Direction = cameraForward;
 
