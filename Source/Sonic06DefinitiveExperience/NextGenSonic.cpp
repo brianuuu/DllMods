@@ -2083,7 +2083,7 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
                 StateManager::ChangeState(StateAction::Walk, context);
             }
         }
-        else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
+        else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B) || !context->m_Grounded)
         {
             // Cancel with B button
             StateManager::ChangeState(StateAction::Walk, context);
