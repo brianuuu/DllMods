@@ -1111,13 +1111,12 @@ SharedPtrTypeless skyGemWaitPfxHandle;
 class CObjSkyGem : public Sonic::CGameObject3D
 {
     INSERT_PADDING(0x4);
-    SharedPtrTypeless m_GlitterPlayer;
+    void* m_GlitterPlayer;
     boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
     Hedgehog::Math::CVector m_Position;
     Hedgehog::Math::CVector m_Velocity;
     float m_Gravity;
     float m_LifeTime;
-    SharedPtrTypeless trailPfxHandle;
     
 public:
     CObjSkyGem
@@ -1133,6 +1132,16 @@ public:
         , m_LifeTime(0.0f)
     {}
 
+    ~CObjSkyGem()
+    {
+        if (m_GlitterPlayer)
+        {
+            typedef void* __fastcall CGlitterPlayerDestructor(void* This, void* Edx, bool freeMem);
+            CGlitterPlayerDestructor* destructorFunc = *(CGlitterPlayerDestructor**)(*(uint32_t*)m_GlitterPlayer);
+            destructorFunc(m_GlitterPlayer, nullptr, true);
+        }
+    }
+
     void AddCallback
     (
         const Hedgehog::Base::THolder<Sonic::CWorld>& worldHolder, 
@@ -1140,15 +1149,15 @@ public:
         const boost::shared_ptr<Hedgehog::Database::CDatabase>& spDatabase
     ) override
     {
-
-        FUNCTION_PTR(void, __thiscall, AddCallbackObjectBase, 0x1058B00, 
-            void* This, 
+        // Base on sub_1058B00
+        FUNCTION_PTR(void, __thiscall, FuncNeededToMakeGlitterWork, 0xD5CB80,
+            void* This,
             const Hedgehog::Base::THolder<Sonic::CWorld>&worldHolder,
             Sonic::CGameDocument * pGameDocument,
             const boost::shared_ptr<Hedgehog::Database::CDatabase>&spDatabase);
-        WRITE_JUMP(0x1058BDC, (void*)0x1058C63);
-        AddCallbackObjectBase(this, worldHolder, pGameDocument, spDatabase);
-        WRITE_MEMORY(0x1058BDC, uint8_t, 0x8B, 0x17, 0x8B, 0x42, 0x60);
+        FUNCTION_PTR(void*, __cdecl, CGlitterPlayerInit, 0x1255B40, Sonic::CGameDocument* pGameDocument);
+        FuncNeededToMakeGlitterWork(this, worldHolder, pGameDocument, spDatabase);
+        m_GlitterPlayer = CGlitterPlayerInit(pGameDocument);
 
         // Prevent fpCGameObject3DMatrixNodeChangedCallback crashing
         *(uint32_t*)((uint32_t)this + 0x1C) = 0;
