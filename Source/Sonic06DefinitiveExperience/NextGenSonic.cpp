@@ -2053,15 +2053,18 @@ HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickBegin, 0x12526D0, hh
         static SharedPtrTypeless soundHandle;
         Common::SonicContextPlaySound(soundHandle, 80041027, 1);
 
-        // Remember position
+        // Remember position (for air only)
         NextGenSonic::m_gemHoldPosition = context->m_spMatrixNode->m_Transform.m_Position;
+
+        // Stop Sonic
+        Common::GetSonicStateFlags()->OutOfControl = true;
+        Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
 
         return nullptr;
     }
     else if (NextGenSonic::m_skyGemEnabled)
     {
         NextGenSonic::m_skyGemLaunched = false;
-        Common::GetSonicStateFlags()->OutOfControl = true;
 
         // Change Sonic's animation
         Common::SonicContextChangeAnimation(AnimationSetPatcher::SkyGem);
@@ -2069,8 +2072,9 @@ HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickBegin, 0x12526D0, hh
         // Sky gem charge sfx
         Common::SonicContextPlaySound(skyGemSoundHandle, 80041030, 1);
 
-        // Remember position
-        NextGenSonic::m_gemHoldPosition = context->m_spMatrixNode->m_Transform.m_Position;
+        // Stop Sonic
+        Common::GetSonicStateFlags()->OutOfControl = true;
+        Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
 
         return nullptr;
     }
@@ -2117,9 +2121,17 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
             }
         }
 
-        // Force stay in position (even in air)
-        Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
-        Common::SetPlayerPosition(NextGenSonic::m_gemHoldPosition);
+        if (context->m_Grounded)
+        {
+            // Remember position in case we become airborne
+            NextGenSonic::m_gemHoldPosition = context->m_spMatrixNode->m_Transform.m_Position;
+        }
+        else
+        {
+            // Force stay in air
+            Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+            Common::SetPlayerPosition(NextGenSonic::m_gemHoldPosition);
+        }
 
         if (This->m_Time > (context->m_Grounded ? 2.95f : 1.05f))
         {
@@ -2188,9 +2200,6 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
             CustomCamera::m_skyGemCameraEnabled = true;
         }
 
-        // Force stay in position
-        Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
-        Common::SetPlayerPosition(NextGenSonic::m_gemHoldPosition);
         return;
     }
 
@@ -2202,6 +2211,7 @@ HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickEnd, 0x12527B0, hh::
     if (NextGenSonic::m_greenGemEnabled)
     {
         NextGenSonic::m_greenGemEnabled = false;
+        Common::GetSonicStateFlags()->OutOfControl = false;
         return nullptr;
     }
     else if (NextGenSonic::m_skyGemEnabled)
