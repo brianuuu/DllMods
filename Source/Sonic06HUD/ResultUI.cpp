@@ -687,17 +687,23 @@ void ResultUI::ResultUIData::nextState()
 	{	 
 		printf("[ResultUI] State: Rank Show\n");
 
-		// Enable rank quote
-		FUNCTION_PTR(void, __cdecl, EnableRankQuote, 0x10B77A8);
-		WRITE_MEMORY(0x10B77AD, uint8_t, 0x58, 0xC3, 0x90, 0x90, 0x90);
-		EnableRankQuote();
+		uint32_t voiceCueID = -1;
+		switch (ResultUI::m_resultData->m_perfectRank)
+		{
+		case RankType::S: voiceCueID = 40000; break;
+		case RankType::A: voiceCueID = 40001; break;
+		case RankType::B: voiceCueID = 40002; break;
+		case RankType::C: voiceCueID = 40003; break;
+		default: voiceCueID = 40004; break;
+		}
 
-		// Use this to play rank quote
-		FUNCTION_PTR(void*, __thiscall, CHudResult_CStateChangeRank, 0x10B76D0, void* This);
-		WRITE_JUMP(0x10B76D0, (void*)0x11D2350);
-		CHudResult_CStateChangeRank(nullptr);
+		static SharedPtrTypeless rankVoiceHandle;
+		Common::PlaySoundStatic(rankVoiceHandle, voiceCueID);
 
-		rankTexture = &m_resultRankTextures[m_resultData->m_perfectRank];
+		static SharedPtrTypeless rankSoundHandle;
+		Common::PlaySoundStatic(rankSoundHandle, 1010002);
+
+		rankTexture = &m_resultRankTextures[max(0, m_resultData->m_perfectRank)];
 
 		m_frame = 110.0f;
 		break; 
