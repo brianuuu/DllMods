@@ -22,6 +22,12 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
         MessageBox(NULL, L"Failed to parse Config.ini", NULL, MB_ICONERROR);
     }
 
+    if (GetModuleHandle(TEXT("ChipReturns.dll")))
+    {
+        MessageBox(nullptr, TEXT("'Chip Returns' mod must be higher priority than 'Sonic 06 HUD'!"), TEXT("Sonic 06 HUD"), MB_ICONERROR);
+        exit(-1);
+    }
+
     isScoreGenLowerPriority = (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr || GetModuleHandle(TEXT("STH2006ProjectExtra.dll")) != nullptr);
 
     // -------------Patches--------------
