@@ -11,10 +11,6 @@
 class RankQuote
 {
 public:
-	static uint32_t m_rank;
-	static uint32_t m_rankSfxID;
-	static bool m_playRankVoice;
-
 	static void applyPatches();
 };
 
