@@ -367,6 +367,9 @@ void Stage::applyPatches()
     //---------------------------------------------------
     // Disable enter CpzPipe sfx
     WRITE_MEMORY(0x1234856, int, -1);
+
+    // Disable result first sfx
+    WRITE_MEMORY(0x11D24DA, int, -1);
     
     //---------------------------------------------------
     // Kingdom Valley sfx
