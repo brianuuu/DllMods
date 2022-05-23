@@ -73,12 +73,22 @@ public:
         /// <summary>
         /// Total amount of speed from checkpoints.
         /// </summary>
-        int totalVelocity;
+        float totalVelocity;
+
+        /// <summary>
+        /// Highest amount of speed from checkpoints.
+        /// </summary>
+        float maxVelocity;
 
         /// <summary>
         /// Current number of rings obtained by the player.
         /// </summary>
         int ringCount;
+
+        /// <summary>
+        /// The amount of time passed in the stage.
+        /// </summary>
+        float elapsedTime;
 
         /// <summary>
         /// Minutes counted by the game.
@@ -89,6 +99,11 @@ public:
         /// Seconds counted by the game.
         /// </summary>
         int seconds;
+
+        /// <summary>
+        /// Milliseconds counted by the game.
+        /// </summary>
+        int milliseconds;
 
         /// <summary>
         /// Resets the current statistics.
@@ -109,9 +124,12 @@ public:
             totalDrifts = 0;
             totalBalloons = 0;
             totalVelocity = 0;
+            maxVelocity = 0;
             ringCount = 0;
+            elapsedTime = 0;
             minutes = 0;
             seconds = 0;
+            milliseconds = 0;
         }
     };
 };
