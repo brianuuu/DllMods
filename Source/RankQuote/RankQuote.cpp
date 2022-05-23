@@ -10,7 +10,7 @@ HOOK(int, __fastcall, RankQuote_CStateGoalFadeBeforeBegin, 0xCFE080, uint32_t* T
     return result;
 }
 
-void PlayRankQuote(uint32_t This)
+void PlayRankQuote()
 {
     uint32_t voiceCueID = -1;
     uint32_t slamCueID = -1;
@@ -34,7 +34,7 @@ void PlayRankQuote(uint32_t This)
 HOOK(void, __fastcall, RankQuote_ChangeRank, 0x10B76D0, uint32_t* This)
 {
     WRITE_MEMORY(0x11D237A, int, -1);
-    PlayRankQuote(This[2]);
+    PlayRankQuote();
 
     originalRankQuote_ChangeRank(This);
     WRITE_MEMORY(0x11D237A, uint32_t, 1010002);
@@ -46,7 +46,7 @@ HOOK(void, __fastcall, RankQuote_ShowRank, 0x10B7800, uint32_t* This)
     if (!IsPerfectBonus())
     {
         WRITE_MEMORY(0x11D237A, int, -1);
-        PlayRankQuote(This[2]);
+        PlayRankQuote();
     }
 
     originalRankQuote_ShowRank(This);
