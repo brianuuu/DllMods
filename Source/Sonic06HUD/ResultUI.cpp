@@ -65,6 +65,7 @@ HOOK(void, __fastcall, ResultUI_CHudResultAdvance, 0x10B96D0, uint32_t* This, vo
 	if (resultFinished)
 	{
 		WRITE_JUMP(0x10B96E6, (void*)0x10B974B);
+		WRITE_NOP(0x10B9976, 5);
 	}
 
 	originalResultUI_CHudResultAdvance(This, Edx, a2);
@@ -73,6 +74,7 @@ HOOK(void, __fastcall, ResultUI_CHudResultAdvance, 0x10B96D0, uint32_t* This, vo
 	if (resultFinished)
 	{
 		WRITE_MEMORY(0x10B96E6, uint8_t, 0xE8, 0x85, 0xD2, 0xFF, 0xFF);
+		WRITE_MEMORY(0x10B9976, uint8_t, 0xE8, 0xD5, 0x7B, 0x5A, 0xFF);
 		resultFinished = false;
 	}
 }
