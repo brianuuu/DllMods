@@ -62,6 +62,12 @@ HOOK(bool, __fastcall, Itembox_CObjItemProcessMessage, 0xFFFD70, hh::fnd::CMessa
 
 HOOK(void, __fastcall, Itembox_CObjItemMsgHitEventCollision, 0xFFF810, Sonic::CGameObject3D* This, void* Edx, hh::fnd::Message& message)
 {
+	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	if (context && message.m_SenderActorID != context->m_pPlayer->m_ActorID)
+	{
+		Common::SonicContextGetItemType(2); // 1-up
+	}
+
 	SendMsgDamageSuccess(This, Edx, message);
 	originalItembox_CObjItemMsgHitEventCollision(This, Edx, message);
 }

@@ -1538,7 +1538,7 @@ inline void SonicContextGetItemType(uint32_t type)
 	if (!pSonicContext) return;
 
 	alignas(16) MsgGetItemType message {};
-	message.m_type = type; // ThunberBarrier
+	message.m_type = type;
 
 	// Original code by Skyth: https://github.com/blueskythlikesclouds
 	FUNCTION_PTR(void, __thiscall, CSonicSpeedProcMsgGetItemType, 0xE6D7D0, void* This, void* pMessage);
