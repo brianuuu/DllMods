@@ -2172,7 +2172,7 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
                 StateManager::ChangeState(StateAction::Walk, context);
             }
         }
-        else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B) || !context->m_Grounded)
+        else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B) || !context->m_Grounded || context->m_Velocity.norm() > 0.1f)
         {
             // Cancel with B button
             NextGenSonic::m_skyGemCancelled = true;
