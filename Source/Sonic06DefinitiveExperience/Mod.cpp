@@ -142,6 +142,12 @@ extern "C" __declspec(dllexport) void PostInit()
         MessageBox(NULL, L"Failed to parse Sonic06DefinitiveExperience.ini", NULL, MB_ICONERROR);
     }
 
+    if (GetModuleHandle(TEXT("CustomizableResultsMusic.dll")))
+    {
+        MessageBox(nullptr, TEXT("'Customizable Results Music' mod is not compatible with this mod, please disable it."), TEXT("Sonic 06 Definitive Experience"), MB_ICONERROR);
+        exit(-1);
+    }
+
     // Post init apply patches
     NextGenPhysics::applyPatchesPostInit();
 }

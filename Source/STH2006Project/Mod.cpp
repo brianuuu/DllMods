@@ -137,6 +137,12 @@ extern "C" __declspec(dllexport) void PostInit()
         WRITE_STRING(0x16AF744, "GameHint_C06");
     }
 
+    if (GetModuleHandle(TEXT("CustomizableResultsMusic.dll")))
+    {
+        MessageBox(nullptr, TEXT("'Customizable Results Music' mod is not compatible with this mod, please disable it."), TEXT("STH2006 Project"), MB_ICONERROR);
+        exit(-1);
+    }
+
     // Override score to all 0s and implement them ourselves
     ScoreManager::applyPostInit();
 }
