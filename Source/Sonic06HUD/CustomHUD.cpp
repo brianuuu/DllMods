@@ -324,7 +324,7 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
     }
 
     // info_custom, info_custom_wisp, info_custom_chao, pin_medal, final boss
-    if (flags & 0x40 || flags & 0x80 || flags & 0x100 || flags & 0x10000 || Common::GetCurrentStageID() == SMT_blb)
+    if (flags & 0x40 || flags & 0x80 || flags & 0x100 || flags & 0x10000 || (Common::GetCurrentStageID() & 0xFF) == SMT_blb)
     {
         m_sceneInfo = m_projectPlayScreen->CreateScene("life_ber_anime");
         if (Configuration::m_uiColor)
@@ -377,7 +377,7 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
         }
     }
 
-    if (Common::IsCurrentStageBoss() && Common::GetCurrentStageID() != SMT_bsd)
+    if (Common::IsCurrentStageBoss() && (Common::GetCurrentStageID() & 0xFF) != SMT_bsd)
     {
         m_sceneBossBG = m_projectPlayScreen->CreateScene("boss_gauge");
         m_sceneBossBar = m_projectPlayScreen->CreateScene("boss_gauge_anime");
@@ -1207,6 +1207,12 @@ HOOK(bool, __fastcall, CustomHUD_CRivalMetalSonicProcessMessage, 0xCD2760, hh::f
 }
 
 int CustomHUD_DeathEggMaxHealth = 0;
+HOOK(int, __fastcall, CustomHUD_CBossDeathEggSetMaxHealth, 0xC46DA0, void* This, void* Edx, int a2, int a3)
+{
+    CustomHUD_DeathEggMaxHealth = *(int*)(*(int*)(a3 + 4) + 4);
+    return originalCustomHUD_CBossDeathEggSetMaxHealth(This, Edx, a2, a3);
+}
+
 HOOK(bool, __fastcall, CustomHUD_CBossDeathEggProcessMessage, 0xC67350, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
 {
     bool result = originalCustomHUD_CBossDeathEggProcessMessage(This, Edx, message, flag);
@@ -1214,13 +1220,6 @@ HOOK(bool, __fastcall, CustomHUD_CBossDeathEggProcessMessage, 0xC67350, hh::fnd:
     if (flag)
     {
         int health = ((int*)((uint32_t)This - 0x28))[121];
-
-        if (std::strstr(message.GetType(), "MsgDummy") != nullptr)
-        {
-            CustomHUD_DeathEggMaxHealth = health;
-            printf("[CustomHUD] Death Egg max health = %d\n", CustomHUD_DeathEggMaxHealth);
-        }
-
         CustomHUD_BossSetHealth(health, CustomHUD_DeathEggMaxHealth);
     }
 
@@ -1235,7 +1234,7 @@ HOOK(bool, __fastcall, CustomHUD_CBossPerfectChaosProcessMessage, 0xC122D0, hh::
     {
         int* pGameObject = (int*)((uint32_t)This - 0x28);
         int health = pGameObject[121];
-        bool finalHitInstance = *(bool*)(pGameObject + 500);
+        bool finalHitInstance = *(bool*)((int)pGameObject + 500);
 
         // Only handles the first two hits
         if (!finalHitInstance && health > 0)
@@ -1412,6 +1411,7 @@ void CustomHUD::applyPatches()
     //---------------------------------------------------
     WRITE_JUMP(0xCC8B6E, CustomHUD_CRivalMetalSonicLastHit);
     INSTALL_HOOK(CustomHUD_CRivalMetalSonicProcessMessage);
+    INSTALL_HOOK(CustomHUD_CBossDeathEggSetMaxHealth);
     INSTALL_HOOK(CustomHUD_CBossDeathEggProcessMessage);
     INSTALL_HOOK(CustomHUD_CBossPerfectChaosProcessMessage);
     INSTALL_HOOK(CustomHUD_CBossPerfectChaosCStateDamageToFinalAttack);
