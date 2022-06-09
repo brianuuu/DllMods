@@ -81,6 +81,8 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePowerEffect;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePower;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneScore;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneGem;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneBossBG;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneBossBar;
 
 Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectCountdown;
 boost::shared_ptr<Sonic::CGameObjectCSD> m_spCountdown;
@@ -119,6 +121,8 @@ void __fastcall CustomHUD::CHudSonicStageRemoveCallback(Sonic::CGameObject* This
     Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_scenePower);
     Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneScore);
     Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneGem);
+    Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneBossBG);
+    Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneBossBar);
 
     Chao::CSD::CProject::DestroyScene(m_projectCountdown.Get(), m_sceneCountdown);
 
@@ -371,6 +375,13 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
             m_sceneGem = m_projectPlayScreen->CreateScene("custom_gem");
             CustomHUD::RestartSonicGem();
         }
+    }
+
+    if (Common::IsCurrentStageBoss() && Common::GetCurrentStageID() != SMT_bsd)
+    {
+        m_sceneBossBG = m_projectPlayScreen->CreateScene("boss_gauge");
+        m_sceneBossBar = m_projectPlayScreen->CreateScene("boss_gauge_anime");
+        m_sceneBossBar->m_MotionSpeed = 0.0f;
     }
 
     // Mask to prevent crash when game tries accessing the elements we disabled later on
@@ -1148,6 +1159,74 @@ HOOK(bool, __fastcall, CustomHUD_CWindowImplSetCursor, 0x438500, void* This, voi
     return originalCustomHUD_CWindowImplSetCursor(This, Edx, pos);
 }
 
+//---------------------------------------------------
+// Boss Health
+//---------------------------------------------------
+void CustomHUD_BossSetHealth(float health, float maxHealth)
+{
+    if (m_sceneBossBar)
+    {
+        float motionFrame = 100.0f - health * 100.0f / maxHealth;
+        Common::ClampFloat(motionFrame, 0.0f, 100.0f);
+        m_sceneBossBar->SetMotionFrame(motionFrame);
+    }
+}
+
+void __declspec(naked) CustomHUD_CRivalMetalSonicLastHit()
+{
+    static uint32_t returnAddress = 0xCC8B73;
+    __asm
+    {
+        add     eax, 0FFFFFFFFh
+        mov     [edi + 200h], eax
+        fldz
+        sub     esp, 8
+        jmp     [returnAddress]
+    }
+}
+
+int CustomHUD_MetalSonicMaxHealth = 0;
+HOOK(bool, __fastcall, CustomHUD_CRivalMetalSonicProcessMessage, 0xCD2760, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
+{
+    bool result = originalCustomHUD_CRivalMetalSonicProcessMessage(This, Edx, message, flag);
+
+    if (flag)
+    {
+        int health = ((int**)((uint32_t)This - 0x28))[104][128] + 2;
+
+        if (std::strstr(message.GetType(), "MsgDummy") != nullptr)
+        {
+            CustomHUD_MetalSonicMaxHealth = health;
+            printf("[CustomHUD] Metal Sonic max health = %d\n", CustomHUD_MetalSonicMaxHealth);
+        }
+
+        CustomHUD_BossSetHealth(health, CustomHUD_MetalSonicMaxHealth);
+    }
+
+    return result;
+}
+
+int CustomHUD_SilverMaxHealth = 0;
+HOOK(bool, __fastcall, CustomHUD_CRivalSilverProcessMessage, 0xC8B8F0, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
+{
+    bool result = originalCustomHUD_CRivalSilverProcessMessage(This, Edx, message, flag);
+
+    if (flag)
+    {
+        int health = ((int**)((uint32_t)This - 0x28))[104][104] + 2;
+
+        if (std::strstr(message.GetType(), "MsgDummy") != nullptr)
+        {
+            CustomHUD_SilverMaxHealth = health;
+            printf("[CustomHUD] Silver max health = %d\n", CustomHUD_SilverMaxHealth);
+        }
+
+        CustomHUD_BossSetHealth(health, CustomHUD_SilverMaxHealth);
+    }
+
+    return result;
+}
+
 void CustomHUD::applyPatches()
 {
     //---------------------------------------------------
@@ -1238,6 +1317,12 @@ void CustomHUD::applyPatches()
     INSTALL_HOOK(CustomHUD_CWindowImplCState_Open);
     WRITE_MEMORY(0x16A6D84, void*, CWindowImplRemoveCallback);
 
+    //---------------------------------------------------
+    // Boss Health
+    //---------------------------------------------------
+    WRITE_JUMP(0xCC8B6E, CustomHUD_CRivalMetalSonicLastHit);
+    INSTALL_HOOK(CustomHUD_CRivalMetalSonicProcessMessage);
+    INSTALL_HOOK(CustomHUD_CRivalSilverProcessMessage);
 }
 
 void CustomHUD::draw()

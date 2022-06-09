@@ -1283,6 +1283,12 @@ inline bool IsCurrentStageMission()
 	return (stageID & 0xFF00) > 0 && (stageID & 0xFF) <= 0x11;
 }
 
+inline bool IsCurrentStageBoss()
+{
+	uint8_t stageID = GetCurrentStageID() & 0xFF;
+	return stageID >= SMT_bms && stageID <= SMT_blb;
+}
+
 inline void PlayStageMusic(char const* cueName, float fadeInTime)
 {
 	FUNCTION_PTR(bool, __stdcall, PlayStageMusicFromCueName, 0xD63070, void* gameDocument, Hedgehog::Base::CSharedString & cueName, float fadeInTime);
