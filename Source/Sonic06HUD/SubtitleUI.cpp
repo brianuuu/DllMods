@@ -211,7 +211,7 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
         m_captionData.clear();
     }
     m_captionData.m_owner = owner;
-    m_captionData.m_isCutscene = isCutscene && Common::GetCurrentStageID() != SMT_blb;
+    m_captionData.m_isCutscene = isCutscene && (Common::GetCurrentStageID() & 0xFF) != SMT_blb;
 
     Caption newCaption;
     newCaption.m_duration = duration;
