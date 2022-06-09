@@ -492,7 +492,8 @@ void NextGenPhysics::applyPatches()
         WRITE_MEMORY(0x1119549, uint32_t, 1);
         WRITE_MEMORY(0x119910D, uint32_t, 1);
 
-        // TODO: Change notification buttons?
+        // Change notification buttons
+        WRITE_STRING(0x16A6AA4, "ui_06_btn_guide");
     }
 
     // After light dash, force using mach speed animation

@@ -86,6 +86,7 @@ bool Configuration::load(const std::string& rootPath)
 
         // TODO: non-Sonic characters will edit these
         bb.addAR("SonicActionCommon", 1);
+        bb.addAR("#SonicActionCommonHud", 1);
         bb.addAR("SonicActionCommonHud", 1);
 
         // common
@@ -128,6 +129,7 @@ bool Configuration::load(const std::string& rootPath)
 
         // TODO: non-Sonic characters will edit these
         bb3.addAR("SonicActionCommon", 1);
+        bb3.addAR("#SonicActionCommonHud", 1);
         bb3.addAR("SonicActionCommonHud", 1);
 
         // stage animations
