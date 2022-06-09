@@ -1206,6 +1206,75 @@ HOOK(bool, __fastcall, CustomHUD_CRivalMetalSonicProcessMessage, 0xCD2760, hh::f
     return result;
 }
 
+int CustomHUD_DeathEggMaxHealth = 0;
+HOOK(bool, __fastcall, CustomHUD_CBossDeathEggProcessMessage, 0xC67350, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
+{
+    bool result = originalCustomHUD_CBossDeathEggProcessMessage(This, Edx, message, flag);
+
+    if (flag)
+    {
+        int health = ((int*)((uint32_t)This - 0x28))[121];
+
+        if (std::strstr(message.GetType(), "MsgDummy") != nullptr)
+        {
+            CustomHUD_DeathEggMaxHealth = health;
+            printf("[CustomHUD] Death Egg max health = %d\n", CustomHUD_DeathEggMaxHealth);
+        }
+
+        CustomHUD_BossSetHealth(health, CustomHUD_DeathEggMaxHealth);
+    }
+
+    return result;
+}
+
+HOOK(bool, __fastcall, CustomHUD_CBossPerfectChaosProcessMessage, 0xC122D0, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
+{
+    bool result = originalCustomHUD_CBossPerfectChaosProcessMessage(This, Edx, message, flag);
+
+    if (flag)
+    {
+        int* pGameObject = (int*)((uint32_t)This - 0x28);
+        int health = pGameObject[121];
+        bool finalHitInstance = *(bool*)(pGameObject + 500);
+
+        // Only handles the first two hits
+        if (!finalHitInstance && health > 0)
+        {
+            CustomHUD_BossSetHealth(health + 1, 4);
+        }
+    }
+
+    return result;
+}
+
+HOOK(bool, __fastcall, CustomHUD_CBossPerfectChaosCStateDamageToFinalAttack, 0x5D1B10, void* This)
+{
+    CustomHUD_BossSetHealth(1, 4);
+    return originalCustomHUD_CBossPerfectChaosCStateDamageToFinalAttack(This);
+}
+
+HOOK(void, __fastcall, CustomHUD_CBossPerfectChaosCStateDefeated, 0x5D1C70, void* This)
+{
+    CustomHUD_BossSetHealth(0, 4);
+    originalCustomHUD_CBossPerfectChaosCStateDefeated(This);
+}
+
+HOOK(bool, __fastcall, CustomHUD_CBossEggDragoonProcessMessage, 0xC3F500, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
+{
+    bool result = originalCustomHUD_CBossEggDragoonProcessMessage(This, Edx, message, flag);
+
+    if (flag)
+    {
+        int* pGameObject = (int*)((uint32_t)This - 0x28);
+        int maxHealth = pGameObject[121];
+        int headHealth = pGameObject[124];
+        int bellyHealth = pGameObject[125];
+        CustomHUD_BossSetHealth(headHealth + bellyHealth, maxHealth);
+    }
+
+    return result;
+}
+
 int CustomHUD_SilverMaxHealth = 0;
 HOOK(bool, __fastcall, CustomHUD_CRivalSilverProcessMessage, 0xC8B8F0, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
 {
@@ -1222,6 +1291,27 @@ HOOK(bool, __fastcall, CustomHUD_CRivalSilverProcessMessage, 0xC8B8F0, hh::fnd::
         }
 
         CustomHUD_BossSetHealth(health, CustomHUD_SilverMaxHealth);
+    }
+
+    return result;
+}
+
+int CustomHUD_TimeEaterMaxHealth = 0;
+HOOK(bool, __fastcall, CustomHUD_CBossTimeEaterProcessMessage, 0xBFF390, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
+{
+    bool result = originalCustomHUD_CBossTimeEaterProcessMessage(This, Edx, message, flag);
+
+    if (flag)
+    {
+        int health = ((int*)((uint32_t)This - 0x28))[121] + 1;
+
+        if (std::strstr(message.GetType(), "MsgDummy") != nullptr)
+        {
+            CustomHUD_TimeEaterMaxHealth = health;
+            printf("[CustomHUD] Time Eater max health = %d\n", CustomHUD_TimeEaterMaxHealth);
+        }
+
+        CustomHUD_BossSetHealth(health, CustomHUD_TimeEaterMaxHealth);
     }
 
     return result;
@@ -1322,7 +1412,13 @@ void CustomHUD::applyPatches()
     //---------------------------------------------------
     WRITE_JUMP(0xCC8B6E, CustomHUD_CRivalMetalSonicLastHit);
     INSTALL_HOOK(CustomHUD_CRivalMetalSonicProcessMessage);
+    INSTALL_HOOK(CustomHUD_CBossDeathEggProcessMessage);
+    INSTALL_HOOK(CustomHUD_CBossPerfectChaosProcessMessage);
+    INSTALL_HOOK(CustomHUD_CBossPerfectChaosCStateDamageToFinalAttack);
+    INSTALL_HOOK(CustomHUD_CBossPerfectChaosCStateDefeated);
+    INSTALL_HOOK(CustomHUD_CBossEggDragoonProcessMessage);
     INSTALL_HOOK(CustomHUD_CRivalSilverProcessMessage);
+    INSTALL_HOOK(CustomHUD_CBossTimeEaterProcessMessage);
 }
 
 void CustomHUD::draw()

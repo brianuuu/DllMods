@@ -209,7 +209,7 @@ HOOK(void, __fastcall, MsgChangeResultState, 0xE692C0, void* This, void* Edx, ui
             uint32_t superSonicAddress = (uint32_t)(pSonicContext) + 0x1A0;
             if (!*(void**)superSonicAddress)
             {
-                uint32_t rank = *(uint32_t*)(a2 + 20);
+                int rank = *(int*)(a2 + 20);
 
                 // Force rank animation code
                 switch (*(uint8_t*)0xE693A7)
@@ -223,7 +223,7 @@ HOOK(void, __fastcall, MsgChangeResultState, 0xE692C0, void* This, void* Edx, ui
                 }
 
                 // E-Rank Generations support
-                if (rank == 4 && *(uint8_t*)0x15EFE9D == 0x45)
+                if (rank == 4 && *(uint8_t*)0x15EFE9D == 0x45 || rank == -1)
                 {
                     rank = 5;
                 }
@@ -359,12 +359,15 @@ void Chip::applyPatches()
     // Check when Chip's object physics are destructed
     INSTALL_HOOK(CGameObject3DDestruction);
 
-    // Use Unleashed goal camera (default) param to avoid blocking Chip with HUD
-    // CameraSp -> CameraSu (this doesn't read CameraSu, just fall back to default values)
-    WRITE_MEMORY(0x15AF4C3, uint8_t, 0x75);
-    WRITE_MEMORY(0x15D1EBB, uint8_t, 0x75);
-    WRITE_MEMORY(0x15D293B, uint8_t, 0x75);
-    WRITE_MEMORY(0x1A48C7C, float, -0.5753f); // -0.05 from default OffsetRight
+    if (GetModuleHandle(TEXT("Sonic06HUD.dll")) == nullptr)
+    {
+        // Use Unleashed goal camera (default) param to avoid blocking Chip with HUD
+        // CameraSp -> CameraSu (this doesn't read CameraSu, just fall back to default values)
+        WRITE_MEMORY(0x15AF4C3, uint8_t, 0x75);
+        WRITE_MEMORY(0x15D1EBB, uint8_t, 0x75);
+        WRITE_MEMORY(0x15D293B, uint8_t, 0x75);
+        WRITE_MEMORY(0x1A48C7C, float, -0.6053f); // -0.08 from default OffsetRight
+    }
 
     // Disable transition between Result_Link and Result_LinkL
     // WRITE_NOP(0xDA59D5, 0x1F3); // Modern Super
