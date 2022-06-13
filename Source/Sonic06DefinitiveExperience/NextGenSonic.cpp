@@ -1681,7 +1681,8 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, Sonic::Player::C
     {
         bool isStateForbidden = StateManager::isCurrentAction(StateAction::ExternalControl)
                              || StateManager::isCurrentAction(StateAction::FinishExternalControlAir)
-                             || StateManager::isCurrentAction(StateAction::TransformSp);
+                             || StateManager::isCurrentAction(StateAction::TransformSp)
+                             || Common::IsPlayerHangOn();
         float* boost = Common::GetPlayerBoost();
         switch (NextGenSonic::m_sonicGemType)
         {

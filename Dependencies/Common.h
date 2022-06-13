@@ -1234,6 +1234,12 @@ inline bool IsPlayerExtendedBoost()
 	return *(uint32_t*)((uint32_t)*PLAYER_CONTEXT + 0x680) == 2;
 }
 
+inline bool IsPlayerHangOn()
+{
+	if (!*PLAYER_CONTEXT) return false;
+	return *(uint32_t*)((uint32_t)*PLAYER_CONTEXT + 0x7D8) != 0;
+}
+
 inline bool IsAtLoadingScreen()
 {
 	uint32_t** hudCount = (uint32_t**)0x1E66B40;
