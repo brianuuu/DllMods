@@ -1829,6 +1829,7 @@ float* HomingLockonCollisionFovy2D = nullptr;
 float* HomingLockonCollisionFovyN2D = nullptr;
 float* HomingLockonCollisionFovy3D = nullptr;
 float* HomingLockonCollisionFovyN3D = nullptr;
+bool whiteGemHomingAttack = false;
 HOOK(int, __fastcall, NextGenSonicGems_CSonicStateHomingAttackBegin, 0x1232040, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
@@ -1876,6 +1877,13 @@ HOOK(int, __fastcall, NextGenSonicGems_CSonicStateHomingAttackBegin, 0x1232040, 
 
         // Use different Homing Attack After animation table
         WRITE_MEMORY(0x111838F, char const**, homingAttackAnim);
+
+        // Increment NoDamage
+        whiteGemHomingAttack = true;
+        if (context->StateFlag(eStateFlag_NoDamage) != 0xFF)
+        {
+            context->StateFlag(eStateFlag_NoDamage)++;
+        }
     }
     else
     {
@@ -1893,14 +1901,11 @@ HOOK(int, __fastcall, NextGenSonicGems_CSonicStateHomingAttackBegin, 0x1232040, 
     return result;
 }
 
-bool greenGemLaunched = false;
 HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAdvance, 0x1231C60, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
     if (NextGenSonic::m_whiteGemEnabled)
     {
-        greenGemLaunched = false;
-
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
         if (padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger))
         {
@@ -1931,13 +1936,6 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAdvance, 0x1231C6
         else
         {
             NextGenSonic::m_whiteGemEnabled = false;
-
-            // Increment NoDamage
-            greenGemLaunched = true;
-            if (context->StateFlag(eStateFlag_NoDamage) != 0xFF)
-            {
-                context->StateFlag(eStateFlag_NoDamage)++;
-            }
 
             // Release sfx/pfx
             static SharedPtrTypeless soundHandle;
@@ -1987,11 +1985,11 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackEnd, 0x1231F80, h
     context->StateFlag(eStateFlag_OutOfControl) = false;
 
     // Decrement NoDamage
-    if (greenGemLaunched && context->StateFlag(eStateFlag_NoDamage) > 0)
+    if (whiteGemHomingAttack && context->StateFlag(eStateFlag_NoDamage) > 0)
     {
         context->StateFlag(eStateFlag_NoDamage)--;
     }
-    greenGemLaunched = false;
+    whiteGemHomingAttack = false;
 
     // Revert stop by ground
     WRITE_MEMORY(0x1231E36, uint8_t, 0x74, 0x17);
