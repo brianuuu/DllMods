@@ -2384,6 +2384,10 @@ void NextGenSonic::applyPatches()
 
         // Do not use sliding fail pfx
         WRITE_NOP(0x11D6A6D, 2);
+
+        // Increase turn rate for Spindash and Anti-Gravity
+        static float slideTurnRate = 100.0f;
+        WRITE_MEMORY(0x11D9441, float*, &slideTurnRate);
     }
 
     //-------------------------------------------------------
