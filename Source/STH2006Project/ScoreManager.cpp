@@ -8,6 +8,7 @@ bool ScoreManager::m_enabled = false;
 bool ScoreManager::m_internalSystem = true;
 std::unordered_set<uint32_t*> ScoreManager::m_savedObjects;
 
+bool ScoreManager::m_externalHUD = false;
 uint32_t ScoreManager::m_scoreLimit = 999999;
 std::string ScoreManager::m_scoreFormat = "%06d";
 CScoreManager* ScoreManager::m_pCScoreManager = nullptr;
@@ -50,10 +51,13 @@ HOOK(void, __fastcall, ScoreManager_CHudSonicStageInit, 0x109A8D0, uint32_t This
 	if (Configuration::m_using06HUD) return;
 
 	// Fix up Generations' life icon
-	Chao::CSD::RCPtr<Chao::CSD::CScene>* gensLifeScene = (Chao::CSD::RCPtr<Chao::CSD::CScene>*)(This + 200);
-	if (gensLifeScene->Get())
+	if (!ScoreManager::m_externalHUD)
 	{
-		gensLifeScene->Get()->SetPosition(0.0f, 61.0f);
+		Chao::CSD::RCPtr<Chao::CSD::CScene>* gensLifeScene = (Chao::CSD::RCPtr<Chao::CSD::CScene>*)(This + 200);
+		if (gensLifeScene->Get())
+		{
+			gensLifeScene->Get()->SetPosition(0.0f, 61.0f);
+		}
 	}
 
 	// Fix mission count & get effect position
@@ -451,6 +455,11 @@ void ScoreManager::applyPatches()
 			INIReader configReader(scoreGenerationsConfig);
 			m_scoreLimit = configReader.GetInteger("Behaviour", "scoreLimit", 999999);
 			m_scoreFormat = configReader.Get("Appearance", "scoreFormat", "%01d");
+			if (configReader.GetBoolean("Developer", "customXNCP", false))
+			{
+				m_externalHUD = true;
+				break;
+			}
 		}
 	}
 
