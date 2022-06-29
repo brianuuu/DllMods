@@ -13,6 +13,7 @@
 #include "SynchronizedObject.h"
 #include "ParamManager.h"
 #include "MissionManager.h"
+#include "DemoUI.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
@@ -76,6 +77,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     // Mission related
     MissionManager::applyPatches();
 
+    // Demo menu
+    DemoUI::applyPatches();
+
     // -------------Mandatory codes--------------
     // Patch "Red Rings Appear On New Game" by "brianuuu"
     WRITE_NOP(0x11A9ECB, 2);
@@ -85,6 +89,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     WRITE_MEMORY(0xBAAFBD, uint8_t, 0xD);
     WRITE_MEMORY(0xBAAFBE, float*, &c_eggRoboLockScale);
     WRITE_NOP(0xBAAFC2, 0x1);
+
+    // Always use sega_logo_us.sfd
+    WRITE_NOP(0x122C674, 2);
 
     // Change slide and jumpball to hit enemy as if you're boosting
     // This will make targeted enemies don't trip or explode early and get launched to targets always
