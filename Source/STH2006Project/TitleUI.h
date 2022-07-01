@@ -14,6 +14,8 @@ enum MenuState : int
 	MS_Main,
 	MS_TrialSelect,
 	MS_Option,
+	MS_QuitYesNo,
+	MS_QuitYes,
 };
 
 enum MenuType : int
@@ -35,6 +37,14 @@ enum TrialMenuType : int
 	TMT_COUNT,
 };
 
+enum YesNoTextType : int
+{
+	YNTT_QuitGame,
+	YNTT_QuitGameJP,
+
+	YNTT_COUNT,
+};
+
 class TitleUI
 {
 public:
@@ -46,9 +56,19 @@ public:
 
 	static void applyPatches();
 
-	static void cursorSelect(CursorData& data, Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, std::vector<std::string> const& selectNames, uint32_t soundCueID = 0xFFFFFFFF);
-	static void cursorLoop(CursorData const& data, Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, std::vector<std::string> const& loopNames);
+	static void cursorSelect(CursorData& data, Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, uint32_t soundCueID = 0xFFFFFFFF);
+	static void cursorLoop(CursorData const& data, Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene);
+
+	// Yes & No Window
+	static std::map<YesNoTextType, std::string> m_yesNoText;
+	static int m_yesNoCursorPos;
+	static float m_yesNoColorTime;
+	static std::string m_yesNoWindowText;
+	static void EnableYesNoWindow(bool enabled, std::string const& text = "");
+	static void SetYesNoCursor(int pos);
+	static std::string const& GetYesNoText(YesNoTextType type);
 
 	static void drawMenu();
+	static void drawYesNoWindow();
 };
 

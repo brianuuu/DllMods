@@ -1,5 +1,6 @@
-#include "TitleUI.h"
+﻿#include "TitleUI.h"
 #include "UIContext.h"
+#include "Application.h"
 
 FUNCTION_PTR(void, __thiscall, TitleUI_TinyChangeState, 0x773250, void* This, SharedPtrTypeless& spState, const Hedgehog::Base::CSharedString name);
 
@@ -136,27 +137,25 @@ TitleUI::CursorData m_cursor1Data;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuCursor1;
 TitleUI::CursorData m_cursor2Data;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuCursor2;
-std::vector<std::string> const m_cursorSelectName =
-{
-	"select_01",
-	"select_02",
-	"select_03",
-	"select_04",
-	"select_05",
-};
-std::vector<std::string> const m_cursorLoopName =
-{
-	"loop_01",
-	"loop_02",
-	"loop_03",
-	"loop_04",
-	"loop_05",
-};
+
+Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectYesNo;
+boost::shared_ptr<Sonic::CGameObjectCSD> m_spYesNo;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneYesNoTop;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneYesNoBottom;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneYesNoCursor;
+
+std::map<YesNoTextType, std::string> TitleUI::m_yesNoText;
+int TitleUI::m_yesNoCursorPos = 0;
+float TitleUI::m_yesNoColorTime = 0.0f;
+std::string TitleUI::m_yesNoWindowText;
 
 HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::fnd::CStateMachineBase::CStateBase* This)
 {
 	Sonic::CGameObject* gameObject = (Sonic::CGameObject*)(This->GetContextBase());
 	Sonic::CCsdDatabaseWrapper wrapper(gameObject->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
+
+	uint32_t owner = (uint32_t)(This->GetContextBase());
+	bool hasSaveFile = *(bool*)(owner + 0x1AC);
 
 	auto spCsdProject = wrapper.GetCsdProject("background");
 	m_projectMenuBG = spCsdProject->m_rcProject;
@@ -166,7 +165,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 
 	if (m_projectMenuBG && !m_spMenuBG)
 	{
-		m_spMenuBG = boost::make_shared<Sonic::CGameObjectCSD>(m_projectMenuBG, 0.5f, "HUD_A1", false);
+		m_spMenuBG = boost::make_shared<Sonic::CGameObjectCSD>(m_projectMenuBG, 0.5f, "HUD", false);
 		Sonic::CGameDocument::GetInstance()->AddGameObject(m_spMenuBG, "main", gameObject);
 	}
 
@@ -196,8 +195,54 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 
 	if (m_projectMenu && !m_spMenu)
 	{
-		m_spMenu = boost::make_shared<Sonic::CGameObjectCSD>(m_projectMenu, 0.5f, "HUD_A2", false);
+		m_spMenu = boost::make_shared<Sonic::CGameObjectCSD>(m_projectMenu, 0.5f, "HUD", false);
 		Sonic::CGameDocument::GetInstance()->AddGameObject(m_spMenu, "main", gameObject);
+	}
+
+	spCsdProject = wrapper.GetCsdProject("windowtest");
+	m_projectYesNo = spCsdProject->m_rcProject;
+
+	m_sceneYesNoTop = m_projectYesNo->CreateScene("Scene_0000");
+	m_sceneYesNoTop->SetPosition(0.0f, -71.0f);
+	m_sceneYesNoTop->GetNode("kuro")->SetScale(8.5f, 3.0f);
+	m_sceneYesNoTop->GetNode("bou1")->SetScale(8.5f, 0.07f);
+	m_sceneYesNoTop->GetNode("bou1")->SetPosition(640.0f, 167.0f);
+	m_sceneYesNoTop->GetNode("bou2")->SetScale(8.5f, 0.07f);
+	m_sceneYesNoTop->GetNode("bou2")->SetPosition(640.0f, 556.0f);
+	m_sceneYesNoTop->GetNode("bou3")->SetScale(0.07f, 3.0f);
+	m_sceneYesNoTop->GetNode("bou3")->SetPosition(97.0f, 360.0f);
+	m_sceneYesNoTop->GetNode("bou4")->SetScale(0.07f, 3.0f);
+	m_sceneYesNoTop->GetNode("bou4")->SetPosition(1190.0f, 360.0f);
+	m_sceneYesNoTop->GetNode("kado1")->SetPosition(105.0f, 176.0f);
+	m_sceneYesNoTop->GetNode("kado2")->SetPosition(105.0f, 544.0f);
+	m_sceneYesNoTop->GetNode("kado3")->SetPosition(1176.0f, 176.0f);
+	m_sceneYesNoTop->GetNode("kado4")->SetPosition(1176.0f, 544.0f);
+	m_sceneYesNoTop->SetHideFlag(true);
+
+	m_sceneYesNoBottom = m_projectYesNo->CreateScene("Scene_0000");
+	m_sceneYesNoBottom->SetPosition(0.0f, 232.0f);
+	m_sceneYesNoBottom->GetNode("kuro")->SetScale(8.5f, 1.0f);
+	m_sceneYesNoBottom->GetNode("bou1")->SetScale(8.5f, 0.07f);
+	m_sceneYesNoBottom->GetNode("bou1")->SetPosition(640.0f, 296.0f);
+	m_sceneYesNoBottom->GetNode("bou2")->SetScale(8.5f, 0.07f);
+	m_sceneYesNoBottom->GetNode("bou2")->SetPosition(640.0f, 429.0f);
+	m_sceneYesNoBottom->GetNode("bou3")->SetScale(0.07f, 1.0f);
+	m_sceneYesNoBottom->GetNode("bou3")->SetPosition(97.0f, 360.0f);
+	m_sceneYesNoBottom->GetNode("bou4")->SetScale(0.07f, 1.0f);
+	m_sceneYesNoBottom->GetNode("bou4")->SetPosition(1190.0f, 360.0f);
+	m_sceneYesNoBottom->GetNode("kado1")->SetPosition(105.0f, 305.0f);
+	m_sceneYesNoBottom->GetNode("kado2")->SetPosition(105.0f, 415.0f);
+	m_sceneYesNoBottom->GetNode("kado3")->SetPosition(1176.0f, 305.0f);
+	m_sceneYesNoBottom->GetNode("kado4")->SetPosition(1176.0f, 415.0f);
+	m_sceneYesNoBottom->SetHideFlag(true);
+
+	m_sceneYesNoCursor = m_projectYesNo->CreateScene("cursor");
+	m_sceneYesNoCursor->SetHideFlag(true);
+
+	if (m_projectYesNo && !m_spYesNo)
+	{
+		m_spYesNo = boost::make_shared<Sonic::CGameObjectCSD>(m_projectYesNo, 0.5f, "HUD", false);
+		Sonic::CGameDocument::GetInstance()->AddGameObject(m_spYesNo, "main", gameObject);
 	}
 
 	m_menuState = MenuState::MS_FadeIn;
@@ -208,9 +253,11 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 {
 	//originalTitleUI_TitleCMainCState_SelectMenuAdvance(This);
 
-	uint32_t* owner = (uint32_t*)(This->GetContextBase());
-	uint32_t* outState = &owner[111];
+	uint32_t owner = (uint32_t)(This->GetContextBase());
+	uint32_t* outState = (uint32_t*)(owner + 0x1BC);
+
 	static SharedPtrTypeless spOutState;
+	static SharedPtrTypeless soundHandle;
 
 	Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 	switch (m_menuState)
@@ -221,7 +268,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 		{
 			// wait until bar finish animation then show cursor
 			m_cursor1Data.m_hidden = false;
-			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, m_cursorSelectName);
+			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1);
 
 			m_menuState = MenuState::MS_Main;
 		}
@@ -232,35 +279,34 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp) && m_cursor1Data.m_index > 0)
 		{
 			m_cursor1Data.m_index--;
-			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, m_cursorSelectName, 1000004);
+			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, 1000004);
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown) && m_cursor1Data.m_index < MenuType::MT_COUNT - 1)
 		{
 			m_cursor1Data.m_index++;
-			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, m_cursorSelectName, 1000004);
+			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, 1000004);
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
 		{
+			m_cursor1Data.m_hidden = true;
+			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, 1000005);
+
 			switch (m_cursor1Data.m_index)
 			{
 			case MenuType::MT_TrialSelect:
 			{
-				m_cursor1Data.m_hidden = true;
-				TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, m_cursorSelectName, 1000005);
-
 				m_cursor2Data.m_index = 0;
 				m_cursor2Data.m_hidden = false;
 				m_sceneMenuCursor2->SetPosition(99.0f, (m_cursor1Data.m_index + 1) * 60.0f);
-				TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, m_cursorSelectName);
+				TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2);
 
 				m_menuState = MenuState::MS_TrialSelect;
 				break;
 			}
 			case MenuType::MT_QuitGame:
 			{
-				*(bool*)0x1E5E2E8 = true;
-				//*outState = 8;
-				//TitleUI_TinyChangeState(This, spOutState, "ExecSubMenu");
+				TitleUI::EnableYesNoWindow(true, TitleUI::GetYesNoText(YesNoTextType::YNTT_QuitGame));
+				m_menuState = MenuState::MS_QuitYesNo;
 				break;
 			}
 			}
@@ -276,29 +322,93 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp) && m_cursor2Data.m_index > 0)
 		{
 			m_cursor2Data.m_index--;
-			TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, m_cursorSelectName, 1000004);
+			TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, 1000004);
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown) && m_cursor2Data.m_index < TrialMenuType::TMT_COUNT - 1)
 		{
 			m_cursor2Data.m_index++;
-			TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, m_cursorSelectName, 1000004);
+			TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, 1000004);
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
 		{
 			m_cursor2Data.m_hidden = true;
-			TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, m_cursorSelectName, 1000003);
+			TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, 1000003);
 
 			m_cursor1Data.m_hidden = false;
-			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, m_cursorSelectName);
+			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1);
 
 			m_menuState = MenuState::MS_Main;
 		}
 		break;
 	}
+	case MenuState::MS_QuitYesNo:
+	{
+		bool returnToMainMenu = false;
+		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp) && TitleUI::m_yesNoCursorPos == 1)
+		{
+			TitleUI::m_yesNoCursorPos = 0;
+			TitleUI::SetYesNoCursor(TitleUI::m_yesNoCursorPos);
+			Common::PlaySoundStatic(soundHandle, 1000004);
+		}
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown) && TitleUI::m_yesNoCursorPos == 0)
+		{
+			TitleUI::m_yesNoCursorPos = 1;
+			TitleUI::SetYesNoCursor(TitleUI::m_yesNoCursorPos);
+			Common::PlaySoundStatic(soundHandle, 1000004);
+		}
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
+		{
+			if (TitleUI::m_yesNoCursorPos == 1)
+			{
+				returnToMainMenu = true;
+			}
+			else
+			{
+				This->m_Time = 0.0f;
+				m_menuState = MenuState::MS_QuitYes;
+			}
+			Common::PlaySoundStatic(soundHandle, 1000005);
+		}
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
+		{
+			returnToMainMenu = true;
+			Common::PlaySoundStatic(soundHandle, 1000003);
+		}
+
+		if (returnToMainMenu)
+		{
+			TitleUI::EnableYesNoWindow(false);
+
+			m_cursor1Data.m_hidden = false;
+			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1);
+
+			m_menuState = MenuState::MS_Main;
+		}
+
+		if (m_sceneYesNoCursor && m_sceneYesNoCursor->m_MotionDisableFlag)
+		{
+			m_sceneYesNoCursor->SetMotion("cursor_set");
+			m_sceneYesNoCursor->SetMotionFrame(0.0f);
+			m_sceneYesNoCursor->m_MotionDisableFlag = false;
+			m_sceneYesNoCursor->m_MotionSpeed = 1.0f;
+			m_sceneYesNoCursor->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_Loop;
+			m_sceneYesNoCursor->Update();
+		}
+		break;
+	}
+	case MenuState::MS_QuitYes:
+	{
+		if (This->m_Time > 0.5f)
+		{
+			// Quit Game
+			*(bool*)0x1E5E2E8 = true;
+		}
+		break;
+	}
 	}
 
-	TitleUI::cursorLoop(m_cursor1Data, m_sceneMenuCursor1, m_cursorLoopName);
-	TitleUI::cursorLoop(m_cursor2Data, m_sceneMenuCursor2, m_cursorLoopName);
+	TitleUI::cursorLoop(m_cursor1Data, m_sceneMenuCursor1);
+	TitleUI::cursorLoop(m_cursor2Data, m_sceneMenuCursor2);
 
 	// change D770FC to 2 to goto trial_menu, change it back to 0 before entering stage
 }
@@ -328,6 +438,17 @@ void TitleUI_TitleCMainCState_SelectMenuEnd(hh::fnd::CStateMachineBase::CStateBa
 	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuCursor1);
 	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuCursor2);
 	m_projectMenu = nullptr;
+
+	if (m_spYesNo)
+	{
+		m_spYesNo->SendMessage(m_spYesNo->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+		m_spYesNo = nullptr;
+	}
+
+	Chao::CSD::CProject::DestroyScene(m_projectYesNo.Get(), m_sceneYesNoTop);
+	Chao::CSD::CProject::DestroyScene(m_projectYesNo.Get(), m_sceneYesNoBottom);
+	Chao::CSD::CProject::DestroyScene(m_projectYesNo.Get(), m_sceneYesNoCursor);
+	m_projectYesNo = nullptr;
 }
 
 void TitleUI::applyPatches()
@@ -353,15 +474,27 @@ void TitleUI::applyPatches()
 	INSTALL_HOOK(TitleUI_TitleCMainCState_SelectMenuBegin);
 	INSTALL_HOOK(TitleUI_TitleCMainCState_SelectMenuAdvance);
 	WRITE_MEMORY(0x16E129C, void*, TitleUI_TitleCMainCState_SelectMenuEnd);
+
+	// Yes No Window
+	m_yesNoText[YesNoTextType::YNTT_QuitGame] = "Quit  the  game.\nThe  progress  of  the  game  from  the  last  saved\npoint  will  not  be  saved.  OK?";
+	m_yesNoText[YesNoTextType::YNTT_QuitGameJP] = u8"ゲームを終了します\n最後にセーブしたところから\nここまでの進行は保存されませんが\nそれでもよろしいですか？";
+	m_yesNoText[YesNoTextType::YNTT_COUNT] = "MISSING TEXT"; // need this for dummy text
 }
 
-void TitleUI::cursorSelect(CursorData& data, Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, std::vector<std::string> const& selectNames, uint32_t soundCueID)
+void TitleUI::cursorSelect(CursorData& data, Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, uint32_t soundCueID)
 {
 	if (!scene) return;
 
-	data.m_index = max(0, min(selectNames.size() - 1, data.m_index));
+	static char const* cursorSelectName[] =
+	{
+		"select_01",
+		"select_02",
+		"select_03",
+		"select_04",
+		"select_05",
+	};
 
-	scene->SetMotion(selectNames[data.m_index].c_str());
+	scene->SetMotion(cursorSelectName[data.m_index]);
 	scene->m_MotionDisableFlag = false;
 	scene->m_PrevMotionFrame = data.m_hidden ? scene->m_MotionEndFrame : 0.0f;
 	scene->m_MotionFrame = data.m_hidden ? scene->m_MotionEndFrame : 0.0f;
@@ -379,13 +512,22 @@ void TitleUI::cursorSelect(CursorData& data, Chao::CSD::RCPtr<Chao::CSD::CScene>
 	}
 }
 
-void TitleUI::cursorLoop(CursorData const& data, Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, std::vector<std::string> const& loopNames)
+void TitleUI::cursorLoop(CursorData const& data, Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene)
 {
 	if (!scene) return;
 
+	static char const* cursorLoopName[] =
+	{
+		"loop_01",
+		"loop_02",
+		"loop_03",
+		"loop_04",
+		"loop_05",
+	};
+
 	if (scene->m_MotionDisableFlag)
 	{
-		scene->SetMotion(loopNames[data.m_index].c_str());
+		scene->SetMotion(cursorLoopName[data.m_index]);
 		if (data.m_hidden)
 		{
 			scene->SetHideFlag(true);
@@ -394,6 +536,58 @@ void TitleUI::cursorLoop(CursorData const& data, Chao::CSD::RCPtr<Chao::CSD::CSc
 
 		scene->m_MotionDisableFlag = false;
 		scene->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_Loop;
+	}
+}
+
+void TitleUI::EnableYesNoWindow(bool enabled, std::string const& text)
+{
+	if (!m_sceneYesNoTop || !m_sceneYesNoBottom) return;
+
+	m_sceneYesNoTop->SetHideFlag(!enabled);
+	m_sceneYesNoBottom->SetHideFlag(!enabled);
+	m_sceneYesNoCursor->SetHideFlag(!enabled);
+
+	if (enabled)
+	{
+		m_yesNoWindowText = text;
+		m_yesNoCursorPos = 0;
+		m_yesNoColorTime = 0.0f;
+
+		SetYesNoCursor(m_yesNoCursorPos);
+		m_sceneYesNoCursor->SetMotion("cursor_select");
+		m_sceneYesNoCursor->SetMotionFrame(0.0f);
+		m_sceneYesNoCursor->m_MotionDisableFlag = false;
+		m_sceneYesNoCursor->m_MotionSpeed = 1.0f;
+		m_sceneYesNoCursor->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
+		m_sceneYesNoCursor->Update();
+	}
+	else
+	{
+		m_yesNoWindowText = "";
+	}
+}
+
+void TitleUI::SetYesNoCursor(int pos)
+{
+	if (m_sceneYesNoCursor)
+	{
+		m_sceneYesNoCursor->SetPosition(-375.0f, 148.0f + m_yesNoCursorPos * 42.7f);
+	}
+}
+
+std::string const& TitleUI::GetYesNoText(YesNoTextType type)
+{
+	if (type < YesNoTextType::YNTT_COUNT - 1)
+	{
+		if (Common::GetUILanguageType() == LT_Japanese)
+		{
+			type = (YesNoTextType)(type + 1);
+		}
+		return m_yesNoText[type];
+	}
+	else
+	{
+		return "";
 	}
 }
 
@@ -425,4 +619,53 @@ void TitleUI::drawMenu()
 		}
 	}
 	ImGui::End();
+}
+
+void TitleUI::drawYesNoWindow()
+{
+	if (!m_yesNoWindowText.empty())
+	{
+		static bool visible = true;
+		ImGui::Begin("YesNoCaption", &visible, UIContext::m_hudFlags);
+		{
+			float sizeX = *BACKBUFFER_WIDTH * 1090.0f / 1280.0f;
+			float sizeY = *BACKBUFFER_HEIGHT * 382.0f / 720.0f;
+
+			ImVec2 textSize = ImGui::CalcTextSize(m_yesNoWindowText.c_str());
+
+			ImGui::SetWindowFocus();
+			ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
+			ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 0.9f), m_yesNoWindowText.c_str());
+			ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.5f - textSize.x / 2.0f, *BACKBUFFER_HEIGHT * 0.4024f - textSize.y / 2.0f));
+		}
+		ImGui::End();
+
+		bool isJapanese = Common::GetUILanguageType() == LT_Japanese;
+		float blueGreenFactor = (m_yesNoColorTime < 0.5f) ? (1.0f - m_yesNoColorTime * 2.0f) : (m_yesNoColorTime - 0.5f) * 2.0f;
+		ImVec4 color(1.0f, blueGreenFactor, blueGreenFactor, 1.0f);
+
+		ImGui::Begin("Yes", &visible, UIContext::m_hudFlags);
+		{
+			ImGui::SetWindowFocus();
+			char const* yes = isJapanese ? u8"はい" : "Yes";
+			ImGui::TextColored(m_yesNoCursorPos == 0 ? color : ImVec4(1.0f, 1.0f, 1.0f, 1.0f), yes);
+			ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.5f - ImGui::CalcTextSize(yes).x / 2.0f, *BACKBUFFER_HEIGHT * 0.7642f));
+		}
+		ImGui::End();
+
+		ImGui::Begin("No", &visible, UIContext::m_hudFlags);
+		{
+			ImGui::SetWindowFocus();
+			char const* no = isJapanese ? u8"いいえ" : "No";
+			ImGui::TextColored(m_yesNoCursorPos != 0 ? color : ImVec4(1.0f, 1.0f, 1.0f, 1.0f), no);
+			ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.5f - ImGui::CalcTextSize(no).x / 2.0f, *BACKBUFFER_HEIGHT * 0.8235f));
+		}
+		ImGui::End();
+
+		m_yesNoColorTime += Application::getDeltaTime();
+		if (m_yesNoColorTime >= 1.0f)
+		{
+			m_yesNoColorTime -= 1.0f;
+		}
+	}
 }

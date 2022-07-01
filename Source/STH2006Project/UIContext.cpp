@@ -66,6 +66,10 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     ImFontGlyphRangesBuilder builderTextbox;
     initFontDatabase(L"Assets\\Textbox\\npcData.ini", builderTextbox);
     initFontDatabase(L"Assets\\Title\\titleData.ini", builderTextbox);
+    for (auto const& iter : TitleUI::m_yesNoText)
+    {
+        builderTextbox.AddText(iter.second.c_str());
+    }
     builderTextbox.BuildRanges(&rangesTextbox);
 
     const float fontSubtitleSize = 39.0f * (float)*BACKBUFFER_WIDTH / 1920.0f;
@@ -120,10 +124,10 @@ void UIContext::update()
 
             ImGui::PushFont(font);
             ScoreManager::draw();
-            TitleUI::drawMenu();
             ImGui::PopFont();
 
             ImGui::PushFont(fontSubtitle);
+            TitleUI::drawYesNoWindow();
             SubtitleUI::draw();
             LoadingUI::draw();
             ImGui::PopFont();
