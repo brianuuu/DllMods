@@ -1665,6 +1665,10 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, Sonic::Player::C
         {
             S06HUD_API::ScrollSonicGem(false, false);
         }
+        else if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadUp))
+        {
+            while (S06HUD_API::ScrollSonicGem(true, false) != S06HUD_API::SonicGemType::SGT_None) {}
+        }
     }
 
     S06HUD_API::SonicGemType newGemType = S06HUD_API::GetSonicGem();
