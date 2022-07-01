@@ -1,6 +1,6 @@
 #include "DemoUI.h"
 
-Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectMenu;
+/*Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectMenu;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuBG;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuBG2;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuBars;
@@ -165,6 +165,8 @@ void DemoUI::applyPatches()
 
 	// Ignore original menu
 	WRITE_JUMP(0x576523, (void*)0x576C61);
+
+	WRITE_MEMORY(0x5727DC, char*, "Menu");
 }
 
 void DemoUI::cursorSelect(CursorData& data, Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, std::vector<std::string> const& selectNames, uint32_t soundCueID)
@@ -207,4 +209,4 @@ void DemoUI::cursorLoop(CursorData const& data, Chao::CSD::RCPtr<Chao::CSD::CSce
 		scene->m_MotionDisableFlag = false;
 		scene->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_Loop;
 	}
-}
+}*/

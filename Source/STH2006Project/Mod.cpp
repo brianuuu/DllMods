@@ -78,7 +78,7 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     MissionManager::applyPatches();
 
     // Demo menu
-    DemoUI::applyPatches();
+    //DemoUI::applyPatches();
 
     // -------------Mandatory codes--------------
     // Patch "Red Rings Appear On New Game" by "brianuuu"
