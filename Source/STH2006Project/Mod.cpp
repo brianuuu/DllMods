@@ -13,7 +13,7 @@
 #include "SynchronizedObject.h"
 #include "ParamManager.h"
 #include "MissionManager.h"
-#include "DemoUI.h"
+#include "TitleUI.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
@@ -79,6 +79,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     // Demo menu
     //DemoUI::applyPatches();
+
+    // Title/Main Menu
+    TitleUI::applyPatches();
 
     // -------------Mandatory codes--------------
     // Patch "Red Rings Appear On New Game" by "brianuuu"

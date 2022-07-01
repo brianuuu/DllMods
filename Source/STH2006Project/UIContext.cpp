@@ -5,6 +5,7 @@
 #include "Omochao.h"
 #include "SubtitleUI.h"
 #include "LoadingUI.h"
+#include "TitleUI.h"
 
 HWND UIContext::window;
 IDirect3DDevice9* UIContext::device;
@@ -51,7 +52,7 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
 
     ImVector<ImWchar> ranges;
     ImFontGlyphRangesBuilder builder;
-    builder.AddText("0123456789'\"");
+    builder.AddText("0123456789'\"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ: ");
     builder.BuildRanges(&ranges);
 
     const float fontSize = 43.0f * (float)*BACKBUFFER_WIDTH / 1920.0f;
@@ -108,7 +109,6 @@ void UIContext::update()
     io.DisplaySize.y = (float)(*BACKBUFFER_HEIGHT)*2 * 1.1f;
 
     ImGui::NewFrame();
-    ImGui::PushFont(font);
     
     // Check if HUD is enabled
     if (*(bool*)0x1A430D7)
@@ -117,7 +117,11 @@ void UIContext::update()
         if (!S06HUD_API::IsYesNoWindowDrawing())
         {
             Itembox::draw();
+
+            ImGui::PushFont(font);
             ScoreManager::draw();
+            TitleUI::drawMenu();
+            ImGui::PopFont();
 
             ImGui::PushFont(fontSubtitle);
             SubtitleUI::draw();
@@ -126,7 +130,6 @@ void UIContext::update()
         }
     }
 
-    ImGui::PopFont();
     ImGui::EndFrame();
     ImGui::Render();
     ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());

@@ -46,6 +46,7 @@
     <ClCompile Include="MissionManager.cpp" />
     <ClCompile Include="SubtitleUI.cpp" />
     <ClCompile Include="DemoUI.cpp" />
+    <ClCompile Include="TitleUI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
@@ -70,6 +71,7 @@
     <ClInclude Include="MissionManager.h" />
     <ClInclude Include="SubtitleUI.h" />
     <ClInclude Include="DemoUI.h" />
+    <ClInclude Include="TitleUI.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">
