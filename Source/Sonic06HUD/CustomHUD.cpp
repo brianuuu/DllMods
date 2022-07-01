@@ -1024,12 +1024,6 @@ void CustomHUD::RefreshYesNoCursor()
     if (m_sceneYesNoCursor)
     {
         m_sceneYesNoCursor->SetPosition(-375.0f, 148.0f + m_yesNoCursorPos * 42.7f);
-        m_sceneYesNoCursor->SetMotion("cursor_select");
-        m_sceneYesNoCursor->SetMotionFrame(0.0f);
-        m_sceneYesNoCursor->m_MotionDisableFlag = false;
-        m_sceneYesNoCursor->m_MotionSpeed = 1.0f;
-        m_sceneYesNoCursor->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
-        m_sceneYesNoCursor->Update();
     }
 }
 
@@ -1119,6 +1113,8 @@ HOOK(void, __fastcall, CustomHUD_CPauseCStateWindowBegin, 0x42ABA0, hh::fnd::CSt
     m_sceneYesNoBottom->GetNode("kado4")->SetPosition(1176.0f, 415.0f);
 
     m_sceneYesNoCursor = m_projectYesNo->CreateScene("cursor");
+    m_sceneYesNoCursor->SetMotion("cursor_select");
+    m_sceneYesNoCursor->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
     CustomHUD::RefreshYesNoCursor();
 
     CustomHUD::CreateScreen(m_projectYesNo, m_spYesNo, "HUD_Pause", true, parent);
