@@ -135,6 +135,7 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuTitleBarEffect;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuTitleText;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuTitleText2;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuText[MenuType::MT_COUNT];
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneTrialText[TrialMenuType::TMT_COUNT];
 
 TitleUI::CursorData m_cursor1Data;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuCursor1;
@@ -252,6 +253,26 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 		m_sceneMenuText[i]->GetNode("episodeselect")->SetPatternIndex(index);
 		m_sceneMenuText[i]->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
 		m_sceneMenuText[i]->SetPosition(0.0f, i * 59.5f);
+	}
+
+	for (int i = 0; i < TrialMenuType::TMT_COUNT; i++)
+	{
+		m_sceneTrialText[i] = m_projectMenu->CreateScene("episodeselect_select");
+		size_t index = 0;
+		switch (i)
+		{
+		// TODO: No stage to select
+		case TMT_Act:
+			index = 7;
+			break;
+		case TMT_Town:
+			index = 9;
+			break;
+		}
+		m_sceneTrialText[i]->GetNode("episodeselect")->SetPatternIndex(index);
+		m_sceneTrialText[i]->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
+		m_sceneTrialText[i]->SetPosition(99.0f, (i + 3) * 60.0f);
+		m_sceneTrialText[i]->SetHideFlag(true);
 	}
 
 	m_cursor1Data.m_index = 0;
@@ -425,6 +446,11 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 				m_sceneMenuCursor2->SetPosition(99.0f, (m_cursor1Data.m_index + 1) * 60.0f);
 				TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2);
 
+				TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_Option], true);
+				TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_QuitGame], true);
+				TitleUI::menuTextLeft(m_sceneTrialText[TrialMenuType::TMT_Act], false);
+				TitleUI::menuTextLeft(m_sceneTrialText[TrialMenuType::TMT_Town], false);
+
 				m_menuState = MenuState::MS_TrialSelect;
 				break;
 			}
@@ -476,6 +502,11 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 			m_cursor1Data.m_hidden = false;
 			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1);
+
+			TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_Option], false);
+			TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_QuitGame], false);
+			TitleUI::menuTextLeft(m_sceneTrialText[TrialMenuType::TMT_Act], true);
+			TitleUI::menuTextLeft(m_sceneTrialText[TrialMenuType::TMT_Town], true);
 
 			m_menuState = MenuState::MS_Main;
 		}
@@ -711,6 +742,16 @@ void TitleUI::cursorLoop(CursorData const& data, Chao::CSD::RCPtr<Chao::CSD::CSc
 		scene->m_MotionDisableFlag = false;
 		scene->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_Loop;
 	}
+}
+
+void TitleUI::menuTextLeft(Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, bool out)
+{
+	TitleUI_PlayMotion(scene, "episodeselect_select", false, out);
+}
+
+void TitleUI::menuTextRight(Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, bool out)
+{
+	TitleUI_PlayMotion(scene, "episodeselect_out", false, out);
 }
 
 void TitleUI::EnableYesNoWindow(bool enabled, std::string const& text)
