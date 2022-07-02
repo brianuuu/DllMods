@@ -172,9 +172,28 @@ VTABLE_HOOK(HRESULT, WINAPI, IDirect3DDevice9, Reset, D3DPRESENT_PARAMETERS* pPr
     return originalIDirect3DDevice9Reset(This, pPresentationParameters);
 }
 
+bool fixedLanguage = false;
 SynchronizedObject** const APPLICATION_DOCUMENT = (SynchronizedObject**)0x1E66B34;
 extern "C" __declspec(dllexport) void OnFrame()
 {
+    if (!fixedLanguage)
+    {
+        // Force game language to be Japanese or English
+        fixedLanguage = true;
+
+        uint32_t voiceOverAddress = Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x10 });
+        if (*(LanguageType*)voiceOverAddress != LT_English && *(LanguageType*)voiceOverAddress != LT_Japanese)
+        {
+            *(uint8_t*)voiceOverAddress = LT_English;
+        }
+
+        uint32_t uiAddress = Common::GetMultiLevelAddress(0x1E66B34, { 0x8 });
+        if (*(LanguageType*)uiAddress != LT_English && *(LanguageType*)uiAddress != LT_Japanese)
+        {
+            *(uint8_t*)uiAddress = LT_English;
+        }
+    }
+
     const SynchronizedObject::Lock lock(*APPLICATION_DOCUMENT);
 
     if (!lock.getSuccess())
