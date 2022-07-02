@@ -15,6 +15,7 @@ enum MenuState : int
 	MS_Main,
 	MS_TrialSelect,
 	MS_Option,
+	MS_DeleteSaveYesNo,
 	MS_ReturnTitleYesNo,
 	MS_QuitYesNo,
 	MS_QuitYes,
@@ -47,6 +48,8 @@ enum YesNoTextType : int
 	YNTT_QuitGameJP,
 	YNTT_ReturnTitle,
 	YNTT_ReturnTitleJP,
+	YNTT_NewGame,
+	YNTT_NewGameJP,
 
 	YNTT_COUNT,
 };

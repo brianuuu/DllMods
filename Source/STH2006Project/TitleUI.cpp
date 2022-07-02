@@ -419,7 +419,11 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 				}
 				else
 				{
-					// TODO: delete save prompt
+					m_cursor1Data.m_hidden = true;
+					TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, 1000005);
+
+					TitleUI::EnableYesNoWindow(true, TitleUI::GetYesNoText(YesNoTextType::YNTT_NewGame));
+					m_menuState = MenuState::MS_DeleteSaveYesNo;
 				}
 				break;
 			}
@@ -431,8 +435,11 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 				}
 				else
 				{
+					Common::PlaySoundStatic(soundHandle, 1000005);
+
 					*outState = 1;
-					TitleUI_TinyChangeState(This, spOutState, "Finish");
+					m_fadeOutTime = 0.0f;
+					m_menuState = MenuState::MS_FadeOut;
 				}
 				break;
 			}
@@ -512,6 +519,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 		}
 		break;
 	}
+	case MenuState::MS_DeleteSaveYesNo:
 	case MenuState::MS_ReturnTitleYesNo:
 	case MenuState::MS_QuitYesNo:
 	{
@@ -536,7 +544,16 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			}
 			else
 			{
-				if (m_menuState == MenuState::MS_QuitYesNo)
+				if (m_menuState == MenuState::MS_DeleteSaveYesNo)
+				{
+					TitleUI::EnableYesNoWindow(false);
+
+					// fade out then use ExecSubMenu to delete save
+					*outState = 0;
+					m_fadeOutTime = 0.0f;
+					m_menuState = MenuState::MS_FadeOut;
+				}
+				else if (m_menuState == MenuState::MS_QuitYesNo)
 				{
 					// wait a bit then close game
 					This->m_Time = 0.0f;
@@ -594,7 +611,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	{
 		if (m_fadeOutTime >= 1.2f)
 		{
-			TitleUI_TinyChangeState(This, spOutState, m_menuState == MenuState::MS_FadeOutTitle ? "Init" : "Finish");
+			TitleUI_TinyChangeState(This, spOutState, m_menuState == MenuState::MS_FadeOutTitle ? "Init" : "ExecSubMenu");
 		}
 		break;
 	}
@@ -687,12 +704,17 @@ void TitleUI::applyPatches()
 	INSTALL_HOOK(TitleUI_TitleCMainCState_SelectMenuBegin);
 	INSTALL_HOOK(TitleUI_TitleCMainCState_SelectMenuAdvance);
 	WRITE_MEMORY(0x16E129C, void*, TitleUI_TitleCMainCState_SelectMenuEnd);
+	WRITE_JUMP(0x572D3A, (void*)0x57326B); // Don't create delete save dialog
+	WRITE_JUMP(0x5732D3, (void*)0x573337); // Always delete save on new game
+	WRITE_NOP(0x573391, 5);
 
 	// Yes No Window
 	m_yesNoText[YesNoTextType::YNTT_QuitGame] = "Quit  the  game.\nThe  progress  of  the  game  from  the  last  saved\npoint  will  not  be  saved.  OK?";
 	m_yesNoText[YesNoTextType::YNTT_QuitGameJP] = u8"ゲームを終了します\n最後にセーブしたところから\nここまでの進行は保存されませんが\nそれでもよろしいですか？";
 	m_yesNoText[YesNoTextType::YNTT_ReturnTitle] = "Return  to  Title  Screen.\nThe  progress  of  the  game  from  the  last  saved\npoint  will  not  be  saved.  OK?";
 	m_yesNoText[YesNoTextType::YNTT_ReturnTitleJP] = u8"ゲームを終了して、タイトルに戻ります\n最後にセーブしたところから\nここまでの進行は保存されませんが\nそれでもよろしいですか？";
+	m_yesNoText[YesNoTextType::YNTT_NewGame] = "Are  you  sure  you  want  to  start  a  new  game?\nAny  previous  saved  game\nprogress  will  be  lost.";
+	m_yesNoText[YesNoTextType::YNTT_NewGameJP] = u8"これまでの記録は消えてしまいますが\nよろしいですか？";
 	m_yesNoText[YesNoTextType::YNTT_COUNT] = "MISSING TEXT"; // need this for dummy text
 }
 
