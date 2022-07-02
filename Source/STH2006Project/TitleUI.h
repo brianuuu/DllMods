@@ -59,6 +59,9 @@ public:
 	static void cursorSelect(CursorData& data, Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, uint32_t soundCueID = 0xFFFFFFFF);
 	static void cursorLoop(CursorData const& data, Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene);
 
+	static void menuTextLeft(Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, bool out);
+	static void menuTextRight(Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, bool out);
+
 	// Yes & No Window
 	static std::map<YesNoTextType, std::string> m_yesNoText;
 	static int m_yesNoCursorPos;

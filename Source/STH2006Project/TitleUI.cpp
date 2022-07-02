@@ -8,18 +8,17 @@ boost::shared_ptr<Sonic::CGameObjectCSD> m_spTitle;
 Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectTitle;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneTitle;
 
-void TitleUI_PlayMotion(Chao::CSD::RCPtr<Chao::CSD::CScene>& scene, char const* motion, bool loop = false, float start = 0.0f, float end = -1.0f)
+void TitleUI_PlayMotion(Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, char const* motion, bool loop = false, bool reverse = false)
 {
 	if (!scene) return;
 	scene->SetHideFlag(false);
 	scene->SetMotion(motion);
-	scene->SetMotionFrame(start);
-	if (end > start)
-	{
-		scene->m_MotionEndFrame = end;
-	}
+	scene->m_PrevMotionFrame = reverse ? scene->m_MotionEndFrame : 0.0f;
+	scene->m_MotionFrame = reverse ? scene->m_MotionEndFrame : 0.0f;
+	*(uint32_t*)((uint32_t)scene.Get() + 0xB0) = reverse ? 0 : 1;
+	*(uint32_t*)((uint32_t)scene.Get() + 0xB4) = reverse ? 0 : 1; // this stops the reverse animation
 	scene->m_MotionDisableFlag = false;
-	scene->m_MotionSpeed = 1.0f;
+	scene->m_MotionSpeed = reverse ? -1.0f : 1.0f;
 	scene->m_MotionRepeatType = loop ? Chao::CSD::eMotionRepeatType_Loop : Chao::CSD::eMotionRepeatType_PlayOnce;
 	scene->Update();
 }
@@ -129,14 +128,21 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuBG2;
 boost::shared_ptr<Sonic::CGameObjectCSD> m_spMenu;
 Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectMenu;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuBars;
-Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuText;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuTextBG;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuTextCover;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuTitleBarEffect;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuTitleText;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuTitleText2;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuText[MenuType::MT_COUNT];
 
 TitleUI::CursorData m_cursor1Data;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuCursor1;
 TitleUI::CursorData m_cursor2Data;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuCursor2;
+
+boost::shared_ptr<Sonic::CGameObjectCSD> m_spButton;
+Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectButton;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneButton;
 
 Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectYesNo;
 boost::shared_ptr<Sonic::CGameObjectCSD> m_spYesNo;
@@ -149,6 +155,33 @@ int TitleUI::m_yesNoCursorPos = 0;
 float TitleUI::m_yesNoColorTime = 0.0f;
 std::string TitleUI::m_yesNoWindowText;
 
+void TitleUI_PlayButtonMotion(bool twoButton)
+{
+	if (!m_sceneButton) return;
+
+	float endFrame = 0.0f;
+	size_t index = 0;
+	if (Common::GetUILanguageType() == LT_Japanese)
+	{
+		endFrame = twoButton ? 32.0f : 21.0f;
+		index = twoButton ? 1 : 3;
+	}
+	else
+	{
+		endFrame = twoButton ? 35.0f : 23.0f;
+		index = twoButton ? 0 : 2;
+	}
+
+	m_sceneButton->GetNode("text")->SetPatternIndex(index);
+	m_sceneButton->SetMotion("DefaultAnim");
+	m_sceneButton->m_MotionFrame = 0.0f;
+	m_sceneButton->m_MotionSpeed = 1.0f;
+	m_sceneButton->m_MotionDisableFlag = false;
+	m_sceneButton->m_MotionEndFrame = endFrame;
+	m_sceneButton->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
+	m_sceneButton->Update();
+}
+
 HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::fnd::CStateMachineBase::CStateBase* This)
 {
 	Sonic::CGameObject* gameObject = (Sonic::CGameObject*)(This->GetContextBase());
@@ -157,6 +190,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 	uint32_t owner = (uint32_t)(This->GetContextBase());
 	bool hasSaveFile = *(bool*)(owner + 0x1AC);
 
+	//---------------------------------------------------------------
 	auto spCsdProject = wrapper.GetCsdProject("background");
 	m_projectMenuBG = spCsdProject->m_rcProject;
 
@@ -169,17 +203,47 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 		Sonic::CGameDocument::GetInstance()->AddGameObject(m_spMenuBG, "main", gameObject);
 	}
 
+	//---------------------------------------------------------------
 	spCsdProject = wrapper.GetCsdProject("main_menu");
 	m_projectMenu = spCsdProject->m_rcProject;
 
 	m_sceneMenuBars = m_projectMenu->CreateScene("main_menu_parts");
 	m_sceneMenuBars->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
-	m_sceneMenuText = m_projectMenu->CreateScene("text");
-	m_sceneMenuText->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
+	m_sceneMenuTextBG = m_projectMenu->CreateScene("text");
+	m_sceneMenuTextBG->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
 	m_sceneMenuTextCover = m_projectMenu->CreateScene("text_cover");
 	m_sceneMenuTextCover->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
 	m_sceneMenuTitleBarEffect = m_projectMenu->CreateScene("titlebar_effect");
 	m_sceneMenuTitleBarEffect->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
+	m_sceneMenuTitleText = m_projectMenu->CreateScene("title");
+	m_sceneMenuTitleText->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
+
+	for (int i = 0; i < MenuType::MT_COUNT; i++)
+	{
+		m_sceneMenuText[i] = m_projectMenu->CreateScene("episodeselect_select");
+		size_t index = 0;
+		switch (i)
+		{
+		case MT_NewGame:
+			index = 0;
+			break;
+		case MT_Continue:
+			index = hasSaveFile ? 2 : 3;
+			break;
+		case MT_TrialSelect:
+			index = 4;
+			break;
+		case MT_Option:
+			index = 5;
+			break;
+		case MT_QuitGame:
+			index = 6;
+			break;
+		}
+		m_sceneMenuText[i]->GetNode("episodeselect")->SetPatternIndex(index);
+		m_sceneMenuText[i]->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
+		m_sceneMenuText[i]->SetPosition(0.0f, i * 59.5f);
+	}
 
 	m_cursor1Data.m_index = 0;
 	m_cursor1Data.m_hidden = true;
@@ -199,6 +263,20 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 		Sonic::CGameDocument::GetInstance()->AddGameObject(m_spMenu, "main", gameObject);
 	}
 
+	//---------------------------------------------------------------
+	spCsdProject = wrapper.GetCsdProject("button_window");
+	m_projectButton = spCsdProject->m_rcProject;
+
+	m_sceneButton = m_projectButton->CreateScene("Scene_0000");
+	TitleUI_PlayButtonMotion(true);
+
+	if (m_projectButton && !m_spButton)
+	{
+		m_spButton = boost::make_shared<Sonic::CGameObjectCSD>(m_projectButton, 0.5f, "HUD", false);
+		Sonic::CGameDocument::GetInstance()->AddGameObject(m_spButton, "main", gameObject);
+	}
+
+	//---------------------------------------------------------------
 	spCsdProject = wrapper.GetCsdProject("windowtest");
 	m_projectYesNo = spCsdProject->m_rcProject;
 
@@ -255,6 +333,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 	uint32_t owner = (uint32_t)(This->GetContextBase());
 	uint32_t* outState = (uint32_t*)(owner + 0x1BC);
+	bool hasSaveFile = *(bool*)(owner + 0x1AC);
 
 	static SharedPtrTypeless spOutState;
 	static SharedPtrTypeless soundHandle;
@@ -288,13 +367,41 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
 		{
-			m_cursor1Data.m_hidden = true;
-			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, 1000005);
-
 			switch (m_cursor1Data.m_index)
 			{
+			case MenuType::MT_NewGame:
+			{
+				if (!hasSaveFile)
+				{
+					Common::PlaySoundStatic(soundHandle, 1000005);
+
+					*outState = 0;
+					TitleUI_TinyChangeState(This, spOutState, "Finish");
+				}
+				else
+				{
+					// TODO: delete save prompt
+				}
+				break;
+			}
+			case MenuType::MT_Continue:
+			{
+				if (!hasSaveFile)
+				{
+					Common::PlaySoundStatic(soundHandle, 1000007);
+				}
+				else
+				{
+					*outState = 1;
+					TitleUI_TinyChangeState(This, spOutState, "Finish");
+				}
+				break;
+			}
 			case MenuType::MT_TrialSelect:
 			{
+				m_cursor1Data.m_hidden = true;
+				TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, 1000005);
+
 				m_cursor2Data.m_index = 0;
 				m_cursor2Data.m_hidden = false;
 				m_sceneMenuCursor2->SetPosition(99.0f, (m_cursor1Data.m_index + 1) * 60.0f);
@@ -305,6 +412,9 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			}
 			case MenuType::MT_QuitGame:
 			{
+				m_cursor1Data.m_hidden = true;
+				TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, 1000005);
+
 				TitleUI::EnableYesNoWindow(true, TitleUI::GetYesNoText(YesNoTextType::YNTT_QuitGame));
 				m_menuState = MenuState::MS_QuitYesNo;
 				break;
@@ -415,6 +525,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 void TitleUI_TitleCMainCState_SelectMenuEnd(hh::fnd::CStateMachineBase::CStateBase* This)
 {
+	//---------------------------------------------------------------
 	if (m_spMenuBG)
 	{
 		m_spMenuBG->SendMessage(m_spMenuBG->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
@@ -425,6 +536,7 @@ void TitleUI_TitleCMainCState_SelectMenuEnd(hh::fnd::CStateMachineBase::CStateBa
 	Chao::CSD::CProject::DestroyScene(m_projectMenuBG.Get(), m_sceneMenuBG2);
 	m_projectMenuBG = nullptr;
 
+	//---------------------------------------------------------------
 	if (m_spMenu)
 	{
 		m_spMenu->SendMessage(m_spMenu->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
@@ -432,13 +544,30 @@ void TitleUI_TitleCMainCState_SelectMenuEnd(hh::fnd::CStateMachineBase::CStateBa
 	}
 
 	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuBars);
-	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuText);
+	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuTextBG);
 	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuTextCover);
 	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuTitleBarEffect);
+	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuTitleText);
+	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuTitleText2);
 	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuCursor1);
 	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuCursor2);
+	for (int i = 0; i < MenuType::MT_COUNT; i++)
+	{
+		Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuText[i]);
+	}
 	m_projectMenu = nullptr;
 
+	//---------------------------------------------------------------
+	if (m_spButton)
+	{
+		m_spButton->SendMessage(m_spButton->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+		m_spButton = nullptr;
+	}
+
+	Chao::CSD::CProject::DestroyScene(m_projectButton.Get(), m_sceneButton);
+	m_projectButton = nullptr;
+
+	//---------------------------------------------------------------
 	if (m_spYesNo)
 	{
 		m_spYesNo->SendMessage(m_spYesNo->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
@@ -494,17 +623,7 @@ void TitleUI::cursorSelect(CursorData& data, Chao::CSD::RCPtr<Chao::CSD::CScene>
 		"select_05",
 	};
 
-	scene->SetMotion(cursorSelectName[data.m_index]);
-	scene->m_MotionDisableFlag = false;
-	scene->m_PrevMotionFrame = data.m_hidden ? scene->m_MotionEndFrame : 0.0f;
-	scene->m_MotionFrame = data.m_hidden ? scene->m_MotionEndFrame : 0.0f;
-	*(uint32_t*)((uint32_t)scene.Get() + 0xB0) = data.m_hidden ? 0 : 1;
-	*(uint32_t*)((uint32_t)scene.Get() + 0xB4) = data.m_hidden ? 0 : 1; // this stops the reverse animation
-	scene->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
-	scene->m_MotionSpeed = data.m_hidden ? -1.0f : 1.0f;
-	scene->Update();
-	scene->SetHideFlag(false);
-
+	TitleUI_PlayMotion(scene, cursorSelectName[data.m_index], false, data.m_hidden);
 	if (soundCueID != 0xFFFFFFFF)
 	{
 		static SharedPtrTypeless soundHandle;
@@ -587,18 +706,9 @@ std::string const& TitleUI::GetYesNoText(YesNoTextType type)
 	}
 	else
 	{
-		return "";
+		return m_yesNoText[YesNoTextType::YNTT_COUNT];
 	}
 }
-
-std::vector<std::string> menuStrings =
-{
-	"NEW GAME",
-	"CONTINUE",
-	"TRIAL SELECT",
-	"OPTION",
-	"QUIT GAME"
-};
 
 void TitleUI::drawMenu()
 {
@@ -611,7 +721,7 @@ void TitleUI::drawMenu()
 		float posY = 0.1667f;
 		float constexpr yDist = 60.0f / 720.0f;
 
-		for (int i = 0; i < menuStrings.size(); i++)
+		for (size_t i = 0; i < menuStrings.size(); i++)
 		{
 			ImGui::SetCursorPos(ImVec2((float)*BACKBUFFER_WIDTH * posX, (float)*BACKBUFFER_HEIGHT * posY));
 			ImGui::Text(menuStrings[i].c_str());
