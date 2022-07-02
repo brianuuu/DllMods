@@ -1,6 +1,7 @@
 ﻿#include "TitleUI.h"
 #include "UIContext.h"
 #include "Application.h"
+#include "LoadingUI.h"
 
 FUNCTION_PTR(void, __thiscall, TitleUI_TinyChangeState, 0x773250, void* This, SharedPtrTypeless& spState, const Hedgehog::Base::CSharedString name);
 
@@ -155,6 +156,8 @@ int TitleUI::m_yesNoCursorPos = 0;
 float TitleUI::m_yesNoColorTime = 0.0f;
 std::string TitleUI::m_yesNoWindowText;
 
+float m_fadeOutTime = 0.0f;
+
 void TitleUI_PlayButtonMotion(bool twoButton)
 {
 	if (!m_sceneButton) return;
@@ -180,6 +183,12 @@ void TitleUI_PlayButtonMotion(bool twoButton)
 	m_sceneButton->m_MotionEndFrame = endFrame;
 	m_sceneButton->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
 	m_sceneButton->Update();
+}
+
+HOOK(void, __fastcall, TitleUI_TitleCMainCState_InitBegin, 0x571370, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+	originalTitleUI_TitleCMainCState_InitBegin(This);
+	m_menuState = MenuState::MS_Idle;
 }
 
 HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::fnd::CStateMachineBase::CStateBase* This)
@@ -355,14 +364,22 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	}
 	case MenuState::MS_Main:
 	{
-		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp) && m_cursor1Data.m_index > 0)
+		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp))
 		{
 			m_cursor1Data.m_index--;
+			if (m_cursor1Data.m_index < 0)
+			{
+				m_cursor1Data.m_index = MenuType::MT_COUNT - 1;
+			}
 			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, 1000004);
 		}
-		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown) && m_cursor1Data.m_index < MenuType::MT_COUNT - 1)
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown))
 		{
 			m_cursor1Data.m_index++;
+			if (m_cursor1Data.m_index >= MenuType::MT_COUNT)
+			{
+				m_cursor1Data.m_index = 0;
+			}
 			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, 1000004);
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
@@ -376,7 +393,8 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 					Common::PlaySoundStatic(soundHandle, 1000005);
 
 					*outState = 0;
-					TitleUI_TinyChangeState(This, spOutState, "Finish");
+					m_fadeOutTime = 0.0f;
+					m_menuState = MenuState::MS_FadeOut;
 				}
 				else
 				{
@@ -423,20 +441,32 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
 		{
-			TitleUI_TinyChangeState(This, spOutState, "Init");
+			m_cursor1Data.m_hidden = true;
+			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, 1000003);
+
+			TitleUI::EnableYesNoWindow(true, TitleUI::GetYesNoText(YesNoTextType::YNTT_ReturnTitle));
+			m_menuState = MenuState::MS_ReturnTitleYesNo;
 		}
 		break;
 	}
 	case MenuState::MS_TrialSelect:
 	{
-		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp) && m_cursor2Data.m_index > 0)
+		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp))
 		{
 			m_cursor2Data.m_index--;
+			if (m_cursor2Data.m_index < 0)
+			{
+				m_cursor2Data.m_index = TrialMenuType::TMT_COUNT - 1;
+			}
 			TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, 1000004);
 		}
-		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown) && m_cursor2Data.m_index < TrialMenuType::TMT_COUNT - 1)
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown))
 		{
 			m_cursor2Data.m_index++;
+			if (m_cursor2Data.m_index >= TrialMenuType::TMT_COUNT)
+			{
+				m_cursor2Data.m_index = 0;
+			}
 			TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, 1000004);
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
@@ -451,6 +481,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 		}
 		break;
 	}
+	case MenuState::MS_ReturnTitleYesNo:
 	case MenuState::MS_QuitYesNo:
 	{
 		bool returnToMainMenu = false;
@@ -474,8 +505,20 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			}
 			else
 			{
-				This->m_Time = 0.0f;
-				m_menuState = MenuState::MS_QuitYes;
+				if (m_menuState == MenuState::MS_QuitYesNo)
+				{
+					// wait a bit then close game
+					This->m_Time = 0.0f;
+					m_menuState = MenuState::MS_QuitYes;
+				}
+				else
+				{
+					TitleUI::EnableYesNoWindow(false);
+
+					// fade out then return to title screen
+					m_fadeOutTime = 0.0f;
+					m_menuState = MenuState::MS_FadeOutTitle;
+				}
 			}
 			Common::PlaySoundStatic(soundHandle, 1000005);
 		}
@@ -512,6 +555,15 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 		{
 			// Quit Game
 			*(bool*)0x1E5E2E8 = true;
+		}
+		break;
+	}
+	case MenuState::MS_FadeOut:
+	case MenuState::MS_FadeOutTitle:
+	{
+		if (m_fadeOutTime >= 1.2f)
+		{
+			TitleUI_TinyChangeState(This, spOutState, m_menuState == MenuState::MS_FadeOutTitle ? "Init" : "Finish");
 		}
 		break;
 	}
@@ -600,6 +652,7 @@ void TitleUI::applyPatches()
 
 	// Main Menu
 	WRITE_MEMORY(0x5727DC, char*, "Menu");
+	INSTALL_HOOK(TitleUI_TitleCMainCState_InitBegin);
 	INSTALL_HOOK(TitleUI_TitleCMainCState_SelectMenuBegin);
 	INSTALL_HOOK(TitleUI_TitleCMainCState_SelectMenuAdvance);
 	WRITE_MEMORY(0x16E129C, void*, TitleUI_TitleCMainCState_SelectMenuEnd);
@@ -607,6 +660,8 @@ void TitleUI::applyPatches()
 	// Yes No Window
 	m_yesNoText[YesNoTextType::YNTT_QuitGame] = "Quit  the  game.\nThe  progress  of  the  game  from  the  last  saved\npoint  will  not  be  saved.  OK?";
 	m_yesNoText[YesNoTextType::YNTT_QuitGameJP] = u8"ゲームを終了します\n最後にセーブしたところから\nここまでの進行は保存されませんが\nそれでもよろしいですか？";
+	m_yesNoText[YesNoTextType::YNTT_ReturnTitle] = "Return  to  Title  Screen.\nThe  progress  of  the  game  from  the  last  saved\npoint  will  not  be  saved.  OK?";
+	m_yesNoText[YesNoTextType::YNTT_ReturnTitleJP] = u8"ゲームを終了して、タイトルに戻ります\n最後にセーブしたところから\nここまでの進行は保存されませんが\nそれでもよろしいですか？";
 	m_yesNoText[YesNoTextType::YNTT_COUNT] = "MISSING TEXT"; // need this for dummy text
 }
 
@@ -712,23 +767,22 @@ std::string const& TitleUI::GetYesNoText(YesNoTextType type)
 
 void TitleUI::drawMenu()
 {
-	if (!m_projectMenu) return;
-
 	static bool visible = true;
-	ImGui::Begin("Test", &visible, UIContext::m_hudFlags);
+	if (m_menuState == MenuState::MS_FadeOut || m_menuState == MenuState::MS_FadeOutTitle)
 	{
-		float posX = 0.1130f;
-		float posY = 0.1667f;
-		float constexpr yDist = 60.0f / 720.0f;
-
-		for (size_t i = 0; i < menuStrings.size(); i++)
+		ImGui::Begin("FadeOut", &visible, UIContext::m_hudFlags);
 		{
-			ImGui::SetCursorPos(ImVec2((float)*BACKBUFFER_WIDTH * posX, (float)*BACKBUFFER_HEIGHT * posY));
-			ImGui::Text(menuStrings[i].c_str());
-			posY += yDist;
+			ImGui::Image(LoadingUI::m_backgroundTexture, ImVec2(*BACKBUFFER_WIDTH * 1.1f, *BACKBUFFER_HEIGHT * 1.1f), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, min(1.0f, m_fadeOutTime)));
+			ImGui::SetWindowPos(ImVec2(-10, -10));
+		}
+		ImGui::End();
+
+		m_fadeOutTime += Application::getDeltaTime();
+		if (Common::IsAtLoadingScreen())
+		{
+			m_menuState = MenuState::MS_Idle;
 		}
 	}
-	ImGui::End();
 }
 
 void TitleUI::drawYesNoWindow()

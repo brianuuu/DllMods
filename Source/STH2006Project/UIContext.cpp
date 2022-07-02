@@ -123,6 +123,7 @@ void UIContext::update()
             Itembox::draw();
 
             ImGui::PushFont(font);
+            TitleUI::drawMenu();
             ScoreManager::draw();
             ImGui::PopFont();
 

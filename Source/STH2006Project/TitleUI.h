@@ -10,12 +10,16 @@ enum TitleState : int
 
 enum MenuState : int
 {
+	MS_Idle,
 	MS_FadeIn,
 	MS_Main,
 	MS_TrialSelect,
 	MS_Option,
+	MS_ReturnTitleYesNo,
 	MS_QuitYesNo,
 	MS_QuitYes,
+	MS_FadeOut,
+	MS_FadeOutTitle,
 };
 
 enum MenuType : int
@@ -41,6 +45,8 @@ enum YesNoTextType : int
 {
 	YNTT_QuitGame,
 	YNTT_QuitGameJP,
+	YNTT_ReturnTitle,
+	YNTT_ReturnTitleJP,
 
 	YNTT_COUNT,
 };
