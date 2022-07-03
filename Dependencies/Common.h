@@ -1295,6 +1295,21 @@ inline bool IsCurrentStageBoss()
 	return stageID >= SMT_bms && stageID <= SMT_blb;
 }
 
+inline bool IsStagePlayed(uint32_t stageID)
+{
+	// Note: Only works for regular stages not mission
+	// fake it as CHudGateMenuMain object
+	uint32_t dummyAddress = (uint32_t)&stageID - 0x208;
+	FUNCTION_PTR(bool, __stdcall, CHudGateMenuMain_IsStagePlayed, 0x107AE80, uint32_t pCHudGateMenuMain);
+	return CHudGateMenuMain_IsStagePlayed(dummyAddress);
+}
+
+inline bool IsStageCompleted(uint32_t stageID)
+{
+	FUNCTION_PTR(bool, __stdcall, fpIsStageCompleted, 0x107ADC0, uint32_t stageID);
+	return fpIsStageCompleted(stageID);
+}
+
 inline void PlayStageMusic(char const* cueName, float fadeInTime)
 {
 	FUNCTION_PTR(bool, __stdcall, PlayStageMusicFromCueName, 0xD63070, void* gameDocument, Hedgehog::Base::CSharedString & cueName, float fadeInTime);
