@@ -13,7 +13,10 @@ enum MenuState : int
 	MS_Idle,
 	MS_FadeIn,
 	MS_Main,
+
 	MS_TrialSelect,
+	MS_ActTrial,
+	MS_TownTrial,
 
 	MS_Option,
 	MS_OptionSaving,
@@ -76,6 +79,23 @@ enum OptionType : int
 	OT_UI,
 };
 
+struct TrialData
+{
+	// Common
+	uint32_t m_stage;
+	bool m_completed;
+	std::string m_header;
+	std::string m_stageID;
+	std::string m_terrainID;
+
+	// act trial
+	std::string m_actName;
+
+	// town trial
+	std::string m_missionName;
+	std::string m_missionNameJP;
+};
+
 class TitleUI
 {
 public:
@@ -86,6 +106,10 @@ public:
 	};
 
 	static void applyPatches();
+
+	static void populateTrialData();
+	static void refreshTrialAvailability();
+	static bool getHasTrialAvailable(std::vector<TrialData> const& dataList);
 
 	static void cursorSelect(CursorData& data, Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, uint32_t soundCueID = 0xFFFFFFFF);
 	static void cursorLoop(CursorData const& data, Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene);

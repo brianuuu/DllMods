@@ -178,6 +178,10 @@ int TitleUI::m_yesNoCursorPos = 0;
 float TitleUI::m_yesNoColorTime = 0.0f;
 std::string TitleUI::m_yesNoWindowText;
 
+bool m_displayNonCompletedStage;
+std::vector<TrialData> m_actTrialData;
+std::vector<TrialData> m_townTrialData;
+
 float m_fadeOutTime = 0.0f;
 
 void TitleUI_PlayButtonMotion(bool twoButton)
@@ -271,6 +275,8 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 	uint32_t owner = (uint32_t)(This->GetContextBase());
 	bool hasSaveFile = *(bool*)(owner + 0x1AC);
 	bool isJapanese = Common::GetUILanguageType() == LT_Japanese;
+
+	TitleUI::refreshTrialAvailability();
 
 	//---------------------------------------------------------------
 	auto spCsdProject = wrapper.GetCsdProject("background");
@@ -389,12 +395,11 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 		size_t index = 0;
 		switch (i)
 		{
-		// TODO: No stage to select
 		case TMT_Act:
-			index = 7;
+			index = TitleUI::getHasTrialAvailable(m_actTrialData) ? 7 : 8;
 			break;
 		case TMT_Town:
-			index = 9;
+			index = TitleUI::getHasTrialAvailable(m_townTrialData) ? 9 : 10;
 			break;
 		}
 		m_sceneTrialText[i]->GetNode("episodeselect")->SetPatternIndex(index);
@@ -643,6 +648,58 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			}
 			TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, 1000004);
 		}
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
+		{
+			switch (m_cursor2Data.m_index)
+			{
+			case TrialMenuType::TMT_Act:
+			{
+				if (!TitleUI::getHasTrialAvailable(m_actTrialData))
+				{
+					Common::PlaySoundStatic(soundHandle, 1000007);
+				}
+				else
+				{
+					TitleUI::menuTitleSecondary(true, 8);
+
+					m_cursor2Data.m_hidden = true;
+					TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, 1000005);
+
+					TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_NewGame], true);
+					TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_Continue], true);
+					TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_TrialSelect], true);
+					TitleUI::menuTextRight(m_sceneTrialText[TrialMenuType::TMT_Act], true);
+					TitleUI::menuTextLeft(m_sceneTrialText[TrialMenuType::TMT_Town], true);
+
+					m_menuState = MenuState::MS_ActTrial;
+				}
+				break;
+			}
+			case TrialMenuType::TMT_Town:
+			{
+				if (!TitleUI::getHasTrialAvailable(m_townTrialData))
+				{
+					Common::PlaySoundStatic(soundHandle, 1000007);
+				}
+				else
+				{
+					TitleUI::menuTitleSecondary(true, 8);
+
+					m_cursor2Data.m_hidden = true;
+					TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, 1000005);
+
+					TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_NewGame], true);
+					TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_Continue], true);
+					TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_TrialSelect], true);
+					TitleUI::menuTextLeft(m_sceneTrialText[TrialMenuType::TMT_Act], true);
+					TitleUI::menuTextRight(m_sceneTrialText[TrialMenuType::TMT_Town], true);
+
+					m_menuState = MenuState::MS_TownTrial;
+				}
+				break;
+			}
+			}
+		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
 		{
 			m_cursor2Data.m_hidden = true;
@@ -657,6 +714,46 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			TitleUI::menuTextLeft(m_sceneTrialText[TrialMenuType::TMT_Town], true);
 
 			m_menuState = MenuState::MS_Main;
+		}
+		break;
+	}
+	case MenuState::MS_ActTrial:
+	{
+		// TODO:
+		if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
+		{
+			TitleUI::menuTitleSecondary(false);
+
+			m_cursor2Data.m_hidden = false;
+			TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, 1000003);
+
+			TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_NewGame], false);
+			TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_Continue], false);
+			TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_TrialSelect], false);
+			TitleUI::menuTextRight(m_sceneTrialText[TrialMenuType::TMT_Act], false);
+			TitleUI::menuTextLeft(m_sceneTrialText[TrialMenuType::TMT_Town], false);
+
+			m_menuState = MenuState::MS_TrialSelect;
+		}
+		break;
+	}
+	case MenuState::MS_TownTrial:
+	{
+		// TODO:
+		if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
+		{
+			TitleUI::menuTitleSecondary(false);
+
+			m_cursor2Data.m_hidden = false;
+			TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, 1000003);
+
+			TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_NewGame], false);
+			TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_Continue], false);
+			TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_TrialSelect], false);
+			TitleUI::menuTextLeft(m_sceneTrialText[TrialMenuType::TMT_Act], false);
+			TitleUI::menuTextRight(m_sceneTrialText[TrialMenuType::TMT_Town], false);
+
+			m_menuState = MenuState::MS_TrialSelect;
 		}
 		break;
 	}
@@ -1066,6 +1163,8 @@ void TitleUI_TitleCMainCState_SelectMenuEnd(hh::fnd::CStateMachineBase::CStateBa
 
 void TitleUI::applyPatches()
 {
+	populateTrialData();
+
 	// Fix menu sounds
 	WRITE_MEMORY(0x11D219A, uint32_t, 1000002); // Menu oppen
 	WRITE_MEMORY(0x11D20EA, uint32_t, 1000003); // Menu close
@@ -1104,6 +1203,77 @@ void TitleUI::applyPatches()
 	m_yesNoText[YesNoTextType::YNTT_NewGame] = "Are  you  sure  you  want  to  start  a  new  game?\nAny  previous  saved  game\nprogress  will  be  lost.";
 	m_yesNoText[YesNoTextType::YNTT_NewGameJP] = u8"これまでの記録は消えてしまいますが\nよろしいですか？";
 	m_yesNoText[YesNoTextType::YNTT_COUNT] = "MISSING TEXT"; // need this for dummy text
+}
+
+void TitleUI::populateTrialData()
+{
+	const INIReader reader(Application::getModDirString() + "Assets\\Title\\trialData.ini");
+	m_displayNonCompletedStage = reader.GetBoolean("Settings", "displayNonCompletedStage", false);
+
+	std::vector<std::string> sectionSorted;
+	for (std::string const& section : reader.Sections())
+	{
+		if (reader.GetBoolean(section, "enabled", false))
+		{
+			sectionSorted.push_back(section);
+		}
+	}
+	std::sort(sectionSorted.begin(), sectionSorted.end(), [](std::string const& a, std::string const& b) {return std::stoi(a) < std::stoi(b); });
+
+	for (std::string const& section : sectionSorted)
+	{
+		TrialData data;
+		data.m_stage = std::stoi(section);
+
+		data.m_header = reader.Get(section, "header", "");
+		if (data.m_header.empty()) continue;
+
+		data.m_stageID = reader.Get(section, "stageID", "");
+		data.m_terrainID = reader.Get(section, "terrainID", "");
+		if (data.m_stageID.empty() || data.m_terrainID.empty()) continue;
+
+		data.m_actName = reader.Get(section, "actName", "");
+		data.m_missionName = reader.Get(section, "missionName", "");
+		data.m_missionNameJP = reader.Get(section, "missionNameJP", "");
+		if (data.m_actName.empty() && (data.m_missionName.empty() || data.m_missionNameJP.empty())) continue;
+
+		if (!data.m_actName.empty())
+		{
+			m_actTrialData.push_back(data);
+		}
+		else
+		{
+			m_townTrialData.push_back(data);
+		}
+	}
+}
+
+void TitleUI::refreshTrialAvailability()
+{
+	for (TrialData& data : m_actTrialData)
+	{
+		data.m_completed = Common::IsStageCompleted(data.m_stage);
+	}
+
+	for (TrialData& data : m_townTrialData)
+	{
+		data.m_completed = Common::IsStageCompleted(data.m_stage);
+	}
+}
+
+bool TitleUI::getHasTrialAvailable(std::vector<TrialData> const& dataList)
+{
+	if (m_displayNonCompletedStage) return true;
+
+	for (TrialData const& data : dataList)
+	{
+		if (data.m_completed)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void TitleUI::cursorSelect(CursorData& data, Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, uint32_t soundCueID)
@@ -1336,7 +1506,7 @@ void TitleUI::menuTextLeft(Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, boo
 
 void TitleUI::menuTextRight(Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, bool out)
 {
-	TitleUI_PlayMotion(scene, "episodeselect_out", false, out);
+	TitleUI_PlayMotion(scene, "episodeselect_out", false, !out);
 }
 
 void TitleUI::EnableYesNoWindow(bool enabled, std::string const& text)
@@ -1394,6 +1564,9 @@ std::string const& TitleUI::GetYesNoText(YesNoTextType type)
 void TitleUI::drawMenu()
 {
 	static bool visible = true;
+
+
+
 	if (m_menuState == MenuState::MS_FadeOut || m_menuState == MenuState::MS_FadeOutTitle)
 	{
 		ImGui::Begin("FadeOut", &visible, UIContext::m_hudFlags);
