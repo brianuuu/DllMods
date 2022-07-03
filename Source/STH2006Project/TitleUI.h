@@ -16,6 +16,7 @@ enum MenuState : int
 	MS_TrialSelect,
 
 	MS_Option,
+	MS_OptionSaving,
 	MS_OptionAudio,
 	MS_OptionUI,
 	MS_OptionVO,

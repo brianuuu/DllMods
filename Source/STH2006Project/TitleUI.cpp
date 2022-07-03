@@ -5,6 +5,14 @@
 
 FUNCTION_PTR(void, __thiscall, TitleUI_TinyChangeState, 0x773250, void* This, SharedPtrTypeless& spState, const Hedgehog::Base::CSharedString name);
 
+struct SaveLoadTestStruct
+{
+	INSERT_PADDING(0x34);
+	bool m_saveCompleted;
+};
+boost::shared_ptr<SaveLoadTestStruct> m_spSave;
+FUNCTION_PTR(void, __thiscall, TitleUI_CTitleOptionCStateOutroSaving, 0xD22A70, boost::shared_ptr<SaveLoadTestStruct>& spSave, void* a2);
+
 boost::shared_ptr<Sonic::CGameObjectCSD> m_spTitle;
 Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectTitle;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneTitle;
@@ -235,14 +243,18 @@ void TitleUI_SetMusicVolume(float volume)
 {
 	uint32_t* pCSoundModuleManager = *(uint32_t**)0x1E77290;
 	FUNCTION_PTR(void, __thiscall, SetMusicVolume, 0x75EEF0, void* This, int a2, float volume);
+
 	SetMusicVolume(pCSoundModuleManager, 0, volume * 0.01f * 0.63f);
+	*(uint8_t*)((uint32_t)TitleUI_GetVoiceLanguageType() + 1) = (uint8_t)volume;
 }
 
 void TitleUI_SetEffectVolume(float volume)
 {
 	uint32_t* pCSoundModuleManager = *(uint32_t**)0x1E77290;
 	FUNCTION_PTR(void, __thiscall, SetMusicVolume, 0x75EEF0, void* This, int a2, float volume);
+
 	SetMusicVolume(pCSoundModuleManager, 1, volume * 0.01f * 0.63f);
+	*(uint8_t*)((uint32_t)TitleUI_GetVoiceLanguageType() + 2) = (uint8_t)volume;
 }
 
 HOOK(void, __fastcall, TitleUI_TitleCMainCState_InitBegin, 0x571370, hh::fnd::CStateMachineBase::CStateBase* This)
@@ -714,9 +726,20 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 				TitleUI::menuTextLeft(m_sceneMenuText[i], false);
 			}
 
-			// TODO: Trigger saving
-
 			TitleUI::optionEnable(false);
+
+			// Trigger saving
+			TitleUI_CTitleOptionCStateOutroSaving(m_spSave, nullptr);
+			m_menuState = MenuState::MS_OptionSaving;
+
+		}
+		break;
+	}
+	case MenuState::MS_OptionSaving:
+	{
+		if (!m_spSave || m_spSave->m_saveCompleted)
+		{
+			m_spSave = nullptr;
 			m_menuState = MenuState::MS_Main;
 		}
 		break;
@@ -1068,6 +1091,10 @@ void TitleUI::applyPatches()
 	WRITE_JUMP(0x572D3A, (void*)0x57326B); // Don't create delete save dialog
 	WRITE_JUMP(0x5732D3, (void*)0x573337); // Always delete save on new game
 	WRITE_NOP(0x573391, 5);
+
+	// Hijack CTitleOption::CStateOutro for saving
+	WRITE_JUMP(0xD22A83, (void*)0xD22B84);
+	WRITE_MEMORY(0xD22CE8, uint8_t, 0);
 
 	// Yes No Window
 	m_yesNoText[YesNoTextType::YNTT_QuitGame] = "Quit  the  game.\nThe  progress  of  the  game  from  the  last  saved\npoint  will  not  be  saved.  OK?";
