@@ -126,6 +126,19 @@ Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectMenuBG;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuBG;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuBG2;
 
+int m_optionIndex = -1;
+int m_optionAudioIndex = -1;
+int m_optionOnOffIndex = -1;
+boost::shared_ptr<Sonic::CGameObjectCSD> m_spOption;
+Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectOption;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneOptionBG;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneOptionText[OptionType::OT_COUNT];
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneOptionCursor;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneOptionAudio;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneOptionAudioBar1;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneOptionAudioBar2;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneOptionOnOff;
+
 boost::shared_ptr<Sonic::CGameObjectCSD> m_spMenu;
 Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectMenu;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuBars;
@@ -186,6 +199,52 @@ void TitleUI_PlayButtonMotion(bool twoButton)
 	m_sceneButton->Update();
 }
 
+LanguageType* TitleUI_GetVoiceLanguageType()
+{
+	uint32_t voiceOverAddress = Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x10 });
+	return (LanguageType*)voiceOverAddress;
+}
+
+LanguageType* TitleUI_GetUILanguageType()
+{
+	uint32_t uiAddress = Common::GetMultiLevelAddress(0x1E66B34, { 0x8 });
+	return (LanguageType*)uiAddress;
+}
+
+float* TitleUI_GetMusicVolume()
+{
+	// range [0.0 - 0.63]
+	uint32_t musicVolumeAddress = Common::GetMultiLevelAddress(0x1E77290, { 0x38 });
+	return (float*)musicVolumeAddress;
+}
+
+float* TitleUI_GetEffectVolume()
+{
+	// range [0.0 - 0.63]
+	uint32_t effectVolumeAddress = Common::GetMultiLevelAddress(0x1E77290, { 0x3C });
+	return (float*)effectVolumeAddress;
+}
+
+uint32_t* TitleUI_GetOptionFlag()
+{
+	uint32_t flagsAddress = Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x18 });
+	return (uint32_t*)flagsAddress;
+}
+
+void TitleUI_SetMusicVolume(float volume)
+{
+	uint32_t* pCSoundModuleManager = *(uint32_t**)0x1E77290;
+	FUNCTION_PTR(void, __thiscall, SetMusicVolume, 0x75EEF0, void* This, int a2, float volume);
+	SetMusicVolume(pCSoundModuleManager, 0, volume * 0.01f * 0.63f);
+}
+
+void TitleUI_SetEffectVolume(float volume)
+{
+	uint32_t* pCSoundModuleManager = *(uint32_t**)0x1E77290;
+	FUNCTION_PTR(void, __thiscall, SetMusicVolume, 0x75EEF0, void* This, int a2, float volume);
+	SetMusicVolume(pCSoundModuleManager, 1, volume * 0.01f * 0.63f);
+}
+
 HOOK(void, __fastcall, TitleUI_TitleCMainCState_InitBegin, 0x571370, hh::fnd::CStateMachineBase::CStateBase* This)
 {
 	originalTitleUI_TitleCMainCState_InitBegin(This);
@@ -199,6 +258,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 
 	uint32_t owner = (uint32_t)(This->GetContextBase());
 	bool hasSaveFile = *(bool*)(owner + 0x1AC);
+	bool isJapanese = Common::GetUILanguageType() == LT_Japanese;
 
 	//---------------------------------------------------------------
 	auto spCsdProject = wrapper.GetCsdProject("background");
@@ -211,6 +271,60 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 	{
 		m_spMenuBG = boost::make_shared<Sonic::CGameObjectCSD>(m_projectMenuBG, 0.5f, "HUD", false);
 		Sonic::CGameDocument::GetInstance()->AddGameObject(m_spMenuBG, "main", gameObject);
+	}
+
+	//---------------------------------------------------------------
+	spCsdProject = wrapper.GetCsdProject("option");
+	m_projectOption = spCsdProject->m_rcProject;
+
+	m_sceneOptionBG = m_projectOption->CreateScene("back");
+	m_sceneOptionBG->SetHideFlag(true);
+
+	for (int i = 0; i < OptionType::OT_COUNT; i++)
+	{
+		int patternIndex = 0;
+		switch (i)
+		{
+		case OptionType::OT_Audio:
+			patternIndex = isJapanese ? 1 : 0;
+			break;
+		case OptionType::OT_UI:
+			patternIndex = isJapanese ? 3 : 2;
+			break;
+		case OptionType::OT_VO:
+			patternIndex = isJapanese ? 5 : 4;
+			break;
+		case OptionType::OT_Dialog:
+			patternIndex = isJapanese ? 7 : 6;
+			break;
+		case OptionType::OT_Subtitle:
+			patternIndex = isJapanese ? 9 : 8;
+			break;
+		}
+
+		m_sceneOptionText[i] = m_projectOption->CreateScene("option");
+		m_sceneOptionText[i]->SetPosition(0.0f, i * 47.0f);
+		m_sceneOptionText[i]->GetNode("text1")->SetPatternIndex(patternIndex);
+		m_sceneOptionText[i]->SetHideFlag(true);
+	}
+
+	m_sceneOptionCursor = m_projectOption->CreateScene("optioncursor");
+	m_sceneOptionCursor->SetHideFlag(true);
+	m_sceneOptionAudio = m_projectOption->CreateScene("audio");
+	m_sceneOptionAudio->SetHideFlag(true);
+	m_sceneOptionAudioBar1 = m_projectOption->CreateScene("tumami01");
+	m_sceneOptionAudioBar1->m_MotionSpeed = 0.0f;
+	m_sceneOptionAudioBar1->SetHideFlag(true);
+	m_sceneOptionAudioBar2 = m_projectOption->CreateScene("tumami02");
+	m_sceneOptionAudioBar2->m_MotionSpeed = 0.0f;
+	m_sceneOptionAudioBar2->SetHideFlag(true);
+	m_sceneOptionOnOff = m_projectOption->CreateScene("jimaku");
+	m_sceneOptionOnOff->SetHideFlag(true);
+
+	if (m_projectOption && !m_spOption)
+	{
+		m_spOption = boost::make_shared<Sonic::CGameObjectCSD>(m_projectOption, 0.5f, "HUD", false);
+		Sonic::CGameDocument::GetInstance()->AddGameObject(m_spOption, "main", gameObject);
 	}
 
 	//---------------------------------------------------------------
@@ -227,6 +341,8 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 	m_sceneMenuTitleBarEffect->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
 	m_sceneMenuTitleText = m_projectMenu->CreateScene("title");
 	m_sceneMenuTitleText->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
+	m_sceneMenuTitleText2 = m_projectMenu->CreateScene("title");
+	m_sceneMenuTitleText2->SetHideFlag(true);
 
 	for (int i = 0; i < MenuType::MT_COUNT; i++)
 	{
@@ -364,6 +480,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	uint32_t owner = (uint32_t)(This->GetContextBase());
 	uint32_t* outState = (uint32_t*)(owner + 0x1BC);
 	bool hasSaveFile = *(bool*)(owner + 0x1AC);
+	bool isJapanese = Common::GetUILanguageType() == LT_Japanese;
 
 	static SharedPtrTypeless spOutState;
 	static SharedPtrTypeless soundHandle;
@@ -405,12 +522,14 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
 		{
+			bool hideCursor = true;
 			switch (m_cursor1Data.m_index)
 			{
 			case MenuType::MT_NewGame:
 			{
 				if (!hasSaveFile)
 				{
+					hideCursor = false;
 					Common::PlaySoundStatic(soundHandle, 1000005);
 
 					*outState = 0;
@@ -419,9 +538,6 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 				}
 				else
 				{
-					m_cursor1Data.m_hidden = true;
-					TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, 1000005);
-
 					TitleUI::EnableYesNoWindow(true, TitleUI::GetYesNoText(YesNoTextType::YNTT_NewGame));
 					m_menuState = MenuState::MS_DeleteSaveYesNo;
 				}
@@ -429,6 +545,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			}
 			case MenuType::MT_Continue:
 			{
+				hideCursor = false;
 				if (!hasSaveFile)
 				{
 					Common::PlaySoundStatic(soundHandle, 1000007);
@@ -445,9 +562,6 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			}
 			case MenuType::MT_TrialSelect:
 			{
-				m_cursor1Data.m_hidden = true;
-				TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, 1000005);
-
 				m_cursor2Data.m_index = 0;
 				m_cursor2Data.m_hidden = false;
 				m_sceneMenuCursor2->SetPosition(99.0f, (m_cursor1Data.m_index + 1) * 60.0f);
@@ -461,15 +575,30 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 				m_menuState = MenuState::MS_TrialSelect;
 				break;
 			}
+			case MenuType::MT_Option:
+			{
+				TitleUI::menuTitleSecondary(true, 6);
+				for (size_t i = 0; i < MenuType::MT_COUNT; i++)
+				{
+					TitleUI::menuTextLeft(m_sceneMenuText[i], true);
+				}
+
+				TitleUI::optionEnable(true);
+				m_menuState = MenuState::MS_Option;
+				break;
+			}
 			case MenuType::MT_QuitGame:
 			{
-				m_cursor1Data.m_hidden = true;
-				TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, 1000005);
-
 				TitleUI::EnableYesNoWindow(true, TitleUI::GetYesNoText(YesNoTextType::YNTT_QuitGame));
 				m_menuState = MenuState::MS_QuitYesNo;
 				break;
 			}
+			}
+
+			if (hideCursor)
+			{
+				m_cursor1Data.m_hidden = true;
+				TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, 1000005);
 			}
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
@@ -516,6 +645,219 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			TitleUI::menuTextLeft(m_sceneTrialText[TrialMenuType::TMT_Town], true);
 
 			m_menuState = MenuState::MS_Main;
+		}
+		break;
+	}
+	case MenuState::MS_Option:
+	{
+		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp))
+		{
+			if (m_optionIndex == 0)
+			{
+				TitleUI::optionSetIndex(OptionType::OT_COUNT - 1);
+			}
+			else
+			{
+				TitleUI::optionSetIndex(m_optionIndex - 1);
+			}
+			Common::PlaySoundStatic(soundHandle, 1000004);
+		}
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown))
+		{
+			if (m_optionIndex == OptionType::OT_COUNT - 1)
+			{
+				TitleUI::optionSetIndex(0);
+			}
+			else
+			{
+				TitleUI::optionSetIndex(m_optionIndex + 1);
+			}
+			Common::PlaySoundStatic(soundHandle, 1000004);
+		}
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
+		{
+			Common::PlaySoundStatic(soundHandle, 1000005);
+			TitleUI_PlayButtonMotion(false);
+
+			switch (m_optionIndex)
+			{
+			case OptionType::OT_Audio:
+				TitleUI::optionAudioSetIndex(0);
+				m_menuState = MenuState::MS_OptionAudio;
+				break;
+			case OptionType::OT_UI:
+				TitleUI::optionOnOffSetIndex(*TitleUI_GetUILanguageType() == LT_Japanese ? 1 : 0);
+				m_menuState = MenuState::MS_OptionUI;
+				break;
+			case OptionType::OT_VO:
+				TitleUI::optionOnOffSetIndex(*TitleUI_GetVoiceLanguageType() == LT_Japanese ? 1 : 0);
+				m_menuState = MenuState::MS_OptionVO;
+				break;
+			case OptionType::OT_Dialog:
+				TitleUI::optionOnOffSetIndex((*TitleUI_GetOptionFlag() & 0x2) == 0 ? 1 : 0);
+				m_menuState = MenuState::MS_OptionDialog;
+				break;
+			case OptionType::OT_Subtitle:
+				TitleUI::optionOnOffSetIndex((*TitleUI_GetOptionFlag() & 0x10) == 0 ? 1 : 0);
+				m_menuState = MenuState::MS_OptionSubtitle;
+				break;
+			}
+		}
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
+		{
+			m_cursor1Data.m_hidden = false;
+			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, 1000003);
+
+			TitleUI::menuTitleSecondary(false);
+			for (size_t i = 0; i < MenuType::MT_COUNT; i++)
+			{
+				TitleUI::menuTextLeft(m_sceneMenuText[i], false);
+			}
+
+			// TODO: Trigger saving
+
+			TitleUI::optionEnable(false);
+			m_menuState = MenuState::MS_Main;
+		}
+		break;
+	}
+	case MenuState::MS_OptionAudio:
+	{
+		float volumeChamge = Application::getDeltaTime() * 50.0f;
+		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp) || padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown))
+		{
+			TitleUI::optionAudioSetIndex(m_optionAudioIndex == 0 ? 1 : 0);
+			Common::PlaySoundStatic(soundHandle, 1000004);
+		}
+		else if (padState->IsDown(Sonic::EKeyState::eKeyState_LeftStickLeft))
+		{
+			if (m_optionAudioIndex == 0)
+			{
+				m_sceneOptionAudioBar1->m_MotionFrame = max(0.0f, m_sceneOptionAudioBar1->m_MotionFrame - volumeChamge);
+				TitleUI_SetMusicVolume(m_sceneOptionAudioBar1->m_MotionFrame);
+			}
+			else
+			{
+				m_sceneOptionAudioBar2->m_MotionFrame = max(0.0f, m_sceneOptionAudioBar2->m_MotionFrame - volumeChamge);
+				TitleUI_SetEffectVolume(m_sceneOptionAudioBar2->m_MotionFrame);
+			}
+		}
+		else if (padState->IsDown(Sonic::EKeyState::eKeyState_LeftStickRight))
+		{
+			if (m_optionAudioIndex == 0)
+			{
+				m_sceneOptionAudioBar1->m_MotionFrame = min(100.0f, m_sceneOptionAudioBar1->m_MotionFrame + volumeChamge);
+				TitleUI_SetMusicVolume(m_sceneOptionAudioBar1->m_MotionFrame);
+			}
+			else
+			{
+				m_sceneOptionAudioBar2->m_MotionFrame = min(100.0f, m_sceneOptionAudioBar2->m_MotionFrame + volumeChamge);
+				TitleUI_SetEffectVolume(m_sceneOptionAudioBar2->m_MotionFrame);
+			}
+		}
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
+		{
+			Common::PlaySoundStatic(soundHandle, 1000003);
+			TitleUI_PlayButtonMotion(true);
+
+			TitleUI::optionSetIndex(OptionType::OT_Audio);
+			TitleUI::optionAudioSetIndex(-1);
+
+			m_menuState = MenuState::MS_Option;
+		}
+		break;
+	}
+	case MenuState::MS_OptionUI:
+	case MenuState::MS_OptionVO:
+	{
+		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp) || padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown))
+		{
+			TitleUI::optionOnOffSetIndex(m_optionOnOffIndex == 0 ? 1 : 0);
+			Common::PlaySoundStatic(soundHandle, 1000004);
+
+			if (m_menuState == MenuState::MS_OptionUI)
+			{
+				*TitleUI_GetUILanguageType() = m_optionOnOffIndex == 0 ? LT_English : LT_Japanese;
+
+				// Refresh language
+				TitleUI_PlayButtonMotion(false);
+				for (int i = 0; i < OptionType::OT_COUNT; i++)
+				{
+					int patternIndex = 0;
+					switch (i)
+					{
+					case OptionType::OT_Audio:
+						patternIndex = m_optionOnOffIndex == 0 ? 1 : 0;
+						break;
+					case OptionType::OT_UI:
+						patternIndex = m_optionOnOffIndex == 0 ? 3 : 2;
+						break;
+					case OptionType::OT_VO:
+						patternIndex = m_optionOnOffIndex == 0 ? 5 : 4;
+						break;
+					case OptionType::OT_Dialog:
+						patternIndex = m_optionOnOffIndex == 0 ? 7 : 6;
+						break;
+					case OptionType::OT_Subtitle:
+						patternIndex = m_optionOnOffIndex == 0 ? 9 : 8;
+						break;
+					}
+					m_sceneOptionText[i]->GetNode("text1")->SetPatternIndex(patternIndex);
+				}
+			}
+			else
+			{
+				*TitleUI_GetVoiceLanguageType() = m_optionOnOffIndex == 0 ? LT_English : LT_Japanese;
+			}
+		}
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
+		{
+			Common::PlaySoundStatic(soundHandle, 1000003);
+			TitleUI_PlayButtonMotion(true);
+
+			TitleUI::optionSetIndex(m_menuState == MenuState::MS_OptionUI ? OptionType::OT_UI : OptionType::OT_VO);
+			m_menuState = MenuState::MS_Option;
+		}
+		break;
+	}
+	case MenuState::MS_OptionDialog:
+	case MenuState::MS_OptionSubtitle:
+	{
+		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp) || padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown))
+		{
+			TitleUI::optionOnOffSetIndex(m_optionOnOffIndex == 0 ? 1 : 0);
+			Common::PlaySoundStatic(soundHandle, 1000004);
+
+			if (m_menuState == MenuState::MS_OptionDialog)
+			{
+				if (m_optionOnOffIndex == 0)
+				{
+					*TitleUI_GetOptionFlag() |= 0x2;
+				}
+				else
+				{
+					*TitleUI_GetOptionFlag() &= 0xFFFFFFFD;
+				}
+			}
+			else
+			{
+				if (m_optionOnOffIndex == 0)
+				{
+					*TitleUI_GetOptionFlag() |= 0x10;
+				}
+				else
+				{
+					*TitleUI_GetOptionFlag() &= 0xFFFFFFEF;
+				}
+			}
+		}
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
+		{
+			Common::PlaySoundStatic(soundHandle, 1000003);
+			TitleUI_PlayButtonMotion(true);
+
+			TitleUI::optionSetIndex(m_menuState == MenuState::MS_OptionDialog ? OptionType::OT_Dialog : OptionType::OT_Subtitle);
+			m_menuState = MenuState::MS_Option;
 		}
 		break;
 	}
@@ -635,6 +977,25 @@ void TitleUI_TitleCMainCState_SelectMenuEnd(hh::fnd::CStateMachineBase::CStateBa
 	Chao::CSD::CProject::DestroyScene(m_projectMenuBG.Get(), m_sceneMenuBG);
 	Chao::CSD::CProject::DestroyScene(m_projectMenuBG.Get(), m_sceneMenuBG2);
 	m_projectMenuBG = nullptr;
+
+	//---------------------------------------------------------------
+	if (m_spOption)
+	{
+		m_spOption->SendMessage(m_spOption->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+		m_spOption = nullptr;
+	}
+
+	Chao::CSD::CProject::DestroyScene(m_projectOption.Get(), m_sceneOptionBG);
+	for (int i = 0; i < OptionType::OT_COUNT; i++)
+	{
+		Chao::CSD::CProject::DestroyScene(m_projectOption.Get(), m_sceneOptionText[i]);
+	}
+	Chao::CSD::CProject::DestroyScene(m_projectOption.Get(), m_sceneOptionCursor);
+	Chao::CSD::CProject::DestroyScene(m_projectOption.Get(), m_sceneOptionAudio);
+	Chao::CSD::CProject::DestroyScene(m_projectOption.Get(), m_sceneOptionAudioBar1);
+	Chao::CSD::CProject::DestroyScene(m_projectOption.Get(), m_sceneOptionAudioBar2);
+	Chao::CSD::CProject::DestroyScene(m_projectOption.Get(), m_sceneOptionOnOff);
+	m_projectOption = nullptr;
 
 	//---------------------------------------------------------------
 	if (m_spMenu)
@@ -764,6 +1125,181 @@ void TitleUI::cursorLoop(CursorData const& data, Chao::CSD::RCPtr<Chao::CSD::CSc
 		scene->m_MotionDisableFlag = false;
 		scene->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_Loop;
 	}
+}
+
+void TitleUI::optionEnable(bool enable)
+{
+	TitleUI_PlayMotion(m_sceneOptionBG, "back_in", false, !enable);
+	for (int i = 0; i < OptionType::OT_COUNT; i++)
+	{
+		TitleUI_PlayMotion(m_sceneOptionText[i], "option_in", false, !enable);
+	}
+
+	if (enable)
+	{
+		// Force layout refresh
+		m_optionIndex = -1;
+	}
+	optionSetIndex(enable ? 0 : -1);
+}
+
+void TitleUI::optionSetIndex(int index)
+{
+	for (int i = 0; i < OptionType::OT_COUNT; i++)
+	{
+		m_sceneOptionText[i]->GetNode("op_ita01")->SetPatternIndex(index == i ? 1 : 0);
+	}
+
+	if (m_optionIndex != index)
+	{
+		// Hide previous option menu
+		switch (m_optionIndex)
+		{
+		case OptionType::OT_Audio:
+			TitleUI_PlayMotion(m_sceneOptionAudio, "audio_in", false, true);
+			m_sceneOptionAudioBar1->SetHideFlag(true);
+			m_sceneOptionAudioBar2->SetHideFlag(true);
+			break;
+		case OptionType::OT_UI:
+		case OptionType::OT_VO:
+		case OptionType::OT_Dialog:
+		case OptionType::OT_Subtitle:
+			TitleUI_PlayMotion(m_sceneOptionOnOff, "jimaku_in", false, true);
+			break;
+		}
+
+		// Set new option menu
+		switch (index)
+		{
+		case OptionType::OT_Audio:
+			TitleUI_PlayMotion(m_sceneOptionAudio, "audio_in", false, false);
+			m_sceneOptionAudioBar1->SetHideFlag(false);
+			m_sceneOptionAudioBar2->SetHideFlag(false);
+			m_sceneOptionAudioBar1->m_MotionFrame = *TitleUI_GetMusicVolume() / 0.63f * 100.0f;
+			m_sceneOptionAudioBar2->m_MotionFrame = *TitleUI_GetEffectVolume() / 0.63f * 100.0f;
+			break;
+		case OptionType::OT_UI:
+		case OptionType::OT_VO:
+			TitleUI_PlayMotion(m_sceneOptionOnOff, "jimaku_in", false, false);
+			m_sceneOptionOnOff->GetNode("text_on")->SetPatternIndex(1);
+			m_sceneOptionOnOff->GetNode("text_off")->SetPatternIndex(1);
+			if (index == OptionType::OT_UI)
+			{
+				optionOnOffSetIndex(*TitleUI_GetUILanguageType() == LT_Japanese ? 1 : 0);
+			}
+			else
+			{
+				optionOnOffSetIndex(*TitleUI_GetVoiceLanguageType() == LT_Japanese ? 1 : 0);
+			}
+			break;
+		case OptionType::OT_Dialog:
+		case OptionType::OT_Subtitle:
+			TitleUI_PlayMotion(m_sceneOptionOnOff, "jimaku_in", false, false);
+			m_sceneOptionOnOff->GetNode("text_on")->SetPatternIndex(0);
+			m_sceneOptionOnOff->GetNode("text_off")->SetPatternIndex(0);
+			if (index == OptionType::OT_Dialog)
+			{
+				optionOnOffSetIndex((*TitleUI_GetOptionFlag() & 0x2) == 0 ? 1 : 0);
+			}
+			else
+			{
+				optionOnOffSetIndex((*TitleUI_GetOptionFlag() & 0x10) == 0 ? 1 : 0);
+			}
+			break;
+		}
+	}
+
+	if (index == -1)
+	{
+		optionCursorSetIndex(m_optionIndex, true);
+	}
+	else
+	{
+		optionCursorSetIndex(index);
+	}
+
+	m_optionIndex = index;
+}
+
+void TitleUI::optionAudioSetIndex(int index)
+{
+	m_optionAudioIndex = index;
+
+	m_sceneOptionAudio->GetNode("au011")->SetPatternIndex(index == 0 ? 1 : 0);
+	m_sceneOptionAudio->GetNode("au012")->SetPatternIndex(index == 0 ? 1 : 0);
+	m_sceneOptionAudio->GetNode("au013")->SetPatternIndex(index == 0 ? 1 : 0);
+	m_sceneOptionAudio->GetNode("au021")->SetPatternIndex(index == 1 ? 1 : 0);
+	m_sceneOptionAudio->GetNode("au022")->SetPatternIndex(index == 1 ? 1 : 0);
+	m_sceneOptionAudio->GetNode("au023")->SetPatternIndex(index == 1 ? 1 : 0);
+
+	if (m_optionAudioIndex >= 0)
+	{
+		optionCursorSetIndex(m_optionIndex, false, m_optionAudioIndex, true);
+	}
+}
+
+void TitleUI::optionOnOffSetIndex(int index)
+{
+	m_optionOnOffIndex = index;
+
+	m_sceneOptionOnOff->GetNode("jimaku011")->SetPatternIndex(index == 0 ? 1 : 0);
+	m_sceneOptionOnOff->GetNode("jimaku012")->SetPatternIndex(index == 0 ? 1 : 0);
+	m_sceneOptionOnOff->GetNode("jimaku013")->SetPatternIndex(index == 0 ? 1 : 0);
+	m_sceneOptionOnOff->GetNode("jimaku021")->SetPatternIndex(index == 1 ? 1 : 0);
+	m_sceneOptionOnOff->GetNode("jimaku022")->SetPatternIndex(index == 1 ? 1 : 0);
+	m_sceneOptionOnOff->GetNode("jimaku023")->SetPatternIndex(index == 1 ? 1 : 0);
+
+	if (m_optionOnOffIndex >= 0)
+	{
+		optionCursorSetIndex(m_optionIndex, false, m_optionOnOffIndex, false);
+	}
+}
+
+void TitleUI::optionCursorSetIndex(int index, bool out, int subIndex, bool subOptionAudio)
+{
+	// cursor
+	switch (index)
+	{
+	case 0:
+		TitleUI_PlayMotion(m_sceneOptionCursor, "select_l01", false, out);
+		break;
+	case 1:
+		TitleUI_PlayMotion(m_sceneOptionCursor, "select_l02", false, out);
+		break;
+	case 2:
+		TitleUI_PlayMotion(m_sceneOptionCursor, "select_l03", false, out);
+		break;
+	case 3:
+		TitleUI_PlayMotion(m_sceneOptionCursor, "select_l04", false, out);
+		break;
+	case 4:
+		TitleUI_PlayMotion(m_sceneOptionCursor, "select_l05", false, out);
+		break;
+	}
+
+	if (subIndex >= 0)
+	{
+		if (subOptionAudio)
+		{
+			TitleUI_PlayMotion(m_sceneOptionCursor, subIndex == 0 ? "select_t01" : "select_t02");
+		}
+		else
+		{
+			TitleUI_PlayMotion(m_sceneOptionCursor, subIndex == 0 ? "select_r01" : "select_r02");
+		}
+	}
+}
+
+void TitleUI::menuTitleSecondary(bool to2nd, size_t patternIndex)
+{
+	TitleUI_PlayMotion(m_sceneMenuTitleText, "mainmenu_out", false, !to2nd);
+
+	if (to2nd)
+	{
+		m_sceneMenuTitleText2->GetNode("title_menu")->SetPatternIndex(patternIndex);
+		TitleUI_PlayMotion(m_sceneMenuTitleBarEffect, "DefaultAnim");
+	}
+	TitleUI_PlayMotion(m_sceneMenuTitleText2, "main_start", false, !to2nd);
 }
 
 void TitleUI::menuTextLeft(Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, bool out)
