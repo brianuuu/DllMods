@@ -184,11 +184,18 @@ int TitleUI::m_yesNoCursorPos = 0;
 float TitleUI::m_yesNoColorTime = 0.0f;
 std::string TitleUI::m_yesNoWindowText;
 
-bool m_displayNonCompletedStage;
-std::vector<int> m_actTrialVisibleID;
+bool m_displayNonCompletedStage = false;
+bool m_allowPlayNonCompletedStage = false;
+bool m_drawActTrial = false;
+float m_drawActTrialAlpha = 0.0f;
+std::vector<size_t> m_actTrialVisibleID;
 std::vector<TrialData> m_actTrialData;
-std::vector<int> m_townTrialVisibleID;
+bool m_drawTownTrial = false;
+float m_drawTownTrialAlpha = 0.0f;
+std::vector<size_t> m_townTrialVisibleID;
 std::vector<TrialData> m_townTrialData;
+bool m_drawModeSelect = false;
+float m_drawModeSelectAlpha = 0.0f;
 
 float m_fadeOutTime = 0.0f;
 
@@ -679,7 +686,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 					m_cursor2Data.m_hidden = true;
 					TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, 1000005);
-					TitleUI::cursorStageSelect(0);
+					TitleUI::cursorStageSelect(0, false);
 
 					TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_NewGame], true);
 					TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_Continue], true);
@@ -703,6 +710,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 					m_cursor2Data.m_hidden = true;
 					TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, 1000005);
+					TitleUI::cursorStageSelect(0, true);
 
 					TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_NewGame], true);
 					TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_Continue], true);
@@ -737,17 +745,32 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	{
 		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp))
 		{
-			TitleUI::cursorStageSelect(m_stageCursorIndex - 1);
+			TitleUI::cursorStageSelect(m_stageCursorIndex - 1, false);
 			Common::PlaySoundStatic(soundHandle, 1000004);
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown))
 		{
-			TitleUI::cursorStageSelect(m_stageCursorIndex + 1);
+			TitleUI::cursorStageSelect(m_stageCursorIndex + 1, false);
 			Common::PlaySoundStatic(soundHandle, 1000004);
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
 		{
-			// TODO:
+			size_t id = m_actTrialVisibleID[m_stageCursorIndex];
+			TrialData const& data = m_actTrialData[id];
+			if (!data.m_playable)
+			{
+				Common::PlaySoundStatic(soundHandle, 1000007);
+			}
+			else
+			{
+				Common::PlaySoundStatic(soundHandle, 1000005);
+
+				m_sceneStageCursor->SetHideFlag(true);
+				m_sceneStageCursor2->SetHideFlag(true);
+				TitleUI::cursorStageSelect(0, true);
+
+				m_menuState = MenuState::MS_ModeSelect;
+			}
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
 		{
@@ -769,15 +792,45 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 		}
 		break;
 	}
-	case MenuState::MS_TownTrial:
+	case MenuState::MS_ModeSelect:
 	{
 		// TODO:
 		if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
+		{
+			Common::PlaySoundStatic(soundHandle, 1000003);
+
+			m_sceneMissionCursor->SetHideFlag(true);
+			TitleUI::cursorStageSelect(m_stageCursorIndex, false);
+
+			m_menuState = MenuState::MS_ActTrial;
+		}
+		break;
+	}
+	case MenuState::MS_TownTrial:
+	{
+		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp))
+		{
+			TitleUI::cursorStageSelect(m_missionCursorIndex - 1, true);
+			Common::PlaySoundStatic(soundHandle, 1000004);
+		}
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown))
+		{
+			TitleUI::cursorStageSelect(m_missionCursorIndex + 1, true);
+			Common::PlaySoundStatic(soundHandle, 1000004);
+		}
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
+		{
+			// TODO:
+		}
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
 		{
 			TitleUI::menuTitleSecondary(false);
 
 			m_cursor2Data.m_hidden = false;
 			TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, 1000003);
+
+			m_sceneMissionCursor->SetHideFlag(true);
+			m_sceneStageCursor2->SetHideFlag(true);
 
 			TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_NewGame], false);
 			TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_Continue], false);
@@ -1244,6 +1297,7 @@ void TitleUI::populateTrialData()
 {
 	const INIReader reader(Application::getModDirString() + "Assets\\Title\\trialData.ini");
 	m_displayNonCompletedStage = reader.GetBoolean("Settings", "displayNonCompletedStage", false);
+	m_allowPlayNonCompletedStage = reader.GetBoolean("Settings", "allowPlayNonCompletedStage", false);
 
 	std::vector<std::string> sectionSorted;
 	for (std::string const& section : reader.Sections())
@@ -1261,14 +1315,16 @@ void TitleUI::populateTrialData()
 		data.m_stage = std::stoi(section);
 
 		data.m_header = reader.Get(section, "header", "");
-		if (data.m_header.empty()) continue;
-
 		data.m_stageID = reader.Get(section, "stageID", "");
 		data.m_terrainID = reader.Get(section, "terrainID", "");
 		if (data.m_stageID.empty() || data.m_terrainID.empty()) continue;
 
 		data.m_actName = reader.Get(section, "actName", "");
+		data.m_actName = std::regex_replace(data.m_actName, std::regex(" "), "  ");
+		data.m_actName = std::regex_replace(data.m_actName, std::regex("\\\\n"), "\n");
 		data.m_missionName = reader.Get(section, "missionName", "");
+		data.m_missionName = std::regex_replace(data.m_missionName, std::regex(" "), "  ");
+		data.m_missionName = std::regex_replace(data.m_missionName, std::regex("\\\\n"), "\n");
 		data.m_missionNameJP = reader.Get(section, "missionNameJP", "");
 		if (data.m_actName.empty() && (data.m_missionName.empty() || data.m_missionNameJP.empty())) continue;
 
@@ -1289,8 +1345,8 @@ void TitleUI::refreshTrialAvailability()
 	int id = 0;
 	for (TrialData& data : m_actTrialData)
 	{
-		data.m_completed = Common::IsStageCompleted(data.m_stage);
-		if (m_displayNonCompletedStage || data.m_completed)
+		data.m_playable = Common::IsStageCompleted(data.m_stage) || m_allowPlayNonCompletedStage;
+		if (m_displayNonCompletedStage || data.m_playable)
 		{
 			m_actTrialVisibleID.push_back(id);
 		}
@@ -1301,8 +1357,8 @@ void TitleUI::refreshTrialAvailability()
 	id = 0;
 	for (TrialData& data : m_townTrialData)
 	{
-		data.m_completed = Common::IsStageCompleted(data.m_stage);
-		if (m_displayNonCompletedStage || data.m_completed)
+		data.m_playable = Common::IsStageCompleted(data.m_stage) || m_allowPlayNonCompletedStage;
+		if (m_displayNonCompletedStage || data.m_playable)
 		{
 			m_townTrialVisibleID.push_back(id);
 		}
@@ -1310,42 +1366,63 @@ void TitleUI::refreshTrialAvailability()
 	}
 }
 
-void TitleUI::cursorStageSelect(int index)
+void TitleUI::cursorStageSelect(int index, bool isMission)
 {
-	m_stageCursorIndex = index;
-	if (m_stageCursorIndex < 0)
+	std::vector<size_t> const& visibleID = isMission ? m_townTrialVisibleID : m_actTrialVisibleID;
+	int& cursorIndex = isMission ? m_missionCursorIndex : m_stageCursorIndex;
+
+	cursorIndex = index;
+	if (cursorIndex < 0)
 	{
-		m_stageCursorIndex = m_actTrialVisibleID.size() - 1;
+		cursorIndex = visibleID.size() - 1;
 	}
-	else if (m_stageCursorIndex >= m_actTrialVisibleID.size())
+	else if (cursorIndex >= visibleID.size())
 	{
-		m_stageCursorIndex = 0;
+		cursorIndex = 0;
 	}
 
-	int visualCursorIndex = m_stageCursorIndex;
-	if (m_actTrialVisibleID.size() > 7 && m_stageCursorIndex > 2)
+	int visualCursorIndex = cursorIndex;
+	if (visibleID.size() > 7 && cursorIndex > 2)
 	{
-		if (m_stageCursorIndex < m_actTrialVisibleID.size() - 3)
+		if (cursorIndex < visibleID.size() - 3)
 		{
 			visualCursorIndex = 3;
 		}
 		else
 		{
-			visualCursorIndex = m_stageCursorIndex - (m_actTrialVisibleID.size() - 7);
+			visualCursorIndex = cursorIndex - (visibleID.size() - 7);
 		}
 	}
 
-	static char const* cursorSelectName[] =
+	if (isMission)
 	{
-		"stagecursor_loop",
-		"stagecursor02",
-		"stagecursor03",
-		"stagecursor04",
-		"stagecursor05",
-		"stagecursor06",
-		"stagecursor07",
-	};
-	TitleUI_PlayMotion(m_sceneStageCursor, cursorSelectName[visualCursorIndex]);
+		static char const* cursorSelectName[] =
+		{
+			"stagecursor_loop",
+			"stagecursor_loop02",
+			"stagecursor_loop03",
+			"stagecursor_loop04",
+			"stagecursor_loop05",
+			"stagecursor_loop06",
+			"stagecursor_loop07",
+		};
+		TitleUI_PlayMotion(m_sceneMissionCursor, cursorSelectName[visualCursorIndex]);
+	}
+	else
+	{
+		static char const* cursorSelectName[] =
+		{
+			"stagecursor_loop",
+			"stagecursor02",
+			"stagecursor03",
+			"stagecursor04",
+			"stagecursor05",
+			"stagecursor06",
+			"stagecursor07",
+		};
+		TitleUI_PlayMotion(m_sceneStageCursor, cursorSelectName[visualCursorIndex]);
+	}
+
 	cursorStageArrow(visualCursorIndex);
 }
 
@@ -1653,8 +1730,184 @@ void TitleUI::drawMenu()
 {
 	static bool visible = true;
 
+	//-------------------------------------------------------------
+	if (m_menuState == MenuState::MS_ActTrial && !m_drawActTrial)
+	{
+		m_drawActTrial = true;
+		m_drawActTrialAlpha = 0.0f;
+	}
+	else if (m_menuState != MenuState::MS_ActTrial && m_drawActTrial)
+	{
+		m_drawActTrial = false;
+		if (Common::IsAtLoadingScreen())
+		{
+			m_drawActTrialAlpha = -1.0f;
+		}
+	}
 
+	if (m_drawActTrial || m_drawActTrialAlpha >= 0.0f)
+	{
+		ImGui::Begin("ActTrial", &visible, UIContext::m_hudFlags);
+		{
+			float posX = 0.1130f; // header pos
+			float posX2 = posX + 0.125f; // act name pos
+			float posY = 0.1667f; // final pos
+			float posYDiff = 10.0f / 720.0f; // fade out pos
+			float constexpr yDist = 50.0f / 720.0f;
 
+			int startIndex = 0;
+			if (m_actTrialVisibleID.size() > 7 && m_stageCursorIndex > 3)
+			{
+				if (m_stageCursorIndex < m_actTrialVisibleID.size() - 3)
+				{
+					startIndex = m_stageCursorIndex - 3;
+				}
+				else
+				{
+					startIndex = m_actTrialVisibleID.size() - 7;
+				}
+			}
+
+			for (int i = startIndex; i < m_actTrialVisibleID.size() && i < startIndex + 7; i++)
+			{
+				size_t id = m_actTrialVisibleID[i];
+				TrialData const& data = m_actTrialData[id];
+				ImVec4 color = data.m_playable
+					? ImVec4(1.0f, 1.0f, 1.0f, m_drawActTrialAlpha)
+					: ImVec4(0.6f, 0.6f, 0.6f, m_drawActTrialAlpha);
+
+				float posYFinal = posY + posYDiff * (1.0f - m_drawActTrialAlpha);
+				ImGui::SetCursorPos(ImVec2((float)*BACKBUFFER_WIDTH * posX, (float)*BACKBUFFER_HEIGHT * posYFinal));
+				ImGui::TextColored(color, data.m_header.c_str());
+				ImGui::SetCursorPos(ImVec2((float)*BACKBUFFER_WIDTH * posX2, (float)*BACKBUFFER_HEIGHT * posYFinal));
+				ImGui::TextColored(color, data.m_actName.c_str());
+				posY += yDist;
+			}
+		}
+		ImGui::End();
+
+		if (m_drawActTrial)
+		{
+			m_drawActTrialAlpha = min(1.0f, m_drawActTrialAlpha + Application::getDeltaTime() * 60.0f / 5.0f);
+		}
+		else
+		{
+			m_drawActTrialAlpha -= Application::getDeltaTime() * 60.0f / 5.0f;
+		}
+	}
+
+	//-------------------------------------------------------------
+	if (m_menuState == MenuState::MS_TownTrial && !m_drawTownTrial)
+	{
+		m_drawTownTrial = true;
+		m_drawTownTrialAlpha = 0.0f;
+	}
+	else if (m_menuState != MenuState::MS_TownTrial && m_drawTownTrial)
+	{
+		m_drawTownTrial = false;
+		if (Common::IsAtLoadingScreen())
+		{
+			m_drawTownTrialAlpha = -1.0f;
+		}
+	}
+
+	if (m_drawTownTrial || m_drawTownTrial >= 0.0f)
+	{
+		ImGui::Begin("TownTrial", &visible, UIContext::m_hudFlags);
+		{
+			float posX = 0.1130f; // header pos
+			float posY = 0.1667f; // final pos
+			float posYDiff = 10.0f / 720.0f; // fade out pos
+			float constexpr yDist = 50.0f / 720.0f;
+
+			int startIndex = 0;
+			if (m_townTrialVisibleID.size() > 7 && m_missionCursorIndex > 3)
+			{
+				if (m_missionCursorIndex < m_townTrialVisibleID.size() - 3)
+				{
+					startIndex = m_missionCursorIndex - 3;
+				}
+				else
+				{
+					startIndex = m_townTrialVisibleID.size() - 7;
+				}
+			}
+
+			for (int i = startIndex; i < m_townTrialVisibleID.size() && i < startIndex + 7; i++)
+			{
+				size_t id = m_townTrialVisibleID[i];
+				TrialData const& data = m_townTrialData[id];
+				ImVec4 color = data.m_playable
+					? ImVec4(1.0f, 1.0f, 1.0f, m_drawTownTrialAlpha)
+					: ImVec4(0.6f, 0.6f, 0.6f, m_drawTownTrialAlpha);
+
+				float posYFinal = posY + posYDiff * (1.0f - m_drawTownTrialAlpha);
+				ImGui::SetCursorPos(ImVec2((float)*BACKBUFFER_WIDTH * posX, (float)*BACKBUFFER_HEIGHT * posYFinal));
+				ImGui::TextColored(color, (std::string("MISSION  ") + std::to_string(i + 1)).c_str());
+				posY += yDist;
+			}
+		}
+		ImGui::End();
+
+		if (m_drawTownTrial)
+		{
+			m_drawTownTrialAlpha = min(1.0f, m_drawTownTrialAlpha + Application::getDeltaTime() * 60.0f / 5.0f);
+		}
+		else
+		{
+			m_drawTownTrialAlpha -= Application::getDeltaTime() * 60.0f / 5.0f;
+		}
+	}
+
+	//-------------------------------------------------------------
+	if (m_menuState == MenuState::MS_ModeSelect && !m_drawModeSelect)
+	{
+		m_drawModeSelect = true;
+		m_drawModeSelectAlpha = 0.0f;
+	}
+	else if (m_menuState != MenuState::MS_ModeSelect && m_drawModeSelect)
+	{
+		m_drawModeSelect = false;
+		if (Common::IsAtLoadingScreen())
+		{
+			m_drawActTrialAlpha = -1.0f;
+		}
+	}
+
+	if (m_drawModeSelect || m_drawModeSelectAlpha >= 0.0f)
+	{
+		ImGui::Begin("ActTrial", &visible, UIContext::m_hudFlags);
+		{
+			float posX = 0.1130f; // header pos
+			float posY = 0.1667f; // final pos
+			float posYDiff = 10.0f / 720.0f; // fade out pos
+			float constexpr yDist = 50.0f / 720.0f;
+
+			for (int i = 0; i < 1; i++)
+			{
+				ImVec4 color = true // TODO: boss hard mode
+					? ImVec4(1.0f, 1.0f, 1.0f, m_drawModeSelectAlpha)
+					: ImVec4(0.6f, 0.6f, 0.6f, m_drawModeSelectAlpha);
+
+				float posYFinal = posY + posYDiff * (1.0f - m_drawModeSelectAlpha);
+				ImGui::SetCursorPos(ImVec2((float)*BACKBUFFER_WIDTH * posX, (float)*BACKBUFFER_HEIGHT * posYFinal));
+				ImGui::TextColored(color, "MISSION");
+				posY += yDist;
+			}
+		}
+		ImGui::End();
+
+		if (m_drawModeSelect)
+		{
+			m_drawModeSelectAlpha = min(1.0f, m_drawModeSelectAlpha + Application::getDeltaTime() * 60.0f / 5.0f);
+		}
+		else
+		{
+			m_drawModeSelectAlpha -= Application::getDeltaTime() * 60.0f / 5.0f;
+		}
+	}
+
+	//-------------------------------------------------------------
 	if (m_menuState == MenuState::MS_FadeOut || m_menuState == MenuState::MS_FadeOutTitle)
 	{
 		ImGui::Begin("FadeOut", &visible, UIContext::m_hudFlags);
