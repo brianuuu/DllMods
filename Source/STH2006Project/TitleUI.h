@@ -109,7 +109,9 @@ public:
 
 	static void populateTrialData();
 	static void refreshTrialAvailability();
-	static bool getHasTrialAvailable(std::vector<TrialData> const& dataList);
+
+	static void cursorStageSelect(int index);
+	static void cursorStageArrow(int index);
 
 	static void cursorSelect(CursorData& data, Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, uint32_t soundCueID = 0xFFFFFFFF);
 	static void cursorLoop(CursorData const& data, Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene);

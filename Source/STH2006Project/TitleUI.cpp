@@ -162,6 +162,12 @@ TitleUI::CursorData m_cursor1Data;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuCursor1;
 TitleUI::CursorData m_cursor2Data;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMenuCursor2;
+int m_stageCursorIndex;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneStageCursor;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneStageCursor2;
+int m_missionCursorIndex;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMissionCursor;
+
 
 boost::shared_ptr<Sonic::CGameObjectCSD> m_spButton;
 Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectButton;
@@ -179,7 +185,9 @@ float TitleUI::m_yesNoColorTime = 0.0f;
 std::string TitleUI::m_yesNoWindowText;
 
 bool m_displayNonCompletedStage;
+std::vector<int> m_actTrialVisibleID;
 std::vector<TrialData> m_actTrialData;
+std::vector<int> m_townTrialVisibleID;
 std::vector<TrialData> m_townTrialData;
 
 float m_fadeOutTime = 0.0f;
@@ -396,10 +404,10 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 		switch (i)
 		{
 		case TMT_Act:
-			index = TitleUI::getHasTrialAvailable(m_actTrialData) ? 7 : 8;
+			index = m_actTrialVisibleID.empty() ? 8 : 7;
 			break;
 		case TMT_Town:
-			index = TitleUI::getHasTrialAvailable(m_townTrialData) ? 9 : 10;
+			index = m_townTrialVisibleID.empty() ? 10 : 9;
 			break;
 		}
 		m_sceneTrialText[i]->GetNode("episodeselect")->SetPatternIndex(index);
@@ -419,6 +427,13 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 	m_sceneMenuCursor2 = m_projectMenu->CreateScene("main_menu_cursor");
 	m_sceneMenuCursor2->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
 	m_sceneMenuCursor2->SetHideFlag(true);
+
+	m_sceneStageCursor = m_projectMenu->CreateScene("stage_cursor");
+	m_sceneStageCursor->SetHideFlag(true);
+	m_sceneStageCursor2 = m_projectMenu->CreateScene("stage_cursor2");
+	m_sceneStageCursor2->SetHideFlag(true);
+	m_sceneMissionCursor = m_projectMenu->CreateScene("mission_cursor");
+	m_sceneMissionCursor->SetHideFlag(true);
 
 	if (m_projectMenu && !m_spMenu)
 	{
@@ -654,7 +669,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			{
 			case TrialMenuType::TMT_Act:
 			{
-				if (!TitleUI::getHasTrialAvailable(m_actTrialData))
+				if (m_actTrialVisibleID.empty())
 				{
 					Common::PlaySoundStatic(soundHandle, 1000007);
 				}
@@ -664,6 +679,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 					m_cursor2Data.m_hidden = true;
 					TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, 1000005);
+					TitleUI::cursorStageSelect(0);
 
 					TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_NewGame], true);
 					TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_Continue], true);
@@ -677,13 +693,13 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			}
 			case TrialMenuType::TMT_Town:
 			{
-				if (!TitleUI::getHasTrialAvailable(m_townTrialData))
+				if (m_townTrialVisibleID.empty())
 				{
 					Common::PlaySoundStatic(soundHandle, 1000007);
 				}
 				else
 				{
-					TitleUI::menuTitleSecondary(true, 8);
+					TitleUI::menuTitleSecondary(true, 10);
 
 					m_cursor2Data.m_hidden = true;
 					TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, 1000005);
@@ -719,13 +735,29 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	}
 	case MenuState::MS_ActTrial:
 	{
-		// TODO:
-		if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
+		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp))
+		{
+			TitleUI::cursorStageSelect(m_stageCursorIndex - 1);
+			Common::PlaySoundStatic(soundHandle, 1000004);
+		}
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown))
+		{
+			TitleUI::cursorStageSelect(m_stageCursorIndex + 1);
+			Common::PlaySoundStatic(soundHandle, 1000004);
+		}
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
+		{
+			// TODO:
+		}
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
 		{
 			TitleUI::menuTitleSecondary(false);
 
 			m_cursor2Data.m_hidden = false;
 			TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, 1000003);
+
+			m_sceneStageCursor->SetHideFlag(true);
+			m_sceneStageCursor2->SetHideFlag(true);
 
 			TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_NewGame], false);
 			TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_Continue], false);
@@ -1136,6 +1168,9 @@ void TitleUI_TitleCMainCState_SelectMenuEnd(hh::fnd::CStateMachineBase::CStateBa
 	{
 		Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuText[i]);
 	}
+	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneStageCursor);
+	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneStageCursor2);
+	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMissionCursor);
 	m_projectMenu = nullptr;
 
 	//---------------------------------------------------------------
@@ -1250,30 +1285,83 @@ void TitleUI::populateTrialData()
 
 void TitleUI::refreshTrialAvailability()
 {
+	m_actTrialVisibleID.clear();
+	int id = 0;
 	for (TrialData& data : m_actTrialData)
 	{
 		data.m_completed = Common::IsStageCompleted(data.m_stage);
+		if (m_displayNonCompletedStage || data.m_completed)
+		{
+			m_actTrialVisibleID.push_back(id);
+		}
+		id++;
 	}
 
+	m_townTrialVisibleID.clear();
+	id = 0;
 	for (TrialData& data : m_townTrialData)
 	{
 		data.m_completed = Common::IsStageCompleted(data.m_stage);
+		if (m_displayNonCompletedStage || data.m_completed)
+		{
+			m_townTrialVisibleID.push_back(id);
+		}
+		id++;
 	}
 }
 
-bool TitleUI::getHasTrialAvailable(std::vector<TrialData> const& dataList)
+void TitleUI::cursorStageSelect(int index)
 {
-	if (m_displayNonCompletedStage) return true;
-
-	for (TrialData const& data : dataList)
+	m_stageCursorIndex = index;
+	if (m_stageCursorIndex < 0)
 	{
-		if (data.m_completed)
+		m_stageCursorIndex = m_actTrialVisibleID.size() - 1;
+	}
+	else if (m_stageCursorIndex >= m_actTrialVisibleID.size())
+	{
+		m_stageCursorIndex = 0;
+	}
+
+	int visualCursorIndex = m_stageCursorIndex;
+	if (m_actTrialVisibleID.size() > 7 && m_stageCursorIndex > 2)
+	{
+		if (m_stageCursorIndex < m_actTrialVisibleID.size() - 3)
 		{
-			return true;
+			visualCursorIndex = 3;
+		}
+		else
+		{
+			visualCursorIndex = m_stageCursorIndex - (m_actTrialVisibleID.size() - 7);
 		}
 	}
 
-	return false;
+	static char const* cursorSelectName[] =
+	{
+		"stagecursor_loop",
+		"stagecursor02",
+		"stagecursor03",
+		"stagecursor04",
+		"stagecursor05",
+		"stagecursor06",
+		"stagecursor07",
+	};
+	TitleUI_PlayMotion(m_sceneStageCursor, cursorSelectName[visualCursorIndex]);
+	cursorStageArrow(visualCursorIndex);
+}
+
+void TitleUI::cursorStageArrow(int index)
+{
+	static char const* cursorArrowName[] =
+	{
+		"stagecursor2_loop",
+		"stagecursor2_loop02",
+		"stagecursor2_loop03",
+		"stagecursor2_loop04",
+		"stagecursor2_loop05",
+		"stagecursor2_loop06",
+		"stagecursor2_loop07",
+	};
+	TitleUI_PlayMotion(m_sceneStageCursor2, cursorArrowName[index], true);
 }
 
 void TitleUI::cursorSelect(CursorData& data, Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, uint32_t soundCueID)
