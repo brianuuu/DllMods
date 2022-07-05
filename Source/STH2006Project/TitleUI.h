@@ -106,11 +106,26 @@ public:
 		bool m_hidden;
 	};
 
+	struct StageData
+	{
+		char m_bestTime[16];
+		uint32_t m_bestScore;
+		uint32_t m_silverMedalCount;
+
+		StageData()
+		{
+			sprintf(m_bestTime, "");
+			m_bestScore = 0;
+			m_silverMedalCount = 0;
+		}
+	};
+
 	static void applyPatches();
 
 	static void populateTrialData();
 	static void refreshTrialAvailability();
 
+	static void populateStageData(size_t stageID);
 	static void cursorStageSelect(int index, bool isMission);
 	static void cursorStageArrow(int index);
 
@@ -132,11 +147,12 @@ public:
 	static int m_yesNoCursorPos;
 	static float m_yesNoColorTime;
 	static std::string m_yesNoWindowText;
-	static void EnableYesNoWindow(bool enabled, std::string const& text = "");
+	static void EnableYesNoWindow(bool enabled, bool defaultYes = true, std::string const& text = "");
 	static void SetYesNoCursor(int pos);
 	static std::string const& GetYesNoText(YesNoTextType type);
 
 	static void drawMenu();
 	static void drawYesNoWindow();
+	static void drawStageData();
 };
 

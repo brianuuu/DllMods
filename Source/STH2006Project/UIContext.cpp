@@ -52,7 +52,7 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
 
     ImVector<ImWchar> ranges;
     ImFontGlyphRangesBuilder builder;
-    builder.AddText("0123456789'\"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ: ");
+    builder.AddText("0123456789'\"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ: ?");
     builder.BuildRanges(&ranges);
 
     const float fontSize = 43.0f * (float)*BACKBUFFER_WIDTH / 1920.0f;
@@ -129,6 +129,7 @@ void UIContext::update()
 
             ImGui::PushFont(fontSubtitle);
             TitleUI::drawYesNoWindow();
+            TitleUI::drawStageData();
             SubtitleUI::draw();
             LoadingUI::draw();
             ImGui::PopFont();

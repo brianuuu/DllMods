@@ -167,7 +167,9 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneStageCursor;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneStageCursor2;
 int m_missionCursorIndex;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMissionCursor;
-
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMissionPlate;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMissionText;
+TitleUI::StageData m_stageData;
 
 boost::shared_ptr<Sonic::CGameObjectCSD> m_spButton;
 Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectButton;
@@ -441,6 +443,10 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 	m_sceneStageCursor2->SetHideFlag(true);
 	m_sceneMissionCursor = m_projectMenu->CreateScene("mission_cursor");
 	m_sceneMissionCursor->SetHideFlag(true);
+	m_sceneMissionPlate = m_projectMenu->CreateScene("mission_plate");
+	m_sceneMissionPlate->SetHideFlag(true);
+	m_sceneMissionText = m_projectMenu->CreateScene("mission_text");
+	m_sceneMissionText->SetHideFlag(true);
 
 	if (m_projectMenu && !m_spMenu)
 	{
@@ -577,7 +583,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 				}
 				else
 				{
-					TitleUI::EnableYesNoWindow(true, TitleUI::GetYesNoText(YesNoTextType::YNTT_NewGame));
+					TitleUI::EnableYesNoWindow(true, false, TitleUI::GetYesNoText(YesNoTextType::YNTT_NewGame));
 					m_menuState = MenuState::MS_DeleteSaveYesNo;
 				}
 				break;
@@ -628,7 +634,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			}
 			case MenuType::MT_QuitGame:
 			{
-				TitleUI::EnableYesNoWindow(true, TitleUI::GetYesNoText(YesNoTextType::YNTT_QuitGame));
+				TitleUI::EnableYesNoWindow(true, false, TitleUI::GetYesNoText(YesNoTextType::YNTT_QuitGame));
 				m_menuState = MenuState::MS_QuitYesNo;
 				break;
 			}
@@ -645,7 +651,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			m_cursor1Data.m_hidden = true;
 			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, 1000003);
 
-			TitleUI::EnableYesNoWindow(true, TitleUI::GetYesNoText(YesNoTextType::YNTT_ReturnTitle));
+			TitleUI::EnableYesNoWindow(true, true, TitleUI::GetYesNoText(YesNoTextType::YNTT_ReturnTitle));
 			m_menuState = MenuState::MS_ReturnTitleYesNo;
 		}
 		break;
@@ -712,6 +718,13 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 					TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, 1000005);
 					TitleUI::cursorStageSelect(0, true);
 
+					size_t id = m_townTrialVisibleID[m_missionCursorIndex];
+					TrialData const& data = m_townTrialData[id];
+					TitleUI::populateStageData(data.m_stage);
+
+					TitleUI_PlayMotion(m_sceneMissionPlate, "DefaultAnim");
+					m_sceneMissionText->SetHideFlag(false);
+
 					TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_NewGame], true);
 					TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_Continue], true);
 					TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_TrialSelect], true);
@@ -769,6 +782,10 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 				m_sceneStageCursor2->SetHideFlag(true);
 				TitleUI::cursorStageSelect(0, true);
 
+				TitleUI_PlayMotion(m_sceneMissionPlate, "DefaultAnim");
+				m_sceneMissionText->SetHideFlag(false);
+				TitleUI::populateStageData(data.m_stage);
+
 				m_menuState = MenuState::MS_ModeSelect;
 			}
 		}
@@ -802,6 +819,9 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			m_sceneMissionCursor->SetHideFlag(true);
 			TitleUI::cursorStageSelect(m_stageCursorIndex, false);
 
+			TitleUI_PlayMotion(m_sceneMissionPlate, "DefaultAnim", false, true);
+			m_sceneMissionText->SetHideFlag(true);
+
 			m_menuState = MenuState::MS_ActTrial;
 		}
 		break;
@@ -811,16 +831,35 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp))
 		{
 			TitleUI::cursorStageSelect(m_missionCursorIndex - 1, true);
+
+			size_t id = m_townTrialVisibleID[m_missionCursorIndex];
+			TrialData const& data = m_townTrialData[id];
+			TitleUI::populateStageData(data.m_stage);
+
 			Common::PlaySoundStatic(soundHandle, 1000004);
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown))
 		{
 			TitleUI::cursorStageSelect(m_missionCursorIndex + 1, true);
+
+			size_t id = m_townTrialVisibleID[m_missionCursorIndex];
+			TrialData const& data = m_townTrialData[id];
+			TitleUI::populateStageData(data.m_stage);
+
 			Common::PlaySoundStatic(soundHandle, 1000004);
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
 		{
-			// TODO:
+			size_t id = m_townTrialVisibleID[m_missionCursorIndex];
+			TrialData const& data = m_townTrialData[id];
+			if (!data.m_playable)
+			{
+				Common::PlaySoundStatic(soundHandle, 1000007);
+			}
+			else
+			{
+				// TODO:
+			}
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
 		{
@@ -831,6 +870,9 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 			m_sceneMissionCursor->SetHideFlag(true);
 			m_sceneStageCursor2->SetHideFlag(true);
+
+			TitleUI_PlayMotion(m_sceneMissionPlate, "DefaultAnim", false, true);
+			m_sceneMissionText->SetHideFlag(true);
 
 			TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_NewGame], false);
 			TitleUI::menuTextLeft(m_sceneMenuText[MenuType::MT_Continue], false);
@@ -1224,6 +1266,8 @@ void TitleUI_TitleCMainCState_SelectMenuEnd(hh::fnd::CStateMachineBase::CStateBa
 	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneStageCursor);
 	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneStageCursor2);
 	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMissionCursor);
+	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMissionPlate);
+	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMissionText);
 	m_projectMenu = nullptr;
 
 	//---------------------------------------------------------------
@@ -1364,6 +1408,49 @@ void TitleUI::refreshTrialAvailability()
 		}
 		id++;
 	}
+}
+
+void TitleUI::populateStageData(size_t stageID)
+{
+	float bestTime, bestTime2, bestTime3;
+	uint32_t bestRank;
+	m_stageData = StageData();
+	Common::GetStageData
+	(
+		stageID,
+		m_stageData.m_bestScore,
+		bestTime,
+		bestTime2,
+		bestTime3,
+		bestRank,
+		m_stageData.m_silverMedalCount
+	);
+
+	// Time
+	uint32_t minutes, seconds, milliseconds;
+	uint32_t totalMilliseconds = bestTime * 1000.0f;
+	minutes = totalMilliseconds / 60000;
+	if (bestTime > 0.0f && minutes <= 99)
+	{
+		seconds = (totalMilliseconds % 60000) / 1000;
+		milliseconds = (totalMilliseconds % 60000) % 1000;
+	}
+	else
+	{
+		minutes = 99;
+		seconds = 59;
+		milliseconds = 999;
+	}
+	sprintf(m_stageData.m_bestTime, "%02d'%02d\"%03d", minutes, seconds, milliseconds);
+
+	// Rank
+	if (m_sceneMissionText)
+	{
+		m_sceneMissionText->GetNode("rank")->SetPatternIndex(bestRank);
+	}
+
+	// Hide silver medal if mission or boss
+	m_sceneMissionText->GetNode("item_icon")->SetHideFlag((stageID & 0xFF00) > 0 && (stageID & 0xFF) <= 0x11);
 }
 
 void TitleUI::cursorStageSelect(int index, bool isMission)
@@ -1674,7 +1761,7 @@ void TitleUI::menuTextRight(Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, bo
 	TitleUI_PlayMotion(scene, "episodeselect_out", false, !out);
 }
 
-void TitleUI::EnableYesNoWindow(bool enabled, std::string const& text)
+void TitleUI::EnableYesNoWindow(bool enabled, bool defaultYes, std::string const& text)
 {
 	if (!m_sceneYesNoTop || !m_sceneYesNoBottom) return;
 
@@ -1685,7 +1772,7 @@ void TitleUI::EnableYesNoWindow(bool enabled, std::string const& text)
 	if (enabled)
 	{
 		m_yesNoWindowText = text;
-		m_yesNoCursorPos = 0;
+		m_yesNoCursorPos = defaultYes ? 0 : 1;
 		m_yesNoColorTime = 0.0f;
 
 		SetYesNoCursor(m_yesNoCursorPos);
@@ -1730,6 +1817,8 @@ void TitleUI::drawMenu()
 {
 	static bool visible = true;
 
+	//-------------------------------------------------------------
+	// Act Trial
 	//-------------------------------------------------------------
 	if (m_menuState == MenuState::MS_ActTrial && !m_drawActTrial)
 	{
@@ -1777,9 +1866,9 @@ void TitleUI::drawMenu()
 					: ImVec4(0.6f, 0.6f, 0.6f, m_drawActTrialAlpha);
 
 				float posYFinal = posY + posYDiff * (1.0f - m_drawActTrialAlpha);
-				ImGui::SetCursorPos(ImVec2((float)*BACKBUFFER_WIDTH * posX, (float)*BACKBUFFER_HEIGHT * posYFinal));
+				ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * posX, *BACKBUFFER_HEIGHT * posYFinal));
 				ImGui::TextColored(color, data.m_header.c_str());
-				ImGui::SetCursorPos(ImVec2((float)*BACKBUFFER_WIDTH * posX2, (float)*BACKBUFFER_HEIGHT * posYFinal));
+				ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * posX2, *BACKBUFFER_HEIGHT * posYFinal));
 				ImGui::TextColored(color, data.m_actName.c_str());
 				posY += yDist;
 			}
@@ -1796,6 +1885,8 @@ void TitleUI::drawMenu()
 		}
 	}
 
+	//-------------------------------------------------------------
+	// Town Trial
 	//-------------------------------------------------------------
 	if (m_menuState == MenuState::MS_TownTrial && !m_drawTownTrial)
 	{
@@ -1842,7 +1933,7 @@ void TitleUI::drawMenu()
 					: ImVec4(0.6f, 0.6f, 0.6f, m_drawTownTrialAlpha);
 
 				float posYFinal = posY + posYDiff * (1.0f - m_drawTownTrialAlpha);
-				ImGui::SetCursorPos(ImVec2((float)*BACKBUFFER_WIDTH * posX, (float)*BACKBUFFER_HEIGHT * posYFinal));
+				ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * posX, *BACKBUFFER_HEIGHT * posYFinal));
 				ImGui::TextColored(color, (std::string("MISSION  ") + std::to_string(i + 1)).c_str());
 				posY += yDist;
 			}
@@ -1860,6 +1951,8 @@ void TitleUI::drawMenu()
 	}
 
 	//-------------------------------------------------------------
+	// Mode Select
+	//-------------------------------------------------------------
 	if (m_menuState == MenuState::MS_ModeSelect && !m_drawModeSelect)
 	{
 		m_drawModeSelect = true;
@@ -1876,7 +1969,7 @@ void TitleUI::drawMenu()
 
 	if (m_drawModeSelect || m_drawModeSelectAlpha >= 0.0f)
 	{
-		ImGui::Begin("ActTrial", &visible, UIContext::m_hudFlags);
+		ImGui::Begin("ModeSelect", &visible, UIContext::m_hudFlags);
 		{
 			float posX = 0.1130f; // header pos
 			float posY = 0.1667f; // final pos
@@ -1890,7 +1983,7 @@ void TitleUI::drawMenu()
 					: ImVec4(0.6f, 0.6f, 0.6f, m_drawModeSelectAlpha);
 
 				float posYFinal = posY + posYDiff * (1.0f - m_drawModeSelectAlpha);
-				ImGui::SetCursorPos(ImVec2((float)*BACKBUFFER_WIDTH * posX, (float)*BACKBUFFER_HEIGHT * posYFinal));
+				ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * posX, *BACKBUFFER_HEIGHT * posYFinal));
 				ImGui::TextColored(color, "MISSION");
 				posY += yDist;
 			}
@@ -1904,23 +1997,6 @@ void TitleUI::drawMenu()
 		else
 		{
 			m_drawModeSelectAlpha -= Application::getDeltaTime() * 60.0f / 5.0f;
-		}
-	}
-
-	//-------------------------------------------------------------
-	if (m_menuState == MenuState::MS_FadeOut || m_menuState == MenuState::MS_FadeOutTitle)
-	{
-		ImGui::Begin("FadeOut", &visible, UIContext::m_hudFlags);
-		{
-			ImGui::Image(LoadingUI::m_backgroundTexture, ImVec2(*BACKBUFFER_WIDTH * 1.1f, *BACKBUFFER_HEIGHT * 1.1f), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, min(1.0f, m_fadeOutTime)));
-			ImGui::SetWindowPos(ImVec2(-10, -10));
-		}
-		ImGui::End();
-
-		m_fadeOutTime += Application::getDeltaTime();
-		if (Common::IsAtLoadingScreen())
-		{
-			m_menuState = MenuState::MS_Idle;
 		}
 	}
 }
@@ -1970,6 +2046,76 @@ void TitleUI::drawYesNoWindow()
 		if (m_yesNoColorTime >= 1.0f)
 		{
 			m_yesNoColorTime -= 1.0f;
+		}
+	}
+}
+
+void TitleUI::drawStageData()
+{
+	static bool visible = true;
+
+	//-------------------------------------------------------------
+	// Stage Data
+	//-------------------------------------------------------------
+	if (m_drawModeSelect || m_drawTownTrial)
+	{
+		ImGui::Begin("StageData", &visible, UIContext::m_hudFlags);
+		{
+			size_t stageID = m_drawTownTrial ? m_townTrialVisibleID[m_missionCursorIndex] : m_actTrialVisibleID[m_stageCursorIndex];
+			TrialData const& data = m_drawTownTrial ? m_townTrialData[stageID] : m_actTrialData[stageID];
+
+			ImVec2 offset = ImVec2(0.0385416666666667f, 0.0722222222f);
+			ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * (0.46875f - offset.x), *BACKBUFFER_HEIGHT * (0.2638889f - offset.y)));
+			ImGui::Text
+			(
+				m_drawTownTrial ? 
+				(
+					data.m_playable ?
+					(
+						Common::GetUILanguageType() == LT_Japanese
+						? data.m_missionNameJP.c_str()
+						: data.m_missionName.c_str()
+					)
+					: "???"
+				) 
+				: data.m_actName.c_str()
+			);
+			ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * (0.46875f - offset.x), *BACKBUFFER_HEIGHT * (0.3888889f - offset.y)));
+			ImGui::Text("BEST  TIME");
+			ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * (0.5726563f - offset.x), *BACKBUFFER_HEIGHT * (0.43888888f - offset.y)));
+			ImGui::Text(m_stageData.m_bestTime);
+			ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * (0.46875f - offset.x), *BACKBUFFER_HEIGHT * (0.4875f - offset.y)));
+			ImGui::Text("BEST  SCORE");
+			ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * (0.5726563f - offset.x), *BACKBUFFER_HEIGHT * (0.5375f - offset.y)));
+			ImGui::Text(std::to_string(m_stageData.m_bestScore).c_str());
+			
+			if (!m_drawTownTrial)
+			{
+				ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * (0.46875f - offset.x), *BACKBUFFER_HEIGHT * (0.5875f - offset.y)));
+				ImGui::Text("SILVER MEDAL");
+				ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * (0.5726563f - offset.x), *BACKBUFFER_HEIGHT * (0.6421112f - offset.y)));
+				ImGui::Text(std::to_string(m_stageData.m_silverMedalCount).c_str());
+			}
+		}
+		ImGui::End();
+	}
+
+	//-------------------------------------------------------------
+	// Fade Out
+	//-------------------------------------------------------------
+	if (m_menuState == MenuState::MS_FadeOut || m_menuState == MenuState::MS_FadeOutTitle)
+	{
+		ImGui::Begin("FadeOut", &visible, UIContext::m_hudFlags);
+		{
+			ImGui::Image(LoadingUI::m_backgroundTexture, ImVec2(*BACKBUFFER_WIDTH * 1.1f, *BACKBUFFER_HEIGHT * 1.1f), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, min(1.0f, m_fadeOutTime)));
+			ImGui::SetWindowPos(ImVec2(-10, -10));
+		}
+		ImGui::End();
+
+		m_fadeOutTime += Application::getDeltaTime();
+		if (Common::IsAtLoadingScreen())
+		{
+			m_menuState = MenuState::MS_Idle;
 		}
 	}
 }
