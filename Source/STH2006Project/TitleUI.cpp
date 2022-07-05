@@ -523,6 +523,8 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 	originalTitleUI_TitleCMainCState_SelectMenuBegin(This);
 }
 
+bool scrollHold = false;
+float scrollDelay = 0.0f;
 HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
 	//originalTitleUI_TitleCMainCState_SelectMenuAdvance(This);
@@ -535,7 +537,30 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	static SharedPtrTypeless spOutState;
 	static SharedPtrTypeless soundHandle;
 
+	static float timePrev = 0.0f;
+	float constexpr firstScrollDelay = 0.3f;
+	float constexpr holdScrollDelay = 0.15f;
 	Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+
+	bool scrollUp = false;
+	bool scrollDown = false;
+	if (padState->IsDown(Sonic::EKeyState::eKeyState_LeftStickUp) || padState->IsDown(Sonic::EKeyState::eKeyState_LeftStickDown))
+	{
+		if (scrollDelay <= 0.0f)
+		{
+			scrollUp = padState->IsDown(Sonic::EKeyState::eKeyState_LeftStickUp);
+			scrollDown = padState->IsDown(Sonic::EKeyState::eKeyState_LeftStickDown);
+			scrollDelay = scrollHold ? holdScrollDelay : firstScrollDelay;
+			scrollHold = true;
+		}
+		scrollDelay -= (This->m_Time - timePrev);
+	}
+	else
+	{
+		scrollHold = false;
+		scrollDelay = 0.0f;
+	}
+
 	switch (m_menuState)
 	{
 	case MenuState::MS_FadeIn:
@@ -552,7 +577,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	}
 	case MenuState::MS_Main:
 	{
-		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp))
+		if (scrollUp)
 		{
 			m_cursor1Data.m_index--;
 			if (m_cursor1Data.m_index < 0)
@@ -561,7 +586,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			}
 			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1, 1000004);
 		}
-		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown))
+		else if (scrollDown)
 		{
 			m_cursor1Data.m_index++;
 			if (m_cursor1Data.m_index >= MenuType::MT_COUNT)
@@ -663,7 +688,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	}
 	case MenuState::MS_TrialSelect:
 	{
-		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp))
+		if (scrollUp)
 		{
 			m_cursor2Data.m_index--;
 			if (m_cursor2Data.m_index < 0)
@@ -672,7 +697,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			}
 			TitleUI::cursorSelect(m_cursor2Data, m_sceneMenuCursor2, 1000004);
 		}
-		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown))
+		else if (scrollDown)
 		{
 			m_cursor2Data.m_index++;
 			if (m_cursor2Data.m_index >= TrialMenuType::TMT_COUNT)
@@ -761,12 +786,12 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	}
 	case MenuState::MS_ActTrial:
 	{
-		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp))
+		if (scrollUp)
 		{
 			TitleUI::cursorStageSelect(m_stageCursorIndex - 1, false);
 			Common::PlaySoundStatic(soundHandle, 1000004);
 		}
-		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown))
+		else if (scrollDown)
 		{
 			TitleUI::cursorStageSelect(m_stageCursorIndex + 1, false);
 			Common::PlaySoundStatic(soundHandle, 1000004);
@@ -818,7 +843,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	{
 		size_t id = m_actTrialVisibleID[m_stageCursorIndex];
 		TrialData const& data = m_actTrialData[id];
-		if (m_stageData.m_isBoss && (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp) || padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown)))
+		if (m_stageData.m_isBoss && (scrollUp || scrollDown))
 		{
 			TitleUI::cursorStageSelect(m_missionCursorIndex == 0 ? 1 : 0, true);
 			if (m_missionCursorIndex == 0)
@@ -867,7 +892,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	}
 	case MenuState::MS_TownTrial:
 	{
-		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp))
+		if (scrollUp)
 		{
 			TitleUI::cursorStageSelect(m_missionCursorIndex - 1, true);
 
@@ -877,7 +902,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 			Common::PlaySoundStatic(soundHandle, 1000004);
 		}
-		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown))
+		else if (scrollDown)
 		{
 			TitleUI::cursorStageSelect(m_missionCursorIndex + 1, true);
 
@@ -933,7 +958,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	}
 	case MenuState::MS_Option:
 	{
-		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp))
+		if (scrollUp)
 		{
 			if (m_optionIndex == 0)
 			{
@@ -945,7 +970,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			}
 			Common::PlaySoundStatic(soundHandle, 1000004);
 		}
-		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown))
+		else if (scrollDown)
 		{
 			if (m_optionIndex == OptionType::OT_COUNT - 1)
 			{
@@ -1018,7 +1043,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	case MenuState::MS_OptionAudio:
 	{
 		float volumeChamge = Application::getDeltaTime() * 50.0f;
-		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp) || padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown))
+		if (scrollUp || scrollDown)
 		{
 			TitleUI::optionAudioSetIndex(m_optionAudioIndex == 0 ? 1 : 0);
 			Common::PlaySoundStatic(soundHandle, 1000004);
@@ -1064,7 +1089,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	case MenuState::MS_OptionUI:
 	case MenuState::MS_OptionVO:
 	{
-		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp) || padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown))
+		if (scrollUp || scrollDown)
 		{
 			TitleUI::optionOnOffSetIndex(m_optionOnOffIndex == 0 ? 1 : 0);
 			Common::PlaySoundStatic(soundHandle, 1000004);
@@ -1117,7 +1142,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	case MenuState::MS_OptionDialog:
 	case MenuState::MS_OptionSubtitle:
 	{
-		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp) || padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown))
+		if (scrollUp || scrollDown)
 		{
 			TitleUI::optionOnOffSetIndex(m_optionOnOffIndex == 0 ? 1 : 0);
 			Common::PlaySoundStatic(soundHandle, 1000004);
@@ -1160,13 +1185,13 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	case MenuState::MS_QuitYesNo:
 	{
 		bool returnToMainMenu = false;
-		if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp) && TitleUI::m_yesNoCursorPos == 1)
+		if (scrollUp && TitleUI::m_yesNoCursorPos == 1)
 		{
 			TitleUI::m_yesNoCursorPos = 0;
 			TitleUI::SetYesNoCursor(TitleUI::m_yesNoCursorPos);
 			Common::PlaySoundStatic(soundHandle, 1000004);
 		}
-		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown) && TitleUI::m_yesNoCursorPos == 0)
+		else if (scrollDown && TitleUI::m_yesNoCursorPos == 0)
 		{
 			TitleUI::m_yesNoCursorPos = 1;
 			TitleUI::SetYesNoCursor(TitleUI::m_yesNoCursorPos);
@@ -1258,7 +1283,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	TitleUI::cursorLoop(m_cursor1Data, m_sceneMenuCursor1);
 	TitleUI::cursorLoop(m_cursor2Data, m_sceneMenuCursor2);
 
-	// change D770FC to 2 to goto trial_menu, change it back to 0 before entering stage
+	timePrev = This->m_Time;
 }
 
 void TitleUI_TitleCMainCState_SelectMenuEnd(hh::fnd::CStateMachineBase::CStateBase* This)
