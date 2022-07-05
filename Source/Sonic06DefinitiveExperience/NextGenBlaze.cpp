@@ -437,6 +437,24 @@ void NextGenBlaze::applyPatches()
     // Don't disable Boost barrier when facing camera
     // WRITE_MEMORY(0xDFBE33, uint8_t, 0xEB);
 
+    // Fix fire/electric damage bone location
+    WRITE_MEMORY(0x1ABD060, char*, "FrontHair"); // Needle_U_C
+    WRITE_MEMORY(0x1ABD064, char*, "LeftHand"); // Hand_L
+    WRITE_MEMORY(0x1ABD068, char*, "RightHand"); // Hand_R
+    WRITE_MEMORY(0x1ABD06C, char*, "LeftToeBase"); // Toe_L
+    WRITE_MEMORY(0x1ABD070, char*, "RightToeBase"); // Toe_R
+    WRITE_MEMORY(0x1203CA3, uint32_t, 0x1ABD05C); // electic damage use fire damage offsets
+    WRITE_MEMORY(0x1203D7C, uint32_t, 0x1ABD074);
+
+    // Fix Super Sonic pfx bone location
+    static float const spineAuraOffset = -50.0f;
+    WRITE_MEMORY(0xDA2689, float*, &spineAuraOffset);
+    WRITE_MEMORY(0xDA26EA, char*, "FrontHair"); // Needle_U_C
+    WRITE_MEMORY(0xDA273B, char*, "LeftHand"); // Hand_L
+    WRITE_MEMORY(0xDA278C, char*, "RightHand"); // Hand_R
+    WRITE_MEMORY(0xDA27DD, char*, "LeftFoot"); // Foot_L
+    WRITE_MEMORY(0xDA285E, char*, "RightFoot"); // Foot_R
+
     // Stomp uses fire tornado voice & sfx
     WRITE_MEMORY(0x1254E02, uint8_t, 10);
     WRITE_MEMORY(0x1254E04, uint32_t, 3002031);
