@@ -186,6 +186,7 @@ int TitleUI::m_yesNoCursorPos = 0;
 float TitleUI::m_yesNoColorTime = 0.0f;
 std::string TitleUI::m_yesNoWindowText;
 
+bool m_allowStoryMode = true;
 bool m_displayNonCompletedStage = false;
 bool m_allowPlayNonCompletedStage = false;
 bool m_drawActTrial = false;
@@ -391,10 +392,10 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 		switch (i)
 		{
 		case MT_NewGame:
-			index = 0;
+			index = m_allowStoryMode ? 0 : 1;
 			break;
 		case MT_Continue:
-			index = hasSaveFile ? 2 : 3;
+			index = (hasSaveFile && m_allowStoryMode) ? 2 : 3;
 			break;
 		case MT_TrialSelect:
 			index = 4;
@@ -602,7 +603,12 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			{
 			case MenuType::MT_NewGame:
 			{
-				if (!hasSaveFile)
+				if (!m_allowStoryMode)
+				{
+					hideCursor = false;
+					Common::PlaySoundStatic(soundHandle, 1000007);
+				}
+				else if (!hasSaveFile)
 				{
 					hideCursor = false;
 					Common::PlaySoundStatic(soundHandle, 1000005);
@@ -621,7 +627,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			case MenuType::MT_Continue:
 			{
 				hideCursor = false;
-				if (!hasSaveFile)
+				if (!hasSaveFile || !m_allowStoryMode)
 				{
 					Common::PlaySoundStatic(soundHandle, 1000007);
 				}
@@ -1446,6 +1452,7 @@ void TitleUI::applyPatches()
 void TitleUI::populateTrialData()
 {
 	const INIReader reader(Application::getModDirString() + "Assets\\Title\\trialData.ini");
+	m_allowStoryMode = reader.GetBoolean("Settings", "allowStoryMode", true);
 	m_displayNonCompletedStage = reader.GetBoolean("Settings", "displayNonCompletedStage", false);
 	m_allowPlayNonCompletedStage = reader.GetBoolean("Settings", "allowPlayNonCompletedStage", false);
 
