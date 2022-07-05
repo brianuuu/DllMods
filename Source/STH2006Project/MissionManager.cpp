@@ -140,17 +140,12 @@ HOOK(void, __fastcall, Mission_CGameplayFlowStageSetStageInfo, 0xCFF6A0, void* T
 {
 	originalMission_CGameplayFlowStageSetStageInfo(This);
 
-	if (Common::IsCurrentStageMission())
+	// Override terrain
+	const INIReader reader(Application::getModDirString() + "Assets\\Title\\trialData.ini");
+	uint32_t stageID = Common::GetCurrentStageID();
+	std::string stageTerrain = reader.Get(std::to_string(stageID), "terrainID", "");
+	if (!stageTerrain.empty())
 	{
-		static std::string stageTerrain = "pam000";
-
-		// Exceptions, missions that uses MapD instead of MapABC
-		uint32_t stageID = Common::GetCurrentStageID();
-		switch (stageID)
-		{
-		default: stageTerrain = "pam000"; break;
-		}
-
 		strcpy(Common::GetCurrentTerrain(), stageTerrain.c_str());
 	}
 }

@@ -1361,7 +1361,7 @@ void TitleUI::populateTrialData()
 		data.m_header = reader.Get(section, "header", "");
 		data.m_stageID = reader.Get(section, "stageID", "");
 		data.m_terrainID = reader.Get(section, "terrainID", "");
-		if (data.m_stageID.empty() || data.m_terrainID.empty()) continue;
+		if (data.m_stageID.empty()) continue;
 
 		data.m_actName = reader.Get(section, "actName", "");
 		data.m_actName = std::regex_replace(data.m_actName, std::regex(" "), "  ");
