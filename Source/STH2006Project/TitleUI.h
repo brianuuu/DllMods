@@ -34,6 +34,8 @@ enum MenuState : int
 
 	MS_FadeOut,
 	MS_FadeOutTitle,
+	MS_FadeOutStage,
+	MS_FadeOutMission,
 };
 
 enum MenuType : int
@@ -108,12 +110,16 @@ public:
 
 	struct StageData
 	{
+		size_t m_stage;
+		std::string m_stageID;
+
 		char m_bestTime[16];
 		uint32_t m_bestScore;
 		uint32_t m_silverMedalCount;
 
 		StageData()
 		{
+			m_stageID = -1;
 			sprintf(m_bestTime, "");
 			m_bestScore = 0;
 			m_silverMedalCount = 0;
@@ -125,7 +131,7 @@ public:
 	static void populateTrialData();
 	static void refreshTrialAvailability();
 
-	static void populateStageData(size_t stageID);
+	static void populateStageData(size_t stage, std::string const& stageID);
 	static void cursorStageSelect(int index, bool isMission);
 	static void cursorStageArrow(int index);
 

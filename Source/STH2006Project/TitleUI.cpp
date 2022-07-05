@@ -281,6 +281,11 @@ void TitleUI_SetEffectVolume(float volume)
 HOOK(void, __fastcall, TitleUI_TitleCMainCState_InitBegin, 0x571370, hh::fnd::CStateMachineBase::CStateBase* This)
 {
 	originalTitleUI_TitleCMainCState_InitBegin(This);
+
+	// Revert demo menu end state
+	WRITE_MEMORY(0xD77102, uint32_t, 0);
+	WRITE_MEMORY(0xD7712E, uint32_t, 1);
+
 	m_menuState = MenuState::MS_Idle;
 }
 
@@ -720,7 +725,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 					size_t id = m_townTrialVisibleID[m_missionCursorIndex];
 					TrialData const& data = m_townTrialData[id];
-					TitleUI::populateStageData(data.m_stage);
+					TitleUI::populateStageData(data.m_stage, data.m_stageID);
 
 					TitleUI_PlayMotion(m_sceneMissionPlate, "DefaultAnim");
 					m_sceneMissionText->SetHideFlag(false);
@@ -784,7 +789,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 				TitleUI_PlayMotion(m_sceneMissionPlate, "DefaultAnim");
 				m_sceneMissionText->SetHideFlag(false);
-				TitleUI::populateStageData(data.m_stage);
+				TitleUI::populateStageData(data.m_stage, data.m_stageID);
 
 				m_menuState = MenuState::MS_ModeSelect;
 			}
@@ -811,8 +816,19 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	}
 	case MenuState::MS_ModeSelect:
 	{
-		// TODO:
-		if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
+		if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
+		{
+			Common::PlaySoundStatic(soundHandle, 1000005);
+
+			// Force GetEndState() to be 2 to launch demo menu
+			WRITE_MEMORY(0xD77102, uint32_t, 2);
+			WRITE_MEMORY(0xD7712E, uint32_t, 2);
+
+			*outState = 4;
+			m_fadeOutTime = 0.0f;
+			m_menuState = MenuState::MS_FadeOutStage;
+		}
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
 		{
 			Common::PlaySoundStatic(soundHandle, 1000003);
 
@@ -834,7 +850,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 			size_t id = m_townTrialVisibleID[m_missionCursorIndex];
 			TrialData const& data = m_townTrialData[id];
-			TitleUI::populateStageData(data.m_stage);
+			TitleUI::populateStageData(data.m_stage, data.m_stageID);
 
 			Common::PlaySoundStatic(soundHandle, 1000004);
 		}
@@ -844,7 +860,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 			size_t id = m_townTrialVisibleID[m_missionCursorIndex];
 			TrialData const& data = m_townTrialData[id];
-			TitleUI::populateStageData(data.m_stage);
+			TitleUI::populateStageData(data.m_stage, data.m_stageID);
 
 			Common::PlaySoundStatic(soundHandle, 1000004);
 		}
@@ -858,7 +874,14 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			}
 			else
 			{
-				// TODO:
+				Common::PlaySoundStatic(soundHandle, 1000005);
+
+				// Force GetEndState() to be 2 to launch demo menu
+				WRITE_MEMORY(0xD77102, uint32_t, 2);
+
+				*outState = 4;
+				m_fadeOutTime = 0.0f;
+				m_menuState = MenuState::MS_FadeOutMission;
 			}
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
@@ -1197,6 +1220,8 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	}
 	case MenuState::MS_FadeOut:
 	case MenuState::MS_FadeOutTitle:
+	case MenuState::MS_FadeOutStage:
+	case MenuState::MS_FadeOutMission:
 	{
 		if (m_fadeOutTime >= 1.2f)
 		{
@@ -1257,12 +1282,16 @@ void TitleUI_TitleCMainCState_SelectMenuEnd(hh::fnd::CStateMachineBase::CStateBa
 	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuTitleBarEffect);
 	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuTitleText);
 	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuTitleText2);
-	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuCursor1);
-	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuCursor2);
 	for (int i = 0; i < MenuType::MT_COUNT; i++)
 	{
 		Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuText[i]);
 	}
+	for (int i = 0; i < TrialMenuType::TMT_COUNT; i++)
+	{
+		Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneTrialText[i]);
+	}
+	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuCursor1);
+	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMenuCursor2);
 	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneStageCursor);
 	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneStageCursor2);
 	Chao::CSD::CProject::DestroyScene(m_projectMenu.Get(), m_sceneMissionCursor);
@@ -1291,6 +1320,25 @@ void TitleUI_TitleCMainCState_SelectMenuEnd(hh::fnd::CStateMachineBase::CStateBa
 	Chao::CSD::CProject::DestroyScene(m_projectYesNo.Get(), m_sceneYesNoBottom);
 	Chao::CSD::CProject::DestroyScene(m_projectYesNo.Get(), m_sceneYesNoCursor);
 	m_projectYesNo = nullptr;
+}
+
+HOOK(void, __fastcall, TitleUI_CDemoMenuObjectAdvance, 0x576470, uint32_t* This, void* Edx, int a2)
+{
+	// override stageID
+	WRITE_STRING(0x15BB8A8, m_stageData.m_stageID.c_str())
+
+	// set mission ID
+	*(uint32_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x80, 0x28 }) = (m_stageData.m_stage >> 8);
+
+	originalTitleUI_CDemoMenuObjectAdvance(This, Edx, a2);
+}
+
+HOOK(void, __fastcall, TitleUI_CGameplayFlowStage_CStateGoalBegin, 0xCFD550, void* This)
+{
+	// Force saving at result screen
+	TitleUI_CTitleOptionCStateOutroSaving(m_spSave, nullptr);
+
+	originalTitleUI_CGameplayFlowStage_CStateGoalBegin(This);
 }
 
 void TitleUI::applyPatches()
@@ -1324,8 +1372,10 @@ void TitleUI::applyPatches()
 	WRITE_NOP(0x573391, 5);
 
 	// Hijack CTitleOption::CStateOutro for saving
+	INSTALL_HOOK(TitleUI_CGameplayFlowStage_CStateGoalBegin);
 	WRITE_JUMP(0xD22A83, (void*)0xD22B84);
 	WRITE_MEMORY(0xD22CE8, uint8_t, 0);
+	WRITE_NOP(0xD22CC9, 5); // don't display auto save icon here
 
 	// Yes No Window
 	m_yesNoText[YesNoTextType::YNTT_QuitGame] = "Quit  the  game.\nThe  progress  of  the  game  from  the  last  saved\npoint  will  not  be  saved.  OK?";
@@ -1335,6 +1385,13 @@ void TitleUI::applyPatches()
 	m_yesNoText[YesNoTextType::YNTT_NewGame] = "Are  you  sure  you  want  to  start  a  new  game?\nAny  previous  saved  game\nprogress  will  be  lost.";
 	m_yesNoText[YesNoTextType::YNTT_NewGameJP] = u8"これまでの記録は消えてしまいますが\nよろしいですか？";
 	m_yesNoText[YesNoTextType::YNTT_COUNT] = "MISSING TEXT"; // need this for dummy text
+
+	// CDemoMenuObject
+	WRITE_NOP(0x5764BE, 6); // skip waiting for animation
+	WRITE_NOP(0x5764DD, 6); // skip waiting for animation
+	WRITE_NOP(0x57656B, 5); // no confirm sfx
+	WRITE_JUMP(0x576528, (void*)0x576561); // immediately confirm
+	INSTALL_HOOK(TitleUI_CDemoMenuObjectAdvance);
 }
 
 void TitleUI::populateTrialData()
@@ -1410,21 +1467,24 @@ void TitleUI::refreshTrialAvailability()
 	}
 }
 
-void TitleUI::populateStageData(size_t stageID)
+void TitleUI::populateStageData(size_t stage, std::string const& stageID)
 {
 	float bestTime, bestTime2, bestTime3;
 	uint32_t bestRank;
 	m_stageData = StageData();
-	Common::GetStageData
+	if (!Common::GetStageData
 	(
-		stageID,
+		stage,
 		m_stageData.m_bestScore,
 		bestTime,
 		bestTime2,
 		bestTime3,
 		bestRank,
 		m_stageData.m_silverMedalCount
-	);
+	)) return;
+
+	m_stageData.m_stage = stage;
+	m_stageData.m_stageID = stageID;
 
 	// Time
 	uint32_t minutes, seconds, milliseconds;
@@ -1450,7 +1510,7 @@ void TitleUI::populateStageData(size_t stageID)
 	}
 
 	// Hide silver medal if mission or boss
-	m_sceneMissionText->GetNode("item_icon")->SetHideFlag((stageID & 0xFF00) > 0 && (stageID & 0xFF) <= 0x11);
+	m_sceneMissionText->GetNode("item_icon")->SetHideFlag((stage & 0xFF00) > 0 && (stage & 0xFF) <= 0x11);
 }
 
 void TitleUI::cursorStageSelect(int index, bool isMission)
@@ -1828,16 +1888,18 @@ void TitleUI::drawMenu()
 	else if (m_menuState != MenuState::MS_ActTrial && m_drawActTrial)
 	{
 		m_drawActTrial = false;
-		if (Common::IsAtLoadingScreen())
-		{
-			m_drawActTrialAlpha = -1.0f;
-		}
+	}
+
+	if (Common::IsAtLoadingScreen() || m_menuState == MenuState::MS_Idle)
+	{
+		m_drawActTrialAlpha = -1.0f;
 	}
 
 	if (m_drawActTrial || m_drawActTrialAlpha >= 0.0f)
 	{
 		ImGui::Begin("ActTrial", &visible, UIContext::m_hudFlags);
 		{
+			ImGui::SetWindowFocus();
 			float posX = 0.1130f; // header pos
 			float posX2 = posX + 0.125f; // act name pos
 			float posY = 0.1667f; // final pos
@@ -1888,24 +1950,27 @@ void TitleUI::drawMenu()
 	//-------------------------------------------------------------
 	// Town Trial
 	//-------------------------------------------------------------
-	if (m_menuState == MenuState::MS_TownTrial && !m_drawTownTrial)
+	bool drawTownTrial = m_menuState == MenuState::MS_TownTrial || m_menuState == MenuState::MS_FadeOutMission;
+	if (drawTownTrial && !m_drawTownTrial)
 	{
 		m_drawTownTrial = true;
 		m_drawTownTrialAlpha = 0.0f;
 	}
-	else if (m_menuState != MenuState::MS_TownTrial && m_drawTownTrial)
+	else if (!drawTownTrial && m_drawTownTrial)
 	{
 		m_drawTownTrial = false;
-		if (Common::IsAtLoadingScreen())
-		{
-			m_drawTownTrialAlpha = -1.0f;
-		}
 	}
 
-	if (m_drawTownTrial || m_drawTownTrial >= 0.0f)
+	if (Common::IsAtLoadingScreen() || m_menuState == MenuState::MS_Idle)
+	{
+		m_drawTownTrialAlpha = -1.0f;
+	}
+
+	if (m_drawTownTrial || m_drawTownTrialAlpha >= 0.0f)
 	{
 		ImGui::Begin("TownTrial", &visible, UIContext::m_hudFlags);
 		{
+			ImGui::SetWindowFocus();
 			float posX = 0.1130f; // header pos
 			float posY = 0.1667f; // final pos
 			float posYDiff = 10.0f / 720.0f; // fade out pos
@@ -1953,24 +2018,27 @@ void TitleUI::drawMenu()
 	//-------------------------------------------------------------
 	// Mode Select
 	//-------------------------------------------------------------
-	if (m_menuState == MenuState::MS_ModeSelect && !m_drawModeSelect)
+	bool drawModeSelect = m_menuState == MenuState::MS_ModeSelect || m_menuState == MenuState::MS_FadeOutStage;
+	if (drawModeSelect && !m_drawModeSelect)
 	{
 		m_drawModeSelect = true;
 		m_drawModeSelectAlpha = 0.0f;
 	}
-	else if (m_menuState != MenuState::MS_ModeSelect && m_drawModeSelect)
+	else if (!drawModeSelect && m_drawModeSelect)
 	{
 		m_drawModeSelect = false;
-		if (Common::IsAtLoadingScreen())
-		{
-			m_drawActTrialAlpha = -1.0f;
-		}
+	}
+
+	if (Common::IsAtLoadingScreen() || m_menuState == MenuState::MS_Idle)
+	{
+		m_drawModeSelectAlpha = -1.0f;
 	}
 
 	if (m_drawModeSelect || m_drawModeSelectAlpha >= 0.0f)
 	{
 		ImGui::Begin("ModeSelect", &visible, UIContext::m_hudFlags);
 		{
+			ImGui::SetWindowFocus();
 			float posX = 0.1130f; // header pos
 			float posY = 0.1667f; // final pos
 			float posYDiff = 10.0f / 720.0f; // fade out pos
@@ -2061,6 +2129,7 @@ void TitleUI::drawStageData()
 	{
 		ImGui::Begin("StageData", &visible, UIContext::m_hudFlags);
 		{
+			ImGui::SetWindowFocus();
 			size_t stageID = m_drawTownTrial ? m_townTrialVisibleID[m_missionCursorIndex] : m_actTrialVisibleID[m_stageCursorIndex];
 			TrialData const& data = m_drawTownTrial ? m_townTrialData[stageID] : m_actTrialData[stageID];
 
@@ -2103,10 +2172,14 @@ void TitleUI::drawStageData()
 	//-------------------------------------------------------------
 	// Fade Out
 	//-------------------------------------------------------------
-	if (m_menuState == MenuState::MS_FadeOut || m_menuState == MenuState::MS_FadeOutTitle)
+	if (m_menuState == MenuState::MS_FadeOut 
+	|| m_menuState == MenuState::MS_FadeOutTitle
+	|| m_menuState == MenuState::MS_FadeOutStage
+	|| m_menuState == MenuState::MS_FadeOutMission)
 	{
 		ImGui::Begin("FadeOut", &visible, UIContext::m_hudFlags);
 		{
+			ImGui::SetWindowFocus();
 			ImGui::Image(LoadingUI::m_backgroundTexture, ImVec2(*BACKBUFFER_WIDTH * 1.1f, *BACKBUFFER_HEIGHT * 1.1f), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, min(1.0f, m_fadeOutTime)));
 			ImGui::SetWindowPos(ImVec2(-10, -10));
 		}
