@@ -141,7 +141,7 @@ HOOK(void, __fastcall, Mission_CGameplayFlowStageSetStageInfo, 0xCFF6A0, void* T
 	originalMission_CGameplayFlowStageSetStageInfo(This);
 
 	// Override terrain
-	const INIReader reader(Application::getModDirString() + "Assets\\Title\\trialData.ini");
+	const INIReader reader(Application::getModDirString() + "Assets\\Title\\titleData.ini");
 	uint32_t stageID = Common::GetCurrentStageID();
 	std::string stageTerrain = reader.Get(std::to_string(stageID), "terrainID", "");
 	if (!stageTerrain.empty())

@@ -87,9 +87,9 @@ struct TrialData
 	// Common
 	uint32_t m_stage;
 	bool m_playable;
+	bool m_hardModePlayable; // boss only
 	std::string m_header;
 	std::string m_stageID;
-	std::string m_terrainID;
 
 	// act trial
 	std::string m_actName;
@@ -113,13 +113,19 @@ public:
 		size_t m_stage;
 		std::string m_stageID;
 
+		bool m_isBoss;
+
 		char m_bestTime[16];
 		uint32_t m_bestScore;
 		uint32_t m_silverMedalCount;
 
 		StageData()
 		{
-			m_stageID = -1;
+			m_stage = -1;
+			m_stageID = "";
+
+			m_isBoss = false;
+
 			sprintf(m_bestTime, "");
 			m_bestScore = 0;
 			m_silverMedalCount = 0;

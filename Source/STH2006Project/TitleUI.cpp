@@ -189,15 +189,15 @@ std::string TitleUI::m_yesNoWindowText;
 bool m_displayNonCompletedStage = false;
 bool m_allowPlayNonCompletedStage = false;
 bool m_drawActTrial = false;
-float m_drawActTrialAlpha = 0.0f;
+float m_drawActTrialAlpha = -1.0f;
 std::vector<size_t> m_actTrialVisibleID;
 std::vector<TrialData> m_actTrialData;
 bool m_drawTownTrial = false;
-float m_drawTownTrialAlpha = 0.0f;
+float m_drawTownTrialAlpha = -1.0f;
 std::vector<size_t> m_townTrialVisibleID;
 std::vector<TrialData> m_townTrialData;
 bool m_drawModeSelect = false;
-float m_drawModeSelectAlpha = 0.0f;
+float m_drawModeSelectAlpha = -1.0f;
 
 float m_fadeOutTime = 0.0f;
 
@@ -816,17 +816,40 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	}
 	case MenuState::MS_ModeSelect:
 	{
-		if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
+		size_t id = m_actTrialVisibleID[m_stageCursorIndex];
+		TrialData const& data = m_actTrialData[id];
+		if (m_stageData.m_isBoss && (padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickUp) || padState->IsTapped(Sonic::EKeyState::eKeyState_LeftStickDown)))
 		{
-			Common::PlaySoundStatic(soundHandle, 1000005);
+			TitleUI::cursorStageSelect(m_missionCursorIndex == 0 ? 1 : 0, true);
+			if (m_missionCursorIndex == 0)
+			{
+				TitleUI::populateStageData(data.m_stage, data.m_stageID);
+			}
+			else
+			{
+				TitleUI::populateStageData(data.m_stage | SMT_BossHard, data.m_stageID + "001");
+			}
+			
+			Common::PlaySoundStatic(soundHandle, 1000004);
+		}
+		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
+		{
+			if (m_missionCursorIndex == 1 && !data.m_hardModePlayable)
+			{
+				Common::PlaySoundStatic(soundHandle, 1000007);
+			}
+			else
+			{
+				Common::PlaySoundStatic(soundHandle, 1000005);
 
-			// Force GetEndState() to be 2 to launch demo menu
-			WRITE_MEMORY(0xD77102, uint32_t, 2);
-			WRITE_MEMORY(0xD7712E, uint32_t, 2);
+				// Force GetEndState() to be 2 to launch demo menu
+				WRITE_MEMORY(0xD77102, uint32_t, 2);
+				WRITE_MEMORY(0xD7712E, uint32_t, 2);
 
-			*outState = 4;
-			m_fadeOutTime = 0.0f;
-			m_menuState = MenuState::MS_FadeOutStage;
+				*outState = 4;
+				m_fadeOutTime = 0.0f;
+				m_menuState = MenuState::MS_FadeOutStage;
+			}
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
 		{
@@ -878,6 +901,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 				// Force GetEndState() to be 2 to launch demo menu
 				WRITE_MEMORY(0xD77102, uint32_t, 2);
+				WRITE_MEMORY(0xD7712E, uint32_t, 2);
 
 				*outState = 4;
 				m_fadeOutTime = 0.0f;
@@ -1417,7 +1441,6 @@ void TitleUI::populateTrialData()
 
 		data.m_header = reader.Get(section, "header", "");
 		data.m_stageID = reader.Get(section, "stageID", "");
-		data.m_terrainID = reader.Get(section, "terrainID", "");
 		if (data.m_stageID.empty()) continue;
 
 		data.m_actName = reader.Get(section, "actName", "");
@@ -1446,19 +1469,27 @@ void TitleUI::refreshTrialAvailability()
 	int id = 0;
 	for (TrialData& data : m_actTrialData)
 	{
-		data.m_playable = Common::IsStageCompleted(data.m_stage) || m_allowPlayNonCompletedStage;
+		data.m_playable = m_allowPlayNonCompletedStage || Common::IsStageCompleted(data.m_stage);
 		if (m_displayNonCompletedStage || data.m_playable)
 		{
 			m_actTrialVisibleID.push_back(id);
 		}
 		id++;
+
+		// Boss hard mode
+		data.m_hardModePlayable = false;
+		uint8_t stageFirstByte = data.m_stage & 0xFF;
+		if (stageFirstByte >= SMT_bms && stageFirstByte <= SMT_blb)
+		{
+			data.m_hardModePlayable = Common::IsStageCompleted(data.m_stage);
+		}
 	}
 
 	m_townTrialVisibleID.clear();
 	id = 0;
 	for (TrialData& data : m_townTrialData)
 	{
-		data.m_playable = Common::IsStageCompleted(data.m_stage) || m_allowPlayNonCompletedStage;
+		data.m_playable = m_allowPlayNonCompletedStage || Common::IsStageCompleted(data.m_stage);
 		if (m_displayNonCompletedStage || data.m_playable)
 		{
 			m_townTrialVisibleID.push_back(id);
@@ -1485,6 +1516,9 @@ void TitleUI::populateStageData(size_t stage, std::string const& stageID)
 
 	m_stageData.m_stage = stage;
 	m_stageData.m_stageID = stageID;
+
+	uint8_t stageFirstByte = stage & 0xFF;
+	m_stageData.m_isBoss = stageFirstByte >= SMT_bms && stageFirstByte <= SMT_blb;
 
 	// Time
 	uint32_t minutes, seconds, milliseconds;
@@ -2044,15 +2078,17 @@ void TitleUI::drawMenu()
 			float posYDiff = 10.0f / 720.0f; // fade out pos
 			float constexpr yDist = 50.0f / 720.0f;
 
-			for (int i = 0; i < 1; i++)
+			for (int i = 0; i < (m_stageData.m_isBoss ? 2 : 1); i++)
 			{
-				ImVec4 color = true // TODO: boss hard mode
+				size_t id = m_actTrialVisibleID[m_stageCursorIndex];
+				TrialData const& data = m_actTrialData[id];
+				ImVec4 color = ((i == 0 && data.m_playable) || (i == 1 && data.m_hardModePlayable))
 					? ImVec4(1.0f, 1.0f, 1.0f, m_drawModeSelectAlpha)
 					: ImVec4(0.6f, 0.6f, 0.6f, m_drawModeSelectAlpha);
 
 				float posYFinal = posY + posYDiff * (1.0f - m_drawModeSelectAlpha);
 				ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * posX, *BACKBUFFER_HEIGHT * posYFinal));
-				ImGui::TextColored(color, "MISSION");
+				ImGui::TextColored(color, m_stageData.m_isBoss ? (i == 0 ? "NORMAL" : "HARD") : "MISSION");
 				posY += yDist;
 			}
 		}
