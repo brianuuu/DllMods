@@ -17,6 +17,10 @@ boost::shared_ptr<Sonic::CGameObjectCSD> m_spTitle;
 Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectTitle;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneTitle;
 
+boost::shared_ptr<Sonic::CGameObjectCSD> m_spTitleBG;
+Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectTitleBG;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneTitleBG;
+
 void TitleUI_PlayMotion(Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, char const* motion, bool loop = false, bool reverse = false)
 {
 	if (!scene) return;
@@ -188,6 +192,34 @@ void TitleUI_SetEffectVolume(float volume)
 
 HOOK(void, __fastcall, TitleUI_TitleCMainCState_InitBegin, 0x571370, hh::fnd::CStateMachineBase::CStateBase* This)
 {
+	Sonic::CGameObject* gameObject = (Sonic::CGameObject*)(This->GetContextBase());
+	Sonic::CCsdDatabaseWrapper wrapper(gameObject->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
+
+	//---------------------------------------------------------------
+	auto spCsdProject = wrapper.GetCsdProject("background");
+	m_projectTitleBG = spCsdProject->m_rcProject;
+
+	m_sceneTitleBG = m_projectTitleBG->CreateScene("fileselect");
+
+	if (m_projectTitleBG && !m_spTitleBG)
+	{
+		m_spTitleBG = boost::make_shared<Sonic::CGameObjectCSD>(m_projectTitleBG, 0.5f, "HUD", false);
+		Sonic::CGameDocument::GetInstance()->AddGameObject(m_spTitleBG, "main", gameObject);
+	}
+
+	//---------------------------------------------------------------
+	spCsdProject = wrapper.GetCsdProject("title_English");
+	m_projectTitle = spCsdProject->m_rcProject;
+
+	m_sceneTitle = m_projectTitle->CreateScene("Scene_Title");
+	TitleUI_PlayMotion(m_sceneTitle, "Title_Open");
+
+	if (m_projectTitle && !m_spTitle)
+	{
+		m_spTitle = boost::make_shared<Sonic::CGameObjectCSD>(m_projectTitle, 0.5f, "HUD", false);
+		Sonic::CGameDocument::GetInstance()->AddGameObject(m_spTitle, "main", gameObject);
+	}
+
 	originalTitleUI_TitleCMainCState_InitBegin(This);
 
 	// Revert demo menu end state
@@ -210,21 +242,6 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_InitBegin, 0x571370, hh::fnd::CS
 
 HOOK(void, __fastcall, TitleUI_TitleCMainCState_WaitStartBegin, 0x571DB0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
-	Sonic::CGameObject* gameObject = (Sonic::CGameObject*)(This->GetContextBase());
-	Sonic::CCsdDatabaseWrapper wrapper(gameObject->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
-
-	auto spCsdProject = wrapper.GetCsdProject("title_English");
-	m_projectTitle = spCsdProject->m_rcProject;
-
-	m_sceneTitle = m_projectTitle->CreateScene("Scene_Title");
-	TitleUI_PlayMotion(m_sceneTitle, "Title_Open");
-
-	if (m_projectTitle && !m_spTitle)
-	{
-		m_spTitle = boost::make_shared<Sonic::CGameObjectCSD>(m_projectTitle, 0.5f, "HUD", false);
-		Sonic::CGameDocument::GetInstance()->AddGameObject(m_spTitle, "main", gameObject);
-	}
-
 	titleState = TitleState::TS_FadeIn;
 	originalTitleUI_TitleCMainCState_WaitStartBegin(This);
 }
@@ -276,6 +293,15 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_WaitStartEnd, 0x571EE0, hh::fnd:
 
 	Chao::CSD::CProject::DestroyScene(m_projectTitle.Get(), m_sceneTitle);
 	m_projectTitle = nullptr;
+
+	if (m_spTitleBG)
+	{
+		m_spTitleBG->SendMessage(m_spTitleBG->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+		m_spTitleBG = nullptr;
+	}
+
+	Chao::CSD::CProject::DestroyScene(m_projectTitleBG.Get(), m_sceneTitleBG);
+	m_projectTitleBG = nullptr;
 
 	originalTitleUI_TitleCMainCState_WaitStartEnd(This);
 }
@@ -626,7 +652,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 		if (m_sceneMenuBars && m_sceneMenuBars->m_MotionDisableFlag)
 		{
 			// Go to apporiate index
-			m_cursor1Data.m_index = hasSaveFile ? MenuType::MT_Continue : MenuType::MT_Continue;
+			m_cursor1Data.m_index = hasSaveFile ? MenuType::MT_Continue : MenuType::MT_NewGame;
 			m_cursor1Data.m_index = m_allowStoryMode ? m_cursor1Data.m_index : MenuType::MT_TrialSelect;
 
 			// wait until bar finish animation then show cursor
