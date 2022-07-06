@@ -133,6 +133,22 @@ public:
 		}
 	};
 
+	struct ReturnData
+	{
+		MenuState m_menuState;
+		int m_cursor1Index;
+		int m_stageCursorIndex;
+		int m_missionCursorIndex;
+
+		ReturnData()
+		{
+			m_menuState = MenuState::MS_Idle;
+			m_cursor1Index = 0;
+			m_stageCursorIndex = 0;
+			m_missionCursorIndex = 0;
+		}
+	};
+
 	static void applyPatches();
 
 	static void populateTrialData();
@@ -140,6 +156,8 @@ public:
 
 	static void populateStageData(size_t stage, std::string const& stageID);
 	static void cursorStageSelect(int index, bool isMission);
+	static void cursorMission(int index);
+	static void cursorStage(int index);
 	static void cursorStageArrow(int index);
 
 	static void cursorSelect(CursorData& data, Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, uint32_t soundCueID = 0xFFFFFFFF);

@@ -12,8 +12,8 @@ public:
 	static void applyPatches();
 
 	static float m_startCountdown;
-	static void startNowLoading(float countdown = 0.0f);
-	static void stopNowLoading();
+	static void startNowLoading(float countdown = 0.0f, bool ignoreOthers = false);
+	static void stopNowLoading(float fadeInTime = 0.4f, bool forceStop = false);
 
 	// ImGui
 	static uint32_t m_stagePrevious;

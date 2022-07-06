@@ -33,101 +33,8 @@ void TitleUI_PlayMotion(Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, char c
 }
 
 TitleState titleState = TitleState::TS_FadeIn;
-HOOK(void, __fastcall, TitleUI_TitleCMainCState_WaitStartBegin, 0x571DB0, hh::fnd::CStateMachineBase::CStateBase* This)
-{
-	Sonic::CGameObject* gameObject = (Sonic::CGameObject*)(This->GetContextBase());
-	Sonic::CCsdDatabaseWrapper wrapper(gameObject->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
-
-	auto spCsdProject = wrapper.GetCsdProject("title_English");
-	m_projectTitle = spCsdProject->m_rcProject;
-
-	m_sceneTitle = m_projectTitle->CreateScene("Scene_Title");
-	TitleUI_PlayMotion(m_sceneTitle, "Title_Open");
-
-	if (m_projectTitle && !m_spTitle)
-	{
-		m_spTitle = boost::make_shared<Sonic::CGameObjectCSD>(m_projectTitle, 0.5f, "HUD", false);
-		Sonic::CGameDocument::GetInstance()->AddGameObject(m_spTitle, "main", gameObject);
-	}
-
-	titleState = TitleState::TS_FadeIn;
-	originalTitleUI_TitleCMainCState_WaitStartBegin(This);
-}
-
-HOOK(void, __fastcall, TitleUI_TitleCMainCState_WaitStartAdvance, 0x571F80, uint32_t This)
-{
-	originalTitleUI_TitleCMainCState_WaitStartAdvance(This);
-
-	uint32_t caseIndex = *(uint32_t*)(This + 36);
-	if (caseIndex == 6 && titleState == 1)
-	{
-		// Pressed start
-		titleState = TitleState::TS_Confirm;
-		TitleUI_PlayMotion(m_sceneTitle, "Title_Close_01");
-	}
-	else if (caseIndex == 1 && titleState == 1)
-	{
-		// Idle too long
-		titleState = TitleState::TS_FadeOut;
-		TitleUI_PlayMotion(m_sceneTitle, "Title_Close_03");
-	}
-
-	if (m_sceneTitle && m_sceneTitle->m_MotionDisableFlag)
-	{
-		switch (titleState)
-		{
-		case 0:
-			titleState = TitleState::TS_Wait;
-			TitleUI_PlayMotion(m_sceneTitle, "Title_Loop", true);
-			break;
-		case 2:
-			titleState = TitleState::TS_FadeOut;
-			TitleUI_PlayMotion(m_sceneTitle, "Title_Close_03");
-			break;
-		case 3:
-			titleState = TitleState::TS_End;
-			break;
-		}
-	}
-}
-
-HOOK(void, __fastcall, TitleUI_TitleCMainCState_WaitStartEnd, 0x571EE0, hh::fnd::CStateMachineBase::CStateBase* This)
-{
-	if (m_spTitle)
-	{
-		m_spTitle->SendMessage(m_spTitle->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
-		m_spTitle = nullptr;
-	}
-
-	Chao::CSD::CProject::DestroyScene(m_projectTitle.Get(), m_sceneTitle);
-	m_projectTitle = nullptr;
-
-	originalTitleUI_TitleCMainCState_WaitStartEnd(This);
-}
-
-void __declspec(naked) TitleUI_TitleCMainFadeInCompleted()
-{
-	// Wait until title animation finishes
-	static uint32_t returnAddress = 0x571FF2;
-	__asm
-	{
-		cmp		titleState, TS_Wait
-		jmp		[returnAddress]
-	}
-}
-
-void __declspec(naked) TitleUI_TitleCMainToSelectMenu()
-{
-	// Wait until title animation finishes
-	static uint32_t returnAddress = 0x57258D;
-	__asm
-	{
-		cmp		titleState, TS_End
-		jmp		[returnAddress]
-	}
-}
-
 MenuState m_menuState = MenuState::MS_FadeIn;
+TitleUI::ReturnData m_returnData;
 
 boost::shared_ptr<Sonic::CGameObjectCSD> m_spMenuBG;
 Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectMenuBG;
@@ -288,6 +195,111 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_InitBegin, 0x571370, hh::fnd::CS
 	WRITE_MEMORY(0xD7712E, uint32_t, 1);
 
 	m_menuState = MenuState::MS_Idle;
+
+	// Skip to previous menu we left off
+	if (m_returnData.m_menuState != MenuState::MS_Idle)
+	{
+		LoadingUI::startNowLoading(0.0f, true);
+
+		WRITE_NOP(0x571ED0, 5); // don't play title music
+		WRITE_NOP(0x572035, 6); // auto press start
+		WRITE_NOP(0x56F1EF, 6); // use previous controller ID
+		WRITE_MEMORY(0x5720B0, uint8_t, 0xEB); // don't play sfx
+	}
+}
+
+HOOK(void, __fastcall, TitleUI_TitleCMainCState_WaitStartBegin, 0x571DB0, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+	Sonic::CGameObject* gameObject = (Sonic::CGameObject*)(This->GetContextBase());
+	Sonic::CCsdDatabaseWrapper wrapper(gameObject->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
+
+	auto spCsdProject = wrapper.GetCsdProject("title_English");
+	m_projectTitle = spCsdProject->m_rcProject;
+
+	m_sceneTitle = m_projectTitle->CreateScene("Scene_Title");
+	TitleUI_PlayMotion(m_sceneTitle, "Title_Open");
+
+	if (m_projectTitle && !m_spTitle)
+	{
+		m_spTitle = boost::make_shared<Sonic::CGameObjectCSD>(m_projectTitle, 0.5f, "HUD", false);
+		Sonic::CGameDocument::GetInstance()->AddGameObject(m_spTitle, "main", gameObject);
+	}
+
+	titleState = TitleState::TS_FadeIn;
+	originalTitleUI_TitleCMainCState_WaitStartBegin(This);
+}
+
+HOOK(void, __fastcall, TitleUI_TitleCMainCState_WaitStartAdvance, 0x571F80, uint32_t This)
+{
+	originalTitleUI_TitleCMainCState_WaitStartAdvance(This);
+
+	uint32_t caseIndex = *(uint32_t*)(This + 36);
+	if (caseIndex == 6 && titleState == 1)
+	{
+		// Pressed start
+		titleState = TitleState::TS_Confirm;
+		TitleUI_PlayMotion(m_sceneTitle, "Title_Close_01");
+	}
+	else if (caseIndex == 1 && titleState == 1)
+	{
+		// Idle too long
+		titleState = TitleState::TS_FadeOut;
+		TitleUI_PlayMotion(m_sceneTitle, "Title_Close_03");
+	}
+
+	if (m_sceneTitle && m_sceneTitle->m_MotionDisableFlag)
+	{
+		switch (titleState)
+		{
+		case TitleState::TS_FadeIn:
+			titleState = TitleState::TS_Wait;
+			TitleUI_PlayMotion(m_sceneTitle, "Title_Loop", true);
+			break;
+		case TitleState::TS_Confirm:
+			titleState = TitleState::TS_FadeOut;
+			TitleUI_PlayMotion(m_sceneTitle, "Title_Close_03");
+			break;
+		case TitleState::TS_FadeOut:
+			titleState = TitleState::TS_End;
+			break;
+		}
+	}
+}
+
+HOOK(void, __fastcall, TitleUI_TitleCMainCState_WaitStartEnd, 0x571EE0, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+	if (m_spTitle)
+	{
+		m_spTitle->SendMessage(m_spTitle->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+		m_spTitle = nullptr;
+	}
+
+	Chao::CSD::CProject::DestroyScene(m_projectTitle.Get(), m_sceneTitle);
+	m_projectTitle = nullptr;
+
+	originalTitleUI_TitleCMainCState_WaitStartEnd(This);
+}
+
+void __declspec(naked) TitleUI_TitleCMainFadeInCompleted()
+{
+	// Wait until title animation finishes
+	static uint32_t returnAddress = 0x571FF2;
+	__asm
+	{
+		cmp		titleState, TS_Wait
+		jmp		[returnAddress]
+	}
+}
+
+void __declspec(naked) TitleUI_TitleCMainToSelectMenu()
+{
+	// Wait until title animation finishes
+	static uint32_t returnAddress = 0x57258D;
+	__asm
+	{
+		cmp		titleState, TS_End
+		jmp		[returnAddress]
+	}
 }
 
 HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::fnd::CStateMachineBase::CStateBase* This)
@@ -521,6 +533,51 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 	}
 
 	m_menuState = MenuState::MS_FadeIn;
+
+	// Skip to previous menu we left off
+	if (m_returnData.m_menuState != MenuState::MS_Idle)
+	{
+		m_menuState = m_returnData.m_menuState;
+
+		// Jump to the correct state
+		switch (m_returnData.m_menuState)
+		{
+		case MenuState::MS_ModeSelect:
+		case MenuState::MS_TownTrial:
+		{
+			for (int i = 0; i < MenuType::MT_COUNT; i++)
+			{
+				m_sceneMenuText[i]->SetHideFlag(true);
+			}
+
+			m_cursor1Data.m_index = m_returnData.m_cursor1Index;
+			m_sceneMenuCursor2->SetPosition(99.0f, (m_cursor1Data.m_index + 1) * 60.0f);
+			m_stageCursorIndex = m_returnData.m_stageCursorIndex;
+			m_missionCursorIndex = m_returnData.m_missionCursorIndex;
+
+			TitleUI::menuTitleSecondary(true, m_returnData.m_menuState == MenuState::MS_ModeSelect ? 8 : 10);
+			m_sceneMenuTitleText->SetHideFlag(true);
+
+			// populate itself so the data can refresh
+			TitleUI::populateStageData(m_stageData.m_stage, m_stageData.m_stageID);
+
+			TitleUI::cursorMission(m_missionCursorIndex);
+			TitleUI_PlayMotion(m_sceneMissionPlate, "DefaultAnim");
+			m_sceneMissionText->SetHideFlag(false);
+			break;
+		}
+		}
+
+		m_returnData.m_menuState = MenuState::MS_Idle;
+		LoadingUI::stopNowLoading(0.0f, true);
+
+		// Revert skipping code
+		WRITE_MEMORY(0x571ED0, uint8_t, 0xE8, 0x4B, 0xE7, 0xFF, 0xFF);
+		WRITE_MEMORY(0x572035, uint8_t, 0x0F, 0x8C, 0x9F, 0x00, 0x00, 0x00);
+		WRITE_MEMORY(0x56F1EF, uint8_t, 0x56, 0xE8, 0x3B, 0xF3, 0xAE, 0x00);
+		WRITE_MEMORY(0x5720B0, uint8_t, 0x75);
+	}
+
 	originalTitleUI_TitleCMainCState_SelectMenuBegin(This);
 }
 
@@ -568,6 +625,10 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 	{
 		if (m_sceneMenuBars && m_sceneMenuBars->m_MotionDisableFlag)
 		{
+			// Go to apporiate index
+			m_cursor1Data.m_index = hasSaveFile ? MenuType::MT_Continue : MenuType::MT_Continue;
+			m_cursor1Data.m_index = m_allowStoryMode ? m_cursor1Data.m_index : MenuType::MT_TrialSelect;
+
 			// wait until bar finish animation then show cursor
 			m_cursor1Data.m_hidden = false;
 			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1);
@@ -616,6 +677,8 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 					*outState = 0;
 					m_fadeOutTime = 0.0f;
 					m_menuState = MenuState::MS_FadeOut;
+
+					m_returnData.m_menuState = MenuState::MS_FadeIn;
 				}
 				else
 				{
@@ -638,6 +701,8 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 					*outState = 1;
 					m_fadeOutTime = 0.0f;
 					m_menuState = MenuState::MS_FadeOut;
+
+					m_returnData.m_menuState = MenuState::MS_FadeIn;
 				}
 				break;
 			}
@@ -816,7 +881,9 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 				m_sceneStageCursor->SetHideFlag(true);
 				m_sceneStageCursor2->SetHideFlag(true);
-				TitleUI::cursorStageSelect(0, true);
+
+				m_missionCursorIndex = 0;
+				TitleUI::cursorMission(m_missionCursorIndex);
 
 				TitleUI_PlayMotion(m_sceneMissionPlate, "DefaultAnim");
 				m_sceneMissionText->SetHideFlag(false);
@@ -851,7 +918,8 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 		TrialData const& data = m_actTrialData[id];
 		if (m_stageData.m_isBoss && (scrollUp || scrollDown))
 		{
-			TitleUI::cursorStageSelect(m_missionCursorIndex == 0 ? 1 : 0, true);
+			m_missionCursorIndex = (m_missionCursorIndex == 0) ? 1 : 0;
+			TitleUI::cursorMission(m_missionCursorIndex);
 			if (m_missionCursorIndex == 0)
 			{
 				TitleUI::populateStageData(data.m_stage, data.m_stageID);
@@ -880,6 +948,11 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 				*outState = 4;
 				m_fadeOutTime = 0.0f;
 				m_menuState = MenuState::MS_FadeOutStage;
+
+				m_returnData.m_menuState = MenuState::MS_ModeSelect;
+				m_returnData.m_cursor1Index = MenuType::MT_TrialSelect;
+				m_returnData.m_stageCursorIndex = m_stageCursorIndex;
+				m_returnData.m_missionCursorIndex = m_missionCursorIndex;
 			}
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
@@ -937,6 +1010,10 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 				*outState = 4;
 				m_fadeOutTime = 0.0f;
 				m_menuState = MenuState::MS_FadeOutMission;
+
+				m_returnData.m_menuState = MenuState::MS_TownTrial;
+				m_returnData.m_cursor1Index = MenuType::MT_TrialSelect;
+				m_returnData.m_missionCursorIndex = m_missionCursorIndex;
 			}
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
@@ -1610,34 +1687,46 @@ void TitleUI::cursorStageSelect(int index, bool isMission)
 
 	if (isMission)
 	{
-		static char const* cursorSelectName[] =
-		{
-			"stagecursor_loop",
-			"stagecursor_loop02",
-			"stagecursor_loop03",
-			"stagecursor_loop04",
-			"stagecursor_loop05",
-			"stagecursor_loop06",
-			"stagecursor_loop07",
-		};
-		TitleUI_PlayMotion(m_sceneMissionCursor, cursorSelectName[visualCursorIndex]);
+		cursorMission(visualCursorIndex);
 	}
 	else
 	{
-		static char const* cursorSelectName[] =
-		{
-			"stagecursor_loop",
-			"stagecursor02",
-			"stagecursor03",
-			"stagecursor04",
-			"stagecursor05",
-			"stagecursor06",
-			"stagecursor07",
-		};
-		TitleUI_PlayMotion(m_sceneStageCursor, cursorSelectName[visualCursorIndex]);
+		cursorStage(visualCursorIndex);
 	}
+}
 
-	cursorStageArrow(visualCursorIndex);
+void TitleUI::cursorMission(int index)
+{
+	static char const* cursorSelectName[] =
+	{
+		"stagecursor_loop",
+		"stagecursor_loop02",
+		"stagecursor_loop03",
+		"stagecursor_loop04",
+		"stagecursor_loop05",
+		"stagecursor_loop06",
+		"stagecursor_loop07",
+	};
+	TitleUI_PlayMotion(m_sceneMissionCursor, cursorSelectName[index]);
+
+	cursorStageArrow(index);
+}
+
+void TitleUI::cursorStage(int index)
+{
+	static char const* cursorSelectName[] =
+	{
+		"stagecursor_loop",
+		"stagecursor02",
+		"stagecursor03",
+		"stagecursor04",
+		"stagecursor05",
+		"stagecursor06",
+		"stagecursor07",
+	};
+	TitleUI_PlayMotion(m_sceneStageCursor, cursorSelectName[index]);
+
+	cursorStageArrow(index);
 }
 
 void TitleUI::cursorStageArrow(int index)

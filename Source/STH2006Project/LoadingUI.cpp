@@ -177,11 +177,13 @@ void LoadingUI::applyPatches()
 	INSTALL_HOOK(LoadingUI_CLoadingSimple);
 }
 
+bool m_ignoreStopNowLoadingRequest = false;
 float LoadingUI::m_startCountdown = -1.0f;
-void LoadingUI::startNowLoading(float countdown)
+void LoadingUI::startNowLoading(float countdown, bool ignoreOthers)
 {
 	if (!m_drawEnabled)
 	{
+		m_ignoreStopNowLoadingRequest = ignoreOthers;
 		if (countdown > 0.0f)
 		{
 			m_startCountdown = countdown;
@@ -197,11 +199,14 @@ void LoadingUI::startNowLoading(float countdown)
 	}
 }
 
-void LoadingUI::stopNowLoading()
+void LoadingUI::stopNowLoading(float fadeInTime, bool forceStop)
 {
-	if (m_drawEnabled && LoadingUI::m_fadeInTime == 0.0f)
+	if (!m_ignoreStopNowLoadingRequest || (m_ignoreStopNowLoadingRequest && forceStop))
 	{
-		LoadingUI::m_fadeInTime = 0.4f;
+		if (m_drawEnabled && LoadingUI::m_fadeInTime == 0.0f)
+		{
+			LoadingUI::m_fadeInTime = (fadeInTime <= 0.0f) ? 0.001f : fadeInTime;
+		}
 	}
 }
 
