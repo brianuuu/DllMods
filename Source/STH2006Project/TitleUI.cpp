@@ -1633,7 +1633,7 @@ void TitleUI::refreshTrialAvailability()
 	}
 }
 
-void TitleUI::populateStageData(size_t stage, std::string const& stageID)
+void TitleUI::populateStageData(size_t stage, std::string stageID)
 {
 	float bestTime, bestTime2, bestTime3;
 	uint32_t bestRank;

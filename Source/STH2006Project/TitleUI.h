@@ -154,7 +154,7 @@ public:
 	static void populateTrialData();
 	static void refreshTrialAvailability();
 
-	static void populateStageData(size_t stage, std::string const& stageID);
+	static void populateStageData(size_t stage, std::string stageID);
 	static void cursorStageSelect(int index, bool isMission);
 	static void cursorMission(int index);
 	static void cursorStage(int index);
