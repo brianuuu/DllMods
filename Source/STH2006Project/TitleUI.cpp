@@ -1559,32 +1559,37 @@ void TitleUI::populateTrialData()
 	m_displayNonCompletedStage = reader.GetBoolean("Settings", "displayNonCompletedStage", false);
 	m_allowPlayNonCompletedStage = reader.GetBoolean("Settings", "allowPlayNonCompletedStage", false);
 
-	std::vector<std::string> sectionSorted;
+	struct SectionSort
+	{
+		std::string m_section;
+		int m_sort;
+	};
+	std::vector<SectionSort> sectionSorted;
 	for (std::string const& section : reader.Sections())
 	{
 		if (reader.GetBoolean(section, "enabled", false))
 		{
-			sectionSorted.push_back(section);
+			sectionSorted.push_back({ section, reader.GetInteger(section, "sort", 0) });
 		}
 	}
-	std::sort(sectionSorted.begin(), sectionSorted.end(), [](std::string const& a, std::string const& b) {return std::stoi(a) < std::stoi(b); });
+	std::sort(sectionSorted.begin(), sectionSorted.end(), [](SectionSort const& a, SectionSort const& b) {return a.m_sort < b.m_sort; });
 
-	for (std::string const& section : sectionSorted)
+	for (SectionSort const& sectionSort : sectionSorted)
 	{
 		TrialData data;
-		data.m_stage = std::stoi(section);
+		data.m_stage = std::stoi(sectionSort.m_section);
 
-		data.m_header = reader.Get(section, "header", "");
-		data.m_stageID = reader.Get(section, "stageID", "");
+		data.m_header = reader.Get(sectionSort.m_section, "header", "");
+		data.m_stageID = reader.Get(sectionSort.m_section, "stageID", "");
 		if (data.m_stageID.empty()) continue;
 
-		data.m_actName = reader.Get(section, "actName", "");
+		data.m_actName = reader.Get(sectionSort.m_section, "actName", "");
 		data.m_actName = std::regex_replace(data.m_actName, std::regex(" "), "  ");
 		data.m_actName = std::regex_replace(data.m_actName, std::regex("\\\\n"), "\n");
-		data.m_missionName = reader.Get(section, "missionName", "");
+		data.m_missionName = reader.Get(sectionSort.m_section, "missionName", "");
 		data.m_missionName = std::regex_replace(data.m_missionName, std::regex(" "), "  ");
 		data.m_missionName = std::regex_replace(data.m_missionName, std::regex("\\\\n"), "\n");
-		data.m_missionNameJP = reader.Get(section, "missionNameJP", "");
+		data.m_missionNameJP = reader.Get(sectionSort.m_section, "missionNameJP", "");
 		if (data.m_actName.empty() && (data.m_missionName.empty() || data.m_missionNameJP.empty())) continue;
 
 		if (!data.m_actName.empty())
