@@ -114,6 +114,7 @@ public:
 		std::string m_stageID;
 
 		bool m_isBoss;
+		bool m_isMission;
 
 		char m_bestTime[16];
 		uint32_t m_bestScore;

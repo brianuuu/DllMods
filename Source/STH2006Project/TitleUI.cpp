@@ -1576,7 +1576,8 @@ void TitleUI::populateStageData(size_t stage, std::string const& stageID)
 	}
 
 	// Hide silver medal if mission or boss
-	m_sceneMissionText->GetNode("item_icon")->SetHideFlag((stage & 0xFF00) > 0 && (stage & 0xFF) <= 0x11);
+	m_stageData.m_isMission = (stage & 0xFF00) > 0 && (stage & 0xFF) <= 0x11;
+	m_sceneMissionText->GetNode("item_icon")->SetHideFlag(m_stageData.m_isMission || m_stageData.m_isBoss);
 }
 
 void TitleUI::cursorStageSelect(int index, bool isMission)
@@ -2226,7 +2227,7 @@ void TitleUI::drawStageData()
 			ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * (0.5726563f - offset.x), *BACKBUFFER_HEIGHT * (0.5375f - offset.y)));
 			ImGui::Text(std::to_string(m_stageData.m_bestScore).c_str());
 			
-			if (!m_drawTownTrial)
+			if (!m_stageData.m_isMission && !m_stageData.m_isBoss)
 			{
 				ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * (0.46875f - offset.x), *BACKBUFFER_HEIGHT * (0.5875f - offset.y)));
 				ImGui::Text("SILVER MEDAL");
