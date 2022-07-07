@@ -1425,15 +1425,11 @@ void CustomHUD::draw()
         char const* captionTitle = m_isPamPause ? "Caption0" : (m_cursorPos == 1 ? "Caption1" : "Caption2");
         ImGui::Begin(captionTitle, &visible, UIContext::m_hudFlags);
         {
-            float sizeX = *BACKBUFFER_WIDTH * 1090.0f / 1280.0f;
-            float sizeY = *BACKBUFFER_HEIGHT * 382.0f / 720.0f;
-
             ImVec2 textSize = ImGui::CalcTextSize(m_yesNoWindowText.c_str());
-
-            ImGui::SetWindowFocus();
-            ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
+            ImGui::SetWindowFocus(); 
+            ImGui::SetWindowPos(ImVec2(0, 0));
+            ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * 0.5f - textSize.x / 2.0f, *BACKBUFFER_HEIGHT * 0.4024f - textSize.y / 2.0f));
             ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 0.9f), m_yesNoWindowText.c_str());
-            ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.5f - textSize.x / 2.0f, *BACKBUFFER_HEIGHT * 0.4024f - textSize.y / 2.0f));
         }
         ImGui::End();
 
