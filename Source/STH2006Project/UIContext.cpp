@@ -70,6 +70,10 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     {
         builderTextbox.AddText(iter.second.c_str());
     }
+    for (auto const& iter : TitleUI::m_menuText)
+    {
+        builderTextbox.AddText(iter.second.c_str());
+    }
     builderTextbox.BuildRanges(&rangesTextbox);
 
     const float fontSubtitleSize = 39.0f * (float)*BACKBUFFER_WIDTH / 1920.0f;

@@ -82,6 +82,38 @@ enum OptionType : int
 	OT_UI,
 };
 
+enum MenuTextType : int
+{
+	MTT_NewGame,
+	MTT_NewGameJP,
+	MTT_Continue,
+	MTT_ContinueJP,
+	MTT_TrialSelect,
+	MTT_TrialSelectJP,
+	MTT_TrialSelectAll,
+	MTT_TrialSelectAllJP,
+	MTT_ActTrial,
+	MTT_ActTrialJP,
+	MTT_TownTrial,
+	MTT_TownTrialJP,
+	MTT_SelectStage,
+	MTT_SelectStageJP,
+	MTT_SelectMission,
+	MTT_SelectMissionJP,
+	MTT_Option,
+	MTT_OptionJP,
+	MTT_OptionAudio,
+	MTT_OptionAudioJP,
+	MTT_OptionVO,
+	MTT_OptionVOJP,
+	MTT_OptionDialogue,
+	MTT_OptionDialogueJP,
+	MTT_OptionSubtitle,
+	MTT_OptionSubtitleJP,
+
+	MTT_COUNT
+};
+
 struct TrialData
 {
 	// Common
@@ -184,6 +216,7 @@ public:
 	static void SetYesNoCursor(int pos);
 	static std::string const& GetYesNoText(YesNoTextType type);
 
+	static std::map<MenuTextType, std::string> m_menuText;
 	static void drawMenu();
 	static void drawYesNoWindow();
 	static void drawStageData();

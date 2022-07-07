@@ -98,6 +98,8 @@ int TitleUI::m_yesNoCursorPos = 0;
 float TitleUI::m_yesNoColorTime = 0.0f;
 std::string TitleUI::m_yesNoWindowText;
 
+std::map<MenuTextType, std::string> TitleUI::m_menuText;
+
 bool m_allowStoryMode = true;
 bool m_displayNonCompletedStage = false;
 bool m_allowPlayNonCompletedStage = false;
@@ -1323,6 +1325,8 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 					*outState = 0;
 					m_fadeOutTime = 0.0f;
 					m_menuState = MenuState::MS_FadeOut;
+
+					m_returnData.m_menuState = MenuState::MS_FadeIn;
 				}
 				else if (m_menuState == MenuState::MS_QuitYesNo)
 				{
@@ -1551,6 +1555,38 @@ void TitleUI::applyPatches()
 	WRITE_NOP(0x57656B, 5); // no confirm sfx
 	WRITE_JUMP(0x576528, (void*)0x576561); // immediately confirm
 	INSTALL_HOOK(TitleUI_CDemoMenuObjectAdvance);
+
+	// Menu Text
+	m_menuText[MTT_NewGame] = "New Game: Start a new Story Mode";
+	m_menuText[MTT_NewGameJP] = u8"ニューゲーム：ストーリーの始めからプレイします";
+	m_menuText[MTT_Continue] = "Continue: Continue Story Mode";
+	m_menuText[MTT_ContinueJP] = u8"コンティニュー：ストーリーモードをプレイします";
+	m_menuText[MTT_TrialSelect] = "Trial Select: Play stages you have cleared";
+	m_menuText[MTT_TrialSelectJP] = u8"トライアルセレクト：一度クリアしたことのあるステージで遊びます";
+	m_menuText[MTT_TrialSelectAll] = "Trial Select: Play available stages";
+	m_menuText[MTT_TrialSelectAllJP] = u8"トライアルセレクト：プレイ可能なステージで遊びます";
+	m_menuText[MTT_ActTrial] = "ACT Trial: Choose a Stage and play!";
+	m_menuText[MTT_ActTrialJP] = u8"ACTトライアル：好きなステージを選んでチャレンジ！";
+	m_menuText[MTT_TownTrial] = "Town Trial: Choose a Town Mission and play!";
+	m_menuText[MTT_TownTrialJP] = u8"タウントライアル：好きなタウンミッチョンを選んでチャレンジ！";
+	m_menuText[MTT_SelectStage] = "Please Select a Stage";
+	m_menuText[MTT_SelectStageJP] = u8"ステージを選択してください";
+	m_menuText[MTT_SelectMission] = "Please Select a Mission";
+	m_menuText[MTT_SelectMissionJP] = u8"ミッチョンを選んでください";
+	m_menuText[MTT_Option] = "Options: Adjust various game settings";
+	m_menuText[MTT_OptionJP] = u8"オプション：各種ゲームの設定を行います";
+	m_menuText[MTT_OptionAudio] = "Adjust audio settings.";
+	m_menuText[MTT_OptionAudioJP] = u8"オーディオの設定を変更します";
+	m_menuText[MTT_OptionVO] = "Adjust voice-over language.";
+	m_menuText[MTT_OptionVOJP] = u8"音声言語の設定を変更します";
+	m_menuText[MTT_OptionDialogue] = "Adjust dialogue settings.";
+	m_menuText[MTT_OptionDialogueJP] = u8"専用ボイズの設定を変更します";
+	m_menuText[MTT_OptionSubtitle] = "Adjust subtitle settings.";
+	m_menuText[MTT_OptionSubtitleJP] = u8"字幕の設定を変更します";
+	for (auto& iter : m_menuText)
+	{
+		iter.second = std::regex_replace(iter.second, std::regex(" "), "  ");
+	}
 }
 
 void TitleUI::populateTrialData()
@@ -2268,15 +2304,11 @@ void TitleUI::drawYesNoWindow()
 		static bool visible = true;
 		ImGui::Begin("YesNoCaption", &visible, UIContext::m_hudFlags);
 		{
-			float sizeX = *BACKBUFFER_WIDTH * 1090.0f / 1280.0f;
-			float sizeY = *BACKBUFFER_HEIGHT * 382.0f / 720.0f;
-
 			ImVec2 textSize = ImGui::CalcTextSize(m_yesNoWindowText.c_str());
-
 			ImGui::SetWindowFocus();
-			ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
+			ImGui::SetWindowPos(ImVec2(0, 0));
+			ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * 0.5f - textSize.x / 2.0f, *BACKBUFFER_HEIGHT * 0.4024f - textSize.y / 2.0f));
 			ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 0.9f), m_yesNoWindowText.c_str());
-			ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.5f - textSize.x / 2.0f, *BACKBUFFER_HEIGHT * 0.4024f - textSize.y / 2.0f));
 		}
 		ImGui::End();
 
@@ -2313,6 +2345,94 @@ void TitleUI::drawYesNoWindow()
 void TitleUI::drawStageData()
 {
 	static bool visible = true;
+
+	//-------------------------------------------------------------
+	// Menu Text
+	//-------------------------------------------------------------
+	MenuTextType menuTextType = MenuTextType::MTT_COUNT;
+	switch (m_menuState)
+	{
+	case MenuState::MS_Main:
+	{
+		switch (m_cursor1Data.m_index)
+		{
+		case MenuType::MT_NewGame:
+			menuTextType = MenuTextType::MTT_NewGame;
+			break;
+		case MenuType::MT_Continue:
+			menuTextType = MenuTextType::MTT_Continue;
+			break;
+		case MenuType::MT_TrialSelect:
+			menuTextType = m_allowPlayNonCompletedStage ? MenuTextType::MTT_TrialSelectAll : MenuTextType::MTT_TrialSelect;
+			break;
+		case MenuType::MT_Option:
+			menuTextType = MenuTextType::MTT_Option;
+			break;
+		}
+		break;
+	}
+	case MenuState::MS_TrialSelect:
+	{
+		switch (m_cursor2Data.m_index)
+		{
+		case TrialMenuType::TMT_Act:
+			menuTextType = MenuTextType::MTT_ActTrial;
+			break;
+		case TrialMenuType::TMT_Town:
+			menuTextType = MenuTextType::MTT_TownTrial;
+			break;
+		}
+		break;
+	}
+	case MenuState::MS_ActTrial:
+	{
+		menuTextType = MenuTextType::MTT_SelectStage;
+		break;
+	}
+	case MenuState::MS_TownTrial:
+	case MenuState::MS_ModeSelect:
+	{
+		menuTextType = MenuTextType::MTT_SelectMission;
+		break;
+	}
+	case MenuState::MS_Option:
+	{
+		switch (m_optionIndex)
+		{
+		case OptionType::OT_Audio:
+			menuTextType = MenuTextType::MTT_OptionAudio;
+			break;
+		case OptionType::OT_VO:
+			menuTextType = MenuTextType::MTT_OptionVO;
+			break;
+		case OptionType::OT_Dialog:
+			menuTextType = MenuTextType::MTT_OptionDialogue;
+			break;
+		case OptionType::OT_Subtitle:
+			menuTextType = MenuTextType::MTT_OptionSubtitle;
+			break;
+		}
+		break;
+	}
+	}
+
+	if (menuTextType != MenuTextType::MTT_COUNT)
+	{
+		if (Common::GetUILanguageType() == LT_Japanese)
+		{
+			menuTextType = (MenuTextType)(menuTextType + 1);
+		}
+
+		ImGui::Begin("MenuText", &visible, UIContext::m_hudFlags);
+		{
+			ImVec2 textSize = ImGui::CalcTextSize(m_menuText[menuTextType].c_str());
+			ImGui::SetWindowFocus();
+			ImGui::SetWindowPos(ImVec2(0, 0));
+			ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * 0.5f - textSize.x / 2.0f, *BACKBUFFER_HEIGHT * 0.82222f - textSize.y / 2.0f));
+			ImGui::Text(m_menuText[menuTextType].c_str()); 
+		}
+		ImGui::End();
+	}
 
 	//-------------------------------------------------------------
 	// Stage Data
