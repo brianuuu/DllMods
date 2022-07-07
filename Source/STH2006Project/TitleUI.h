@@ -86,6 +86,7 @@ struct TrialData
 {
 	// Common
 	uint32_t m_stage;
+	bool m_disableSilverMedal;
 	bool m_playable;
 	bool m_hardModePlayable; // boss only
 	std::string m_header;
@@ -113,6 +114,7 @@ public:
 		size_t m_stage;
 		std::string m_stageID;
 
+		bool m_disableSilverMedal;
 		bool m_isBoss;
 		bool m_isMission;
 
@@ -154,7 +156,7 @@ public:
 	static void populateTrialData();
 	static void refreshTrialAvailability();
 
-	static void populateStageData(size_t stage, std::string stageID);
+	static void populateStageData(size_t stage, std::string stageID, bool disableSilverMedal);
 	static void cursorStageSelect(int index, bool isMission);
 	static void cursorMission(int index);
 	static void cursorStage(int index);

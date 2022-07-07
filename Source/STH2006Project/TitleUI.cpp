@@ -586,7 +586,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 			m_sceneMenuTitleText->SetHideFlag(true);
 
 			// populate itself so the data can refresh
-			TitleUI::populateStageData(m_stageData.m_stage, m_stageData.m_stageID);
+			TitleUI::populateStageData(m_stageData.m_stage, m_stageData.m_stageID, m_stageData.m_disableSilverMedal);
 
 			TitleUI::cursorMission(m_missionCursorIndex);
 			TitleUI_PlayMotion(m_sceneMissionPlate, "DefaultAnim");
@@ -848,7 +848,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 					size_t id = m_townTrialVisibleID[m_missionCursorIndex];
 					TrialData const& data = m_townTrialData[id];
-					TitleUI::populateStageData(data.m_stage, data.m_stageID);
+					TitleUI::populateStageData(data.m_stage, data.m_stageID, data.m_disableSilverMedal);
 
 					TitleUI_PlayMotion(m_sceneMissionPlate, "DefaultAnim");
 					m_sceneMissionText->SetHideFlag(false);
@@ -914,7 +914,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 				TitleUI_PlayMotion(m_sceneMissionPlate, "DefaultAnim");
 				m_sceneMissionText->SetHideFlag(false);
-				TitleUI::populateStageData(data.m_stage, data.m_stageID);
+				TitleUI::populateStageData(data.m_stage, data.m_stageID, data.m_disableSilverMedal);
 
 				m_menuState = MenuState::MS_ModeSelect;
 			}
@@ -949,11 +949,11 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			TitleUI::cursorMission(m_missionCursorIndex);
 			if (m_missionCursorIndex == 0)
 			{
-				TitleUI::populateStageData(data.m_stage, data.m_stageID);
+				TitleUI::populateStageData(data.m_stage, data.m_stageID, data.m_disableSilverMedal);
 			}
 			else
 			{
-				TitleUI::populateStageData(data.m_stage | SMT_BossHard, data.m_stageID + "001");
+				TitleUI::populateStageData(data.m_stage | SMT_BossHard, data.m_stageID + "001", data.m_disableSilverMedal);
 			}
 			
 			Common::PlaySoundStatic(soundHandle, 1000004);
@@ -1004,7 +1004,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 			size_t id = m_townTrialVisibleID[m_missionCursorIndex];
 			TrialData const& data = m_townTrialData[id];
-			TitleUI::populateStageData(data.m_stage, data.m_stageID);
+			TitleUI::populateStageData(data.m_stage, data.m_stageID, data.m_disableSilverMedal);
 
 			Common::PlaySoundStatic(soundHandle, 1000004);
 		}
@@ -1014,7 +1014,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 			size_t id = m_townTrialVisibleID[m_missionCursorIndex];
 			TrialData const& data = m_townTrialData[id];
-			TitleUI::populateStageData(data.m_stage, data.m_stageID);
+			TitleUI::populateStageData(data.m_stage, data.m_stageID, data.m_disableSilverMedal);
 
 			Common::PlaySoundStatic(soundHandle, 1000004);
 		}
@@ -1579,6 +1579,7 @@ void TitleUI::populateTrialData()
 	{
 		TrialData data;
 		data.m_stage = std::stoi(sectionSort.m_section);
+		data.m_disableSilverMedal = reader.GetBoolean(sectionSort.m_section, "disableSilverMedal", false);
 
 		data.m_header = reader.Get(sectionSort.m_section, "header", "");
 		data.m_stageID = reader.Get(sectionSort.m_section, "stageID", "");
@@ -1639,7 +1640,7 @@ void TitleUI::refreshTrialAvailability()
 	}
 }
 
-void TitleUI::populateStageData(size_t stage, std::string stageID)
+void TitleUI::populateStageData(size_t stage, std::string stageID, bool disableSilverMedal)
 {
 	float bestTime, bestTime2, bestTime3;
 	uint32_t bestRank;
@@ -1657,6 +1658,7 @@ void TitleUI::populateStageData(size_t stage, std::string stageID)
 
 	m_stageData.m_stage = stage;
 	m_stageData.m_stageID = stageID;
+	m_stageData.m_disableSilverMedal = disableSilverMedal;
 
 	uint8_t stageFirstByte = stage & 0xFF;
 	m_stageData.m_isBoss = stageFirstByte >= SMT_bms && stageFirstByte <= SMT_blb;
@@ -1686,7 +1688,7 @@ void TitleUI::populateStageData(size_t stage, std::string stageID)
 
 	// Hide silver medal if mission or boss
 	m_stageData.m_isMission = (stage & 0xFF00) > 0 && (stage & 0xFF) <= 0x11;
-	m_sceneMissionText->GetNode("item_icon")->SetHideFlag(m_stageData.m_isMission || m_stageData.m_isBoss);
+	m_sceneMissionText->GetNode("item_icon")->SetHideFlag(m_stageData.m_isMission || m_stageData.m_isBoss || m_stageData.m_disableSilverMedal);
 }
 
 void TitleUI::cursorStageSelect(int index, bool isMission)
@@ -2348,7 +2350,7 @@ void TitleUI::drawStageData()
 			ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * (0.5726563f - offset.x), *BACKBUFFER_HEIGHT * (0.5375f - offset.y)));
 			ImGui::Text(std::to_string(m_stageData.m_bestScore).c_str());
 			
-			if (!m_stageData.m_isMission && !m_stageData.m_isBoss)
+			if (!m_stageData.m_isMission && !m_stageData.m_isBoss && !m_stageData.m_disableSilverMedal)
 			{
 				ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * (0.46875f - offset.x), *BACKBUFFER_HEIGHT * (0.5875f - offset.y)));
 				ImGui::Text("SILVER MEDAL");
