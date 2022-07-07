@@ -2,6 +2,7 @@
 #include "UIContext.h"
 #include "Application.h"
 #include "LoadingUI.h"
+#include "Configuration.h"
 
 FUNCTION_PTR(void, __thiscall, TitleUI_TinyChangeState, 0x773250, void* This, SharedPtrTypeless& spState, const Hedgehog::Base::CSharedString name);
 
@@ -208,7 +209,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_InitBegin, 0x571370, hh::fnd::CS
 	}
 
 	//---------------------------------------------------------------
-	spCsdProject = wrapper.GetCsdProject("title_English");
+	spCsdProject = wrapper.GetCsdProject(Configuration::m_titleLogo == Configuration::TitleLogoType::TLT_Original ? "title_English" : "title_English2");
 	m_projectTitle = spCsdProject->m_rcProject;
 
 	m_sceneTitle = m_projectTitle->CreateScene("Scene_Title");
