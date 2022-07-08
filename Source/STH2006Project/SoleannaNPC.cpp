@@ -196,8 +196,8 @@ HOOK(void, __fastcall, SoleannaNPC_MsgNotifyObjectEvent, 0xEA4F50, void* This, v
 
 void SoleannaNPC::applyPatches()
 {
-	if (PathManager::parsePathXml(m_pathsMapA, true, "SoleannaNPC_mapA.path.xml") == tinyxml2::XML_SUCCESS
-	 && PathManager::parsePathXml(m_pathsMapB, true, "SoleannaNPC_mapB.path.xml") == tinyxml2::XML_SUCCESS)
+	if (PathManager::parsePathXml(m_pathsMapA, true, "Assets\\Stage\\SoleannaNPC_mapA.path.xml") == tinyxml2::XML_SUCCESS
+	 && PathManager::parsePathXml(m_pathsMapB, true, "Assets\\Stage\\SoleannaNPC_mapB.path.xml") == tinyxml2::XML_SUCCESS)
 	{
 		INSTALL_HOOK(SoleannaNPC_CSonicUpdate);
 		INSTALL_HOOK(SoleannaNPC_CGameObject3DDestruction);
