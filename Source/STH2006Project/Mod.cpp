@@ -14,6 +14,7 @@
 #include "ParamManager.h"
 #include "MissionManager.h"
 #include "TitleUI.h"
+#include "Window.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
@@ -82,6 +83,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
     // Title/Main Menu
     TitleUI::applyPatches();
+
+    // Custom window title
+    Window::applyPatches();
 
     // -------------Mandatory codes--------------
     // Patch "Red Rings Appear On New Game" by "brianuuu"

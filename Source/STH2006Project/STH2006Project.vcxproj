@@ -224,16 +224,19 @@ xcopy /Y /E /I "$(MSBuildProjectDirectory)\Fonts" "$(MSBuildProjectDirectory)\bi
     <ClCompile Include="Stage.cpp" />
     <ClCompile Include="SynchronizedObject.cpp" />
     <ClCompile Include="tinyxml2.cpp" />
+    <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
     <ClInclude Include="ArchiveTreePatcher.h" />
     <ClInclude Include="ChaosEnergy.h" />
     <ClInclude Include="Configuration.h" />
+    <ClInclude Include="DllMain.h" />
     <ClInclude Include="EnemyTrigger.h" />
     <ClInclude Include="LoadingUI.h" />
     <ClInclude Include="MissionManager.h" />
     <ClInclude Include="ParamManager.h" />
+    <ClInclude Include="Resources.h" />
     <ClInclude Include="ResultUI.h" />
     <ClInclude Include="SubtitleUI.h" />
     <ClInclude Include="TitleUI.h" />
@@ -248,6 +251,13 @@ xcopy /Y /E /I "$(MSBuildProjectDirectory)\Fonts" "$(MSBuildProjectDirectory)\bi
     <ClInclude Include="Stage.h" />
     <ClInclude Include="SynchronizedObject.h" />
     <ClInclude Include="tinyxml2.h" />
+    <ClInclude Include="Window.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="STH2006Project.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Icon.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
