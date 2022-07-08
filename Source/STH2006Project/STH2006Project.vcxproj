@@ -195,7 +195,6 @@ xcopy /Y /E /I "$(MSBuildProjectDirectory)\Fonts" "$(MSBuildProjectDirectory)\bi
     <ClCompile Include="ArchiveTreePatcher.cpp" />
     <ClCompile Include="ChaosEnergy.cpp" />
     <ClCompile Include="Configuration.cpp" />
-    <ClCompile Include="DemoUI.cpp" />
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="EnemyTrigger.cpp" />
     <ClCompile Include="LoadingUI.cpp" />
@@ -231,7 +230,6 @@ xcopy /Y /E /I "$(MSBuildProjectDirectory)\Fonts" "$(MSBuildProjectDirectory)\bi
     <ClInclude Include="ArchiveTreePatcher.h" />
     <ClInclude Include="ChaosEnergy.h" />
     <ClInclude Include="Configuration.h" />
-    <ClInclude Include="DemoUI.h" />
     <ClInclude Include="EnemyTrigger.h" />
     <ClInclude Include="LoadingUI.h" />
     <ClInclude Include="MissionManager.h" />
