@@ -64,6 +64,7 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
 
     ImVector<ImWchar> rangesTextbox;
     ImFontGlyphRangesBuilder builderTextbox;
+    builderTextbox.AddText("0123456789'\"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ: ?");
     initFontDatabase(L"Assets\\Textbox\\npcData.ini", builderTextbox);
     initFontDatabase(L"Assets\\Title\\titleData.ini", builderTextbox);
     for (auto const& iter : TitleUI::m_yesNoText)

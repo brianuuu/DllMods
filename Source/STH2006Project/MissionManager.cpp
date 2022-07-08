@@ -141,12 +141,43 @@ HOOK(void, __fastcall, Mission_CGameplayFlowStageSetStageInfo, 0xCFF6A0, void* T
 	originalMission_CGameplayFlowStageSetStageInfo(This);
 
 	// Override terrain
-	const INIReader reader(Application::getModDirString() + "Assets\\Title\\titleData.ini");
+	const INIReader reader(Application::getModDirString() + "Assets\\Title\\trialData.ini");
 	uint32_t stageID = Common::GetCurrentStageID();
-	std::string stageTerrain = reader.Get(std::to_string(stageID), "terrainID", "");
+	std::string const stageStr = std::to_string(stageID);
+	std::string stageTerrain = reader.Get(stageStr, "terrainID", "");
 	if (!stageTerrain.empty())
 	{
 		strcpy(Common::GetCurrentTerrain(), stageTerrain.c_str());
+	}
+
+	bool isMission = (stageID & 0xFF00) > 0 && (stageID & 0xFF) <= 0x11;
+	if (isMission)
+	{
+		if (reader.GetBoolean(stageStr, "missionFailEnabled", false))
+		{
+			// Always fail mission if you die (since there's no checkpoint)
+			WRITE_MEMORY(0xD10803, uint8_t, 0xE9, 0xFA, 0x00, 0x00, 0x00, 0x90);
+		}
+		else
+		{
+			WRITE_MEMORY(0xD10803, uint8_t, 0x0F, 0x84, 0xF9, 0x00, 0x00, 0x00);
+		}
+
+		if (reader.GetBoolean(stageStr, "missionLifeEnabled", false))
+		{
+			// Enable life count change
+			WRITE_MEMORY(0xE761ED, uint8_t, 0xEB);
+			WRITE_MEMORY(0xD599CE, uint8_t, 0xEB);
+
+			// Don't allow restart at 0 life
+			WRITE_NOP(0x10A0FCA, 6);
+		}
+		else
+		{
+			WRITE_MEMORY(0xE761ED, uint8_t, 0x77);
+			WRITE_MEMORY(0xD599CE, uint8_t, 0x7E);
+			WRITE_MEMORY(0x10A0FCA, uint8_t, 0x0F, 0x85, 0x61, 0x01, 0x00, 0x00);
+		}
 	}
 }
 
@@ -315,13 +346,6 @@ void MissionManager::applyPatches()
 	// Disable rank display in missions
 	WRITE_NOP(0x109ADFE, 0xA);
 
-	// Enable life count change
-	//WRITE_MEMORY(0xE761ED, uint8_t, 0xEB);
-	//WRITE_MEMORY(0xD599CE, uint8_t, 0xEB);
-
-	// Don't allow restart at 0 life
-	//WRITE_NOP(0x10A0FCA, 6);
-
 	// Don't show mission objective at pause
 	WRITE_MEMORY(0xD00A46, uint8_t, 0);
 	WRITE_MEMORY(0xD07489, uint8_t, 0);
@@ -347,9 +371,6 @@ void MissionManager::applyPatches()
 	// Don't stop camera after mission finishes
 	WRITE_JUMP(0xD0FFDF, (void*)0xD1016C); // success
 	WRITE_JUMP(0xD0F9A4, (void*)0xD0FB31); // fail
-
-	// Always fail mission if you die (since there's no checkpoint)
-	WRITE_MEMORY(0xD10803, uint8_t, 0xE9, 0xFA, 0x00, 0x00, 0x00, 0x90);
 
 	//---------------------------------------------------
 	// CObjMsnNumberDashRing
