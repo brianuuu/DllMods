@@ -9,6 +9,7 @@ FUNCTION_PTR(void*, __stdcall, Mission_fpEventTrigger, 0xD5ED00, void* This, int
 //---------------------------------------------------
 // Mission Complete Result HUD
 //---------------------------------------------------
+bool MissionManager::m_missionAsStage = false;
 HOOK(void, __fastcall, Mission_CMissionManagerAdvance, 0xD10690, uint32_t This, void* Edx, float* a2)
 {
 	uint32_t* pState = (uint32_t*)(This + 184);
@@ -18,7 +19,13 @@ HOOK(void, __fastcall, Mission_CMissionManagerAdvance, 0xD10690, uint32_t This, 
 	static bool dialogShown = false;
 	if (state == 1 || state == 2)
 	{
-		if (*pStateTime == 0.0f)
+		if (MissionManager::m_missionAsStage)
+		{
+			// Skip showing "You Succeed!"/"You Failed"
+			WRITE_NOP(0xD104B0, 6);
+			WRITE_NOP(0xD101B0, 6);
+		}
+		else if (*pStateTime == 0.0f)
 		{
 			// Prevent changing game state until we show dialog
 			WRITE_MEMORY(0xD104B0, uint8_t, 0xE9, 0xCF, 0x01, 0x00, 0x00, 0x90);
@@ -151,33 +158,31 @@ HOOK(void, __fastcall, Mission_CGameplayFlowStageSetStageInfo, 0xCFF6A0, void* T
 	}
 
 	bool isMission = (stageID & 0xFF00) > 0 && (stageID & 0xFF) <= 0x11;
-	if (isMission)
+	if (isMission && reader.GetBoolean(stageStr, "missionAsStage", false))
 	{
-		if (reader.GetBoolean(stageStr, "missionFailEnabled", false))
-		{
-			// Always fail mission if you die (since there's no checkpoint)
-			WRITE_MEMORY(0xD10803, uint8_t, 0xE9, 0xFA, 0x00, 0x00, 0x00, 0x90);
-		}
-		else
-		{
-			WRITE_MEMORY(0xD10803, uint8_t, 0x0F, 0x84, 0xF9, 0x00, 0x00, 0x00);
-		}
+		// Allow dying in mission
+		WRITE_MEMORY(0xD10803, uint8_t, 0x0F, 0x84, 0xF9, 0x00, 0x00, 0x00);
 
-		if (reader.GetBoolean(stageStr, "missionLifeEnabled", false))
-		{
-			// Enable life count change
-			WRITE_MEMORY(0xE761ED, uint8_t, 0xEB);
-			WRITE_MEMORY(0xD599CE, uint8_t, 0xEB);
+		// Enable life count change
+		WRITE_MEMORY(0xE761ED, uint8_t, 0xEB);
+		WRITE_MEMORY(0xD599CE, uint8_t, 0xEB);
 
-			// Don't allow restart at 0 life
-			WRITE_NOP(0x10A0FCA, 6);
-		}
-		else
-		{
-			WRITE_MEMORY(0xE761ED, uint8_t, 0x77);
-			WRITE_MEMORY(0xD599CE, uint8_t, 0x7E);
-			WRITE_MEMORY(0x10A0FCA, uint8_t, 0x0F, 0x85, 0x61, 0x01, 0x00, 0x00);
-		}
+		// Don't allow restart at 0 life
+		WRITE_NOP(0x10A0FCA, 6);
+
+		MissionManager::m_missionAsStage = true;
+	}
+	else
+	{
+		// Always fail mission if you die (since there's no checkpoint)
+		WRITE_MEMORY(0xD10803, uint8_t, 0xE9, 0xFA, 0x00, 0x00, 0x00, 0x90);
+
+		// Revert life codes
+		WRITE_MEMORY(0xE761ED, uint8_t, 0x77);
+		WRITE_MEMORY(0xD599CE, uint8_t, 0x7E);
+		WRITE_MEMORY(0x10A0FCA, uint8_t, 0x0F, 0x85, 0x61, 0x01, 0x00, 0x00);
+
+		MissionManager::m_missionAsStage = false;
 	}
 }
 
@@ -262,7 +267,7 @@ HOOK(bool, __fastcall, Mission_CObjMsnNumberDashRing_AddEventCollision, 0x115B46
 //---------------------------------------------------
 HOOK(void, __fastcall, Mission_CObjGoalRing_MsgHitEventCollision, 0x1159010, uint32_t This, void* Edx, void* message)
 {
-	if (Common::IsCurrentStageMission())
+	if (Common::IsCurrentStageMission() && !MissionManager::m_missionAsStage)
 	{
 		// Disable goalring sfx
 		WRITE_MEMORY(0x1159054, int, -1);

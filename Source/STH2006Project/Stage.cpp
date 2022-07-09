@@ -4,6 +4,7 @@
 #include "UIContext.h"
 #include "ParamManager.h"
 #include "LoadingUI.h"
+#include "MissionManager.h"
 
 //---------------------------------------------------
 // Kingdom Valley sfx
@@ -300,7 +301,7 @@ HOOK(void, __fastcall, Stage_CStateGoalFadeIn, 0xCFD2D0, void* This)
     static const char* Result_Town = "Result_Town";
     static const char* Result = (char*)0x15B38F0;
 
-    if (Common::IsCurrentStageMission())
+    if (Common::IsCurrentStageMission() && !MissionManager::m_missionAsStage)
     {
         WRITE_MEMORY(0xCFD3C9, char*, Result_Town);
     }
