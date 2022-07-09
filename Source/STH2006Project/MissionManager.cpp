@@ -157,7 +157,7 @@ HOOK(void, __fastcall, Mission_CGameplayFlowStageSetStageInfo, 0xCFF6A0, void* T
 		strcpy(Common::GetCurrentTerrain(), stageTerrain.c_str());
 	}
 
-	bool isMission = (stageID & 0xFF00) > 0 && (stageID & 0xFF) <= 0x11;
+	bool isMission = Common::IsStageMission(stageID);
 	if (isMission && reader.GetBoolean(stageStr, "missionAsStage", false))
 	{
 		// Allow dying in mission

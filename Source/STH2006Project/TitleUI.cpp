@@ -1726,7 +1726,7 @@ void TitleUI::populateStageData(size_t stage, std::string stageID, bool disableS
 	}
 
 	// Hide silver medal if mission or boss
-	m_stageData.m_isMission = (stage & 0xFF00) > 0 && (stage & 0xFF) <= 0x11;
+	m_stageData.m_isMission = Common::IsStageMission(stage);
 	m_sceneMissionText->GetNode("item_icon")->SetHideFlag(m_stageData.m_isMission || m_stageData.m_isBoss || m_stageData.m_disableSilverMedal);
 }
 

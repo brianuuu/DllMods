@@ -1283,16 +1283,25 @@ inline char* GetCurrentTerrain()
 	return *(char**)terrainAddress;
 }
 
+inline bool IsStageMission(uint32_t stageID)
+{
+	return (stageID & 0xFF00) > 0 && (stageID & 0xFF) <= SMT_pla200;
+}
+
 inline bool IsCurrentStageMission()
 {
-	uint32_t stageID = GetCurrentStageID();
-	return (stageID & 0xFF00) > 0 && (stageID & 0xFF) <= 0x11;
+	return IsStageMission(GetCurrentStageID());
+}
+
+inline bool IsStageBoss(uint32_t stageID)
+{
+	stageID &= 0xFF;
+	return stageID >= SMT_bms && stageID <= SMT_blb;
 }
 
 inline bool IsCurrentStageBoss()
 {
-	uint8_t stageID = GetCurrentStageID() & 0xFF;
-	return stageID >= SMT_bms && stageID <= SMT_blb;
+	return IsStageBoss(GetCurrentStageID());
 }
 
 inline bool IsStagePlayed(uint32_t stageID)
