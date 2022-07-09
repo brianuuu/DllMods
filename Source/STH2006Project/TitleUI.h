@@ -171,6 +171,7 @@ public:
 	{
 		MenuState m_menuState;
 		int m_cursor1Index;
+		int m_cursor2Index;
 		int m_stageCursorIndex;
 		int m_missionCursorIndex;
 
@@ -178,6 +179,7 @@ public:
 		{
 			m_menuState = MenuState::MS_Idle;
 			m_cursor1Index = 0;
+			m_cursor2Index = 0;
 			m_stageCursorIndex = 0;
 			m_missionCursorIndex = 0;
 		}

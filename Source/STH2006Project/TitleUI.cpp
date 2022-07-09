@@ -580,6 +580,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 			}
 
 			m_cursor1Data.m_index = m_returnData.m_cursor1Index;
+			m_cursor2Data.m_index = m_returnData.m_cursor2Index;
 			m_sceneMenuCursor2->SetPosition(99.0f, (m_cursor1Data.m_index + 1) * 60.0f);
 			m_stageCursorIndex = m_returnData.m_stageCursorIndex;
 			m_missionCursorIndex = m_returnData.m_missionCursorIndex;
@@ -980,6 +981,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 				m_returnData.m_menuState = MenuState::MS_ModeSelect;
 				m_returnData.m_cursor1Index = MenuType::MT_TrialSelect;
+				m_returnData.m_cursor2Index = TrialMenuType::TMT_Act;
 				m_returnData.m_stageCursorIndex = m_stageCursorIndex;
 				m_returnData.m_missionCursorIndex = m_missionCursorIndex;
 			}
@@ -1042,6 +1044,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 
 				m_returnData.m_menuState = MenuState::MS_TownTrial;
 				m_returnData.m_cursor1Index = MenuType::MT_TrialSelect;
+				m_returnData.m_cursor2Index = TrialMenuType::TMT_Town;
 				m_returnData.m_missionCursorIndex = m_missionCursorIndex;
 			}
 		}
