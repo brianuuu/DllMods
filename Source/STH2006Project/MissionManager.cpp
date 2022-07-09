@@ -163,12 +163,15 @@ HOOK(void, __fastcall, Mission_CGameplayFlowStageSetStageInfo, 0xCFF6A0, void* T
 		// Allow dying in mission
 		WRITE_MEMORY(0xD10803, uint8_t, 0x0F, 0x84, 0xF9, 0x00, 0x00, 0x00);
 
+		// Enable life HUD
+		WRITE_NOP(0x109ADF8, 6);
+
 		// Enable life count change
 		WRITE_MEMORY(0xE761ED, uint8_t, 0xEB);
 		WRITE_MEMORY(0xD599CE, uint8_t, 0xEB);
 
 		// Don't allow restart at 0 life
-		WRITE_NOP(0x10A0FCA, 6);
+		//WRITE_NOP(0x10A0FCA, 6);
 
 		MissionManager::m_missionAsStage = true;
 	}
@@ -178,9 +181,10 @@ HOOK(void, __fastcall, Mission_CGameplayFlowStageSetStageInfo, 0xCFF6A0, void* T
 		WRITE_MEMORY(0xD10803, uint8_t, 0xE9, 0xFA, 0x00, 0x00, 0x00, 0x90);
 
 		// Revert life codes
+		WRITE_MEMORY(0x109ADF8, uint8_t, 0x21, 0xBD, 0x5C, 0x02, 0x00, 0x00);
 		WRITE_MEMORY(0xE761ED, uint8_t, 0x77);
 		WRITE_MEMORY(0xD599CE, uint8_t, 0x7E);
-		WRITE_MEMORY(0x10A0FCA, uint8_t, 0x0F, 0x85, 0x61, 0x01, 0x00, 0x00);
+		//WRITE_MEMORY(0x10A0FCA, uint8_t, 0x0F, 0x85, 0x61, 0x01, 0x00, 0x00);
 
 		MissionManager::m_missionAsStage = false;
 	}
