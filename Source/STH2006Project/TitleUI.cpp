@@ -1692,6 +1692,7 @@ void TitleUI::populateStageData(size_t stage, std::string stageID, bool disableS
 		bestTime2,
 		bestTime3,
 		bestRank,
+		m_stageData.m_bestRing,
 		m_stageData.m_silverMedalCount
 	)) return;
 
@@ -2472,12 +2473,14 @@ void TitleUI::drawStageData()
 			ImGui::Text("BEST  SCORE");
 			ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * (0.5726563f - offset.x), *BACKBUFFER_HEIGHT * (0.5375f - offset.y)));
 			ImGui::Text(std::to_string(m_stageData.m_bestScore).c_str());
-			
+			ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH* (0.46875f - offset.x), *BACKBUFFER_HEIGHT* (0.5875f - offset.y)));
+			ImGui::Text(Common::GetUILanguageType() == LT_Japanese ? "BEST  RING" : "BEST  Rings");
+			ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH* (0.5726563f - offset.x), *BACKBUFFER_HEIGHT* (0.6421112f - offset.y)));
+			ImGui::Text(std::to_string(m_stageData.m_bestRing).c_str());
+
 			if (!m_stageData.m_isMission && !m_stageData.m_isBoss && !m_stageData.m_disableSilverMedal)
 			{
-				ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * (0.46875f - offset.x), *BACKBUFFER_HEIGHT * (0.5875f - offset.y)));
-				ImGui::Text("SILVER MEDAL");
-				ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * (0.5726563f - offset.x), *BACKBUFFER_HEIGHT * (0.6421112f - offset.y)));
+				ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * (0.5726563f - offset.x), *BACKBUFFER_HEIGHT * (0.69211116f - offset.y)));
 				ImGui::Text(std::to_string(m_stageData.m_silverMedalCount).c_str());
 			}
 		}

@@ -152,6 +152,7 @@ public:
 
 		char m_bestTime[16];
 		uint32_t m_bestScore;
+		uint32_t m_bestRing;
 		uint32_t m_silverMedalCount;
 
 		StageData()
@@ -163,6 +164,7 @@ public:
 
 			sprintf(m_bestTime, "");
 			m_bestScore = 0;
+			m_bestRing = 0;
 			m_silverMedalCount = 0;
 		}
 	};

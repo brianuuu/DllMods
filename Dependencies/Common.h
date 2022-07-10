@@ -1327,6 +1327,7 @@ inline bool GetStageData
 	float& bestTime2, 
 	float& bestTime3, 
 	uint32_t& bestRank,
+	uint32_t& bestRing,
 	uint32_t& redRingCount
 )
 {
@@ -1352,6 +1353,7 @@ inline bool GetStageData
 			bestTime3 = -1.0f;
 		}
 		bestRank = 4 - *(uint32_t*)(saveSlotAddress + 0x10);
+		bestRing = *(uint32_t*)(saveSlotAddress + 0x14);
 
 		if ((stageID & 0xFF00) > 0 && (stageID & 0xFF) <= 0x11)
 		{
