@@ -108,8 +108,8 @@
       <AdditionalLibraryDirectories>..\..\Dependencies\Detours\lib\x86;..\..\Include\BlueBlur;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y /E /I "$(MSBuildProjectDirectory)\Assets" "$(MSBuildProjectDirectory)\bin\Win32\$(Configuration)\Assets"
-xcopy /Y /E /I "$(MSBuildProjectDirectory)\Fonts" "$(MSBuildProjectDirectory)\bin\Win32\$(Configuration)\Fonts"</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -155,8 +155,8 @@ xcopy /Y /E /I "$(MSBuildProjectDirectory)\Fonts" "$(MSBuildProjectDirectory)\bi
       <AdditionalLibraryDirectories>..\..\Dependencies\Detours\lib\x86;..\..\Include\BlueBlur;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y /E /I "$(MSBuildProjectDirectory)\Assets" "$(MSBuildProjectDirectory)\bin\Win32\$(Configuration)\Assets"
-xcopy /Y /E /I "$(MSBuildProjectDirectory)\Fonts" "$(MSBuildProjectDirectory)\bin\Win32\$(Configuration)\Fonts"</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
