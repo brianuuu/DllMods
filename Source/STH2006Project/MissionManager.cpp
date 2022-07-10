@@ -21,9 +21,7 @@ HOOK(void, __fastcall, Mission_CMissionManagerAdvance, 0xD10690, uint32_t This, 
 	{
 		if (MissionManager::m_missionAsStage)
 		{
-			// Skip showing "You Succeed!"/"You Failed"
-			WRITE_NOP(0xD104B0, 6);
-			WRITE_NOP(0xD101B0, 6);
+			// Do nothing
 		}
 		else if (*pStateTime == 0.0f)
 		{
@@ -56,6 +54,8 @@ HOOK(void, __fastcall, Mission_CMissionManagerAdvance, 0xD10690, uint32_t This, 
 	{
 		WRITE_MEMORY(0x10951F5, uint8_t, 0xEB);
 	}
+
+	
 }
 
 int MissionManager::getMissionDialog(std::vector<std::string>& captions, uint32_t stageID, std::string const& name, std::string* speaker)
@@ -173,6 +173,13 @@ HOOK(void, __fastcall, Mission_CGameplayFlowStageSetStageInfo, 0xCFF6A0, void* T
 		// Don't allow restart at 0 life
 		//WRITE_NOP(0x10A0FCA, 6);
 
+		// Reduce "You Succeed!"/"You Failed" time and hide them
+		static float missionFinishStopTimer = 0.6f;
+		WRITE_MEMORY(0xD104A2, float*, &missionFinishStopTimer);
+		WRITE_MEMORY(0xD101A2, float*, &missionFinishStopTimer);
+		WRITE_MEMORY(0x168E128, float, -1.0f); // success freeze frame
+		WRITE_MEMORY(0x168E134, float, -1.0f); // success freeze frame
+
 		MissionManager::m_missionAsStage = true;
 	}
 	else
@@ -185,6 +192,12 @@ HOOK(void, __fastcall, Mission_CGameplayFlowStageSetStageInfo, 0xCFF6A0, void* T
 		WRITE_MEMORY(0xE761ED, uint8_t, 0x77);
 		WRITE_MEMORY(0xD599CE, uint8_t, 0x7E);
 		//WRITE_MEMORY(0x10A0FCA, uint8_t, 0x0F, 0x85, 0x61, 0x01, 0x00, 0x00);
+
+		// Revert 2s timer
+		WRITE_MEMORY(0xD104A2, uint32_t, 0x1635170);
+		WRITE_MEMORY(0xD101A2, uint32_t, 0x1635170);
+		WRITE_MEMORY(0x168E128, float, 90.0f); // success freeze frame
+		WRITE_MEMORY(0x168E134, float, 90.0f); // success freeze frame
 
 		MissionManager::m_missionAsStage = false;
 	}
