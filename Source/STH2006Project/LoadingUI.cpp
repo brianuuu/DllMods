@@ -1,6 +1,7 @@
 ﻿#include "LoadingUI.h"
 #include "UIContext.h"
 #include "Application.h"
+#include "MissionManager.h"
 
 bool LoadingUI::m_init = false;
 bool LoadingUI::m_drawEnabled = false;
@@ -93,7 +94,7 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 			LoadingUI::m_bottomText = std::regex_replace(LoadingUI::m_bottomText, std::regex("\\\\n"), "\n");
 
 			// Character tips (For S06DE character movesets only)
-			if (currentStage >= SMT_ghz200 && currentStage <= SMT_pla200)
+			if ((currentStage >= SMT_ghz200 && currentStage <= SMT_pla200) || MissionManager::m_missionAsStage)
 			{
 				if (S06DE_API::IsUsingCharacterMoveset())
 				{
