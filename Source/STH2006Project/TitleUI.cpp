@@ -2130,9 +2130,10 @@ void TitleUI::drawMenu()
 		ImGui::Begin("ActTrial", &visible, UIContext::m_hudFlags);
 		{
 			ImGui::SetWindowFocus();
-			float posX = 0.1130f; // header pos
+			ImGui::SetWindowPos(ImVec2(0, 0));
+			float posX = 0.143208; // header pos
 			float posX2 = posX + 0.125f; // act name pos
-			float posY = 0.1667f; // final pos
+			float posY = 0.224107; // final pos
 			float posYDiff = 10.0f / 720.0f; // fade out pos
 			float constexpr yDist = 50.0f / 720.0f;
 
@@ -2201,8 +2202,9 @@ void TitleUI::drawMenu()
 		ImGui::Begin("TownTrial", &visible, UIContext::m_hudFlags);
 		{
 			ImGui::SetWindowFocus();
-			float posX = 0.1130f; // header pos
-			float posY = 0.1667f; // final pos
+			ImGui::SetWindowPos(ImVec2(0, 0));
+			float posX = 0.143208; // header pos
+			float posY = 0.224107; // final pos
 			float posYDiff = 10.0f / 720.0f; // fade out pos
 			float constexpr yDist = 50.0f / 720.0f;
 
@@ -2269,8 +2271,9 @@ void TitleUI::drawMenu()
 		ImGui::Begin("ModeSelect", &visible, UIContext::m_hudFlags);
 		{
 			ImGui::SetWindowFocus();
-			float posX = 0.1130f; // header pos
-			float posY = 0.1667f; // final pos
+			ImGui::SetWindowPos(ImVec2(0, 0));
+			float posX = 0.143208; // header pos
+			float posY = 0.224107; // final pos
 			float posYDiff = 10.0f / 720.0f; // fade out pos
 			float constexpr yDist = 50.0f / 720.0f;
 
@@ -2446,10 +2449,11 @@ void TitleUI::drawStageData()
 		ImGui::Begin("StageData", &visible, UIContext::m_hudFlags);
 		{
 			ImGui::SetWindowFocus();
+			ImGui::SetWindowPos(ImVec2(0, 0));
 			size_t stageID = m_drawTownTrial ? m_townTrialVisibleID[m_missionCursorIndex] : m_actTrialVisibleID[m_stageCursorIndex];
 			TrialData const& data = m_drawTownTrial ? m_townTrialData[stageID] : m_actTrialData[stageID];
 
-			ImVec2 offset = ImVec2(0.0385416666666667f, 0.0722222222f);
+			ImVec2 offset = ImVec2(0.0078125f, 0.01388889f);
 			ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * (0.46875f - offset.x), *BACKBUFFER_HEIGHT * (0.2638889f - offset.y)));
 			ImGui::Text
 			(
@@ -2475,7 +2479,7 @@ void TitleUI::drawStageData()
 			ImGui::Text(std::to_string(m_stageData.m_bestScore).c_str());
 			ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH* (0.46875f - offset.x), *BACKBUFFER_HEIGHT* (0.5875f - offset.y)));
 			ImGui::Text(Common::GetUILanguageType() == LT_Japanese ? "BEST  RING" : "BEST  Rings");
-			ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH* (0.5726563f - offset.x), *BACKBUFFER_HEIGHT* (0.6421112f - offset.y)));
+			ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH* (0.5726563f - offset.x), *BACKBUFFER_HEIGHT* (0.6374816f - offset.y)));
 			ImGui::Text(std::to_string(m_stageData.m_bestRing).c_str());
 
 			if (!m_stageData.m_isMission && !m_stageData.m_isBoss && !m_stageData.m_disableSilverMedal)
