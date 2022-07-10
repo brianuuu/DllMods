@@ -149,9 +149,9 @@ HOOK(bool, __fastcall, Itembox_CStateLandJumpShortMsgDamageSuccess, 0x111CC20, S
 
 HOOK(bool, __fastcall, Itembox_CObjItemProcessMessage, 0xFFFD70, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
 {
-	if (flag && HandleHomingAttackMessageCommon(This, Edx, message))
+	if (flag)
 	{
-		return true;
+		HandleHomingAttackMessageCommon(This, Edx, message);
 	}
 
 	return originalItembox_CObjItemProcessMessage(This, Edx, message, flag);
@@ -166,9 +166,9 @@ HOOK(void, __fastcall, Itembox_CObjItemMsgHitEventCollision, 0xFFF810, Sonic::CG
 
 HOOK(bool, __fastcall, Itembox_CObjSuperRingProcessMessage, 0x11F3680, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
 {
-	if (flag && HandleHomingAttackMessageCommon(This, Edx, message))
+	if (flag)
 	{
-		return true;
+		HandleHomingAttackMessageCommon(This, Edx, message);
 	}
 
 	return originalItembox_CObjSuperRingProcessMessage(This, Edx, message, flag);
