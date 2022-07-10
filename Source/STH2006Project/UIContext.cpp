@@ -55,7 +55,7 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     builder.AddText("0123456789'\"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ: ?");
     builder.BuildRanges(&ranges);
 
-    const float fontSize = 43.0f * (float)*BACKBUFFER_WIDTH / 1920.0f;
+    const float fontSize = 43.0f;
     if ((font = io.Fonts->AddFontFromFileTTF((Application::getModDirString() + "Fonts\\FOT-NewRodin Pro EB.otf").c_str(), fontSize, nullptr, ranges.Data)) == nullptr)
     {
         MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-NewRodin Pro EB.otf\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
@@ -77,7 +77,7 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     }
     builderTextbox.BuildRanges(&rangesTextbox);
 
-    const float fontSubtitleSize = 39.0f * (float)*BACKBUFFER_WIDTH / 1920.0f;
+    const float fontSubtitleSize = 39.0f;
     if ((fontSubtitle = io.Fonts->AddFontFromFileTTF((Application::getModDirString() + "Fonts\\FOT-RodinCattleyaPro-DB.otf").c_str(), fontSubtitleSize, nullptr, rangesTextbox.Data)) == nullptr)
     {
         MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-RodinCattleyaPro-DB.otf\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
@@ -127,11 +127,13 @@ void UIContext::update()
         {
             Itembox::draw();
 
+            font->Scale = (float)*BACKBUFFER_WIDTH / 1920.0f;
             ImGui::PushFont(font);
             TitleUI::drawMenu();
             ScoreManager::draw();
             ImGui::PopFont();
 
+            fontSubtitle->Scale = (float)*BACKBUFFER_WIDTH / 1920.0f;
             ImGui::PushFont(fontSubtitle);
             TitleUI::drawYesNoWindow();
             TitleUI::drawStageData();

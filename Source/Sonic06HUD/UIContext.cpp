@@ -41,7 +41,7 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     builder.AddText("0123456789'\"");
     builder.BuildRanges(&ranges);
 
-    const float fontSize = 43.0f * (float)*BACKBUFFER_WIDTH / 1920.0f;
+    const float fontSize = 43.0f;
     if ((font = io.Fonts->AddFontFromFileTTF((Application::getModDirString() + "Fonts\\FOT-NewRodin Pro EB.otf").c_str(), fontSize, nullptr, ranges.Data)) == nullptr)
     {
         MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-NewRodin Pro EB.otf\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
@@ -56,7 +56,7 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     }
     builderTextbox.BuildRanges(&rangesTextbox);
 
-    const float fontSubtitleSize = 39.0f * (float)*BACKBUFFER_WIDTH / 1920.0f;
+    const float fontSubtitleSize = 39.0f;
     if ((fontSubtitle = io.Fonts->AddFontFromFileTTF((Application::getModDirString() + "Fonts\\FOT-RodinCattleyaPro-DB.otf").c_str(), fontSubtitleSize, nullptr, rangesTextbox.Data)) == nullptr)
     {
         MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-RodinCattleyaPro-DB.otf\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
@@ -64,7 +64,7 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     }
     io.Fonts->Build();
 
-    const float fontSubtitleBigSize = 43.0f * (float)*BACKBUFFER_WIDTH / 1920.0f;
+    const float fontSubtitleBigSize = 43.0f;
     if ((fontSubtitleBig = io.Fonts->AddFontFromFileTTF((Application::getModDirString() + "Fonts\\FOT-RodinCattleyaPro-DB.otf").c_str(), fontSubtitleBigSize, nullptr, rangesTextbox.Data)) == nullptr)
     {
         MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-RodinCattleyaPro-DB.otf\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
@@ -89,6 +89,7 @@ void UIContext::update()
     io.DisplaySize.y = (float)(*BACKBUFFER_HEIGHT)*2 * 1.1f;
 
     ImGui::NewFrame();
+    font->Scale = (float)*BACKBUFFER_WIDTH / 1920.0f;
     ImGui::PushFont(font);
     
     // Check if HUD is enabled
@@ -101,12 +102,14 @@ void UIContext::update()
             Stage::draw();
             ScoreUI::draw();
 
+            fontSubtitle->Scale = (float)*BACKBUFFER_WIDTH / 1920.0f;
             ImGui::PushFont(fontSubtitle);
             SubtitleUI::draw();
             ResultUI::draw();
             ImGui::PopFont();
         }
 
+        fontSubtitleBig->Scale = (float)*BACKBUFFER_WIDTH / 1920.0f;
         ImGui::PushFont(fontSubtitleBig);
         CustomHUD::draw();
         ImGui::PopFont();
