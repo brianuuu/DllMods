@@ -17,32 +17,54 @@ HOOK(void, __fastcall, Mission_CMissionManagerAdvance, 0xD10690, uint32_t This, 
 
 	float* pStateTime = (float*)(This + 188);
 	static bool dialogShown = false;
+	static bool dialogFinished = false;
 	if (state == 1 || state == 2)
 	{
 		if (MissionManager::m_missionAsStage)
 		{
-			// Do nothing
-		}
-		else if (*pStateTime == 0.0f)
-		{
-			// Prevent changing game state until we show dialog
-			WRITE_MEMORY(0xD104B0, uint8_t, 0xE9, 0xCF, 0x01, 0x00, 0x00, 0x90);
-			WRITE_MEMORY(0xD101B0, uint8_t, 0xE9, 0xC1, 0x02, 0x00, 0x00, 0x90);
-			dialogShown = false;
-		}
-		else if (*pStateTime >= 1.0f)
-		{
-			if (!dialogShown)
+			if (Sonic::Player::CPlayerSpeedContext::GetInstance()->m_Grounded && *pStateTime >= 0.6f || *pStateTime >= 1.0f)
 			{
-				// Show dialog
-				MissionManager::startMissionCompleteDialog(state == 1);
-				dialogShown = true;
+				// Change state immediately
+				WRITE_NOP(0xD104B0, 6);
+				WRITE_NOP(0xD101B0, 6);
 			}
-			else if (!SubtitleUI::isPlayingCaption())
+			else
 			{
-				// Revert code
-				WRITE_MEMORY(0xD104B0, uint8_t, 0x0F, 0x82, 0xCE, 0x01, 0x00, 0x00);
-				WRITE_MEMORY(0xD101B0, uint8_t, 0x0F, 0x82, 0xC0, 0x02, 0x00, 0x00);
+				// Prevent changing game state until we show dialog
+				WRITE_MEMORY(0xD104B0, uint8_t, 0xE9, 0xCF, 0x01, 0x00, 0x00, 0x90);
+				WRITE_MEMORY(0xD101B0, uint8_t, 0xE9, 0xC1, 0x02, 0x00, 0x00, 0x90);
+			}
+		}
+		else
+		{
+			if (*pStateTime == 0.0f)
+			{
+				// Prevent changing game state until we show dialog
+				WRITE_MEMORY(0xD104B0, uint8_t, 0xE9, 0xCF, 0x01, 0x00, 0x00, 0x90);
+				WRITE_MEMORY(0xD101B0, uint8_t, 0xE9, 0xC1, 0x02, 0x00, 0x00, 0x90);
+				dialogShown = false;
+				dialogFinished = false;
+			}
+			else if (*pStateTime >= 1.0f)
+			{
+				if (!dialogShown)
+				{
+					// Show dialog
+					MissionManager::startMissionCompleteDialog(state == 1);
+					dialogShown = true;
+				}
+				else if (!SubtitleUI::isPlayingCaption() && !dialogFinished)
+				{
+					// Use this to fix camera
+					FUNCTION_PTR(int, __thiscall, CSonicContext_MsgPlayerGoal, 0xE6C2C0, void* player, int a2);
+					CSonicContext_MsgPlayerGoal(Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer, 0);
+
+					// Revert code
+					WRITE_MEMORY(0xD104B0, uint8_t, 0x0F, 0x82, 0xCE, 0x01, 0x00, 0x00);
+					WRITE_MEMORY(0xD101B0, uint8_t, 0x0F, 0x82, 0xC0, 0x02, 0x00, 0x00);
+
+					dialogFinished = true;
+				}
 			}
 		}
 	}
@@ -54,8 +76,6 @@ HOOK(void, __fastcall, Mission_CMissionManagerAdvance, 0xD10690, uint32_t This, 
 	{
 		WRITE_MEMORY(0x10951F5, uint8_t, 0xEB);
 	}
-
-	
 }
 
 int MissionManager::getMissionDialog(std::vector<std::string>& captions, uint32_t stageID, std::string const& name, std::string* speaker)
@@ -126,13 +146,6 @@ HOOK(int, __fastcall, Mission_CStateGoalFadeBefore, 0xCFE080, uint32_t* This)
 	{
 		if (Common::IsCurrentStageMission())
 		{
-			// Fix result camera
-			float* cameraUp = (float*)0x1A48C80;
-			if (*cameraUp > 0.0f)
-			{
-				*cameraUp -= 1.655f;
-			}
-
 			// Restore getScoreTimeTable code
 			stageName[5] = '0';
 		}
@@ -174,9 +187,6 @@ HOOK(void, __fastcall, Mission_CGameplayFlowStageSetStageInfo, 0xCFF6A0, void* T
 		//WRITE_NOP(0x10A0FCA, 6);
 
 		// Reduce "You Succeed!"/"You Failed" time and hide them
-		static float missionFinishStopTimer = 0.6f;
-		WRITE_MEMORY(0xD104A2, float*, &missionFinishStopTimer);
-		WRITE_MEMORY(0xD101A2, float*, &missionFinishStopTimer);
 		WRITE_MEMORY(0x168E128, float, -1.0f); // success freeze frame
 		WRITE_MEMORY(0x168E134, float, -1.0f); // success freeze frame
 
@@ -194,8 +204,6 @@ HOOK(void, __fastcall, Mission_CGameplayFlowStageSetStageInfo, 0xCFF6A0, void* T
 		//WRITE_MEMORY(0x10A0FCA, uint8_t, 0x0F, 0x85, 0x61, 0x01, 0x00, 0x00);
 
 		// Revert 2s timer
-		WRITE_MEMORY(0xD104A2, uint32_t, 0x1635170);
-		WRITE_MEMORY(0xD101A2, uint32_t, 0x1635170);
 		WRITE_MEMORY(0x168E128, float, 90.0f); // success freeze frame
 		WRITE_MEMORY(0x168E134, float, 90.0f); // success freeze frame
 
@@ -284,10 +292,19 @@ HOOK(bool, __fastcall, Mission_CObjMsnNumberDashRing_AddEventCollision, 0x115B46
 //---------------------------------------------------
 HOOK(void, __fastcall, Mission_CObjGoalRing_MsgHitEventCollision, 0x1159010, uint32_t This, void* Edx, void* message)
 {
-	if (Common::IsCurrentStageMission() && !MissionManager::m_missionAsStage)
+	if (Common::IsCurrentStageMission())
 	{
-		// Disable goalring sfx
-		WRITE_MEMORY(0x1159054, int, -1);
+		if (!MissionManager::m_missionAsStage)
+		{
+			// Disable goalring sfx
+			WRITE_MEMORY(0x1159054, int, -1);
+		}
+		else
+		{
+			// Force fixing camera
+			FUNCTION_PTR(int, __thiscall, CSonicContext_MsgPlayerGoal, 0xE6C2C0, void* player, int a2);
+			CSonicContext_MsgPlayerGoal(Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer, 0);
+		}
 	}
 
 	originalMission_CObjGoalRing_MsgHitEventCollision(This, Edx, message);

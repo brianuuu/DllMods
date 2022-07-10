@@ -43,17 +43,8 @@ HOOK(int, __fastcall, ResultUI_CStateGoalFadeBefore, 0xCFE080, uint32_t* This)
 		ResultUI::m_resultData = (ResultUI::ResultData*)(This[2] + 0x16C);
 
 		// Fix result camera
-		if (Common::IsCurrentStageMission())
-		{
-			WRITE_MEMORY(0x1A48C7C, float, 0.15f); // OffsetRight
-			WRITE_MEMORY(0x1A48C80, float, -1.22f); // OffsetUp
-			WRITE_MEMORY(0x1A48C88, float, -1.994f); // Yaw
-		}
-		else
-		{
-			WRITE_MEMORY(0x1A48C7C, float, 0.704f); // OffsetRight
-			WRITE_MEMORY(0x1A48C80, float, 0.455f); // OffsetUp
-		}
+		WRITE_MEMORY(0x1A48C7C, float, 0.704f); // OffsetRight
+		WRITE_MEMORY(0x1A48C80, float, 0.455f); // OffsetUp
 	}
 	return result;
 }

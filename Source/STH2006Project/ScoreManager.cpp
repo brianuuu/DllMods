@@ -247,6 +247,7 @@ HOOK(void, __stdcall, ScoreManager_GetPhysics, 0xEA49B0, uint32_t This, int a2, 
 			if (fakeEnemyType)
 			{
 				ScoreManager::addScore(fakeEnemyType == 1 ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, (uint32_t*)This);
+				ScoreManager::addEnemyChain((uint32_t*)This, nullptr);
 			}
 			else
 			{
@@ -727,10 +728,13 @@ void ScoreManager::addEnemyChain(uint32_t* This, void* message)
 	}
 
 	// Must be MsgNotifyObjectEvent event 12
-	uint32_t* msg = (uint32_t*)message;
-	if (msg[0] != 0x016A9D98 || msg[4] != 12)
+	if (message)
 	{
-		return;
+		uint32_t* msg = (uint32_t*)message;
+		if (msg[0] != 0x016A9D98 || msg[4] != 12)
+		{
+			return;
+		}
 	}
 
 	// Add to the current enemy chain
