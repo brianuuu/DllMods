@@ -982,8 +982,8 @@ void ScoreManager::draw()
 			{
 				float sizeX = *BACKBUFFER_WIDTH * 300.0f / 1280.0f;
 				float sizeY = *BACKBUFFER_HEIGHT * 50.0f / 720.0f;
-				float posX = 0.645f;
-				float posY = 0.347f;
+				float posX = 0.64083f;
+				float posY = 0.34052f;
 				if (m_bonusDrawTimer > 3.9f)
 				{
 					posX = 1.0f - (1.0f - posX) * ((4.0f - m_bonusDrawTimer) / 0.1f);
