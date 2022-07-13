@@ -193,6 +193,7 @@ void TitleUI_SetEffectVolume(float volume)
 	*(uint8_t*)((uint32_t)TitleUI_GetVoiceLanguageType() + 2) = (uint8_t)volume;
 }
 
+float titleScreenPressStartIgnoreTime = 2.0f;
 HOOK(void, __fastcall, TitleUI_TitleCMainCState_InitBegin, 0x571370, hh::fnd::CStateMachineBase::CStateBase* This)
 {
 	Sonic::CGameObject* gameObject = (Sonic::CGameObject*)(This->GetContextBase());
@@ -240,6 +241,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_InitBegin, 0x571370, hh::fnd::CS
 		WRITE_NOP(0x572035, 6); // auto press start
 		WRITE_NOP(0x56F1EF, 6); // use previous controller ID
 		WRITE_MEMORY(0x5720B0, uint8_t, 0xEB); // don't play sfx
+		titleScreenPressStartIgnoreTime = 0.5f; // shorter delay
 	}
 }
 
@@ -307,17 +309,6 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_WaitStartEnd, 0x571EE0, hh::fnd:
 	m_projectTitleBG = nullptr;
 
 	originalTitleUI_TitleCMainCState_WaitStartEnd(This);
-}
-
-void __declspec(naked) TitleUI_TitleCMainFadeInCompleted()
-{
-	// Wait until title animation finishes
-	static uint32_t returnAddress = 0x571FF2;
-	__asm
-	{
-		cmp		titleState, TS_Wait
-		jmp		[returnAddress]
-	}
 }
 
 void __declspec(naked) TitleUI_TitleCMainToSelectMenu()
@@ -606,6 +597,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 		WRITE_MEMORY(0x572035, uint8_t, 0x0F, 0x8C, 0x9F, 0x00, 0x00, 0x00);
 		WRITE_MEMORY(0x56F1EF, uint8_t, 0x56, 0xE8, 0x3B, 0xF3, 0xAE, 0x00);
 		WRITE_MEMORY(0x5720B0, uint8_t, 0x75);
+		titleScreenPressStartIgnoreTime = 2.0f;
 	}
 
 	originalTitleUI_TitleCMainCState_SelectMenuBegin(This);
@@ -1522,8 +1514,9 @@ void TitleUI::applyPatches()
 	INSTALL_HOOK(TitleUI_TitleCMainCState_WaitStartAdvance);
 	INSTALL_HOOK(TitleUI_TitleCMainCState_WaitStartEnd);
 
-	WRITE_JUMP(0x571FEB, TitleUI_TitleCMainFadeInCompleted);
-	WRITE_MEMORY(0x571FF3, uint8_t, 0x85); // je -> jne
+	WRITE_MEMORY(0x571FEB, uint8_t, 0x0F, 0x2F, 0x05); // comiss xmm0, titleScreenPressStartIgnoreTime
+	WRITE_MEMORY(0x571FEE, float*, &titleScreenPressStartIgnoreTime);
+	WRITE_MEMORY(0x571FF3, uint8_t, 0x86); // je -> jbe
 	WRITE_JUMP(0x572586, TitleUI_TitleCMainToSelectMenu);
 	WRITE_MEMORY(0x57258E, uint8_t, 0x85); // je -> jne
 
