@@ -463,6 +463,9 @@ void NextGenBlaze::applyPatches()
     WRITE_MEMORY(0x12548FC, uint32_t, 80041022);
     WRITE_MEMORY(0x12549D8, uint32_t, 80041022);
 
+    // Replace Chaos Emerald with Sol Emeralds
+    WRITE_MEMORY(0x111A484, char*, "chr_obj_sol_emerald");
+
     // Replace homing attack animation with air boost
     WRITE_MEMORY(0x1232056, char*, "AirBoost");
 
