@@ -21,6 +21,7 @@ uint32_t ScoreManager::m_enemyCount = 0;
 float ScoreManager::m_enemyChainTimer = 0.0f;
 
 uint32_t ScoreManager::m_bonus = 0;
+uint32_t ScoreManager::m_bonusToDraw = 0;
 float ScoreManager::m_bonusTimer = 0.0f;
 float ScoreManager::m_bonusDrawTimer = 0.0f;
 PDIRECT3DTEXTURE9* ScoreManager::m_bonusTexture = nullptr;
@@ -201,6 +202,18 @@ HOOK(void, __fastcall, ScoreManager_GetSuperRing, 0x11F2F10, uint32_t* This, voi
 	originalScoreManager_GetSuperRing(This, Edx, message);
 }
 
+HOOK(void, __fastcall, ScoreManager_GetPhysicsMsgNotifyObjectEvent, 0xEA4F50, uint32_t This, void* Edx, uint32_t message)
+{
+	std::string name(*(char**)(This + 0x130));
+	int fakeEnemyType = ChaosEnergy::getFakeEnemyType(name);
+	if (fakeEnemyType)
+	{
+		ScoreManager::addEnemyChain((uint32_t*)This, nullptr);
+	}
+
+	originalScoreManager_GetPhysicsMsgNotifyObjectEvent(This, Edx, message);
+}
+
 HOOK(void, __stdcall, ScoreManager_GetPhysics, 0xEA49B0, uint32_t This, int a2, void* a3, bool a4)
 {
 	static std::vector<std::string> const filterList =
@@ -247,7 +260,6 @@ HOOK(void, __stdcall, ScoreManager_GetPhysics, 0xEA49B0, uint32_t This, int a2, 
 			if (fakeEnemyType)
 			{
 				ScoreManager::addScore(fakeEnemyType == 1 ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, (uint32_t*)This);
-				ScoreManager::addEnemyChain((uint32_t*)This, nullptr);
 			}
 			else
 			{
@@ -490,6 +502,7 @@ void ScoreManager::applyPatches()
 	INSTALL_HOOK(ScoreManager_GetItem);
 	INSTALL_HOOK(ScoreManager_GetRing);
 	INSTALL_HOOK(ScoreManager_GetSuperRing);
+	INSTALL_HOOK(ScoreManager_GetPhysicsMsgNotifyObjectEvent);
 	INSTALL_HOOK(ScoreManager_GetPhysics);
 	WRITE_JUMP(0x115A8F6, ScoreManager_GetRainbow);
 	INSTALL_HOOK(ScoreManager_GetMissionDashRing);
@@ -663,12 +676,19 @@ void __fastcall ScoreManager::addScore(ScoreType type, uint32_t* This)
 	case ST_missionDashRing:score = 100;	break;
 	default: return;
 	}
+	
+	bool resetBonus = false;
 
 	// Add to rainbow ring stack bonus and notify draw GUI
 	if (type == ST_rainbow)
 	{
-		// Resets enemy bonus
-		if (m_enemyChain > 0)
+		// Chain from enemy +600
+		if (m_enemyChain == 1)
+		{
+			score += 600;
+			resetBonus = true;
+		}
+		else if (m_enemyChain > 1)
 		{
 			m_bonus = 0;
 			m_enemyChain = 0;
@@ -681,8 +701,13 @@ void __fastcall ScoreManager::addScore(ScoreType type, uint32_t* This)
 	// Add to enemy stack bonus and notify draw GUI
 	if (type == ST_enemyBonus)
 	{
-		// Resets rainbow ring bonus
-		if (m_rainbowRingChain > 0)
+		// Chain from rainbow ring +600
+		if (m_rainbowRingChain == 1)
+		{
+			score += 600;
+			resetBonus = true;
+		}
+		else if (m_rainbowRingChain > 1)
 		{
 			m_bonus = 0;
 			m_rainbowRingChain = 0;
@@ -704,6 +729,15 @@ void __fastcall ScoreManager::addScore(ScoreType type, uint32_t* This)
 	else
 	{
 		ScoreGenerationsAPI::AddScore(score);
+	}
+
+	// Switching chain add the first time, but discontinue afterwards
+	// Ask Sonic Team why that is
+	if (resetBonus)
+	{
+		m_bonus = 0;
+		m_enemyChain = 0;
+		m_rainbowRingChain = 0;
 	}
 }
 
@@ -740,6 +774,7 @@ void ScoreManager::addEnemyChain(uint32_t* This, void* message)
 	// Add to the current enemy chain
 	m_enemyCount++;
 	m_enemyChainTimer = 0.2f;
+	printf("[ScoreManager] Enemy Chain: %d\n", m_enemyCount);
 }
 
 uint32_t ScoreManager::calculateEnemyChainBonus()
@@ -920,20 +955,26 @@ float ScoreManager::getPropBetween(int min, int max, int num)
 
 void ScoreManager::notifyDraw(BonusCommentType type)
 {
+	// Update bonus to draw
+	m_bonusToDraw = m_bonus;
+
 	// Always clear texture first
+	PDIRECT3DTEXTURE9* bonusTexturePrev = m_bonusTexture;
 	if (m_bonusTexture)
 	{
 		m_bonusTexture = nullptr;
 	}
 
-	// Only draw comment if there not already one
-	if (m_bonusDrawTimer == 0.0f)
+	switch (type)
 	{
-		switch (type)
-		{
 		case BCT_Great:		m_bonusTexture = &m_bonus_Great;   break;
 		case BCT_Radical:	m_bonusTexture = &m_bonus_Radical; break;
-		}
+	}
+
+	// Only draw comment if there not already one or has switched
+	if (m_bonusTexture == bonusTexturePrev && m_bonusDrawTimer > 0.0f)
+	{
+		m_bonusTexture = nullptr;
 	}
 
 	m_bonusTimer = 10.0f;
@@ -964,12 +1005,12 @@ void ScoreManager::draw()
 		return;
 	}
 
-	if (m_bonus > 0 && m_bonusDrawTimer > 0)
+	if (m_bonusToDraw > 0 && m_bonusDrawTimer > 0)
 	{
 		static bool visible = true;
 		ImGui::Begin("Bonus", &visible, UIContext::m_hudFlags);
 		{
-			std::string const bonusStr = std::to_string(m_bonus);
+			std::string const bonusStr = std::to_string(m_bonusToDraw);
 			ImVec2 size = ImGui::CalcTextSize(bonusStr.c_str());
 			ImGui::SetWindowPos(ImVec2(0, 0));
 			ImGui::SetCursorPos(ImVec2((float)*BACKBUFFER_WIDTH * 0.8f - size.x / 2, (float)*BACKBUFFER_HEIGHT * 0.295f - size.y / 2));

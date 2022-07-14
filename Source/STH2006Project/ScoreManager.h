@@ -116,7 +116,8 @@ public:
 	static uint32_t calculateEnemyChainBonus();
 
 	// Bonus GUI
-	static uint32_t m_bonus;
+	static uint32_t m_bonus; // interal bonus counter
+	static uint32_t m_bonusToDraw; // bonus to draw on screen
 	static float m_bonusTimer;
 	static float m_bonusDrawTimer;
 	static PDIRECT3DTEXTURE9* m_bonusTexture;
