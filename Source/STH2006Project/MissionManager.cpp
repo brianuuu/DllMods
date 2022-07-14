@@ -190,6 +190,9 @@ HOOK(void, __fastcall, Mission_CGameplayFlowStageSetStageInfo, 0xCFF6A0, void* T
 		WRITE_MEMORY(0x168E128, float, -1.0f); // success freeze frame
 		WRITE_MEMORY(0x168E134, float, -1.0f); // success freeze frame
 
+		// Always use stage result screen
+		WRITE_MEMORY(0x10951F5, uint8_t, 0xEB);
+
 		MissionManager::m_missionAsStage = true;
 	}
 	else
@@ -206,6 +209,9 @@ HOOK(void, __fastcall, Mission_CGameplayFlowStageSetStageInfo, 0xCFF6A0, void* T
 		// Revert 2s timer
 		WRITE_MEMORY(0x168E128, float, 90.0f); // success freeze frame
 		WRITE_MEMORY(0x168E134, float, 90.0f); // success freeze frame
+
+		// Revert result screen
+		WRITE_MEMORY(0x10951F5, uint8_t, 0x77);
 
 		MissionManager::m_missionAsStage = false;
 	}
