@@ -4,8 +4,19 @@
 HOOK(int, __fastcall, Omochao_MsgNotifyObjectEvent, 0x114FB60, void* This, void* Edx, uint32_t a2)
 {
 	uint32_t* pEvent = (uint32_t*)(a2 + 16);
+	S06DE_API::ModelType modelType = S06DE_API::GetModelType();
 	switch (*pEvent)
 	{
+	case 50:
+	{
+		// Sonic specific dialogs (Super Sonic in Elise is also Sonic)
+		if ((Common::IsPlayerSuper() && S06DE_API::GetModelType() == S06DE_API::ModelType::SonicElise)
+		|| modelType == S06DE_API::ModelType::Sonic || modelType == S06DE_API::ModelType::None)
+		{
+			*pEvent = 6;
+		}
+		break;
+	}
 	case 51:
 	{
 		// Elise specific dialogs
@@ -17,8 +28,17 @@ HOOK(int, __fastcall, Omochao_MsgNotifyObjectEvent, 0x114FB60, void* This, void*
 	}
 	case 52:
 	{
-		// Non-Elise specific dialogs
-		if (Common::IsPlayerSuper() || S06DE_API::GetModelType() != S06DE_API::ModelType::SonicElise)
+		// Sonic OR Elise specific dialogs
+		if (modelType == S06DE_API::ModelType::None || modelType == S06DE_API::ModelType::Sonic || S06DE_API::GetModelType() == S06DE_API::ModelType::SonicElise)
+		{
+			*pEvent = 6;
+		}
+		break;
+	}
+	case 53:
+	{
+		// Blaze specific dialogs
+		if (S06DE_API::GetModelType() == S06DE_API::ModelType::Blaze)
 		{
 			*pEvent = 6;
 		}

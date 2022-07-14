@@ -6,7 +6,8 @@ class S06DE_API
 public:
     enum ModelType
     {
-        Sonic = 0,
+        None = -1,
+        Sonic,
         SonicElise,
         Blaze,
     };
