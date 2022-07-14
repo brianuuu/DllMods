@@ -779,10 +779,11 @@ ResultData* ScoreManager::calculateResultData()
 	case SMT_csc200:	timeBonusBase = 36000;	break; // Tropical Jungle
 	case SMT_euc200:	timeBonusBase = 24000;	break; // Kingdom Valley
 	case SMT_pla200:	timeBonusBase = 23000;	break; // TODO: Aquatic Base
-	case SMT_bsl:					timeBonusBase = 21000;	break; // Silver
-	case (SMT_bsl | SMT_BossHard):	timeBonusBase = 22000;	break; // Silver Hard Mode
-	case SMT_bpc:					timeBonusBase = 19000;	break; // Iblis
-	case (SMT_bpc | SMT_BossHard):	timeBonusBase = 20000;	break; // Iblis Hard Mode
+	case (SMT_ghz100 | SMT_Mission1):	timeBonusBase = 41000;	break; // Wave Ocean: Blaze
+	case SMT_bsl:						timeBonusBase = 21000;	break; // Silver
+	case (SMT_bsl | SMT_BossHard):		timeBonusBase = 22000;	break; // Silver Hard Mode
+	case SMT_bpc:						timeBonusBase = 19000;	break; // Iblis
+	case (SMT_bpc | SMT_BossHard):		timeBonusBase = 20000;	break; // Iblis Hard Mode
 	default:	break;
 	}
 
