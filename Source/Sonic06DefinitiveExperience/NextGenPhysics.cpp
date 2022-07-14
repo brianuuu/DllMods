@@ -435,9 +435,11 @@ void NextGenPhysics::applyPatches()
         // No out of control for air dash
         WRITE_JUMP(0x123243C, noAirDashOutOfControl);
 
-        // Disable jumpball collision
+        // Disable jumpball collision and bounce on objects
         WRITE_MEMORY(0x1118FFA, uint8_t, 0xC2, 0xC5); // Fall state
+        WRITE_MEMORY(0x1118B16, uint8_t, 0xEB); 
         WRITE_MEMORY(0x11BCC4B, uint8_t, 0x71); // JumpBall
+        WRITE_MEMORY(0x11BCAD6, uint8_t, 0xEB);
 
         // Drop all rings when getting damaged
         WRITE_MEMORY(0xE6628E, uint8_t, 0xEB);

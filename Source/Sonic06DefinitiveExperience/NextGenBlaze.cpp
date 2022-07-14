@@ -138,6 +138,12 @@ bool NextGenBlaze::doubleJumpImpl(bool pressedJump)
 
 HOOK(char*, __fastcall, NextGenBlaze_CSonicStateJumpBallBegin, 0x11BCBE0, void* This)
 {
+    if (!NextGenBlaze::m_doubleJumpEnabled)
+    {
+        // Allow double jump to damage objects
+        WRITE_MEMORY(0x11BCC4B, uint8_t, 0xC1); // JumpBall
+    }
+
     char* result = originalNextGenBlaze_CSonicStateJumpBallBegin(This);
     {
         // Restore spin attack animation
@@ -146,6 +152,11 @@ HOOK(char*, __fastcall, NextGenBlaze_CSonicStateJumpBallBegin, 0x11BCBE0, void* 
         // Restore jump pfx (nothing)
         WRITE_MEMORY(0x11BCDA7, uint32_t, 0x1E61D6C);
         WRITE_MEMORY(0x11BCCFC, uint32_t, 0x1E61D00);
+
+        if (Configuration::m_physics)
+        {
+            WRITE_MEMORY(0x11BCC4B, uint8_t, 0x71); // JumpBall
+        }
     }
     return result;
 }
