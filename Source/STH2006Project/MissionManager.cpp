@@ -123,14 +123,6 @@ void MissionManager::startMissionCompleteDialog(bool success)
 	Common::PlaySoundStatic(soundHandle, reader.GetInteger(std::to_string(Common::GetCurrentStageID()), name + "Voice", -1));
 }
 
-HOOK(void, __fastcall, Mission_MsgGoalResult, 0x10950E0, uint32_t* This, void* Edx, void* message)
-{
-	originalMission_MsgGoalResult(This, Edx, message);
-
-	// Set original code
-	WRITE_MEMORY(0x10951F5, uint8_t, 0x77);
-}
-
 HOOK(int, __fastcall, Mission_CStateGoalFadeBefore, 0xCFE080, uint32_t* This)
 {
 	// Change getScoreTimeTable for missions
@@ -398,7 +390,6 @@ void MissionManager::applyPatches()
 	// Mission Complete use stage result
 	WRITE_MEMORY(0xD104C3, uint32_t, 2);
 	INSTALL_HOOK(Mission_CMissionManagerAdvance);
-	INSTALL_HOOK(Mission_MsgGoalResult);
 	INSTALL_HOOK(Mission_CStateGoalFadeBefore);
 
 	// Load correct mission terrain
