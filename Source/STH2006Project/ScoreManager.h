@@ -121,6 +121,7 @@ public:
 	static float m_bonusTimer;
 	static float m_bonusDrawTimer;
 	static PDIRECT3DTEXTURE9* m_bonusTexture;
+	static PDIRECT3DTEXTURE9* m_bonusTexturePrev;
 	static void notifyDraw(BonusCommentType type);
 	static void draw();
 	static void clearDraw();

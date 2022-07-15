@@ -25,6 +25,7 @@ uint32_t ScoreManager::m_bonusToDraw = 0;
 float ScoreManager::m_bonusTimer = 0.0f;
 float ScoreManager::m_bonusDrawTimer = 0.0f;
 PDIRECT3DTEXTURE9* ScoreManager::m_bonusTexture = nullptr;
+PDIRECT3DTEXTURE9* ScoreManager::m_bonusTexturePrev = nullptr;
 PDIRECT3DTEXTURE9 ScoreManager::m_bonus_Great = nullptr;
 PDIRECT3DTEXTURE9 ScoreManager::m_bonus_Radical = nullptr;
 
@@ -116,6 +117,7 @@ HOOK(void, __fastcall, CScoreManager_CHudSonicStageUpdate, 0x1098A50, void* This
 	if (ScoreManager::m_bonusDrawTimer == 0.0f)
 	{
 		ScoreManager::m_bonusTexture = nullptr;
+		ScoreManager::m_bonusTexturePrev = nullptr;
 	}
 
 	originalCScoreManager_CHudSonicStageUpdate(This, Edx, dt);
@@ -202,13 +204,16 @@ HOOK(void, __fastcall, ScoreManager_GetSuperRing, 0x11F2F10, uint32_t* This, voi
 	originalScoreManager_GetSuperRing(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_GetPhysicsMsgNotifyObjectEvent, 0xEA4F50, uint32_t This, void* Edx, uint32_t message)
+HOOK(void, __fastcall, ScoreManager_GetPhysicsMsgNotifyObjectEvent, 0xEA4F50, uint32_t This, void* Edx, uint32_t* message)
 {
-	std::string name(*(char**)(This + 0x130));
-	int fakeEnemyType = ChaosEnergy::getFakeEnemyType(name);
-	if (fakeEnemyType)
+	if (message[4] == 12)
 	{
-		ScoreManager::addEnemyChain((uint32_t*)This, nullptr);
+		std::string name(*(char**)(This + 0x130));
+		int fakeEnemyType = ChaosEnergy::getFakeEnemyType(name);
+		if (fakeEnemyType)
+		{
+			ScoreManager::addEnemyChain((uint32_t*)This, nullptr);
+		}
 	}
 
 	originalScoreManager_GetPhysicsMsgNotifyObjectEvent(This, Edx, message);
@@ -959,7 +964,6 @@ void ScoreManager::notifyDraw(BonusCommentType type)
 	m_bonusToDraw = m_bonus;
 
 	// Always clear texture first
-	PDIRECT3DTEXTURE9* bonusTexturePrev = m_bonusTexture;
 	if (m_bonusTexture)
 	{
 		m_bonusTexture = nullptr;
@@ -972,9 +976,13 @@ void ScoreManager::notifyDraw(BonusCommentType type)
 	}
 
 	// Only draw comment if there not already one or has switched
-	if (m_bonusTexture == bonusTexturePrev && m_bonusDrawTimer > 0.0f)
+	if (m_bonusTexture == m_bonusTexturePrev && m_bonusDrawTimer > 0.0f)
 	{
 		m_bonusTexture = nullptr;
+	}
+	else
+	{
+		m_bonusTexturePrev = m_bonusTexture;
 	}
 
 	m_bonusTimer = 10.0f;
