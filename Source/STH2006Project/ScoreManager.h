@@ -24,6 +24,7 @@ enum ScoreType : uint32_t
 	ST_enemyBonus,
 	ST_boss,
 	ST_missionDashRing,
+	ST_barricade,
 
 	ST_COUNT
 };
@@ -46,6 +47,7 @@ inline char const* GetScoreTypeName(ScoreType type)
 	case ST_enemyBonus:		return "Enemy (Bonus)";
 	case ST_boss:			return "Boss";
 	case ST_missionDashRing:return "Mission Dash Ring";
+	case ST_barricade:		return "Barricade";
 	default:				return "";
 	}
 }

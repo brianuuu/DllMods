@@ -266,6 +266,10 @@ HOOK(void, __stdcall, ScoreManager_GetPhysics, 0xEA49B0, uint32_t This, int a2, 
 			{
 				ScoreManager::addScore(fakeEnemyType == 1 ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, (uint32_t*)This);
 			}
+			else if (name == "twn_obj_barricade")
+			{
+				ScoreManager::addScore(ScoreType::ST_barricade, (uint32_t*)This);
+			}
 			else
 			{
 				bool filtered = false;
@@ -679,6 +683,7 @@ void __fastcall ScoreManager::addScore(ScoreType type, uint32_t* This)
 	case ST_enemyBonus:		score = calculateEnemyChainBonus();	break;
 	case ST_boss:			score = 10000;	break;
 	case ST_missionDashRing:score = 100;	break;
+	case ST_barricade:		score = 500;	break;
 	default: return;
 	}
 	
