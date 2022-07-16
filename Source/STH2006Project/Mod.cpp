@@ -15,6 +15,7 @@
 #include "MissionManager.h"
 #include "TitleUI.h"
 #include "Window.h"
+#include "Pele.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
@@ -72,14 +73,14 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     // Animate Soleanna NPCs
     SoleannaNPC::applyPatches();
 
+    // Pele the Beloved Dog AI
+    Pele::applyPatches();
+
     // Get Param Data
     ParamManager::applyPatches();
 
     // Mission related
     MissionManager::applyPatches();
-
-    // Demo menu
-    //DemoUI::applyPatches();
 
     // Title/Main Menu
     TitleUI::applyPatches();

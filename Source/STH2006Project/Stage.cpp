@@ -253,27 +253,27 @@ HOOK(void, __fastcall, Stage_MsgNotifyObjectEvent, 0xEA4F50, void* This, void* E
         *m_LightSpeedDashMaxVelocity3D->m_funcData->m_pValue = 100.0f;
         m_LightSpeedDashMaxVelocity3D->m_funcData->update();
 
-        break;
+        return;
     }
     case 300:
     {
         Common::PlayStageMusic("City_Escape_Generic2", 1.5f);
-        break;
+        return;
     }
     case 301:
     {
         Common::PlayStageMusic("Speed_Highway_Generic1", 0.0f);
-        break;
+        return;
     }
     case 302:
     {
         Common::PlayStageMusic("Speed_Highway_Generic2", 0.0f);
-        break;
+        return;
     }
     case 303:
     {
         Common::PlayStageMusic("Speed_Highway_Generic3", 0.0f);
-        break;
+        return;
     }
     }
 

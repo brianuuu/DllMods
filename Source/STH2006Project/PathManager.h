@@ -34,6 +34,9 @@ struct PathFollowData
 	bool m_yawOnly;
 	bool m_enabled;
 
+	bool m_loop;
+	bool m_finished;
+
 	size_t m_segmentID;
 	float m_segmentTime;
 
@@ -46,6 +49,8 @@ struct PathFollowData
 	PathFollowData()
 		: m_yawOnly(false)
 		, m_enabled(true)
+		, m_loop(true)
+		, m_finished(false)
 		, m_segmentID(0)
 		, m_segmentTime(0.0f)
 		, m_speed(0.0f)

@@ -200,6 +200,7 @@
     <ClCompile Include="LoadingUI.cpp" />
     <ClCompile Include="MissionManager.cpp" />
     <ClCompile Include="ParamManager.cpp" />
+    <ClCompile Include="Pele.cpp" />
     <ClCompile Include="ResultUI.cpp" />
     <ClCompile Include="SubtitleUI.cpp" />
     <ClCompile Include="TitleUI.cpp" />
@@ -236,6 +237,7 @@
     <ClInclude Include="LoadingUI.h" />
     <ClInclude Include="MissionManager.h" />
     <ClInclude Include="ParamManager.h" />
+    <ClInclude Include="Pele.h" />
     <ClInclude Include="Resources.h" />
     <ClInclude Include="ResultUI.h" />
     <ClInclude Include="SubtitleUI.h" />

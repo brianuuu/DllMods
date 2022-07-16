@@ -45,7 +45,7 @@ HOOK(void, __fastcall, SoleannaNPC_CSonicUpdate, 0xE6BF20, void* This, void* Edx
 			continue;
 		}
 
-		// Traverse oath
+		// Traverse path
 		PathManager::followAdvance(pathFollowData, *dt);
 		Common::ApplyObjectPhysicsPosition(pObject, pathFollowData.m_position);
 		Common::ApplyObjectPhysicsRotation(pObject, pathFollowData.m_rotation);
@@ -132,6 +132,7 @@ HOOK(void, __fastcall, SoleannaNPC_MsgNotifyObjectEvent, 0xEA4F50, void* This, v
 		{
 			SoleannaNPC::m_pBoxes[This] = 0.0f;
 			printf("[The Box] Added box 0x%08x\n", (uint32_t)This);
+			return;
 		}
 		else if (*pEvent >= 101 && *pEvent <= 160)
 		{
@@ -160,6 +161,7 @@ HOOK(void, __fastcall, SoleannaNPC_MsgNotifyObjectEvent, 0xEA4F50, void* This, v
 				SoleannaNPC::m_NPCs[This] = data;
 				printf("[SoleannaNPC] Added object 0x%08x with mapA pathID = %u (segment %u)\n", (uint32_t)pObject, id, data.m_segmentID);
 			}
+			return;
 		}
 		else if (*pEvent >= 201 && *pEvent <= 245)
 		{
@@ -188,6 +190,7 @@ HOOK(void, __fastcall, SoleannaNPC_MsgNotifyObjectEvent, 0xEA4F50, void* This, v
 				SoleannaNPC::m_NPCs[This] = data;
 				printf("[SoleannaNPC] Added object 0x%08x with mapA pathID = %u (segment %u)\n", (uint32_t)pObject, id, data.m_segmentID);
 			}
+			return;
 		}
 	}
 

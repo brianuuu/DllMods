@@ -274,7 +274,7 @@ tinyxml2::XMLError PathManager::parsePathXml(PathDataCollection& collection, boo
 //-------------------------------------------------------------
 void PathManager::followAdvance(PathFollowData& followData, float dt)
 {
-    if (!followData.m_pPathData || !followData.m_enabled) return;
+    if (!followData.m_pPathData || !followData.m_enabled || followData.m_finished) return;
 
     std::vector<float> const& segmentLengths = followData.m_pPathData->m_segmentLengths;
 
@@ -291,6 +291,11 @@ void PathManager::followAdvance(PathFollowData& followData, float dt)
             if (followData.m_segmentID >= segmentLengths.size())
             {
                 followData.m_segmentID = 0;
+                if (!followData.m_loop)
+                {
+                    followData.m_finished = true;
+                    return;
+                }
             }
             segmentLength = segmentLengths[followData.m_segmentID];
         }

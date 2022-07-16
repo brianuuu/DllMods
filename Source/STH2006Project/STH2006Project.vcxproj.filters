@@ -47,6 +47,7 @@
     <ClCompile Include="SubtitleUI.cpp" />
     <ClCompile Include="TitleUI.cpp" />
     <ClCompile Include="Window.cpp" />
+    <ClCompile Include="Pele.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
@@ -74,6 +75,7 @@
     <ClInclude Include="Window.h" />
     <ClInclude Include="DllMain.h" />
     <ClInclude Include="Resources.h" />
+    <ClInclude Include="Pele.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">
