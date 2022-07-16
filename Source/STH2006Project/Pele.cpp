@@ -31,11 +31,17 @@ HOOK(int, __fastcall, Pele_CGameObject3DDestruction, 0xD5D790, void* This)
 	return originalPele_CGameObject3DDestruction(This);
 }
 
-HOOK(void, __fastcall, Pele_CSonicUpdate, 0xE6BF20, void* This, void* Edx, float* dt)
+HOOK(void, __fastcall, Pele_CSonicUpdate, 0xE6BF20, void* This, void* Edx, const Hedgehog::Universe::SUpdateInfo& updateInfo)
 {
-	originalPele_CSonicUpdate(This, Edx, dt);
+	originalPele_CSonicUpdate(This, Edx, updateInfo);
 
-	Pele::m_data.advance(*dt);
+	// Account for object slow time from red gem
+	float dt = updateInfo.DeltaTime;
+	if (*(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19D }))
+	{
+		dt *= *(float*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x1A4 });
+	}
+	Pele::m_data.advance(dt);
 }
 
 void Pele::applyPatches()

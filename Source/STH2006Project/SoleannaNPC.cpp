@@ -8,15 +8,22 @@ std::set<void*> SoleannaNPC::m_pObjectsMapA;
 std::set<void*> SoleannaNPC::m_pObjectsMapB;
 std::map<void*, float> SoleannaNPC::m_pBoxes;
 
-HOOK(void, __fastcall, SoleannaNPC_CSonicUpdate, 0xE6BF20, void* This, void* Edx, float* dt)
+HOOK(void, __fastcall, SoleannaNPC_CSonicUpdate, 0xE6BF20, void* This, void* Edx, const Hedgehog::Universe::SUpdateInfo& updateInfo)
 {
-	originalSoleannaNPC_CSonicUpdate(This, Edx, dt);
+	originalSoleannaNPC_CSonicUpdate(This, Edx, updateInfo);
 
 	Eigen::Vector3f sonicPosition;
 	Eigen::Quaternionf sonicRotation;
 	if (!Common::GetPlayerTransform(sonicPosition, sonicRotation))
 	{
 		return;
+	}
+
+	// Account for object slow time from red gem
+	float dt = updateInfo.DeltaTime;
+	if (*(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19D }))
+	{
+		dt *= *(float*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x1A4 });
 	}
 
 	for (auto& iter : SoleannaNPC::m_NPCs)
@@ -46,7 +53,7 @@ HOOK(void, __fastcall, SoleannaNPC_CSonicUpdate, 0xE6BF20, void* This, void* Edx
 		}
 
 		// Traverse path
-		PathManager::followAdvance(pathFollowData, *dt);
+		PathManager::followAdvance(pathFollowData, dt);
 		Common::ApplyObjectPhysicsPosition(pObject, pathFollowData.m_position);
 		Common::ApplyObjectPhysicsRotation(pObject, pathFollowData.m_rotation);
 	}
@@ -62,7 +69,6 @@ HOOK(void, __fastcall, SoleannaNPC_CSonicUpdate, 0xE6BF20, void* This, void* Edx
 
 		float const minY = -7.0785f;
 		float const gravity = -5.0f;
-		float const dt = Application::getDeltaTime();
 
 		pos.y() += upSpeed * dt + 0.5f * gravity * dt * dt;
 		printf("upspeed = %.4f\n", upSpeed);
