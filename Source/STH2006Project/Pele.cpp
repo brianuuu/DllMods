@@ -72,7 +72,7 @@ void Pele::PeleData::reset()
 		m_followData.m_loop = false;
 		m_followData.m_pPathData = &m_path[0];
 
-		m_followData.m_rotation = Eigen::AngleAxisf(PI_F / 2.0f, Eigen::Vector3f::UnitY()) * Eigen::Quaternionf::Identity();
+		m_followData.m_rotation = Eigen::Quaternionf::Identity();
 		m_followData.m_position = m_path[0].m_knots[0].m_point;
 	}
 
