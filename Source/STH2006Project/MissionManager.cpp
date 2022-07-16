@@ -55,10 +55,6 @@ HOOK(void, __fastcall, Mission_CMissionManagerAdvance, 0xD10690, uint32_t This, 
 				}
 				else if (!SubtitleUI::isPlayingCaption() && !dialogFinished)
 				{
-					// Use this to fix camera
-					FUNCTION_PTR(int, __thiscall, CSonicContext_MsgPlayerGoal, 0xE6C2C0, void* player, int a2);
-					CSonicContext_MsgPlayerGoal(Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer, 0);
-
 					// Revert code
 					WRITE_MEMORY(0xD104B0, uint8_t, 0x0F, 0x82, 0xCE, 0x01, 0x00, 0x00);
 					WRITE_MEMORY(0xD101B0, uint8_t, 0x0F, 0x82, 0xC0, 0x02, 0x00, 0x00);
@@ -74,6 +70,11 @@ HOOK(void, __fastcall, Mission_CMissionManagerAdvance, 0xD10690, uint32_t This, 
 	// Mission success finished
 	if (state == 1 && *pState == 3)
 	{
+		// Use this to fix camera
+		FUNCTION_PTR(int, __thiscall, CSonicContext_MsgPlayerGoal, 0xE6C2C0, void* player, int a2);
+		CSonicContext_MsgPlayerGoal(Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer, 0);
+
+		// Use normal result screen
 		WRITE_MEMORY(0x10951F5, uint8_t, 0xEB);
 	}
 }
