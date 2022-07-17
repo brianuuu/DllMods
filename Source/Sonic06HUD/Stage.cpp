@@ -213,7 +213,7 @@ void Stage::applyPatches()
     WRITE_JUMP(0x42D661, (void*)0x42D68C);
 
     // Unleashed game over (remove yes no confirm, force yes)
-    WRITE_MEMORY(0xCFE9FF, char*, "Game_over_SWA");
+    //WRITE_MEMORY(0xCFE9FF, char*, "Game_over_SWA");
     WRITE_MEMORY(0xCFED0E, uint32_t, 4);
     WRITE_JUMP(0xCFEC3D, (void*)0xCFEC94);
     WRITE_JUMP(0xCFECB4, (void*)0xCFED0B);
