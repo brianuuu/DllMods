@@ -1,0 +1,701 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<SonicPath>
+
+	<library type="GEOMETRY">
+		<geometry id="soleanna_boy005-geometry" name="soleanna_boy005-geometry">
+			<spline count="1" width="0">
+				<spline3d count="25">
+					<knot type="bezier">
+						<invec>20.9797 0.0 -2.09989</invec>
+						<outvec>15.1806 0.0 -6.65635</outvec>
+						<point>18.6214 0.0 -3.95284</point>
+					</knot>
+					<knot type="bezier">
+						<invec>16.7167 0.0 -10.8959</invec>
+						<outvec>6.51708 0.0 -11.6332</outvec>
+						<point>11.6169 0.0 -11.2646</point>
+					</knot>
+					<knot type="bezier">
+						<invec>2.1546 0.0 -6.16479</invec>
+						<outvec>-4.65446 0.0 -5.32533</outvec>
+						<point>-2.33075 0.0 -5.61181</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-7.32448 0.0 -5.50058</invec>
+						<outvec>-9.9911 0.0 -6.55097</outvec>
+						<point>-9.09347 0.0 -6.19739</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-10.6567 0.0 -7.03883</invec>
+						<outvec>-11.153 0.0 -8.19374</outvec>
+						<point>-10.9274 0.0 -7.66879</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-11.1043 0.0 -8.81736</invec>
+						<outvec>-10.2051 0.0 -10.3836</outvec>
+						<point>-10.687 0.0 -9.54417</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-9.55803 0.0 -11.0146</invec>
+						<outvec>-7.94125 0.0 -12.0335</outvec>
+						<point>-8.85122 0.0 -11.4601</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-6.93231 0.0 -12.2994</invec>
+						<outvec>-4.90772 0.0 -12.3159</outvec>
+						<point>-6.04949 0.0 -12.3066</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-3.9769 0.0 -11.8923</invec>
+						<outvec>-3.19096 0.0 -9.35985</outvec>
+						<point>-3.74395 0.0 -11.1417</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-10.3184 0.0 -3.0312</invec>
+						<outvec>-17.6916 0.0 3.72756</outvec>
+						<point>-14.005 0.0 0.348183</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-20.2722 0.0 4.71066</invec>
+						<outvec>-21.5125 0.0 11.7652</outvec>
+						<point>-21.2553 0.0 10.302</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-21.7404 0.0 13.0812</invec>
+						<outvec>-22.1052 0.0 16.1435</outvec>
+						<point>-21.8782 0.0 14.2378</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-22.0878 0.0 17.6164</invec>
+						<outvec>-21.1757 0.0 19.3046</outvec>
+						<point>-21.5551 0.0 18.6024</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-20.5349 0.0 19.7599</invec>
+						<outvec>-16.2784 0.0 20.563</outvec>
+						<point>-19.5349 0.0 19.9486</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-12.2231 0.0 18.2896</invec>
+						<outvec>-10.2569 0.0 8.82735</outvec>
+						<point>-11.24 0.0 13.5585</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-11.6087 0.0 5.38654</invec>
+						<outvec>-12.4687 0.0 0.79986</outvec>
+						<point>-12.1617 0.0 2.43726</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-12.6242 0.0 -5.26855</invec>
+						<outvec>-12.1579 0.0 -7.53603</outvec>
+						<point>-12.3653 0.0 -6.52742</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-11.6845 0.0 -8.30166</invec>
+						<outvec>-9.56442 0.0 -9.09669</outvec>
+						<point>-10.8099 0.0 -8.62963</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-8.17099 0.0 -8.13374</invec>
+						<outvec>-3.98721 0.0 -7.56133</outvec>
+						<point>-5.52073 0.0 -7.77114</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-2.03288 0.0 -7.55253</invec>
+						<outvec>7.62305 0.0 -9.73561</outvec>
+						<point>0.557079 0.0 -8.13808</point>
+					</knot>
+					<knot type="bezier">
+						<invec>14.5047 0.0 -2.72398</invec>
+						<outvec>19.7888 0.0 1.45416</outvec>
+						<point>17.1468 0.0 -0.634911</point>
+					</knot>
+					<knot type="bezier">
+						<invec>23.3525 0.0 4.46487</invec>
+						<outvec>28.295 0.0 3.83584</outvec>
+						<point>26.7319 0.0 4.03477</point>
+					</knot>
+					<knot type="bezier">
+						<invec>29.6609 0.0 3.37399</invec>
+						<outvec>31.5436 0.0 1.88597</outvec>
+						<point>30.5317 0.0 2.68573</point>
+					</knot>
+					<knot type="bezier">
+						<invec>31.8869 0.0 0.780496</invec>
+						<outvec>30.6304 0.0 -1.36603</outvec>
+						<point>31.0944 0.0 -0.573463</point>
+					</knot>
+					<knot type="bezier">
+						<invec>29.5644 0.0 -1.72679</invec>
+						<outvec>25.2718 0.0 -2.38283</outvec>
+						<point>28.2139 0.0 -1.93319</point>
+					</knot>
+				</spline3d>
+			</spline>
+		</geometry>
+		<geometry id="soleanna_boy004-geometry" name="soleanna_boy004-geometry">
+			<spline count="1" width="0">
+				<spline3d count="13">
+					<knot type="bezier">
+						<invec>11.4489 0.0 -5.86602</invec>
+						<outvec>9.62277 0.0 -12.398</outvec>
+						<point>10.5359 0.0 -9.132</point>
+					</knot>
+					<knot type="bezier">
+						<invec>6.84286 0.0 -18.4731</invec>
+						<outvec>-0.0217476 0.0 -21.1668</outvec>
+						<point>3.41056 0.0 -19.8199</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-5.06159 0.0 -21.7316</invec>
+						<outvec>-10.1014 0.0 -14.5194</outvec>
+						<point>-7.58151 0.0 -18.1255</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-13.36 0.0 -7.35068</invec>
+						<outvec>-11.8828 0.0 -0.312279</outvec>
+						<point>-12.6214 0.0 -3.83148</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-11.4483 0.0 3.46761</invec>
+						<outvec>-4.40989 0.0 4.85791</outvec>
+						<point>-7.92909 0.0 4.16276</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-1.84652 0.0 5.5965</invec>
+						<outvec>5.0181 0.0 1.4256</outvec>
+						<point>1.58579 0.0 3.51105</point>
+					</knot>
+					<knot type="bezier">
+						<invec>5.79965 0.0 0.105865</invec>
+						<outvec>10.5308 0.0 1.64195</outvec>
+						<point>8.16522 0.0 0.873909</point>
+					</knot>
+					<knot type="bezier">
+						<invec>9.6918 0.0 6.85381</invec>
+						<outvec>6.00521 0.0 9.61876</outvec>
+						<point>7.84851 0.0 8.23628</point>
+					</knot>
+					<knot type="bezier">
+						<invec>3.24027 0.0 13.674</invec>
+						<outvec>-3.45705 0.0 14.5957</outvec>
+						<point>-0.108391 0.0 14.1348</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-7.81952 0.0 14.3192</invec>
+						<outvec>-10.0929 0.0 11.0627</outvec>
+						<point>-8.95622 0.0 12.6909</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-10.0315 0.0 6.66948</invec>
+						<outvec>-6.83642 0.0 4.39608</outvec>
+						<point>-8.43395 0.0 5.53278</point>
+					</knot>
+					<knot type="bezier">
+						<invec>0.352432 0.0 5.62494</invec>
+						<outvec>5.88232 0.0 2.55278</outvec>
+						<point>3.11738 0.0 4.08886</point>
+					</knot>
+					<knot type="bezier">
+						<invec>10.9454 0.0 0.592758</invec>
+						<outvec>11.6839 0.0 -3.92573</outvec>
+						<point>11.3146 0.0 -1.66648</point>
+					</knot>
+				</spline3d>
+			</spline>
+		</geometry>
+		<geometry id="soleanna_boy003-geometry" name="soleanna_boy003-geometry">
+			<spline count="1" width="0">
+				<spline3d count="19">
+					<knot type="bezier">
+						<invec>21.3215 0.0 21.9537</invec>
+						<outvec>18.7472 0.0 20.6327</outvec>
+						<point>20.5925 0.0 21.5796</point>
+					</knot>
+					<knot type="bezier">
+						<invec>9.60039 0.0 8.63241</invec>
+						<outvec>-1.26134 0.0 7.329</outvec>
+						<point>4.16953 0.0 7.9807</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-4.31628 0.0 8.2101</invec>
+						<outvec>-9.41608 0.0 6.79691</outvec>
+						<point>-6.86618 0.0 7.50351</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-13.1027 0.0 4.86145</invec>
+						<outvec>-13.8731 0.0 0.720488</outvec>
+						<point>-13.5942 0.0 2.21939</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-13.2183 0.0 -1.14263</invec>
+						<outvec>-11.4703 0.0 -4.67848</outvec>
+						<point>-12.2267 0.0 -3.1486</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-10.5181 0.0 -6.29146</invec>
+						<outvec>-7.59256 0.0 -11.5823</outvec>
+						<point>-9.63455 0.0 -7.88934</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-7.5683 0.0 -14.7744</invec>
+						<outvec>-8.83331 0.0 -18.47</outvec>
+						<point>-8.20081 0.0 -16.6222</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-8.83237 0.0 -23.4332</invec>
+						<outvec>-10.4074 0.0 -25.5032</outvec>
+						<point>-9.90762 0.0 -24.8464</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-11.0532 0.0 -25.5627</invec>
+						<outvec>-12.1528 0.0 -24.9432</outvec>
+						<point>-11.5643 0.0 -25.2748</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-12.5626 0.0 -24.151</invec>
+						<outvec>-11.9967 0.0 -21.6513</outvec>
+						<point>-12.3653 0.0 -23.2796</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-11.5973 0.0 -17.0123</invec>
+						<outvec>-7.84927 0.0 -13.5101</outvec>
+						<point>-9.7233 0.0 -15.2612</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-6.73604 0.0 -12.7722</invec>
+						<outvec>-3.29521 0.0 -7.67241</outvec>
+						<point>-5.01563 0.0 -10.2223</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-3.26504 0.0 -6.78963</invec>
+						<outvec>-5.41556 0.0 -0.276645</outvec>
+						<point>-4.3403 0.0 -3.53314</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-4.8078 0.0 3.26392</invec>
+						<outvec>-0.383911 0.0 8.97814</outvec>
+						<point>-2.59586 0.0 6.12103</point>
+					</knot>
+					<knot type="bezier">
+						<invec>6.22128 0.0 14.2623</invec>
+						<outvec>12.6113 0.0 17.2115</outvec>
+						<point>9.41631 0.0 15.7369</point>
+					</knot>
+					<knot type="bezier">
+						<invec>17.9262 0.0 18.1639</invec>
+						<outvec>22.1021 0.0 19.1244</outvec>
+						<point>20.9983 0.0 18.8705</point>
+					</knot>
+					<knot type="bezier">
+						<invec>22.9758 0.0 19.5606</invec>
+						<outvec>24.6804 0.0 20.9218</outvec>
+						<point>23.5882 0.0 20.0497</point>
+					</knot>
+					<knot type="bezier">
+						<invec>24.9414 0.0 21.9618</invec>
+						<outvec>23.4872 0.0 22.8802</outvec>
+						<point>24.1934 0.0 22.4342</point>
+					</knot>
+					<knot type="bezier">
+						<invec>22.9929 0.0 22.8204</invec>
+						<outvec>21.8543 0.0 22.2807</outvec>
+						<point>22.3042 0.0 22.4939</point>
+					</knot>
+				</spline3d>
+			</spline>
+		</geometry>
+		<geometry id="soleanna_boy002-geometry" name="soleanna_boy002-geometry">
+			<spline count="1" width="0">
+				<spline3d count="21">
+					<knot type="corner">
+						<invec>3.2742 2.00017 3.01945</invec>
+						<outvec>2.75358 2.00017 1.78528</outvec>
+						<point>3.2742 2.00017 3.01945</point>
+					</knot>
+					<knot type="corner">
+						<invec>2.23295 2.00017 0.551119</invec>
+						<outvec>0.649073 2.00017 -0.227831</outvec>
+						<point>1.71233 2.00017 -0.683044</point>
+					</knot>
+					<knot type="corner">
+						<invec>-0.41418 2.00017 0.227382</invec>
+						<outvec>-1.47743 2.00017 1.46126</outvec>
+						<point>-1.47743 2.00017 0.682595</point>
+					</knot>
+					<knot type="corner">
+						<invec>-1.47743 2.00017 2.23992</invec>
+						<outvec>-1.47743 1.26698 7.04299</outvec>
+						<point>-1.47743 2.00017 3.01858</point>
+					</knot>
+					<knot type="corner">
+						<invec>-1.47743 0.533781 11.0674</invec>
+						<outvec>-1.47743 0.534192 19.1169</outvec>
+						<point>-1.47743 -0.199412 15.0918</point>
+					</knot>
+					<knot type="corner">
+						<invec>-1.47743 1.2678 23.1419</invec>
+						<outvec>-1.47743 2.0014 29.1784</outvec>
+						<point>-1.47743 2.0014 27.1669</point>
+					</knot>
+					<knot type="corner">
+						<invec>-1.47743 2.0014 31.1899</invec>
+						<outvec>-1.09939 1.74046 34.6317</outvec>
+						<point>-1.47743 2.0014 33.2014</point>
+					</knot>
+					<knot type="corner">
+						<invec>-0.721339 1.47952 36.062</invec>
+						<outvec>0.861877 1.21568 37.5082</outvec>
+						<point>-0.343292 1.21858 37.4923</point>
+					</knot>
+					<knot type="corner">
+						<invec>2.06705 1.21279 37.5241</invec>
+						<outvec>3.27222 1.38198 36.5967</outvec>
+						<point>3.27222 1.20989 37.54</point>
+					</knot>
+					<knot type="corner">
+						<invec>3.27222 1.55407 35.6534</invec>
+						<outvec>2.11825 1.8179 34.2072</outvec>
+						<point>3.27222 1.72616 34.7101</point>
+					</knot>
+					<knot type="corner">
+						<invec>0.964284 1.90965 33.7043</invec>
+						<outvec>-0.189682 2.0014 31.1899</outvec>
+						<point>-0.189682 2.0014 33.2014</point>
+					</knot>
+					<knot type="corner">
+						<invec>-0.189682 2.0014 29.1784</invec>
+						<outvec>0.964284 1.92507 26.7481</outvec>
+						<point>-0.189682 2.0014 27.1669</point>
+					</knot>
+					<knot type="corner">
+						<invec>2.11825 1.84874 26.3293</invec>
+						<outvec>3.27222 1.44769 24.1289</outvec>
+						<point>3.27222 1.77241 25.9105</point>
+					</knot>
+					<knot type="corner">
+						<invec>3.27222 1.12296 22.3472</invec>
+						<outvec>2.32978 0.738946 20.2403</outvec>
+						<point>3.27222 0.798242 20.5656</point>
+					</knot>
+					<knot type="corner">
+						<invec>1.38735 0.679651 19.9149</invec>
+						<outvec>0.444916 0.497727 18.9168</outvec>
+						<point>0.444916 0.620356 19.5896</point>
+					</knot>
+					<knot type="corner">
+						<invec>0.444916 0.375098 18.244</invec>
+						<outvec>0.160656 0.101843 16.7447</outvec>
+						<point>0.444916 0.25247 17.5711</point>
+					</knot>
+					<knot type="corner">
+						<invec>-0.123603 -0.0487844 15.9183</invec>
+						<outvec>-0.0895761 0.137009 13.2452</outvec>
+						<point>-0.407863 -0.199412 15.0918</point>
+					</knot>
+					<knot type="corner">
+						<invec>0.228711 0.47343 11.3987</invec>
+						<outvec>0.546997 0.931384 8.88502</outvec>
+						<point>0.546997 0.809851 9.55209</point>
+					</knot>
+					<knot type="corner">
+						<invec>0.546997 1.05292 8.21794</invec>
+						<outvec>1.4554 1.23058 7.24275</outvec>
+						<point>0.546997 1.17445 7.55086</point>
+					</knot>
+					<knot type="corner">
+						<invec>2.36381 1.28672 6.93465</invec>
+						<outvec>3.27288 1.56196 5.42417</outvec>
+						<point>3.27222 1.34285 6.62654</point>
+					</knot>
+					<knot type="corner">
+						<invec>3.27354 1.78106 4.22181</invec>
+						<outvec>3.2742 2.00017 3.01945</outvec>
+						<point>3.2742 2.00017 3.01945</point>
+					</knot>
+				</spline3d>
+			</spline>
+		</geometry>
+		<geometry id="soleanna_boy001-geometry" name="soleanna_boy001-geometry">
+			<spline count="1" width="0">
+				<spline3d count="23">
+					<knot type="bezier">
+						<invec>-5.29164 0.0 -8.48697</invec>
+						<outvec>-11.0701 0.0 -6.44498</outvec>
+						<point>-8.18086 0.0 -7.46597</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-13.0686 0.0 -5.68466</invec>
+						<outvec>-13.7638 0.0 -3.03439</outvec>
+						<point>-13.4162 0.0 -4.35953</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-14.4461 0.0 -0.858856</invec>
+						<outvec>-14.5248 0.0 2.06887</outvec>
+						<point>-14.5047 0.0 1.32236</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-14.5243 0.0 2.61025</invec>
+						<outvec>-14.4158 0.0 3.77265</outvec>
+						<point>-14.4872 0.0 3.00808</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-14.2094 0.0 4.00704</invec>
+						<outvec>-13.3301 0.0 4.28062</outvec>
+						<point>-13.7548 0.0 4.1485</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-12.7895 0.0 4.0185</invec>
+						<outvec>-12.0222 0.0 3.17043</outvec>
+						<point>-12.3181 0.0 3.49748</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-11.7537 0.0 2.74137</invec>
+						<outvec>-11.0513 0.0 0.95346</outvec>
+						<point>-11.5582 0.0 2.24377</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-11.6503 0.0 -0.106476</invec>
+						<outvec>-10.2372 0.0 -3.7623</outvec>
+						<point>-10.9437 0.0 -1.93439</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-8.43994 0.0 -4.9451</invec>
+						<outvec>-5.98221 0.0 -6.02036</outvec>
+						<point>-7.21107 0.0 -5.48273</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-4.59974 0.0 -8.01724</invec>
+						<outvec>-0.145103 0.0 -8.50882</outvec>
+						<point>-2.37242 0.0 -8.26303</point>
+					</knot>
+					<knot type="bezier">
+						<invec>4.47081 0.0 -7.80991</invec>
+						<outvec>8.95617 0.0 -4.06186</outvec>
+						<point>6.71349 0.0 -5.93588</point>
+					</knot>
+					<knot type="bezier">
+						<invec>11.7211 0.0 -1.2662</invec>
+						<outvec>12.5199 0.0 5.43112</outvec>
+						<point>12.1205 0.0 2.08246</point>
+					</knot>
+					<knot type="bezier">
+						<invec>12.3695 0.0 7.77582</invec>
+						<outvec>10.7356 0.0 11.5409</outvec>
+						<point>11.3703 0.0 10.0785</point>
+					</knot>
+					<knot type="bezier">
+						<invec>9.31247 0.0 12.6002</invec>
+						<outvec>7.75745 0.0 14.5099</outvec>
+						<point>8.3249 0.0 13.813</point>
+					</knot>
+					<knot type="bezier">
+						<invec>7.33382 0.0 15.2574</invec>
+						<outvec>7.22962 0.0 17.2371</outvec>
+						<point>7.28625 0.0 16.1611</point>
+					</knot>
+					<knot type="bezier">
+						<invec>7.32063 0.0 17.9358</invec>
+						<outvec>7.87808 0.0 18.9134</outvec>
+						<point>7.56284 0.0 18.3606</point>
+					</knot>
+					<knot type="bezier">
+						<invec>8.44945 0.0 19.0022</invec>
+						<outvec>10.762 0.0 18.5941</outvec>
+						<point>9.28481 0.0 18.8548</point>
+					</knot>
+					<knot type="bezier">
+						<invec>13.2493 0.0 14.7165</invec>
+						<outvec>13.8576 0.0 11.4579</outvec>
+						<point>13.5535 0.0 13.0872</point>
+					</knot>
+					<knot type="bezier">
+						<invec>15.8305 0.0 7.92194</invec>
+						<outvec>14.1101 0.0 2.76068</outvec>
+						<point>14.9703 0.0 5.34131</point>
+					</knot>
+					<knot type="bezier">
+						<invec>14.0162 0.0 1.68222</invec>
+						<outvec>10.6708 0.0 -1.01151</outvec>
+						<point>12.3435 0.0 0.335358</point>
+					</knot>
+					<knot type="bezier">
+						<invec>8.65053 0.0 -2.14111</invec>
+						<outvec>5.17477 0.0 -6.70306</outvec>
+						<point>6.91265 0.0 -4.42209</point>
+					</knot>
+					<knot type="bezier">
+						<invec>4.84892 0.0 -7.15927</invec>
+						<outvec>1.63385 0.0 -11.026</outvec>
+						<point>3.24139 0.0 -9.09265</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-0.0605851 0.0 -11.8298</invec>
+						<outvec>-3.3191 0.0 -10.2223</outvec>
+						<point>-1.68984 0.0 -11.026</point>
+					</knot>
+				</spline3d>
+			</spline>
+		</geometry>
+		<geometry id="soleanna_boy000-geometry" name="soleanna_boy000-geometry">
+			<spline count="1" width="0">
+				<spline3d count="23">
+					<knot type="bezier">
+						<invec>-3.76809 0.0 -0.474731</invec>
+						<outvec>-4.68974 0.0 -11.3502</outvec>
+						<point>-4.22891 0.0 -5.91245</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-5.11983 0.0 -16.3271</invec>
+						<outvec>-4.49583 0.0 -17.9911</outvec>
+						<point>-4.65901 0.0 -17.5559</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-4.34421 0.0 -18.2798</invec>
+						<outvec>-3.9294 0.0 -18.7975</outvec>
+						<point>-4.19733 0.0 -18.4631</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-3.67724 0.0 -18.781</invec>
+						<outvec>-3.17373 0.0 -18.5652</outvec>
+						<point>-3.39943 0.0 -18.6619</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-2.98186 0.0 -18.3585</invec>
+						<outvec>-2.70611 0.0 -17.7973</outvec>
+						<point>-2.83716 0.0 -18.064</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-2.61374 0.0 -17.4586</invec>
+						<outvec>-2.47778 0.0 -16.2349</outvec>
+						<point>-2.56994 0.0 -17.0644</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-2.3856 0.0 -11.1351</invec>
+						<outvec>-2.90443 0.0 -6.77701</outvec>
+						<point>-2.69283 0.0 -8.5545</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-5.02537 0.0 -4.35824</invec>
+						<outvec>-4.75514 0.0 -2.10175</outvec>
+						<point>-4.83924 0.0 -2.80401</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-4.01484 0.0 -1.11739</invec>
+						<outvec>1.947 0.0 -0.231155</outvec>
+						<point>-2.5998 0.0 -0.907043</point>
+					</knot>
+					<knot type="bezier">
+						<invec>3.78943 0.0 -0.8741</invec>
+						<outvec>9.62654 0.0 1.09209</outvec>
+						<point>6.70798 0.0 0.108994</point>
+					</knot>
+					<knot type="bezier">
+						<invec>8.28514 0.0 1.87328</invec>
+						<outvec>11.2856 0.0 2.99465</outvec>
+						<point>10.4358 0.0 2.67703</point>
+					</knot>
+					<knot type="bezier">
+						<invec>12.01 0.0 3.05446</invec>
+						<outvec>13.4405 0.0 2.80102</outvec>
+						<point>12.5753 0.0 2.95431</point>
+					</knot>
+					<knot type="bezier">
+						<invec>13.9333 0.0 2.27303</invec>
+						<outvec>13.9333 0.0 1.1795</outvec>
+						<point>13.9333 0.0 1.72119</point>
+					</knot>
+					<knot type="bezier">
+						<invec>13.4968 0.0 0.706732</invec>
+						<outvec>12.2486 0.0 0.417017</outvec>
+						<point>12.7557 0.0 0.534727</point>
+					</knot>
+					<knot type="bezier">
+						<invec>11.5987 0.0 0.440162</invec>
+						<outvec>9.00202 0.0 1.265</outvec>
+						<point>10.8485 0.0 0.678467</point>
+					</knot>
+					<knot type="bezier">
+						<invec>6.56899 0.0 1.98189</invec>
+						<outvec>1.78983 0.0 2.41634</outvec>
+						<point>4.17941 0.0 2.19911</point>
+					</knot>
+					<knot type="bezier">
+						<invec>1.44226 0.0 0.743637</invec>
+						<outvec>-2.64175 0.0 1.00432</outvec>
+						<point>-0.599747 0.0 0.873978</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-5.03134 0.0 2.98116</invec>
+						<outvec>-4.20584 0.0 6.02245</outvec>
+						<point>-4.61859 0.0 4.5018</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-3.5107 0.0 6.97827</invec>
+						<outvec>-1.99005 0.0 13.3215</outvec>
+						<point>-2.75037 0.0 10.1499</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-1.09938 0.0 15.1897</invec>
+						<outvec>-3.70621 0.0 17.6662</outvec>
+						<point>-2.40279 0.0 16.428</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-6.07162 0.0 16.7096</invec>
+						<outvec>-6.5061 0.0 14.7545</outvec>
+						<point>-6.28886 0.0 15.7321</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-6.44336 0.0 12.5829</invec>
+						<outvec>-4.40135 0.0 8.19479</outvec>
+						<point>-5.42236 0.0 10.3889</point>
+					</knot>
+					<knot type="bezier">
+						<invec>-2.94588 0.0 4.56697</invec>
+						<outvec>-3.68449 0.0 1.13466</outvec>
+						<point>-3.31519 0.0 2.85081</point>
+					</knot>
+				</spline3d>
+			</spline>
+		</geometry>
+	</library>
+	<scene id="DefaultScene">
+		<node id="soleanna_boy005" name="soleanna_boy005">
+			<translate>-59.5846 -8.0 -111.143</translate>
+			<scale>1 1 1</scale>
+			<rotate>0 0 0 1</rotate>
+			<instance url="#soleanna_boy005-geometry"/>
+		</node>
+		<node id="soleanna_boy004" name="soleanna_boy004">
+			<translate>22.4166 -8.0 -48.7727</translate>
+			<scale>1 1 1</scale>
+			<rotate>0 0 0 1</rotate>
+			<instance url="#soleanna_boy004-geometry"/>
+		</node>
+		<node id="soleanna_boy003" name="soleanna_boy003">
+			<translate>-139.132 -8.0 -25.7615</translate>
+			<scale>1 1 1</scale>
+			<rotate>0 0 0 1</rotate>
+			<instance url="#soleanna_boy003-geometry"/>
+		</node>
+		<node id="soleanna_boy002" name="soleanna_boy002">
+			<translate>-148.342 -5.99858 -162.691</translate>
+			<scale>1 1 1</scale>
+			<rotate>0 0 0 1</rotate>
+			<instance url="#soleanna_boy002-geometry"/>
+		</node>
+		<node id="soleanna_boy001" name="soleanna_boy001">
+			<translate>-70.1999 -8.0 -286.55</translate>
+			<scale>1 1 1</scale>
+			<rotate>0 0 0 1</rotate>
+			<instance url="#soleanna_boy001-geometry"/>
+		</node>
+		<node id="soleanna_boy000" name="soleanna_boy000">
+			<translate>88.534 -8.0 -251.69</translate>
+			<scale>1 1 1</scale>
+			<rotate>0 0 0 1</rotate>
+			<instance url="#soleanna_boy000-geometry"/>
+		</node>
+	</scene>
+
+</SonicPath>

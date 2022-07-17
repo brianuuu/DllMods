@@ -202,6 +202,7 @@
     <ClCompile Include="ParamManager.cpp" />
     <ClCompile Include="Pele.cpp" />
     <ClCompile Include="ResultUI.cpp" />
+    <ClCompile Include="SoleannaBoys.cpp" />
     <ClCompile Include="SubtitleUI.cpp" />
     <ClCompile Include="TitleUI.cpp" />
     <ClCompile Include="UIContext.cpp" />
@@ -240,6 +241,7 @@
     <ClInclude Include="Pele.h" />
     <ClInclude Include="Resources.h" />
     <ClInclude Include="ResultUI.h" />
+    <ClInclude Include="SoleannaBoys.h" />
     <ClInclude Include="SubtitleUI.h" />
     <ClInclude Include="TitleUI.h" />
     <ClInclude Include="UIContext.h" />

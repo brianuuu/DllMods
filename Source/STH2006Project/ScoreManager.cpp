@@ -865,6 +865,13 @@ ResultData* ScoreManager::calculateResultData()
 		timeBonusRate = 100;
 		break;
 	}
+	case (SMT_ghz200 | SMT_Mission4): // Sonic Mission 4
+	{
+		scoreTable = ScoreTable{ 30000,27500,25000,22500 };
+		timeBonusBase = 40500;
+		timeBonusRate = 100;
+		break;
+	}
 	default: break;
 	}
 
