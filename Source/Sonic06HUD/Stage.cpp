@@ -200,8 +200,26 @@ void Stage::applyPatches()
     WRITE_MEMORY(0x44A2E8, int, -1);
     WRITE_MEMORY(0x44A4F5, int, -1);
 
-    // Use different xncp for READY GO
-    WRITE_STRING(0x168F1EC, "ui_gp_signul");
+    // Unleashed Ready GO!
+    WRITE_MEMORY(0x109DAC8, char*, "Start_SWA");
+    WRITE_MEMORY(0x109DBB5, char*, "Intro_Anim_act");
+
+    // Unleashed mission success/fail
+    WRITE_MEMORY(0x168E124, char*, "Clear_SWA");
+    WRITE_MEMORY(0x168E130, char*, "Clear_SWA");
+    WRITE_MEMORY(0x168E13C, char*, "Failed_SWA");
+    WRITE_MEMORY(0x168E148, char*, "Failed_SWA");
+    WRITE_MEMORY(0x168E154, char*, "Failed_SWA");
+    WRITE_JUMP(0x42D661, (void*)0x42D68C);
+
+    // Unleashed game over (remove yes no confirm, force yes)
+    WRITE_MEMORY(0xCFE9FF, char*, "Game_over_SWA");
+    WRITE_MEMORY(0xCFED0E, uint32_t, 4);
+    WRITE_JUMP(0xCFEC3D, (void*)0xCFEC94);
+    WRITE_JUMP(0xCFECB4, (void*)0xCFED0B);
+    WRITE_JUMP(0xCFEDC7, (void*)0xCFE888);
+    WRITE_NOP(0xCFDF9D, 19); // Don't play Game Over music
+    WRITE_MEMORY(0xCFE6FD, uint8_t, 0xEB); // Don't play Game Over ticking sfx
 
     // Prevent timer getting reset twice after fade in is completed
     WRITE_MEMORY(0xCFDD8F, uint8_t, 0xEB);
