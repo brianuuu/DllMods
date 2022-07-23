@@ -67,7 +67,7 @@ HOOK(void, __fastcall, SoleannaBoys_CSonicUpdate, 0xE6BF20, void* This, void* Ed
 {
 	originalSoleannaBoys_CSonicUpdate(This, Edx, updateInfo);
 
-	if (SoleannaBoys::m_paths.empty()) return;
+	if (SoleannaBoys::m_paths.empty() || SoleannaBoys::m_boys.empty()) return;
 
 	Eigen::Vector3f sonicPosition;
 	Eigen::Quaternionf sonicRotation;

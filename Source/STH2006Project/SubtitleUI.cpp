@@ -219,6 +219,7 @@ void SubtitleUI::draw()
         if (m_captionData.m_frame >= 5.0f && 
             (
                 padState->IsTapped(Sonic::EKeyState::eKeyState_A) ||
+                padState->IsTapped(Sonic::EKeyState::eKeyState_Y) ||
                 padState->IsTapped(Sonic::EKeyState::eKeyState_X) ||
                 (!m_captionData.m_acceptDialogShown && padState->IsTapped(Sonic::EKeyState::eKeyState_B))
             ))
