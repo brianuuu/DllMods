@@ -93,8 +93,7 @@ void Pele::PeleData::advance(float dt)
 	if (m_followData.m_finished && !m_triggerFired)
 	{
 		m_triggerFired = true;
-		FUNCTION_PTR(void*, __stdcall, Pele_fpEventTrigger, 0xD5ED00, void* This, int Event);
-		Pele_fpEventTrigger(m_pObject, 10);
+		Common::fEventTrigger(m_pObject, 10);
 		printf("[Pele] Reached desination! Mission Complete!\n");
 	}
 

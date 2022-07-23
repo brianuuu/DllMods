@@ -15,8 +15,6 @@
 #include "MissionManager.h"
 #include "TitleUI.h"
 #include "Window.h"
-#include "Pele.h"
-#include "SoleannaBoys.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
@@ -71,13 +69,8 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     // Stage specific patches
     Stage::applyPatches();
 
-    // ----------AIs----------
     // Animate Soleanna NPCs
     SoleannaNPC::applyPatches();
-    // Pele the Beloved Dog AI
-    Pele::applyPatches();
-    // Soleanna Boys Challenge AI
-    SoleannaBoys::applyPatches();
 
     // Get Param Data
     ParamManager::applyPatches();

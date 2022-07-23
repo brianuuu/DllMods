@@ -226,6 +226,7 @@
     <ClCompile Include="Stage.cpp" />
     <ClCompile Include="SynchronizedObject.cpp" />
     <ClCompile Include="tinyxml2.cpp" />
+    <ClCompile Include="WhosCaptain.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -255,6 +256,7 @@
     <ClInclude Include="Stage.h" />
     <ClInclude Include="SynchronizedObject.h" />
     <ClInclude Include="tinyxml2.h" />
+    <ClInclude Include="WhosCaptain.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>

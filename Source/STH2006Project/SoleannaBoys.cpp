@@ -95,8 +95,7 @@ HOOK(void, __fastcall, SoleannaBoys_CSonicUpdate, 0xE6BF20, void* This, void* Ed
 
 				static SharedPtrTypeless soundHandle;
 				Common::PlaySoundStatic(soundHandle, 845019953);
-				FUNCTION_PTR(void*, __stdcall, SoleannaBoys_fpEventTrigger, 0xD5ED00, void* This, int Event);
-				SoleannaBoys_fpEventTrigger(data.m_pObjectRunning, 10);
+				Common::fEventTrigger(data.m_pObjectRunning, 10);
 
 				if (!SoleannaBoys::m_omochaos.empty())
 				{

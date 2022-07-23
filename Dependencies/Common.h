@@ -1163,6 +1163,12 @@ static void* fGetScreenPosition
 	}
 }
 
+inline void fEventTrigger(void* This, int Event)
+{
+	FUNCTION_PTR(void*, __stdcall, fpEventTrigger, 0xD5ED00, void* This, int Event);
+	fpEventTrigger(This, Event);
+}
+
 inline void ObjectCGlitterPlayerOneShot(void* pObject, Hedgehog::Base::CSharedString const& name)
 {
 	uint32_t* CGlitterPlayer = *(uint32_t**)((uint32_t)pObject + 0xF8);

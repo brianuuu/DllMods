@@ -1,22 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="Application.cpp" />
-    <ClCompile Include="ArchiveTreePatcher.cpp" />
-    <ClCompile Include="ChaosEnergy.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DllMain.cpp" />
-    <ClCompile Include="EnemyTrigger.cpp" />
-    <ClCompile Include="Itembox.cpp" />
     <ClCompile Include="Mod.cpp" />
-    <ClCompile Include="Navigation.cpp" />
-    <ClCompile Include="Omochao.cpp" />
-    <ClCompile Include="PathManager.cpp" />
     <ClCompile Include="Pch.cpp" />
-    <ClCompile Include="ScoreManager.cpp" />
-    <ClCompile Include="SoleannaNPC.cpp" />
-    <ClCompile Include="Stage.cpp" />
-    <ClCompile Include="tinyxml2.cpp" />
     <ClCompile Include="..\..\Dependencies\imgui\imgui.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
@@ -38,50 +26,172 @@
     <ClCompile Include="..\..\Dependencies\DDSTextureLoader\DDSTextureLoader9.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="UIContext.cpp" />
-    <ClCompile Include="SynchronizedObject.cpp" />
-    <ClCompile Include="ParamManager.cpp" />
-    <ClCompile Include="ResultUI.cpp" />
-    <ClCompile Include="LoadingUI.cpp" />
-    <ClCompile Include="MissionManager.cpp" />
-    <ClCompile Include="SubtitleUI.cpp" />
-    <ClCompile Include="TitleUI.cpp" />
-    <ClCompile Include="Window.cpp" />
-    <ClCompile Include="Pele.cpp" />
-    <ClCompile Include="SoleannaBoys.cpp" />
+    <ClCompile Include="MissionManager.cpp">
+      <Filter>Mission</Filter>
+    </ClCompile>
+    <ClCompile Include="Pele.cpp">
+      <Filter>Mission</Filter>
+    </ClCompile>
+    <ClCompile Include="SoleannaBoys.cpp">
+      <Filter>Mission</Filter>
+    </ClCompile>
+    <ClCompile Include="LoadingUI.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ResultUI.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="SubtitleUI.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="TitleUI.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UIContext.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Application.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="ArchiveTreePatcher.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="EnemyTrigger.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="ParamManager.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="PathManager.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="ChaosEnergy.cpp">
+      <Filter>Stage</Filter>
+    </ClCompile>
+    <ClCompile Include="Itembox.cpp">
+      <Filter>Stage</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation.cpp">
+      <Filter>Stage</Filter>
+    </ClCompile>
+    <ClCompile Include="Omochao.cpp">
+      <Filter>Stage</Filter>
+    </ClCompile>
+    <ClCompile Include="ScoreManager.cpp">
+      <Filter>Stage</Filter>
+    </ClCompile>
+    <ClCompile Include="Stage.cpp">
+      <Filter>Stage</Filter>
+    </ClCompile>
+    <ClCompile Include="SynchronizedObject.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="tinyxml2.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Window.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="SoleannaNPC.cpp">
+      <Filter>Stage</Filter>
+    </ClCompile>
+    <ClCompile Include="WhosCaptain.cpp">
+      <Filter>Mission</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Application.h" />
-    <ClInclude Include="ArchiveTreePatcher.h" />
-    <ClInclude Include="ChaosEnergy.h" />
     <ClInclude Include="Configuration.h" />
-    <ClInclude Include="EnemyTrigger.h" />
-    <ClInclude Include="Itembox.h" />
-    <ClInclude Include="Navigation.h" />
-    <ClInclude Include="Omochao.h" />
-    <ClInclude Include="PathManager.h" />
     <ClInclude Include="Pch.h" />
-    <ClInclude Include="ScoreManager.h" />
-    <ClInclude Include="SoleannaNPC.h" />
-    <ClInclude Include="Stage.h" />
-    <ClInclude Include="tinyxml2.h" />
-    <ClInclude Include="UIContext.h" />
-    <ClInclude Include="SynchronizedObject.h" />
-    <ClInclude Include="ParamManager.h" />
-    <ClInclude Include="ResultUI.h" />
-    <ClInclude Include="LoadingUI.h" />
-    <ClInclude Include="MissionManager.h" />
-    <ClInclude Include="SubtitleUI.h" />
-    <ClInclude Include="TitleUI.h" />
-    <ClInclude Include="Window.h" />
     <ClInclude Include="DllMain.h" />
     <ClInclude Include="Resources.h" />
-    <ClInclude Include="Pele.h" />
-    <ClInclude Include="SoleannaBoys.h" />
+    <ClInclude Include="MissionManager.h">
+      <Filter>Mission</Filter>
+    </ClInclude>
+    <ClInclude Include="Pele.h">
+      <Filter>Mission</Filter>
+    </ClInclude>
+    <ClInclude Include="SoleannaBoys.h">
+      <Filter>Mission</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadingUI.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ResultUI.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="SubtitleUI.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="TitleUI.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UIContext.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Application.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="ArchiveTreePatcher.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="EnemyTrigger.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="ParamManager.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="PathManager.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="ChaosEnergy.h">
+      <Filter>Stage</Filter>
+    </ClInclude>
+    <ClInclude Include="Itembox.h">
+      <Filter>Stage</Filter>
+    </ClInclude>
+    <ClInclude Include="Navigation.h">
+      <Filter>Stage</Filter>
+    </ClInclude>
+    <ClInclude Include="Omochao.h">
+      <Filter>Stage</Filter>
+    </ClInclude>
+    <ClInclude Include="ScoreManager.h">
+      <Filter>Stage</Filter>
+    </ClInclude>
+    <ClInclude Include="Stage.h">
+      <Filter>Stage</Filter>
+    </ClInclude>
+    <ClInclude Include="SynchronizedObject.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="tinyxml2.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Window.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="SoleannaNPC.h">
+      <Filter>Stage</Filter>
+    </ClInclude>
+    <ClInclude Include="WhosCaptain.h">
+      <Filter>Mission</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">
       <UniqueIdentifier>{bac37829-acdd-4f2d-b945-8b16d201d56b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mission">
+      <UniqueIdentifier>{ce9b4ebb-e8df-4ade-ba77-47a2bf7cd08b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{d0d1034f-b331-44e7-9625-c9210e573071}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{f5612fee-5d99-43c2-b5f8-6dc01394c85e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Stage">
+      <UniqueIdentifier>{27796f1c-d015-45b6-ba57-2c08882d6e01}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

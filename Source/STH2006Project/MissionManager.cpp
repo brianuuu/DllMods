@@ -3,8 +3,10 @@
 #include "Application.h"
 #include "SubtitleUI.h"
 
+#include "Pele.h"
+#include "SoleannaBoys.h"
+
 #define NPC_DATA_FILE "Assets\\Textbox\\npcData.ini"
-FUNCTION_PTR(void*, __stdcall, Mission_fpEventTrigger, 0xD5ED00, void* This, int Event);
 
 //---------------------------------------------------
 // Mission Complete Result HUD
@@ -222,7 +224,7 @@ HOOK(void, __fastcall, Mission_CObjMsnNumberDashRing_MsgHitEventCollision, 0xEDB
 		playSoundFunc(This, nullptr, soundHandle, 8002040);
 
 		// Send event
-		Mission_fpEventTrigger((void*)This, 1);
+		Common::fEventTrigger((void*)This, 1);
 	}
 
 	originalMission_CObjMsnNumberDashRing_MsgHitEventCollision(This, Edx, message);
@@ -615,4 +617,13 @@ void MissionManager::applyPatches()
 	INSTALL_HOOK(Mission_MsgNotifyObjectEvent);
 	INSTALL_HOOK(Mission_MsgRestartStage);
 	INSTALL_HOOK(Mission_CSonicUpdate);
+
+	//---------------------------------------------------
+	// Individual Mission Manager/AI
+	//---------------------------------------------------
+    // Pele the Beloved Dog AI
+	Pele::applyPatches();
+
+	// Soleanna Boys Challenge AI
+	SoleannaBoys::applyPatches();
 }

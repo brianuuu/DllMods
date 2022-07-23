@@ -1,7 +1,6 @@
 #include "EnemyTrigger.h"
 
 uint32_t const MsgNotifyObjectEventOffset = 0x16811C0;
-FUNCTION_PTR(void*, __stdcall, fpEventTrigger, 0xD5ED00, void* This, int Event);
 #define DAMAGE_EVENT_ASM(enemyName, address, damageFunctionAddress) \
     uint32_t const enemyName##DamageEventReturnAddress = address; \
     uint32_t const enemyName##JumpToDamageCall = address + 0x0D; \
@@ -36,7 +35,7 @@ FUNCTION_PTR(void*, __stdcall, fpEventTrigger, 0xD5ED00, void* This, int Event);
     HOOK(void, __fastcall, enemyName##MsgDamage, damageFunctionAddress, void* This, void* Edx, uint32_t* a2) \
     { \
         /*Fire event 4*/ \
-        fpEventTrigger(This, 4); \
+        Common::fEventTrigger(This, 4); \
         original##enemyName##MsgDamage(This, Edx, a2);\
     }
 
