@@ -79,16 +79,15 @@ HOOK(void, __fastcall, Mission_CMissionManagerAdvance, 0xD10690, uint32_t This, 
 	}
 }
 
-int MissionManager::getMissionDialog(std::vector<std::string>& captions, uint32_t stageID, std::string const& name, std::string* speaker)
+int MissionManager::getMissionDialog(std::vector<std::string>& captions, std::string const& section, std::string const& name, std::string* speaker)
 {
 	bool isJapanese = Common::GetUILanguageType() == LT_Japanese;
-	std::string const currentStageStr = std::to_string(stageID);
 
 	const INIReader reader(Application::getModDirString() + NPC_DATA_FILE);
 	int dialogCount = 1;
 	while (true)
 	{
-		std::string caption = reader.Get(currentStageStr, name + (isJapanese ? "JP" : "") + std::to_string(dialogCount), "");
+		std::string caption = reader.Get(section, name + (isJapanese ? "JP" : "") + std::to_string(dialogCount), "");
 		if (caption.empty())
 		{
 			break;
@@ -101,7 +100,7 @@ int MissionManager::getMissionDialog(std::vector<std::string>& captions, uint32_
 	// Get speaker
 	if (speaker != nullptr)
 	{
-		*speaker = reader.Get(currentStageStr, isJapanese ? "SpeakerJP" : "Speaker", "");
+		*speaker = reader.Get(section, isJapanese ? "SpeakerJP" : "Speaker", "");
 	}
 
 	return dialogCount - 1;
@@ -115,7 +114,7 @@ void MissionManager::startMissionCompleteDialog(bool success)
 	name += success ? "Success" : "Fail";
 
 	std::string speaker;
-	MissionManager::getMissionDialog(captions, Common::GetCurrentStageID(), name, &speaker);
+	MissionManager::getMissionDialog(captions, std::to_string(Common::GetCurrentStageID()), name, &speaker);
 	SubtitleUI::addCaption(captions, speaker);
 
 	// Play voice
@@ -323,30 +322,184 @@ HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateLoadingBegin, 0x107D790, u
 
 	if (gateMissionID > 0 && gateStageID <= SMT_pla200)
 	{
-		MissionManager::m_missionAccept = true;
-
-		std::vector<std::string> captions;
-		uint32_t stageID = (gateMissionID << 8) + gateStageID;
-		std::string speaker;
-		MissionManager::getMissionDialog(captions, stageID, "MissionStart", &speaker);
-
-		// Get accept & reject dialog size
-		int acceptSize = -1;
-		int rejectSize = -1;
-		if (gateMissionID <= 5)
-		{
-			acceptSize = MissionManager::getMissionDialog(captions, stageID, "MissionAccept");
-			rejectSize = MissionManager::getMissionDialog(captions, stageID, "MissionReject");
-		}
-		SubtitleUI::addCaption(captions, speaker, acceptSize, rejectSize);
-
-		// Play voice
-		const INIReader reader(Application::getModDirString() + NPC_DATA_FILE);
-		static SharedPtrTypeless soundHandle;
-		Common::PlaySoundStatic(soundHandle, reader.GetInteger(std::to_string(stageID), "MissionStartVoice", -1));
+		std::string stageID = std::to_string((gateMissionID << 8) + gateStageID);
+		MissionManager::startGenericDialog(stageID, gateMissionID <= 5);
 	}
 
 	originalMission_CHudGateMenuMain_CStateLoadingBegin(This);
+}
+
+Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectMissionButton;
+boost::shared_ptr<Sonic::CGameObjectCSD> m_spMissionButton;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMissionButton;
+
+void Mission_KillScene()
+{
+	if (m_spMissionButton)
+	{
+		m_spMissionButton->SendMessage(m_spMissionButton->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+		m_spMissionButton = nullptr;
+	}
+
+	Chao::CSD::CProject::DestroyScene(m_projectMissionButton.Get(), m_sceneMissionButton);
+	m_projectMissionButton = nullptr;
+}
+
+void Mission_PlayMotion(Chao::CSD::RCPtr<Chao::CSD::CScene>& scene, char const* motion, bool loop = false)
+{
+	if (!scene) return;
+	scene->SetHideFlag(false);
+	scene->SetMotion(motion);
+	scene->m_MotionDisableFlag = false;
+	scene->m_MotionSpeed = 1.0f;
+	scene->m_MotionRepeatType = loop ? Chao::CSD::eMotionRepeatType_Loop : Chao::CSD::eMotionRepeatType_PlayOnce;
+	scene->Update();
+}
+
+uint32_t MissionManager::m_genericNPCDialog = 0;
+Eigen::Vector4f m_genericNPCPos;
+HOOK(void, __fastcall, Mission_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObject* This, void* Edx, uint32_t a2)
+{
+	uint32_t* pEvent = (uint32_t*)(a2 + 16);
+	if (*pEvent == 10000)
+	{
+		MissionManager::m_genericNPCDialog = 0;
+
+		auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+		if (context)
+		{
+			context->StateFlag(eStateFlag_OutOfControl) = false;
+		}
+
+		if (m_sceneMissionButton)
+		{
+			Mission_PlayMotion(m_sceneMissionButton, "Outro_Anim");
+		}
+	}
+	else if (*pEvent > 10000)
+	{
+		Mission_KillScene();
+
+		Sonic::CCsdDatabaseWrapper wrapper(This->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
+		auto spCsdProject = wrapper.GetCsdProject("ui_hud");
+		m_projectMissionButton = spCsdProject->m_rcProject;
+		if (m_projectMissionButton)
+		{
+			m_sceneMissionButton = m_projectMissionButton->CreateScene("btn_guide");
+			m_sceneMissionButton->GetNode("btn_word")->SetPatternIndex(0);
+			Mission_PlayMotion(m_sceneMissionButton, "Intro_Anim");
+
+			if (!m_spMissionButton)
+			{
+				m_spMissionButton = boost::make_shared<Sonic::CGameObjectCSD>(m_projectMissionButton, 0.5f, "HUD", false);
+				Sonic::CGameDocument::GetInstance()->AddGameObject(m_spMissionButton, "main", This);
+			}
+		}
+
+		MissionManager::m_genericNPCDialog = *pEvent;
+		m_genericNPCPos = *(Eigen::Vector4f*)(((uint32_t*)This)[46] + 112);
+		m_genericNPCPos.y() -= 0.5f;
+	}
+
+	originalMission_MsgNotifyObjectEvent(This, Edx, a2);
+}
+
+HOOK(int, __fastcall, Mission_MsgRestartStage, 0xE76810, Sonic::Player::CPlayer* player, void* Edx, void* message)
+{
+	MissionManager::m_genericNPCDialog = 0;
+	Mission_KillScene();
+
+	return originalMission_MsgRestartStage(player, Edx, message);
+}
+
+HOOK(void, __fastcall, Mission_CSonicUpdate, 0xE6BF20, void* This, void* Edx, const Hedgehog::Universe::SUpdateInfo& updateInfo)
+{
+	originalMission_CSonicUpdate(This, Edx, updateInfo);
+
+	if (m_sceneMissionButton)
+	{
+		Eigen::Vector4f screenPosition;
+		Common::fGetScreenPosition(m_genericNPCPos, screenPosition);
+		m_sceneMissionButton->SetPosition(screenPosition.x(), screenPosition.y());
+	}
+
+	if (MissionManager::m_genericNPCDialog <= 10000) return;
+
+	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	if (!context) return;
+
+	Hedgehog::Base::CSharedString stateName = context->m_pPlayer->m_StateMachine.GetCurrentState()->GetStateName();
+	if (stateName.compare("Walk") != 0 && stateName.compare("Stand") != 0 && stateName.compare("MoveStop") != 0) 
+	{
+		if (m_sceneMissionButton)
+		{
+			m_sceneMissionButton->SetPosition(-100.0f, 0.0f);
+		}
+		return;
+	}
+
+	if (!SubtitleUI::isPlayingCaption())
+	{
+		if (m_sceneMissionButton && m_sceneMissionButton->m_MotionDisableFlag)
+		{
+			Mission_PlayMotion(m_sceneMissionButton, "Usual_Anim", true);
+		}
+
+		Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+		if (context->m_Grounded && padState->IsTapped(Sonic::EKeyState::eKeyState_Y))
+		{
+			Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+			MissionManager::startGenericDialog("NPC" + std::to_string(MissionManager::m_genericNPCDialog));
+
+			context->StateFlag(eStateFlag_OutOfControl) = true;
+
+			if (m_sceneMissionButton)
+			{
+				Mission_PlayMotion(m_sceneMissionButton, "Outro_Anim");
+			}
+		}
+		else
+		{
+			context->StateFlag(eStateFlag_OutOfControl) = false;
+		}
+	}
+}
+
+void MissionManager::startGenericDialog(std::string const& section, bool hasYesNo)
+{
+	// If dialog has Yes/No box
+	{
+		const INIReader reader(Application::getModDirString() + NPC_DATA_FILE);
+		if (!reader.Sections().count(section))
+		{
+			return;
+		}
+
+		hasYesNo |= reader.GetBoolean(section, "HasYesNo", false);
+	}
+
+	MissionManager::m_missionAccept = true;
+
+	std::vector<std::string> captions;
+	std::string speaker;
+	MissionManager::getMissionDialog(captions, section, "MissionStart", &speaker);
+
+	// Get accept & reject dialog size
+	int acceptSize = -1;
+	int rejectSize = -1;
+	if (hasYesNo)
+	{
+		acceptSize = MissionManager::getMissionDialog(captions, section, "MissionAccept");
+		rejectSize = MissionManager::getMissionDialog(captions, section, "MissionReject");
+	}
+	SubtitleUI::addCaption(captions, speaker, acceptSize, rejectSize);
+
+	// Play voice
+	{
+		const INIReader reader(Application::getModDirString() + NPC_DATA_FILE);
+		static SharedPtrTypeless soundHandle;
+		Common::PlaySoundStatic(soundHandle, reader.GetInteger(section, "MissionStartVoice", -1));
+	}
 }
 
 HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateLoadingAdvance, 0x10804C0, uint32_t** This)
@@ -397,7 +550,8 @@ void MissionManager::applyPatches()
 	INSTALL_HOOK(Mission_CGameplayFlowStageSetStageInfo);
 
 	// Change press X to interact stage gate
-	WRITE_MEMORY(0xD315F4, Sonic::EKeyState, Sonic::EKeyState::eKeyState_X);
+	WRITE_STRING(0x168B3C8, "ui_hud");
+	WRITE_MEMORY(0xD315F4, Sonic::EKeyState, Sonic::EKeyState::eKeyState_Y);
 
 	// MissionGate will use "Talk" UI popup instead
 	WRITE_MEMORY(0xEEAF15, uint32_t, 0);
@@ -456,4 +610,9 @@ void MissionManager::applyPatches()
 	// Force invalid MissionID to allow interact
 	WRITE_MEMORY(0xEEB17C, uint8_t, 0xB0, 0x01);
 	WRITE_MEMORY(0x552145, uint8_t, 0xEB); // ID = 9 is hardcoded for something...?
+
+	// Generic NPC dialog
+	INSTALL_HOOK(Mission_MsgNotifyObjectEvent);
+	INSTALL_HOOK(Mission_MsgRestartStage);
+	INSTALL_HOOK(Mission_CSonicUpdate);
 }

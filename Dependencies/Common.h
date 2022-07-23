@@ -1145,6 +1145,24 @@ static bool fRaycast
 	}
 }
 
+static void* fGetScreenPosition
+(
+	Eigen::Vector4f const& pos3D,
+	Eigen::Vector4f& pos2D
+)
+{
+	static void* const pfGetScreenPosition = (void*)0xD61C40;
+	__asm
+	{
+		mov		ecx, 0x1E0BE5C
+		mov		ecx, [ecx]
+		mov		eax, pos3D
+		mov		ebx, pos2D
+		push	ebx
+		call	[pfGetScreenPosition]
+	}
+}
+
 inline void ObjectCGlitterPlayerOneShot(void* pObject, Hedgehog::Base::CSharedString const& name)
 {
 	uint32_t* CGlitterPlayer = *(uint32_t**)((uint32_t)pObject + 0xF8);
