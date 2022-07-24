@@ -61,5 +61,11 @@ public:
 	static void draw();
 	static void clearDraw();
 	static void drawCaptions(Caption const& caption, float alpha);
+
+	using DialogCallbackFunc = void(*)(void*, uint32_t);
+	static std::set<DialogCallbackFunc> m_acceptCallbacks;
+	static std::set<DialogCallbackFunc> m_finishCallbacks;
+	static void addDialogAcceptCallback(DialogCallbackFunc);
+	static void addDialogFinishCallback(DialogCallbackFunc);
 };
 

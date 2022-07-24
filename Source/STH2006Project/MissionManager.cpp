@@ -5,17 +5,41 @@
 
 #include "Pele.h"
 #include "SoleannaBoys.h"
+#include "WhosCaptain.h"
 
 #define NPC_DATA_FILE "Assets\\Textbox\\npcData.ini"
 
 //---------------------------------------------------
 // Mission Complete Result HUD
 //---------------------------------------------------
+bool m_missionFailed = false;
+void MissionManager::setMissionFailed()
+{
+	m_missionFailed = true;
+}
+
 bool MissionManager::m_missionAsStage = false;
 HOOK(void, __fastcall, Mission_CMissionManagerAdvance, 0xD10690, uint32_t This, void* Edx, float* a2)
 {
 	uint32_t* pState = (uint32_t*)(This + 184);
 	uint32_t state = *pState;
+
+	if (state == 0 && m_missionFailed)
+	{
+		m_missionFailed = false;
+		struct MsgMissionFailed
+		{
+			INSERT_PADDING(0x10);
+			uint32_t m_type;
+		};
+		alignas(16) MsgMissionFailed msgMissionFailed {};
+		msgMissionFailed.m_type = 3;
+
+		FUNCTION_PTR(void*, __thiscall, processMsgMissionFailed, 0xD10920, void* This, void* message);
+		processMsgMissionFailed((void*)This, &msgMissionFailed);
+
+		state = *pState;
+	}
 
 	float* pStateTime = (float*)(This + 188);
 	static bool dialogShown = false;
@@ -317,6 +341,7 @@ HOOK(void, __fastcall, Mission_CObjGoalRing_MsgHitEventCollision, 0x1159010, uin
 // HUB NPC Talk
 //---------------------------------------------------
 bool MissionManager::m_missionAccept = true;
+void* MissionManager::m_genericNPCObject = nullptr;
 HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateLoadingBegin, 0x107D790, uint32_t** This)
 {
 	uint32_t gateStageID = This[2][84];
@@ -381,6 +406,7 @@ HOOK(void, __fastcall, Mission_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObjec
 	else if (*pEvent > 10000)
 	{
 		Mission_KillScene();
+		printf("[MissionManager] NPC ID: %d\n", *pEvent);
 
 		Sonic::CCsdDatabaseWrapper wrapper(This->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
 		auto spCsdProject = wrapper.GetCsdProject("ui_hud");
@@ -399,6 +425,7 @@ HOOK(void, __fastcall, Mission_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObjec
 		}
 
 		MissionManager::m_genericNPCDialog = *pEvent;
+		MissionManager::m_genericNPCObject = This;
 		m_genericNPCPos = *(Eigen::Vector4f*)(((uint32_t*)This)[46] + 112);
 		m_genericNPCPos.y() -= 0.5f;
 	}
@@ -409,6 +436,7 @@ HOOK(void, __fastcall, Mission_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObjec
 HOOK(int, __fastcall, Mission_MsgRestartStage, 0xE76810, Sonic::Player::CPlayer* player, void* Edx, void* message)
 {
 	MissionManager::m_genericNPCDialog = 0;
+	MissionManager::m_genericNPCObject = nullptr;
 	Mission_KillScene();
 
 	return originalMission_MsgRestartStage(player, Edx, message);
@@ -626,4 +654,7 @@ void MissionManager::applyPatches()
 
 	// Soleanna Boys Challenge AI
 	SoleannaBoys::applyPatches();
+
+	// Who's the Captain mission
+	WhosCaptain::applyPatches();
 }

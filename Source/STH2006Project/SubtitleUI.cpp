@@ -5,6 +5,8 @@
 #include "MissionManager.h"
 
 CaptionData SubtitleUI::m_captionData;
+std::set<SubtitleUI::DialogCallbackFunc> SubtitleUI::m_acceptCallbacks;
+std::set<SubtitleUI::DialogCallbackFunc> SubtitleUI::m_finishCallbacks;
 
 void SubtitleUI::applyPatches()
 {
@@ -216,7 +218,7 @@ void SubtitleUI::draw()
 
         // Goto next dialog when pressing A
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-        if (m_captionData.m_frame >= 5.0f && 
+        if (m_captionData.m_frame >= 5.0f && Application::getHudDeltaTime() > 0.0f &&
             (
                 padState->IsTapped(Sonic::EKeyState::eKeyState_A) ||
                 padState->IsTapped(Sonic::EKeyState::eKeyState_Y) ||
@@ -246,6 +248,12 @@ void SubtitleUI::draw()
                         {
                             m_captionData.m_captions.pop_back();
                         }
+
+                        // Accept callback
+                        for (DialogCallbackFunc pFn : m_acceptCallbacks)
+                        {
+                            pFn(MissionManager::m_genericNPCObject, MissionManager::m_genericNPCDialog);
+                        }
                     }
                     else
                     {
@@ -271,7 +279,7 @@ void SubtitleUI::draw()
         }
 
         // Yes/No dialog switching
-        if (m_captionData.m_acceptDialogShown)
+        if (m_captionData.m_acceptDialogShown && Application::getHudDeltaTime() > 0.0f)
         {
             bool playSound = false;
             if (MissionManager::m_missionAccept && (padState->LeftStickVertical < -0.5f || padState->IsTapped(Sonic::EKeyState::eKeyState_DpadDown)))
@@ -297,6 +305,12 @@ void SubtitleUI::draw()
         if (!m_captionData.m_isFadeIn && m_captionData.m_frame == 0.0f)
         {
             m_captionData.clear();
+
+            // Finish callback
+            for (DialogCallbackFunc pFn : m_finishCallbacks)
+            {
+                pFn(MissionManager::m_genericNPCObject, MissionManager::m_genericNPCDialog);
+            }
         }
     }
 }
@@ -318,4 +332,14 @@ void SubtitleUI::drawCaptions(Caption const& caption, float alpha)
         ImGui::SetCursorPosX(offset);
         ImGui::SetCursorPosY(ImGui::GetCursorPosY() + *BACKBUFFER_HEIGHT * 0.01f);
     }
+}
+
+void SubtitleUI::addDialogAcceptCallback(DialogCallbackFunc pFn)
+{
+    m_acceptCallbacks.insert(pFn);
+}
+
+void SubtitleUI::addDialogFinishCallback(DialogCallbackFunc pFn)
+{
+    m_finishCallbacks.insert(pFn);
 }
