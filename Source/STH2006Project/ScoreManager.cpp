@@ -204,11 +204,11 @@ HOOK(void, __fastcall, ScoreManager_GetSuperRing, 0x11F2F10, uint32_t* This, voi
 	originalScoreManager_GetSuperRing(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_GetPhysicsMsgNotifyObjectEvent, 0xEA4F50, uint32_t This, void* Edx, uint32_t* message)
+HOOK(void, __fastcall, ScoreManager_GetPhysicsMsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObject* This, void* Edx, Sonic::Message::MsgNotifyObjectEvent& message)
 {
-	if (message[4] == 12)
+	if (message.m_Event == 12)
 	{
-		std::string name(*(char**)(This + 0x130));
+		std::string name(*(char**)((uint32_t)This + 0x130));
 		int fakeEnemyType = ChaosEnergy::getFakeEnemyType(name);
 		if (fakeEnemyType)
 		{

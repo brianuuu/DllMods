@@ -11,14 +11,11 @@ HOOK(int, __fastcall, WhosCaptain_MsgRestartStage, 0xE76810, uint32_t* This, voi
 	return originalWhosCaptain_MsgRestartStage(This, Edx, message);
 }
 
-HOOK(void, __fastcall, WhosCaptain_MsgNotifyObjectEvent, 0xEA4F50, void* This, void* Edx, uint32_t a2)
+HOOK(void, __fastcall, WhosCaptain_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObject* This, void* Edx, Sonic::Message::MsgNotifyObjectEvent& message)
 {
-	uint32_t* pEvent = (uint32_t*)(a2 + 16);
-	uint32_t* pObject = (uint32_t*)This;
-
 	if (Common::GetCurrentStageID() == (SMT_ghz200 | SMT_Mission5))
 	{
-		if (*pEvent == 402)
+		if (message.m_Event == 402)
 		{
 			WhosCaptain::m_pCaptain = This;
 			printf("[WhosCaptain] Captain added with address 0x%08x\n", (uint32_t)This);
@@ -26,7 +23,7 @@ HOOK(void, __fastcall, WhosCaptain_MsgNotifyObjectEvent, 0xEA4F50, void* This, v
 		}
 	}
 
-	originalWhosCaptain_MsgNotifyObjectEvent(This, Edx, a2);
+	originalWhosCaptain_MsgNotifyObjectEvent(This, Edx, message);
 }
 
 void WhosCaptain::applyPatches()

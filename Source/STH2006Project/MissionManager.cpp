@@ -385,10 +385,9 @@ void Mission_PlayMotion(Chao::CSD::RCPtr<Chao::CSD::CScene>& scene, char const* 
 
 uint32_t MissionManager::m_genericNPCDialog = 0;
 Eigen::Vector4f m_genericNPCPos;
-HOOK(void, __fastcall, Mission_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObject* This, void* Edx, uint32_t a2)
+HOOK(void, __fastcall, Mission_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObject* This, void* Edx, Sonic::Message::MsgNotifyObjectEvent& message)
 {
-	uint32_t* pEvent = (uint32_t*)(a2 + 16);
-	if (*pEvent == 10000)
+	if (message.m_Event == 10000)
 	{
 		MissionManager::m_genericNPCDialog = 0;
 
@@ -403,10 +402,10 @@ HOOK(void, __fastcall, Mission_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObjec
 			Mission_PlayMotion(m_sceneMissionButton, "Outro_Anim");
 		}
 	}
-	else if (*pEvent > 10000)
+	else if (message.m_Event > 10000)
 	{
 		Mission_KillScene();
-		printf("[MissionManager] NPC ID: %d\n", *pEvent);
+		printf("[MissionManager] NPC ID: %d\n", message.m_Event);
 
 		Sonic::CCsdDatabaseWrapper wrapper(This->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
 		auto spCsdProject = wrapper.GetCsdProject("ui_hud");
@@ -424,13 +423,13 @@ HOOK(void, __fastcall, Mission_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObjec
 			}
 		}
 
-		MissionManager::m_genericNPCDialog = *pEvent;
+		MissionManager::m_genericNPCDialog = message.m_Event;
 		MissionManager::m_genericNPCObject = This;
 		m_genericNPCPos = *(Eigen::Vector4f*)(((uint32_t*)This)[46] + 112);
 		m_genericNPCPos.y() -= 0.5f;
 	}
 
-	originalMission_MsgNotifyObjectEvent(This, Edx, a2);
+	originalMission_MsgNotifyObjectEvent(This, Edx, message);
 }
 
 HOOK(int, __fastcall, Mission_MsgRestartStage, 0xE76810, Sonic::Player::CPlayer* player, void* Edx, void* message)

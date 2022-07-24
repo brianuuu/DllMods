@@ -218,12 +218,9 @@ ParamValue* m_LightSpeedDashMinVelocity = nullptr;
 ParamValue* m_LightSpeedDashMinVelocity3D = nullptr;
 ParamValue* m_LightSpeedDashMaxVelocity = nullptr;
 ParamValue* m_LightSpeedDashMaxVelocity3D = nullptr;
-HOOK(void, __fastcall, Stage_MsgNotifyObjectEvent, 0xEA4F50, void* This, void* Edx, uint32_t a2)
+HOOK(void, __fastcall, Stage_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObject* This, void* Edx, Sonic::Message::MsgNotifyObjectEvent& message)
 {
-    uint32_t* pEvent = (uint32_t*)(a2 + 16);
-    uint32_t* pObject = (uint32_t*)This;
-
-    switch (*pEvent)
+    switch (message.m_Event)
     {
     // Change light speed dash param
     case 1001:
@@ -277,7 +274,7 @@ HOOK(void, __fastcall, Stage_MsgNotifyObjectEvent, 0xEA4F50, void* This, void* E
     }
     }
 
-    originalStage_MsgNotifyObjectEvent(This, Edx, a2);
+    originalStage_MsgNotifyObjectEvent(This, Edx, message);
 }
 
 //---------------------------------------------------

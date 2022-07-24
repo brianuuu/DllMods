@@ -198,18 +198,15 @@ public:
 	}
 };
 
-HOOK(void, __fastcall, Pele_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObject* This, void* Edx, uint32_t a2)
+HOOK(void, __fastcall, Pele_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObject* This, void* Edx, Sonic::Message::MsgNotifyObjectEvent& message)
 {
-	uint32_t* pEvent = (uint32_t*)(a2 + 16);
-	uint32_t* pObject = (uint32_t*)This;
-
-	if (*pEvent == 401 && Common::GetCurrentStageID() == (SMT_ghz200 | SMT_Mission3))
+	if (message.m_Event == 401 && Common::GetCurrentStageID() == (SMT_ghz200 | SMT_Mission3))
 	{
 		This->m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjPele>(This));
 		return;
 	}
 
-	originalPele_MsgNotifyObjectEvent(This, Edx, a2);
+	originalPele_MsgNotifyObjectEvent(This, Edx, message);
 }
 
 void Pele::applyPatches()

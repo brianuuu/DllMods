@@ -1,11 +1,10 @@
 ﻿#include "Omochao.h"
 #include "Application.h"
 
-HOOK(int, __fastcall, Omochao_MsgNotifyObjectEvent, 0x114FB60, void* This, void* Edx, uint32_t a2)
+HOOK(int, __fastcall, Omochao_MsgNotifyObjectEvent, 0x114FB60, Sonic::CGameObject* This, void* Edx, Sonic::Message::MsgNotifyObjectEvent& message)
 {
-	uint32_t* pEvent = (uint32_t*)(a2 + 16);
 	S06DE_API::ModelType modelType = S06DE_API::GetModelType();
-	switch (*pEvent)
+	switch (message.m_Event)
 	{
 	case 50:
 	{
@@ -13,7 +12,7 @@ HOOK(int, __fastcall, Omochao_MsgNotifyObjectEvent, 0x114FB60, void* This, void*
 		if ((Common::IsPlayerSuper() && S06DE_API::GetModelType() == S06DE_API::ModelType::SonicElise)
 		|| modelType == S06DE_API::ModelType::Sonic || modelType == S06DE_API::ModelType::None)
 		{
-			*pEvent = 6;
+			message.m_Event = 6;
 		}
 		break;
 	}
@@ -22,7 +21,7 @@ HOOK(int, __fastcall, Omochao_MsgNotifyObjectEvent, 0x114FB60, void* This, void*
 		// Elise specific dialogs
 		if (!Common::IsPlayerSuper() && S06DE_API::GetModelType() == S06DE_API::ModelType::SonicElise)
 		{
-			*pEvent = 6;
+			message.m_Event = 6;
 		}
 		break;
 	}
@@ -31,7 +30,7 @@ HOOK(int, __fastcall, Omochao_MsgNotifyObjectEvent, 0x114FB60, void* This, void*
 		// Sonic OR Elise specific dialogs
 		if (modelType == S06DE_API::ModelType::None || modelType == S06DE_API::ModelType::Sonic || S06DE_API::GetModelType() == S06DE_API::ModelType::SonicElise)
 		{
-			*pEvent = 6;
+			message.m_Event = 6;
 		}
 		break;
 	}
@@ -40,14 +39,14 @@ HOOK(int, __fastcall, Omochao_MsgNotifyObjectEvent, 0x114FB60, void* This, void*
 		// Blaze specific dialogs
 		if (S06DE_API::GetModelType() == S06DE_API::ModelType::Blaze)
 		{
-			*pEvent = 6;
+			message.m_Event = 6;
 		}
 		break;
 	}
 	default: break;
 	}
 
-	return originalOmochao_MsgNotifyObjectEvent(This, Edx, a2);
+	return originalOmochao_MsgNotifyObjectEvent(This, Edx, message);
 }
 
 void Omochao::applyPatches()

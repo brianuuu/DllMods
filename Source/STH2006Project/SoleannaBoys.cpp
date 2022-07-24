@@ -1,22 +1,20 @@
 #include "SoleannaBoys.h"
 
 PathDataCollection SoleannaBoys::m_paths;
-std::deque<void*> SoleannaBoys::m_omochaos;
+std::deque<Sonic::CGameObject*> SoleannaBoys::m_omochaos;
 
-HOOK(int, __fastcall, SoleannaBoys_OmochaoMsgNotifyObjectEvent, 0x114FB60, void* This, void* Edx, uint32_t a2)
+HOOK(int, __fastcall, SoleannaBoys_OmochaoMsgNotifyObjectEvent, 0x114FB60, Sonic::CGameObject* This, void* Edx, Sonic::Message::MsgNotifyObjectEvent& message)
 {
-	uint32_t* pEvent = (uint32_t*)(a2 + 16);
-
 	if (Common::GetCurrentStageID() == (SMT_ghz200 | SMT_Mission4))
 	{
-		if (*pEvent >= 421 && *pEvent <= 425)
+		if (message.m_Event >= 421 && message.m_Event <= 425)
 		{
 			if (SoleannaBoys::m_omochaos.size() != 5)
 			{
 				SoleannaBoys::m_omochaos.resize(5);
 			}
 
-			int index = *pEvent - 421;
+			int index = message.m_Event - 421;
 			SoleannaBoys::m_omochaos[index] = This;
 			printf("[SoleannaBoys] Omochao added with address 0x%08x\n", (uint32_t)This);
 
@@ -24,7 +22,7 @@ HOOK(int, __fastcall, SoleannaBoys_OmochaoMsgNotifyObjectEvent, 0x114FB60, void*
 		}
 	}
 
-	return originalSoleannaBoys_OmochaoMsgNotifyObjectEvent(This, Edx, a2);
+	return originalSoleannaBoys_OmochaoMsgNotifyObjectEvent(This, Edx, message);
 }
 
 class CObjSoleannaBoy : public Sonic::CGameObject
@@ -103,16 +101,7 @@ public:
 				printf("[SoleannaBoys] Boy captured, %d remaining\n", SoleannaBoys::m_omochaos.size());
 				if (!SoleannaBoys::m_omochaos.empty())
 				{
-					struct MsgNotifyObjectEvent
-					{
-						INSERT_PADDING(0x10);
-						uint32_t m_event;
-						bool m_unknown;
-					};
-					alignas(16) MsgNotifyObjectEvent msgNotifyObjectEvent {};
-					msgNotifyObjectEvent.m_event = 6;
-					msgNotifyObjectEvent.m_unknown = false;
-					originalSoleannaBoys_OmochaoMsgNotifyObjectEvent(SoleannaBoys::m_omochaos.front(), nullptr, (uint32_t)&msgNotifyObjectEvent);
+					SendMessage(SoleannaBoys::m_omochaos.front()->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
 					SoleannaBoys::m_omochaos.pop_front();
 				}
 			}
@@ -150,14 +139,11 @@ public:
 	}
 };
 
-HOOK(void, __fastcall, SoleannaBoys_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObject* This, void* Edx, uint32_t a2)
+HOOK(void, __fastcall, SoleannaBoys_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObject* This, void* Edx, Sonic::Message::MsgNotifyObjectEvent& message)
 {
-	uint32_t* pEvent = (uint32_t*)(a2 + 16);
-	uint32_t* pObject = (uint32_t*)This;
-
 	if (Common::GetCurrentStageID() == (SMT_ghz200 | SMT_Mission4))
 	{
-		if (*pEvent >= 411 && *pEvent <= 416)
+		if (message.m_Event >= 411 && message.m_Event <= 416)
 		{
 			if (SoleannaBoys::m_paths.empty())
 			{
@@ -167,7 +153,7 @@ HOOK(void, __fastcall, SoleannaBoys_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGame
 				}
 			}
 
-			int index = *pEvent - 411;
+			int index = message.m_Event - 411;
 			PathFollowData followData;
 			followData.m_yawOnly = true;
 			followData.m_speed = 4.0f;
@@ -179,7 +165,7 @@ HOOK(void, __fastcall, SoleannaBoys_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGame
 		}
 	}
 
-	originalSoleannaBoys_MsgNotifyObjectEvent(This, Edx, a2);
+	originalSoleannaBoys_MsgNotifyObjectEvent(This, Edx, message);
 }
 
 HOOK(int, __fastcall, SoleannaBoys_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
