@@ -13,12 +13,12 @@ class CObjPele : public Sonic::CGameObject
 	PathDataCollection m_path;
 	PathFollowData m_followData;
 
-	void* m_pObject;
+	Sonic::CGameObject* m_pObject;
 	PeleState m_state;
 	bool m_triggerFired;
 
 public:
-	CObjPele(void* pObject)
+	CObjPele(Sonic::CGameObject* pObject)
 	{
 		if (!PathManager::parsePathXml(m_path, false, "Assets\\Stage\\Pele.path.xml") == tinyxml2::XML_SUCCESS)
 		{
@@ -155,8 +155,8 @@ public:
 				}
 
 				PathManager::followAdvance(m_followData, updateInfo.DeltaTime);
-				Common::ApplyObjectPhysicsPosition(m_pObject, m_followData.m_position);
-				Common::ApplyObjectPhysicsRotation(m_pObject, m_followData.m_rotation);
+				SendMessage(m_pObject->m_ActorID, boost::make_shared<Sonic::Message::MsgSetPosition>(m_followData.m_position));
+				SendMessage(m_pObject->m_ActorID, boost::make_shared<Sonic::Message::MsgSetRotation>(m_followData.m_rotation));
 			}
 			else
 			{

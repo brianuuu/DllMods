@@ -27,12 +27,12 @@ HOOK(int, __fastcall, SoleannaBoys_OmochaoMsgNotifyObjectEvent, 0x114FB60, Sonic
 
 class CObjSoleannaBoy : public Sonic::CGameObject
 {
-	void* m_pObject;
+	Sonic::CGameObject* m_pObject;
 	bool m_stopped;
 	PathFollowData m_followData;
 
 public:
-	CObjSoleannaBoy(void* pObject, PathFollowData followData)
+	CObjSoleannaBoy(Sonic::CGameObject* pObject, PathFollowData followData)
 	{
 		m_pObject = pObject;
 		m_stopped = false;
@@ -108,8 +108,8 @@ public:
 			else
 			{
 				PathManager::followAdvance(m_followData, updateInfo.DeltaTime);
-				Common::ApplyObjectPhysicsPosition(m_pObject, m_followData.m_position);
-				Common::ApplyObjectPhysicsRotation(m_pObject, m_followData.m_rotation);
+				SendMessage(m_pObject->m_ActorID, boost::make_shared<Sonic::Message::MsgSetPosition>(m_followData.m_position));
+				SendMessage(m_pObject->m_ActorID, boost::make_shared<Sonic::Message::MsgSetRotation>(m_followData.m_rotation));
 			}
 		}
 
