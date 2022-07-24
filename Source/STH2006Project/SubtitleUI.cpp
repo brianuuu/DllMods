@@ -114,6 +114,8 @@ void SubtitleUI::draw()
             ImGui::SetWindowFocus();
             ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
             drawCaptions(caption, alpha);
+            ImGui::SetCursorPos(ImVec2(sizeX, sizeY));
+            ImGui::Text(" "); // dummy text to expand window size
             ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.2023f, *BACKBUFFER_HEIGHT * (posY + 0.047f)));
         }
         ImGui::End();
