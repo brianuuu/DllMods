@@ -21,6 +21,7 @@
 #include <unordered_set>
 #include <deque>
 #include <regex>
+#include <mutex>
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
