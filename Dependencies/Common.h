@@ -1989,4 +1989,39 @@ inline std::wstring multiByteToWideChar(const char* value)
 	return std::wstring(wideChar);
 }
 
+inline bool DoesArchiveExist(std::string const& archiveName, std::set<std::string> ignoreModList = {})
+{
+	std::vector<std::string> modIniList;
+	GetModIniList(modIniList);
+	for (std::string const& modIni : modIniList)
+	{
+		bool ignore = false;
+		INIReader configReader(modIni);
+		std::string modName = configReader.Get("Desc", "Title", "");
+		for (std::string const& ignoreMod : ignoreModList)
+		{
+			if (modName.find(ignoreMod) != std::string::npos)
+			{
+				ignore = true;
+				break;
+			}
+		}
+		
+		if (ignore)
+		{
+			continue;
+		}
+
+		std::string folder = modIni.substr(0, modIni.length() - 7);
+		for (const auto& dirEntry : std::filesystem::recursive_directory_iterator(folder))
+		{
+			if (dirEntry.path().filename() == archiveName)
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 } // namespace Common

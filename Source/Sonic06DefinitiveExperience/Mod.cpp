@@ -43,6 +43,12 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
         exit(-1);
     }
 
+    if (Common::DoesArchiveExist("Sonic.ar.00", { "Sonic 06 Definitive Experience" }))
+    {
+        MessageBox(nullptr, TEXT("You are NOT allowed to use other character mods with this mod, please disable them."), TEXT("Sonic 06 Definitive Experience"), MB_ICONERROR);
+        exit(-1);
+    }
+
     // -------------Patches--------------
     // General application patches
     Application::applyPatches();

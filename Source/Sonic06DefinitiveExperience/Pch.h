@@ -18,6 +18,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <filesystem>
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
