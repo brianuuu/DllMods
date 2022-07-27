@@ -22,6 +22,7 @@
 #include <deque>
 #include <regex>
 #include <mutex>
+#include <filesystem>
 
 #include <Eigen/Core>
 #include <Eigen/Dense>

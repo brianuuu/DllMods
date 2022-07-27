@@ -9,9 +9,16 @@ public:
 		TLT_STH2006Project,
 	};
 
+	enum TitleMusicType
+	{
+		TMT_Original,
+		TMT_E3,
+	};
+
     static bool load(const std::string& rootPath);
 
 	static bool m_using06HUD;
 	static bool m_usingCustomWindow;
-	static bool m_titleLogo;
+	static TitleLogoType m_titleLogo;
+	static TitleMusicType m_titleMusic;
 };

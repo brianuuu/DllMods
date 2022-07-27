@@ -1503,6 +1503,13 @@ void TitleUI::applyPatches()
 {
 	populateTrialData();
 
+	// Disgusting E3 title screen music
+	if (Configuration::m_titleMusic == Configuration::TitleMusicType::TMT_E3)
+	{
+		WRITE_MEMORY(0x571ECA, char*, "Title_2");
+		WRITE_MEMORY(0x570C19, uint32_t, 1000017);
+	}
+
 	// Fix menu sounds
 	WRITE_MEMORY(0x11D219A, uint32_t, 1000002); // Menu oppen
 	WRITE_MEMORY(0x11D20EA, uint32_t, 1000003); // Menu close
