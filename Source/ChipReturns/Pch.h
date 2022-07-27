@@ -20,6 +20,7 @@
 #include <math.h>
 #include <cstdlib>
 #include <ctime>
+#include <filesystem>
 
 #include <Eigen/Core>
 #include <Eigen/Dense>

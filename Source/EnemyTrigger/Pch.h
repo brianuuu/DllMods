@@ -16,6 +16,7 @@
 #include <fstream>
 #include <iomanip>
 #include <math.h>
+#include <filesystem>
 
 // LostCodeLoader
 #include <LostCodeLoader.h>

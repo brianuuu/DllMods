@@ -20,6 +20,7 @@
 #include <unordered_set>
 #include <deque>
 #include <regex>
+#include <filesystem>
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
