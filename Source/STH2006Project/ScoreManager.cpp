@@ -397,6 +397,13 @@ HOOK(void, __fastcall, ScoreManager_EnemyCrawler, 0xB99B80, uint32_t* This, void
 	originalScoreManager_EnemyCrawler(This, Edx, message);
 }
 
+HOOK(void, __fastcall, ScoreManager_EnemySpinner, 0xBBD990, uint32_t* This, void* Edx, void* message)
+{
+	ScoreManager::addEnemyChain(This, message);
+	ScoreManager::addScore(*(bool*)((uint32_t)This + 372) ? ScoreType::ST_enemyMedium : ScoreType::ST_enemySmall, This);
+	originalScoreManager_EnemySpinner(This, Edx, message);
+}
+
 HOOK(int, __fastcall, ScoreManager_CGameObject3DDestruction, 0xD5D790, uint32_t* This)
 {
 	ScoreManager::m_savedObjects.erase(This);
@@ -528,6 +535,7 @@ void ScoreManager::applyPatches()
 	INSTALL_HOOK(ScoreManager_EnemyTaker);
 	INSTALL_HOOK(ScoreManager_EnemyBiter);
 	INSTALL_HOOK(ScoreManager_EnemyCrawler);
+	INSTALL_HOOK(ScoreManager_EnemySpinner);
 
 	if (m_internalSystem)
 	{
