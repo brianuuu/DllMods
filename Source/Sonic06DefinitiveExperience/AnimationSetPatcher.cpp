@@ -320,10 +320,13 @@ void AnimationSetPatcher::applyPatches()
     {
         // Double Jump
         m_newAnimationData.emplace_back(AccelJumpLoop, "sn_accel_jump_loop", 2.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back(AccelJumpLoop, "sn_accel_jump_loop", 2.0f, true, nullptr);
 
         // Fire Tornado
         m_newAnimationData.emplace_back(FireTornadoLoop, "sn_spin_attack_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back(FireTornadoLoop, "sn_spin_attack_loop", 1.0f, true, nullptr);
         m_newAnimationData.emplace_back(FireTornadoEnd, "sn_spin_attack_e", 1.0f, false, nullptr);
+        m_newAnimationDataSuper.emplace_back(FireTornadoEnd, "sn_spin_attack_e", 1.0f, false, nullptr);
     }
 
     if (!m_newAnimationData.empty())
