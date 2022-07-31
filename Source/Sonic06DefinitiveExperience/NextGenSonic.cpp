@@ -2463,6 +2463,9 @@ void NextGenSonic::applyPatches()
 
 void NextGenSonic::applyPatchesPostInit()
 {
+    // Handle model hide/unhide
+    INSTALL_HOOK(NextGenSonicGems_MsgRestartStage);
+
     if (!Configuration::m_characterMoveset) return;
 
     //-------------------------------------------------------
@@ -2471,7 +2474,6 @@ void NextGenSonic::applyPatchesPostInit()
     if (!m_isElise && Configuration::m_gemsEnabled)
     {
         INSTALL_HOOK(NextGenSonicGems_CSonicUpdate);
-        INSTALL_HOOK(NextGenSonicGems_MsgRestartStage);
 
         // Ignore D-pad input for Sonic's control
         WRITE_JUMP(0xD97B56, (void*)0xD97B9E);
