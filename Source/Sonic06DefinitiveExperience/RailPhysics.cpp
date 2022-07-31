@@ -69,6 +69,14 @@ HOOK(uint32_t*, __fastcall, RailPhysics_CDatabaseDataDestructor, 0x699380, uint3
     return originalRailPhysics_CDatabaseDataDestructor(This);
 }
 
+HOOK(int, __fastcall, RailPhysics_CHomingTargetImplCollisionInit, 0xE914E0, uint32_t* This, void* Edx, int a2, int a3, int a4)
+{
+    RailPhysics::m_pHomingTargetObj = This;
+    RailPhysics::m_isGettingHomingTarget = true;
+
+    return originalRailPhysics_CHomingTargetImplCollisionInit(This, Edx, a2, a3, a4);
+}
+
 HOOK(uint32_t*, __cdecl, RailPhysics_CEventCollisionConstructor, 0x11836F0, int a1, int a2, int a3, int a4, int a5, char a6, int a7)
 {
     uint32_t* pObject = originalRailPhysics_CEventCollisionConstructor(a1, a2, a3, a4, a5, a6, a7);
@@ -189,19 +197,6 @@ HOOK(int*, __fastcall, RailPhysics_CSonicStateGrindBegin, 0xDF26A0, void* This)
     }
 
     return originalRailPhysics_CSonicStateGrindBegin(This);
-}
-
-void __declspec(naked) getHomingTargetObj()
-{
-    static uint32_t returnAddress = 0xE91412;
-    static uint32_t sub_D5DBA0 = 0xD5DBA0;
-    __asm
-    {
-        mov     RailPhysics::m_pHomingTargetObj, esi
-        mov     RailPhysics::m_isGettingHomingTarget, 1
-        call    [sub_D5DBA0]
-        jmp     [returnAddress]
-    }
 }
 
 void __declspec(naked) createHomingTargetObj()
@@ -335,13 +330,11 @@ void RailPhysics::applyPatches()
         // Only allow one homing target
         WRITE_JUMP(0x121EDAA, createHomingTargetObj);
 
-        // Grab the target object pointer
-        WRITE_JUMP(0xE9140D, getHomingTargetObj);
-
         // Force rail event collision to be "detected"
         WRITE_JUMP(0xE744C1, forceQueryHomingCollision);
 
-        // Grab the event collision pointer
+        // Grab the target object & event collision pointer
+        INSTALL_HOOK(RailPhysics_CHomingTargetImplCollisionInit);
         INSTALL_HOOK(RailPhysics_CEventCollisionConstructor);
 
         // Update rail lock-on position
