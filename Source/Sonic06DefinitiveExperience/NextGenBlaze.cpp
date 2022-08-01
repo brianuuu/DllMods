@@ -457,7 +457,7 @@ void NextGenBlaze::applyPatches()
     WRITE_MEMORY(0x1203CA3, uint32_t, 0x1ABD05C); // electic damage use fire damage offsets
     WRITE_MEMORY(0x1203D7C, uint32_t, 0x1ABD074);
 
-    // Fix Super Sonic pfx bone location
+    // Fix Burning Blaze pfx bone location
     static float const spineAuraOffset = -50.0f;
     WRITE_MEMORY(0xDA2689, float*, &spineAuraOffset);
     WRITE_MEMORY(0xDA26EA, char*, "FrontHair"); // Needle_U_C
@@ -465,6 +465,17 @@ void NextGenBlaze::applyPatches()
     WRITE_MEMORY(0xDA278C, char*, "RightHand"); // Hand_R
     WRITE_MEMORY(0xDA27DD, char*, "LeftFoot"); // Foot_L
     WRITE_MEMORY(0xDA285E, char*, "RightFoot"); // Foot_R
+
+    // Burning Blaze aura/boost pfx
+    WRITE_STRING(0x15D64E4, "ef_ch_bnb_yh1_forceaura2");
+    WRITE_STRING(0x15D64C0, "ef_ch_bnb_yh1_forceaura3");
+    WRITE_STRING(0x15D6498, "ef_ch_bnb_yh1_forceaura1");
+    WRITE_STRING(0x15D6474, "ef_ch_bnb_yh1_forceaura1");
+    WRITE_STRING(0x15D6450, "ef_ch_bnb_yh1_forceaura1");
+    WRITE_STRING(0x15D642C, "ef_ch_bnb_yh1_forceaura1");
+    WRITE_STRING(0x15D6408, "ef_ch_bnb_yh1_forceaura1");
+    WRITE_STRING(0x15F99F8, "ef_ch_sng_yh1_boost1");
+    WRITE_STRING(0x15F9A10, "ef_ch_sng_yh1_boost2");
 
     // Stomp uses fire tornado voice & sfx
     WRITE_MEMORY(0x1254E02, uint8_t, 10);
