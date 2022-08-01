@@ -229,7 +229,7 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
     for (uint32_t i = 0; i < length; i++)
     {
         uint32_t const key = captionList[i];
-        if (key >= 0x64 && key <= 0x6F)
+        if (key >= 0x64 && key <= 0x6F || key == 0x78)
         {
             // Button at the beginning of a line, add dummy text
             if (str.empty())
@@ -241,7 +241,7 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
                 newCaption.m_captions.push_back(Common::wideCharToMultiByte(str.c_str()));
                 str.clear();
             }
-            newCaption.m_buttons[newCaption.m_captions.size() - 1] = (CaptionButtonType)(key - 0x64);
+            newCaption.m_buttons[newCaption.m_captions.size() - 1] = (key == 0x78) ? CaptionButtonType::CBT_DPad : (CaptionButtonType)(key - 0x64);
             rowLength += 2;
         }
         else if (m_fontDatabase.count(key))
@@ -326,6 +326,7 @@ bool CaptionData::init()
     success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_Back.dds").c_str(), &m_buttonBack);
     success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_LStick.dds").c_str(), &m_buttonLStick);
     success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_RStick.dds").c_str(), &m_buttonRStick);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_DPad.dds").c_str(), &m_buttonDPad);
 
     if (!success)
     {
@@ -486,6 +487,7 @@ float SubtitleUI::drawCaptions(Caption const& caption, float alpha, bool isShado
             case CBT_Back:  texture = &m_captionData.m_buttonBack;   break;
             case CBT_LStick:  texture = &m_captionData.m_buttonLStick;   break;
             case CBT_RStick:  texture = &m_captionData.m_buttonRStick;   break;
+            case CBT_DPad:  texture = &m_captionData.m_buttonDPad;   break;
             }
 
             ImGui::SameLine();
