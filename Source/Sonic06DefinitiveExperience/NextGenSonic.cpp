@@ -1893,6 +1893,12 @@ HOOK(int, __fastcall, NextGenSonicGems_CSonicStateHomingAttackBegin, 0x1232040, 
     {
         // Revert using original Homing Attack After animation table
         WRITE_MEMORY(0x111838F, uint32_t, 0x1E75E18);
+
+        // Disable pointers
+        HomingLockonCollisionFovy2D = nullptr;
+        HomingLockonCollisionFovyN2D = nullptr;
+        HomingLockonCollisionFovy3D = nullptr;
+        HomingLockonCollisionFovyN3D = nullptr;
     }
 
     int result = originalNextGenSonicGems_CSonicStateHomingAttackBegin(This);
