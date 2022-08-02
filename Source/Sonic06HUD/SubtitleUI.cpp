@@ -206,19 +206,20 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
         return;
     }
 
-    if (m_captionData.m_owner != owner || isCutscene)
+    // Read caption and convert to string
+    uint32_t const length = (caption[2] - caption[1]) / 4;
+    uint32_t* captionList = (uint32_t*)caption[1];
+
+    if (m_captionData.m_owner != owner || isCutscene || m_captionData.m_captionStart == captionList)
     {
         m_captionData.clear();
     }
     m_captionData.m_owner = owner;
+    m_captionData.m_captionStart = captionList;
     m_captionData.m_isCutscene = isCutscene && (Common::GetCurrentStageID() & 0xFF) != SMT_blb;
 
     Caption newCaption;
     newCaption.m_duration = duration;
-
-    // Read caption and convert to string
-    uint32_t const length = (caption[2] - caption[1]) / 4;
-    uint32_t* captionList = (uint32_t*)caption[1];
 
     bool isJapanese = Common::GetUILanguageType() == LT_Japanese;
     bool adjustLineBreak = !Configuration::m_usingSTH2006Project && !m_captionData.m_isCutscene;

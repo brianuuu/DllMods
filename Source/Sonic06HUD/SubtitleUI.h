@@ -27,6 +27,7 @@ struct Caption
 struct CaptionData
 {
 	uint32_t* m_owner;
+	uint32_t* m_captionStart;
 	bool m_isCutscene;
 	float m_timer;
 	bool m_bypassLoading;
@@ -51,6 +52,7 @@ struct CaptionData
 	void clear()
 	{
 		m_owner = nullptr;
+		m_captionStart = nullptr;
 		m_isCutscene = false;
 		m_timer = 0.0f;
 		m_bypassLoading = false;
