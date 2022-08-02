@@ -27,6 +27,8 @@ enum MenuState : int
 	MS_OptionDialog,
 	MS_OptionSubtitle,
 
+	MS_ActWarningYesNo,
+	//MS_TownWarningYesNo,
 	MS_DeleteSaveYesNo,
 	MS_ReturnTitleYesNo,
 	MS_QuitYesNo,
@@ -192,6 +194,7 @@ public:
 	static void populateTrialData();
 	static void refreshTrialAvailability();
 
+	static void enterModeSelect();
 	static void populateStageData(size_t stage, std::string stageID, bool disableSilverMedal);
 	static void cursorStageSelect(int index, bool isMission);
 	static void cursorMission(int index);

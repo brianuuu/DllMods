@@ -135,8 +135,8 @@ void UIContext::update()
 
             fontSubtitle->Scale = (float)*BACKBUFFER_WIDTH / 1920.0f;
             ImGui::PushFont(fontSubtitle);
-            TitleUI::drawYesNoWindow();
             TitleUI::drawStageData();
+            TitleUI::drawYesNoWindow();
             SubtitleUI::draw();
             LoadingUI::draw();
             ImGui::PopFont();

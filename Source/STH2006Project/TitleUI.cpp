@@ -901,17 +901,24 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			{
 				Common::PlaySoundStatic(soundHandle, 1000005);
 
-				m_sceneStageCursor->SetHideFlag(true);
-				m_sceneStageCursor2->SetHideFlag(true);
+				bool isJapanese = Common::GetUILanguageType() == LT_Japanese;
+				const INIReader reader(Application::getModDirString() + "Assets\\Title\\titleData.ini");
+				std::string warningStr = reader.Get(std::to_string(data.m_stage), Common::GetUILanguageType() == LT_Japanese ? "WarningMessageJP" : "WarningMessage", "");
+				if (warningStr.empty())
+				{
+					TitleUI::enterModeSelect();
+				}
+				else
+				{
+					warningStr = std::regex_replace(warningStr, std::regex(" "), "  ");
+					warningStr = std::regex_replace(warningStr, std::regex("\\\\n"), "\n");
 
-				m_missionCursorIndex = 0;
-				TitleUI::cursorMission(m_missionCursorIndex);
+					m_sceneStageCursor->SetHideFlag(true);
+					m_sceneStageCursor2->SetHideFlag(true);
 
-				TitleUI_PlayMotion(m_sceneMissionPlate, "DefaultAnim");
-				m_sceneMissionText->SetHideFlag(false);
-				TitleUI::populateStageData(data.m_stage, data.m_stageID, data.m_disableSilverMedal);
-
-				m_menuState = MenuState::MS_ModeSelect;
+					TitleUI::EnableYesNoWindow(true, true, warningStr);
+					m_menuState = MenuState::MS_ActWarningYesNo;
+				}
 			}
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
@@ -1287,6 +1294,8 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 		}
 		break;
 	}
+	case MenuState::MS_ActWarningYesNo:
+	//case MenuState::MS_TownWarningYesNo:
 	case MenuState::MS_DeleteSaveYesNo:
 	case MenuState::MS_ReturnTitleYesNo:
 	case MenuState::MS_QuitYesNo:
@@ -1312,7 +1321,15 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			}
 			else
 			{
-				if (m_menuState == MenuState::MS_DeleteSaveYesNo)
+				switch (m_menuState)
+				{
+				case MenuState::MS_ActWarningYesNo:
+				{
+					TitleUI::EnableYesNoWindow(false);
+					TitleUI::enterModeSelect();
+					break;
+				}
+				case MenuState::MS_DeleteSaveYesNo:
 				{
 					TitleUI::EnableYesNoWindow(false);
 
@@ -1322,20 +1339,24 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 					m_menuState = MenuState::MS_FadeOut;
 
 					m_returnData.m_menuState = MenuState::MS_FadeIn;
+					break;
 				}
-				else if (m_menuState == MenuState::MS_QuitYesNo)
-				{
-					// wait a bit then close game
-					This->m_Time = 0.0f;
-					m_menuState = MenuState::MS_QuitYes;
-				}
-				else
+				case MenuState::MS_ReturnTitleYesNo:
 				{
 					TitleUI::EnableYesNoWindow(false);
 
 					// fade out then return to title screen
 					m_fadeOutTime = 0.0f;
 					m_menuState = MenuState::MS_FadeOutTitle;
+					break;
+				}
+				case MenuState::MS_QuitYesNo:
+				{
+					// wait a bit then close game
+					This->m_Time = 0.0f;
+					m_menuState = MenuState::MS_QuitYes;
+					break;
+				}
 				}
 			}
 			Common::PlaySoundStatic(soundHandle, 1000005);
@@ -1350,10 +1371,25 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 		{
 			TitleUI::EnableYesNoWindow(false);
 
-			m_cursor1Data.m_hidden = false;
-			TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1);
+			switch (m_menuState)
+			{
+			case MenuState::MS_ActWarningYesNo:
+			{
+				TitleUI::cursorStageSelect(m_stageCursorIndex, false);
+				m_menuState = MenuState::MS_ActTrial;
+				break;
+			}
+			case MenuState::MS_DeleteSaveYesNo:
+			case MenuState::MS_ReturnTitleYesNo:
+			case MenuState::MS_QuitYesNo:
+			{
+				m_cursor1Data.m_hidden = false;
+				TitleUI::cursorSelect(m_cursor1Data, m_sceneMenuCursor1);
 
-			m_menuState = MenuState::MS_Main;
+				m_menuState = MenuState::MS_Main;
+				break;
+			}
+			}
 		}
 
 		if (m_sceneYesNoCursor && m_sceneYesNoCursor->m_MotionDisableFlag)
@@ -1677,6 +1713,24 @@ void TitleUI::refreshTrialAvailability()
 		}
 		id++;
 	}
+}
+
+void TitleUI::enterModeSelect()
+{
+	size_t id = m_actTrialVisibleID[m_stageCursorIndex];
+	TrialData const& data = m_actTrialData[id];
+
+	m_sceneStageCursor->SetHideFlag(true);
+	m_sceneStageCursor2->SetHideFlag(true);
+
+	m_missionCursorIndex = 0;
+	TitleUI::cursorMission(m_missionCursorIndex);
+
+	TitleUI_PlayMotion(m_sceneMissionPlate, "DefaultAnim");
+	m_sceneMissionText->SetHideFlag(false);
+	TitleUI::populateStageData(data.m_stage, data.m_stageID, data.m_disableSilverMedal);
+
+	m_menuState = MenuState::MS_ModeSelect;
 }
 
 void TitleUI::populateStageData(size_t stage, std::string stageID, bool disableSilverMedal)
@@ -2110,12 +2164,13 @@ void TitleUI::drawMenu()
 	//-------------------------------------------------------------
 	// Act Trial
 	//-------------------------------------------------------------
-	if (m_menuState == MenuState::MS_ActTrial && !m_drawActTrial)
+	bool drawActTrial = m_menuState == MenuState::MS_ActTrial;
+	if (drawActTrial && !m_drawActTrial)
 	{
 		m_drawActTrial = true;
 		m_drawActTrialAlpha = 0.0f;
 	}
-	else if (m_menuState != MenuState::MS_ActTrial && m_drawActTrial)
+	else if (!drawActTrial && m_drawActTrial)
 	{
 		m_drawActTrial = false;
 	}

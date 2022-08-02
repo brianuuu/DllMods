@@ -77,7 +77,7 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 		if (reader.ParseError() != 0)
 		{
 			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\cmn.dds").c_str(), &LoadingUI::m_stageTexture);
-			LoadingUI::m_bottomText = "MISSING TEXT";
+			LoadingUI::m_bottomText = "titleData.ini parse error" + std::to_string(reader.ParseError());
 		}
 		else
 		{
