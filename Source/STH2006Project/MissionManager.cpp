@@ -341,6 +341,7 @@ HOOK(void, __fastcall, Mission_CObjGoalRing_MsgHitEventCollision, 0x1159010, uin
 // HUB NPC Talk
 //---------------------------------------------------
 bool MissionManager::m_missionAccept = true;
+uint32_t MissionManager::m_genericNPCDialog = 0;
 void* MissionManager::m_genericNPCObject = nullptr;
 HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateLoadingBegin, 0x107D790, uint32_t** This)
 {
@@ -356,142 +357,247 @@ HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateLoadingBegin, 0x107D790, u
 	originalMission_CHudGateMenuMain_CStateLoadingBegin(This);
 }
 
-Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectMissionButton;
-boost::shared_ptr<Sonic::CGameObjectCSD> m_spMissionButton;
-Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMissionButton;
-
-void Mission_KillScene()
+class CObjTalkButton : public Sonic::CGameObject
 {
-	if (m_spMissionButton)
+	enum TalkState
 	{
-		m_spMissionButton->SendMessage(m_spMissionButton->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
-		m_spMissionButton = nullptr;
+		TS_Intro,
+		TS_Usual,
+		TS_Talk,
+		TS_Outro,
+	} m_state;
+
+	Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectMissionButton;
+	boost::shared_ptr<Sonic::CGameObjectCSD> m_spMissionButton;
+	Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneMissionButton;
+	
+	bool m_outOfControl;
+	uint32_t m_genericNPCDialog;
+	Eigen::Vector4f m_genericNPCPos;
+
+public:
+	CObjTalkButton(uint32_t inDialogID, Eigen::Vector4f inPos)
+		: m_outOfControl(false)
+		, m_genericNPCDialog(inDialogID)
+		, m_genericNPCPos(inPos)
+	{
 	}
 
-	Chao::CSD::CProject::DestroyScene(m_projectMissionButton.Get(), m_sceneMissionButton);
-	m_projectMissionButton = nullptr;
-}
-
-void Mission_PlayMotion(Chao::CSD::RCPtr<Chao::CSD::CScene>& scene, char const* motion, bool loop = false)
-{
-	if (!scene) return;
-	scene->SetHideFlag(false);
-	scene->SetMotion(motion);
-	scene->m_MotionDisableFlag = false;
-	scene->m_MotionSpeed = 1.0f;
-	scene->m_MotionRepeatType = loop ? Chao::CSD::eMotionRepeatType_Loop : Chao::CSD::eMotionRepeatType_PlayOnce;
-	scene->Update();
-}
-
-uint32_t MissionManager::m_genericNPCDialog = 0;
-Eigen::Vector4f m_genericNPCPos;
-HOOK(void, __fastcall, Mission_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObject* This, void* Edx, Sonic::Message::MsgNotifyObjectEvent& message)
-{
-	if (message.m_Event == 10000)
+	~CObjTalkButton()
 	{
-		MissionManager::m_genericNPCDialog = 0;
-
-		auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-		if (context)
+		if (m_spMissionButton)
 		{
-			context->StateFlag(eStateFlag_OutOfControl) = false;
+			m_spMissionButton->SendMessage(m_spMissionButton->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+			m_spMissionButton = nullptr;
 		}
 
-		if (m_sceneMissionButton)
-		{
-			Mission_PlayMotion(m_sceneMissionButton, "Outro_Anim");
-		}
+		Chao::CSD::CProject::DestroyScene(m_projectMissionButton.Get(), m_sceneMissionButton);
+		m_projectMissionButton = nullptr;
 	}
-	else if (message.m_Event > 10000)
-	{
-		Mission_KillScene();
-		printf("[MissionManager] NPC ID: %d\n", message.m_Event);
 
-		Sonic::CCsdDatabaseWrapper wrapper(This->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
+	void AddCallback
+	(
+		const Hedgehog::Base::THolder<Sonic::CWorld>& worldHolder,
+		Sonic::CGameDocument* pGameDocument,
+		const boost::shared_ptr<Hedgehog::Database::CDatabase>& spDatabase
+	) override
+	{
+		Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
+		pGameDocument->AddUpdateUnit("1", this);
+		
+		Sonic::CCsdDatabaseWrapper wrapper(m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
 		auto spCsdProject = wrapper.GetCsdProject("ui_hud");
 		m_projectMissionButton = spCsdProject->m_rcProject;
 		if (m_projectMissionButton)
 		{
 			m_sceneMissionButton = m_projectMissionButton->CreateScene("btn_guide");
 			m_sceneMissionButton->GetNode("btn_word")->SetPatternIndex(0);
-			Mission_PlayMotion(m_sceneMissionButton, "Intro_Anim");
+
+			if (SubtitleUI::isPlayingCaption())
+			{
+				// there's another dialog playing, wait for it to finish
+				m_sceneMissionButton->m_MotionDisableFlag = true;
+				m_state = TalkState::TS_Talk;
+			}
+			else
+			{
+				StateIntro();
+			}
 
 			if (!m_spMissionButton)
 			{
 				m_spMissionButton = boost::make_shared<Sonic::CGameObjectCSD>(m_projectMissionButton, 0.5f, "HUD", false);
-				Sonic::CGameDocument::GetInstance()->AddGameObject(m_spMissionButton, "main", This);
+				Sonic::CGameDocument::GetInstance()->AddGameObject(m_spMissionButton, "main", this);
 			}
 		}
+	}
+
+	bool ProcessMessage
+	(
+		Hedgehog::Universe::Message& message,
+		bool flag
+	) override
+	{
+		if (flag)
+		{
+			if (std::strstr(message.GetType(), "MsgRestartStage") != nullptr
+			 || std::strstr(message.GetType(), "MsgStageClear") != nullptr)
+			{
+				Kill();
+				return true;
+			}
+		}
+
+		return Sonic::CGameObject::ProcessMessage(message, flag);
+	}
+
+	void UpdateParallel
+	(
+		const Hedgehog::Universe::SUpdateInfo& updateInfo
+	) override
+	{
+		auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+		if (!context) return;
+
+		bool validState = context->m_Grounded;
+		if (validState)
+		{
+			Hedgehog::Base::CSharedString stateName = context->m_pPlayer->m_StateMachine.GetCurrentState()->GetStateName();
+			validState  &= stateName.compare("Walk") == 0 || stateName.compare("Stand") == 0 || stateName.compare("MoveStop") == 0;
+		}
+
+		switch (m_state)
+		{
+		case TS_Intro:
+		case TS_Usual:
+		{
+			// loop animation
+			if (m_sceneMissionButton && m_sceneMissionButton->m_MotionDisableFlag)
+			{
+				PlayMotion("Usual_Anim", true);
+				m_state = TalkState::TS_Usual;
+			}
+
+			if (!validState || m_genericNPCDialog != MissionManager::m_genericNPCDialog)
+			{
+				PlayMotion("Outro_Anim");
+				m_state = TalkState::TS_Outro;
+			}
+			else
+			{
+				Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+				if (padState->IsTapped(Sonic::EKeyState::eKeyState_Y))
+				{
+					Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+					MissionManager::startGenericDialog("NPC" + std::to_string(MissionManager::m_genericNPCDialog));
+
+					m_outOfControl = true;
+					context->StateFlag(eStateFlag_OutOfControl)++;
+
+					PlayMotion("Outro_Anim");
+					m_state = TalkState::TS_Talk;
+				}
+			}
+			break;
+		}
+		case TS_Talk:
+		{
+			if (!SubtitleUI::isPlayingCaption())
+			{
+				if (m_outOfControl)
+				{
+					context->StateFlag(eStateFlag_OutOfControl)--;
+					m_outOfControl = false;
+				}
+				StateIntro();
+			}
+			break;
+		}
+		case TS_Outro:
+		{
+			if (m_genericNPCDialog == MissionManager::m_genericNPCDialog)
+			{
+				if (validState)
+				{
+					StateIntro();
+				}
+			}
+			else if (m_sceneMissionButton && m_sceneMissionButton->m_MotionDisableFlag)
+			{
+				// finished outro, kill
+				Kill();
+			}
+			break;
+		}
+		}
+
+		// Handle position
+		if (m_sceneMissionButton)
+		{
+			if (m_state == TalkState::TS_Talk && m_sceneMissionButton->m_MotionDisableFlag)
+			{
+				m_sceneMissionButton->SetPosition(0, -200);
+			}
+			else
+			{
+				Eigen::Vector4f screenPosition;
+				Common::fGetScreenPosition(m_genericNPCPos, screenPosition);
+				m_sceneMissionButton->SetPosition(screenPosition.x(), screenPosition.y());
+			}
+		}
+	}
+
+	void StateIntro()
+	{
+		PlayMotion("Intro_Anim");
+		m_state = TalkState::TS_Intro;
+	}
+
+	void PlayMotion(char const* motion, bool loop = false)
+	{
+		if (!m_sceneMissionButton) return;
+		m_sceneMissionButton->SetHideFlag(false);
+		m_sceneMissionButton->SetMotion(motion);
+		m_sceneMissionButton->m_MotionDisableFlag = false;
+		m_sceneMissionButton->m_MotionFrame = 0.0f;
+		m_sceneMissionButton->m_MotionSpeed = 1.0f;
+		m_sceneMissionButton->m_MotionRepeatType = loop ? Chao::CSD::eMotionRepeatType_Loop : Chao::CSD::eMotionRepeatType_PlayOnce;
+		m_sceneMissionButton->Update();
+	}
+
+	void Kill()
+	{
+		auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+		if (context && m_outOfControl)
+		{
+			context->StateFlag(eStateFlag_OutOfControl)--;
+			m_outOfControl = false;
+		}
+
+		printf("[TalkButton] Killed\n");
+		SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+	}
+};
+
+HOOK(void, __fastcall, Mission_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObject* This, void* Edx, Sonic::Message::MsgNotifyObjectEvent& message)
+{
+	if (message.m_Event == 10000)
+	{
+		MissionManager::m_genericNPCDialog = 0;
+	}
+	else if (message.m_Event > 10000)
+	{
+		Eigen::RowVector4f pos = *(Eigen::Vector4f*)(((uint32_t*)This)[46] + 112);
+		pos.y() -= 0.5f;
+
+		printf("[TalkButton] NPC ID: %d\n", message.m_Event);
+		This->m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjTalkButton>(message.m_Event, pos));
 
 		MissionManager::m_genericNPCDialog = message.m_Event;
 		MissionManager::m_genericNPCObject = This;
-		m_genericNPCPos = *(Eigen::Vector4f*)(((uint32_t*)This)[46] + 112);
-		m_genericNPCPos.y() -= 0.5f;
 	}
 
 	originalMission_MsgNotifyObjectEvent(This, Edx, message);
-}
-
-HOOK(int, __fastcall, Mission_MsgRestartStage, 0xE76810, Sonic::Player::CPlayer* player, void* Edx, void* message)
-{
-	MissionManager::m_genericNPCDialog = 0;
-	MissionManager::m_genericNPCObject = nullptr;
-	Mission_KillScene();
-
-	return originalMission_MsgRestartStage(player, Edx, message);
-}
-
-HOOK(void, __fastcall, Mission_CSonicUpdate, 0xE6BF20, void* This, void* Edx, const Hedgehog::Universe::SUpdateInfo& updateInfo)
-{
-	originalMission_CSonicUpdate(This, Edx, updateInfo);
-
-	if (m_sceneMissionButton)
-	{
-		Eigen::Vector4f screenPosition;
-		Common::fGetScreenPosition(m_genericNPCPos, screenPosition);
-		m_sceneMissionButton->SetPosition(screenPosition.x(), screenPosition.y());
-	}
-
-	if (MissionManager::m_genericNPCDialog <= 10000) return;
-
-	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-	if (!context) return;
-
-	Hedgehog::Base::CSharedString stateName = context->m_pPlayer->m_StateMachine.GetCurrentState()->GetStateName();
-	if (stateName.compare("Walk") != 0 && stateName.compare("Stand") != 0 && stateName.compare("MoveStop") != 0) 
-	{
-		if (m_sceneMissionButton)
-		{
-			m_sceneMissionButton->SetPosition(-100.0f, 0.0f);
-		}
-		return;
-	}
-
-	if (!SubtitleUI::isPlayingCaption())
-	{
-		if (m_sceneMissionButton && m_sceneMissionButton->m_MotionDisableFlag)
-		{
-			Mission_PlayMotion(m_sceneMissionButton, "Usual_Anim", true);
-		}
-
-		Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-		if (context->m_Grounded && padState->IsTapped(Sonic::EKeyState::eKeyState_Y))
-		{
-			Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
-			MissionManager::startGenericDialog("NPC" + std::to_string(MissionManager::m_genericNPCDialog));
-
-			context->StateFlag(eStateFlag_OutOfControl) = true;
-
-			if (m_sceneMissionButton)
-			{
-				Mission_PlayMotion(m_sceneMissionButton, "Outro_Anim");
-			}
-		}
-		else
-		{
-			context->StateFlag(eStateFlag_OutOfControl) = false;
-		}
-	}
 }
 
 void MissionManager::startGenericDialog(std::string const& section, bool hasYesNo)
@@ -642,8 +748,6 @@ void MissionManager::applyPatches()
 
 	// Generic NPC dialog
 	INSTALL_HOOK(Mission_MsgNotifyObjectEvent);
-	INSTALL_HOOK(Mission_MsgRestartStage);
-	INSTALL_HOOK(Mission_CSonicUpdate);
 
 	//---------------------------------------------------
 	// Individual Mission Manager/AI
