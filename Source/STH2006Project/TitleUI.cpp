@@ -1669,7 +1669,7 @@ void TitleUI::populateTrialData()
 		data.m_missionNameJP = reader.Get(sectionSort.m_section, "missionNameJP", "");
 		if (data.m_actName.empty() && (data.m_missionName.empty() || data.m_missionNameJP.empty())) continue;
 
-		if (!data.m_actName.empty())
+		if (data.m_missionName.empty())
 		{
 			m_actTrialData.push_back(data);
 		}
@@ -2286,7 +2286,7 @@ void TitleUI::drawMenu()
 
 				float posYFinal = posY + posYDiff * (1.0f - m_drawTownTrialAlpha);
 				ImGui::SetCursorPos(ImVec2(*BACKBUFFER_WIDTH * posX, *BACKBUFFER_HEIGHT * posYFinal));
-				ImGui::TextColored(color, (std::string("MISSION  ") + std::to_string(i + 1)).c_str());
+				ImGui::TextColored(color, data.m_actName.c_str());
 				posY += yDist;
 			}
 		}
