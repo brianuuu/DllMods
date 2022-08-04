@@ -1,5 +1,6 @@
 #pragma once
 #include "CustomHUD.h"
+#include "SubtitleUI.h"
 
 extern "C" __declspec(dllexport) bool API_IsYesNoWindowDrawing()
 {
@@ -20,4 +21,9 @@ extern "C" __declspec(dllexport) CustomHUD::SonicGemType API_GetSonicGem()
 extern "C" __declspec(dllexport) void API_SetSonicGemEnabled(CustomHUD::SonicGemType type, bool enabled)
 {
 	CustomHUD::m_sonicGemEnabled[type] = enabled;
+}
+
+extern "C" __declspec(dllexport) void API_CloseCaptionWindow()
+{
+	SubtitleUI::closeCaptionWindow();
 }

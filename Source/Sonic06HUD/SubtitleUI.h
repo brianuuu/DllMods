@@ -87,6 +87,8 @@ public:
 	static bool initFontDatabase();
 
 	static CaptionData m_captionData;
+	static void closeCaptionWindow();
+
 	static void __cdecl addCaptionImpl(uint32_t* owner, uint32_t* caption, float duration, bool isCutscene);
 	static void draw();
 	static void clearDraw();

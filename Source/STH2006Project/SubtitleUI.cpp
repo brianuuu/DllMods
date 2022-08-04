@@ -38,6 +38,9 @@ void __cdecl SubtitleUI::addCaption(std::vector<std::string> const& captions, st
     m_captionData.m_rejectDialogSize = rejectDialogSize;
     m_captionData.m_speaker = speaker;
     m_captionData.m_bypassLoading = Common::IsAtLoadingScreen();
+
+    // Prevent dialog overlapping
+    S06HUD_API::CloseCaptionWindow();
 }
 
 bool CaptionData::init()

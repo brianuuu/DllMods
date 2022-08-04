@@ -198,6 +198,20 @@ bool SubtitleUI::initFontDatabase()
     return false;
 }
 
+void SubtitleUI::closeCaptionWindow()
+{
+    if (!m_captionData.m_captions.empty())
+    {
+        Caption& caption = m_captionData.m_captions.front();
+
+        float constexpr fadeOutTime = 5.0f / 60.0f;
+        if (caption.m_duration - m_captionData.m_timer > fadeOutTime)
+        {
+            m_captionData.m_timer = caption.m_duration - fadeOutTime;
+        }
+    }
+}
+
 void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, float duration, bool isCutscene)
 {
     // Caption disabled

@@ -22,6 +22,7 @@ private:
 	LIB_FUNCTION(SonicGemType, "Sonic06HUD.dll", API_ScrollSonicGem, bool toRight, bool ignoreNone);
 	LIB_FUNCTION(SonicGemType, "Sonic06HUD.dll", API_GetSonicGem);
 	LIB_FUNCTION(void, "Sonic06HUD.dll", API_SetSonicGemEnabled, SonicGemType type, bool enabled);
+	LIB_FUNCTION(void, "Sonic06HUD.dll", API_CloseCaptionWindow);
 
 public:
     static S06HUD_API* GetInstance()
@@ -48,5 +49,10 @@ public:
     static void SetSonicGemEnabled(SonicGemType type, bool enabled)
 	{
 		VOID_EXPORT(API_SetSonicGemEnabled, type, enabled);
+	}
+
+    static void CloseCaptionWindow()
+	{
+		VOID_EXPORT(API_CloseCaptionWindow);
 	}
 };
