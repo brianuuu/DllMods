@@ -652,10 +652,24 @@ HOOK(void, __fastcall, Mission_CHudGateMenuMain_CStateIntroBegin, 0x1080110, uin
 
 	if (gateMissionID > 0 && gateStageID <= SMT_pla200)
 	{
-		if (gateMissionID  <= 5 && MissionManager::m_missionAccept)
+		if (gateMissionID <= 5 && MissionManager::m_missionAccept)
 		{
+			if (gateStageID % 2 == 0)
+			{
+				// Force Classic stage
+				WRITE_NOP(0xD4024E, 2);
+			}
+			else
+			{
+				// Force Modern stage
+				WRITE_MEMORY(0xD4024E, uint8_t, 0xEB, 0x13); 
+			}
+
 			FUNCTION_PTR(void, __cdecl, Mission_fpEnterStage, 0xD401F0, uint32_t* This, uint32_t nStageID, uint32_t nMissionID);
 			Mission_fpEnterStage(This[2], gateStageID, gateMissionID);
+
+			// Revert code
+			WRITE_MEMORY(0xD4024E, uint8_t, 0x74, 0x13);
 		}
 
 		// Kill state machine
