@@ -37,6 +37,8 @@ void WhosCaptain::applyPatches()
 
 void WhosCaptain::callbackCaptainAccept(void* pObject, uint32_t dialogID)
 {
+	if (Common::GetCurrentStageID() != (SMT_ghz200 | SMT_Mission5)) return;
+
 	// Accepted captain's dialogue
 	if (m_pCaptain && m_pCaptain == pObject)
 	{
@@ -47,6 +49,7 @@ void WhosCaptain::callbackCaptainAccept(void* pObject, uint32_t dialogID)
 
 void WhosCaptain::callbackDialogFinish(void* pObject, uint32_t dialogID)
 {
+	if (Common::GetCurrentStageID() != (SMT_ghz200 | SMT_Mission5)) return;
 	if (!m_pCaptain) return;
 
 	switch (m_state)
