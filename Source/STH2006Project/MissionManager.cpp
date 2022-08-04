@@ -426,7 +426,7 @@ public:
 
 			if (!m_spMissionButton)
 			{
-				m_spMissionButton = boost::make_shared<Sonic::CGameObjectCSD>(m_projectMissionButton, 0.5f, "HUD", false);
+				m_spMissionButton = boost::make_shared<Sonic::CGameObjectCSD>(m_projectMissionButton, 0.5f, "HUD_B2", false);
 				Sonic::CGameDocument::GetInstance()->AddGameObject(m_spMissionButton, "main", this);
 			}
 		}
@@ -587,7 +587,7 @@ HOOK(void, __fastcall, Mission_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObjec
 	}
 	else if (message.m_Event > 10000)
 	{
-		Eigen::RowVector4f pos = *(Eigen::Vector4f*)(((uint32_t*)This)[46] + 112);
+		Eigen::Vector4f pos = *(Eigen::Vector4f*)(((uint32_t*)This)[46] + 112);
 		pos.y() -= 0.5f;
 
 		printf("[TalkButton] NPC ID: %d\n", message.m_Event);
