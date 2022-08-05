@@ -221,16 +221,17 @@ HOOK(int, __fastcall, SoleannaNPC_CGameObject3DDestruction, 0xD5D790, Sonic::CGa
 
 HOOK(void, __fastcall, SoleannaNPC_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObject* This, void* Edx, Sonic::Message::MsgNotifyObjectEvent& message)
 {
-	if (Common::CheckCurrentStage("pam000"))
+	if (message.m_Event == 50 && !m_spBoxes.count(This))
 	{
-		if (message.m_Event == 50 && !m_spBoxes.count(This))
-		{
-			m_spBoxes[This] = boost::make_shared<CObjTheBox>(This);
-			This->m_pMember->m_pGameDocument->AddGameObject(m_spBoxes[This]);
-			printf("[The Box] Added box 0x%08x\n", (uint32_t)This);
-			return;
-		}
-		else if (message.m_Event >= 101 && message.m_Event <= 160)
+		m_spBoxes[This] = boost::make_shared<CObjTheBox>(This);
+		This->m_pMember->m_pGameDocument->AddGameObject(m_spBoxes[This]);
+		printf("[The Box] Added box 0x%08x\n", (uint32_t)This);
+		return;
+	}
+
+	if (Common::GetCurrentStageID() == SMT_pam000)
+	{
+		if (message.m_Event >= 101 && message.m_Event <= 160)
 		{
 			// Event 101-120 -> ID 0-19
 			// Event 121-140 -> ID 0-19 start at 1/3 of spline
