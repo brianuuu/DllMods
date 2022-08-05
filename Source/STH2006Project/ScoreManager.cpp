@@ -899,22 +899,22 @@ ResultData* ScoreManager::calculateResultData()
 	data.m_score = m_pCScoreManager->m_score + m_timeBonus + ringBonus;
 
 	// Get current rank and score to next rank (if applicable)
-	if (data.m_score > scoreTable.m_scoreS)
+	if (data.m_score >= scoreTable.m_scoreS)
 	{
 		data.m_rank = ResultRankType::RT_S;
 		data.m_nextRankScore = 0;
 	}
-	else if (data.m_score > scoreTable.m_scoreA)
+	else if (data.m_score >= scoreTable.m_scoreA)
 	{
 		data.m_rank = ResultRankType::RT_A;
 		data.m_nextRankScore = scoreTable.m_scoreS - data.m_score;
 	}
-	else if (data.m_score > scoreTable.m_scoreB)
+	else if (data.m_score >= scoreTable.m_scoreB)
 	{
 		data.m_rank = ResultRankType::RT_B;
 		data.m_nextRankScore = scoreTable.m_scoreA - data.m_score;
 	}
-	else if (data.m_score > scoreTable.m_scoreC)
+	else if (data.m_score >= scoreTable.m_scoreC)
 	{
 		data.m_rank = ResultRankType::RT_C;
 		data.m_nextRankScore = scoreTable.m_scoreB - data.m_score;
