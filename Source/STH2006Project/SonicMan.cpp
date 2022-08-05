@@ -93,13 +93,6 @@ public:
 			return;
 		}
 
-		Eigen::Vector3f sonicPosition;
-		Eigen::Quaternionf sonicRotation;
-		if (!Common::GetPlayerTransform(sonicPosition, sonicRotation))
-		{
-			return;
-		}
-
 		std::lock_guard<std::mutex> guard(m_mutex);
 
 		float* frameTime = getFrameTime();
