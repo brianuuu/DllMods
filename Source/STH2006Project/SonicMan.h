@@ -1,6 +1,5 @@
 #pragma once
-
-class Pele
+class SonicMan
 {
 public:
 	static void applyPatches();

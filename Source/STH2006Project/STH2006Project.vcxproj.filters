@@ -98,6 +98,9 @@
     <ClCompile Include="WhosCaptain.cpp">
       <Filter>Mission</Filter>
     </ClCompile>
+    <ClCompile Include="SonicMan.cpp">
+      <Filter>Mission</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -174,6 +177,9 @@
       <Filter>Stage</Filter>
     </ClInclude>
     <ClInclude Include="WhosCaptain.h">
+      <Filter>Mission</Filter>
+    </ClInclude>
+    <ClInclude Include="SonicMan.h">
       <Filter>Mission</Filter>
     </ClInclude>
   </ItemGroup>

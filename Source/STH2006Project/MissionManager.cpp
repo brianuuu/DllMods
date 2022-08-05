@@ -6,6 +6,7 @@
 #include "Pele.h"
 #include "SoleannaBoys.h"
 #include "WhosCaptain.h"
+#include "SonicMan.h"
 
 #define NPC_DATA_FILE "Assets\\Textbox\\npcData.ini"
 
@@ -774,4 +775,7 @@ void MissionManager::applyPatches()
 
 	// Who's the Captain mission
 	WhosCaptain::applyPatches();
+
+	// Sonic Man mission
+	SonicMan::applyPatches();
 }
