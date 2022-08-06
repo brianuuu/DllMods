@@ -490,6 +490,7 @@ void NextGenBlaze::applyPatches()
 
     // Replace homing attack animation with air boost
     WRITE_MEMORY(0x1232056, char*, "AirBoost");
+    WRITE_MEMORY(0x129334D, char*, "ssn_airboost_loop");
 
     // Don't use any lotus effect (homing attack/stomp)
     WRITE_JUMP(0xE5FDEA, (void*)0xE5FF03);
