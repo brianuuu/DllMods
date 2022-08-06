@@ -56,9 +56,9 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     builder.BuildRanges(&ranges);
 
     const float fontSize = 43.0f;
-    if ((font = io.Fonts->AddFontFromFileTTF((Application::getModDirString() + "Fonts\\FOT-NewRodin Pro EB.otf").c_str(), fontSize, nullptr, ranges.Data)) == nullptr)
+    if ((font = io.Fonts->AddFontFromFileTTF((Application::getModDirString() + "Fonts\\FOT-NewRodin-Pro-EB.otf").c_str(), fontSize, nullptr, ranges.Data)) == nullptr)
     {
-        MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-NewRodin Pro EB.otf\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
+        MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-NewRodin-Pro-EB.otf\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
         font = io.Fonts->AddFontDefault();
     }
 
