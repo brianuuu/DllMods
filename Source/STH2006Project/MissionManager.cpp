@@ -195,6 +195,9 @@ HOOK(void, __fastcall, Mission_CGameplayFlowStageSetStageInfo, 0xCFF6A0, void* T
 		// Allow dying in mission
 		WRITE_MEMORY(0xD10803, uint8_t, 0x0F, 0x84, 0xF9, 0x00, 0x00, 0x00);
 
+		// Allow skills in mission
+		WRITE_MEMORY(0xD59C89, uint8_t, 0xEB);
+
 		// Enable life HUD
 		WRITE_NOP(0x109ADF8, 6);
 
@@ -218,6 +221,9 @@ HOOK(void, __fastcall, Mission_CGameplayFlowStageSetStageInfo, 0xCFF6A0, void* T
 	{
 		// Always fail mission if you die (since there's no checkpoint)
 		WRITE_MEMORY(0xD10803, uint8_t, 0xE9, 0xFA, 0x00, 0x00, 0x00, 0x90);
+
+		// Disable skills in mission
+		WRITE_MEMORY(0xD59C89, uint8_t, 0x77);
 
 		// Revert life codes
 		WRITE_MEMORY(0x109ADF8, uint8_t, 0x21, 0xBD, 0x5C, 0x02, 0x00, 0x00);
