@@ -129,6 +129,12 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
 extern "C" __declspec(dllexport) void PostInit()
 {
+    if (GetModuleHandle(TEXT("BetterFxPipeline.dll")) == nullptr)
+    {
+        MessageBox(nullptr, TEXT("This mod requires the latest version of 'Better FxPipeline' enabled."), TEXT("STH2006 Project"), MB_ICONERROR);
+        exit(-1);
+    }
+
     if (GetModuleHandle(TEXT("GenerationsD3D9Ex.dll")) == nullptr)
     {
         MessageBox(nullptr, TEXT("This mod requires the latest version of 'Direct3D 9 Ex' enabled."), TEXT("STH2006 Project"), MB_ICONERROR);
