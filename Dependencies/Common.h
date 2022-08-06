@@ -1488,6 +1488,14 @@ inline bool GetPlayerTransform(Eigen::Vector3f& position, Eigen::Quaternionf& ro
     return true;
 }
 
+inline void GetPlayerHUBTransform(Eigen::Vector3f& position, Eigen::Quaternionf& rotation)
+{
+	uint32_t posAddress = GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x9FF0 });
+	uint32_t rotAddress = GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0xA2D0 });
+	position = *(Eigen::Vector3f*)posAddress;
+	rotation = *(Eigen::Quaternionf*)rotAddress;
+}
+
 inline void SetPlayerPosition(Eigen::Vector3f const& position)
 {
 	if (!*PLAYER_CONTEXT) return;

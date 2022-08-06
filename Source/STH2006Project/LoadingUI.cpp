@@ -38,25 +38,29 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 	std::wstring const dir = Application::getModDirWString();
 	uint32_t currentStage = Common::GetCurrentStageID();
 
-	// Deal with special case first
-	switch (currentStage)
+	if (currentStage == SMT_pam000)
 	{
-	case SMT_pam000:
-	{
-		if (LoadingUI::m_stagePrevious == SMT_ghz200 ||
-			LoadingUI::m_stagePrevious == SMT_cpz200 ||
-			LoadingUI::m_stagePrevious == SMT_pla200 ||
-			LoadingUI::m_stagePrevious == SMT_bsl ||
-			LoadingUI::m_stagePrevious == (SMT_bsl | SMT_BossHard))
+		Eigen::Vector3f position;
+		Eigen::Quaternionf rotation;
+		Common::GetPlayerHUBTransform(position, rotation);
+		
+		if (std::strcmp(Common::GetCurrentTerrain(), "pam001") == 0)
+		{
+			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\cmn.dds").c_str(), &LoadingUI::m_stageTexture);
+			LoadingUI::m_bottomText = isJapanese ? u8"カオスエメラルドを探し出せ！" : "Find  the  Chaos  Emerald!";
+		}
+		else if ((position - Eigen::Vector3f(-147.926f, -1.12277f, 656.42f)).norm() <= 10.0f)
+		{
+			// Spawn back from Iblis (distortion world) to New City
+			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\twn_b.dds").c_str(), &LoadingUI::m_stageTexture);
+			// TODO: text
+		}
+		else if (position.z() >= -330.f && position.x() <= 110.f)
 		{
 			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\twn_a.dds").c_str(), &LoadingUI::m_stageTexture);
 			// TODO: text
 		}
-		else if (LoadingUI::m_stagePrevious == SMT_ssz200 ||
-			LoadingUI::m_stagePrevious == SMT_sph200 ||
-			LoadingUI::m_stagePrevious == SMT_ssh200 ||
-			LoadingUI::m_stagePrevious == SMT_bpc ||
-			LoadingUI::m_stagePrevious == (SMT_bpc | SMT_BossHard))
+		else if (position.z() >= -230.f && position.x() >= 110.f)
 		{
 			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\twn_b.dds").c_str(), &LoadingUI::m_stageTexture);
 			// TODO: text
@@ -66,11 +70,8 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\twn_c.dds").c_str(), &LoadingUI::m_stageTexture);
 			// TODO: text
 		}
-		break;
 	}
-	}
-
-	if (LoadingUI::m_stageTexture == nullptr)
+	else
 	{
 		// Get loading UI data from ini
 		const INIReader reader(Application::getModDirString() + "Assets\\Title\\titleData.ini");

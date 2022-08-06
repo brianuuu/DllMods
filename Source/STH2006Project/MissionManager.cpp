@@ -237,6 +237,42 @@ HOOK(void, __fastcall, Mission_CGameplayFlowStageSetStageInfo, 0xCFF6A0, void* T
 }
 
 //---------------------------------------------------
+// Sonic Spawn Points
+//---------------------------------------------------
+HOOK(void, __fastcall, Mission_CGameplayFlowPlayableMenu_Spawn, 0xD0A4D0, bool* This)
+{
+	if (!This[448])
+	{
+		uint32_t currentStage = Common::GetCurrentStageID();
+		if (currentStage == SMT_pam000)
+		{
+			Eigen::Vector3f* position = (Eigen::Vector3f*)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x9FF0 });
+			Eigen::Quaternionf* rotation = (Eigen::Quaternionf*)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0xA2D0 });
+			if (std::strcmp(Common::GetCurrentTerrain(), "pam001") == 0)
+			{
+				// First spawning in distortion world
+				if ((*position - Eigen::Vector3f(117.506f, -3.91258f, -118.412f)).norm() <= 10.0f)
+				{
+					*position = Eigen::Vector3f(-12.3816f, -1.77263f, -172.612f);
+					*rotation = Eigen::Quaternionf(0.949235f, 0.0f, 0.314567f, 0.0f);
+				}
+			}
+			else
+			{
+				// Spawn back from Iblis (distortion world) to New City
+				if ((*position - Eigen::Vector3f(-147.926f, -1.12277f, 656.42f)).norm() <= 10.0f)
+				{
+					*position = Eigen::Vector3f(304.942f, -6.94501f, 14.4114f);
+					*rotation = Eigen::Quaternionf(0.0f, 0.0f, 1.0f, 0.0f);
+				}
+			}
+		}
+	}
+
+	originalMission_CGameplayFlowPlayableMenu_Spawn(This);
+}
+
+//---------------------------------------------------
 // CObjMsnNumberDashRing
 //---------------------------------------------------
 HOOK(void, __fastcall, Mission_CObjMsnNumberDashRing_MsgHitEventCollision, 0xEDB560, uint32_t This, void* Edx, void* message)
@@ -698,6 +734,9 @@ void MissionManager::applyPatches()
 
 	// Load correct mission terrain
 	INSTALL_HOOK(Mission_CGameplayFlowStageSetStageInfo);
+
+	// Handle Sonic spawn points in HUB world
+	INSTALL_HOOK(Mission_CGameplayFlowPlayableMenu_Spawn);
 
 	// Change press X to interact stage gate
 	WRITE_STRING(0x168B3C8, "ui_hud");
