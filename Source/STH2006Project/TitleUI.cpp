@@ -1655,6 +1655,7 @@ void TitleUI::populateTrialData()
 		TrialData data;
 		data.m_stage = std::stoi(sectionSort.m_section);
 		data.m_disableSilverMedal = reader.GetBoolean(sectionSort.m_section, "disableSilverMedal", false);
+		data.m_forceNotPlayable = reader.GetBoolean(sectionSort.m_section, "forceNotPlayable", false);
 
 		data.m_header = reader.Get(sectionSort.m_section, "header", "");
 		data.m_stageID = reader.Get(sectionSort.m_section, "stageID", "");
@@ -1687,6 +1688,7 @@ void TitleUI::refreshTrialAvailability()
 	for (TrialData& data : m_actTrialData)
 	{
 		data.m_playable = m_allowPlayNonCompletedStage || Common::IsStageCompleted(data.m_stage);
+		data.m_playable &= !data.m_forceNotPlayable;
 		if (m_displayNonCompletedStage || data.m_playable)
 		{
 			m_actTrialVisibleID.push_back(id);
@@ -1707,6 +1709,7 @@ void TitleUI::refreshTrialAvailability()
 	for (TrialData& data : m_townTrialData)
 	{
 		data.m_playable = m_allowPlayNonCompletedStage || Common::IsStageCompleted(data.m_stage);
+		data.m_playable &= !data.m_forceNotPlayable;
 		if (m_displayNonCompletedStage || data.m_playable)
 		{
 			m_townTrialVisibleID.push_back(id);
