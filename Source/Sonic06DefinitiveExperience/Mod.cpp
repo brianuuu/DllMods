@@ -1,3 +1,5 @@
+#include <mmsystem.h>
+
 #include "Configuration.h"
 
 #include "Application.h"
@@ -152,6 +154,26 @@ extern "C" __declspec(dllexport) void PostInit()
     {
         MessageBox(nullptr, TEXT("'Customizable Results Music' mod is not compatible with this mod, please disable it."), TEXT("Sonic 06 Definitive Experience"), MB_ICONERROR);
         exit(-1);
+    }
+
+    if (Configuration::m_model == Configuration::ModelType::Sonic && Configuration::m_gemsEnabled)
+    {
+        bool noGamepad = true;
+        for (UINT i = 0; i <= 15; i++)
+        {
+            JOYINFO info;
+            if (joyGetPos(i, &info) == JOYERR_NOERROR)
+            {
+                printf("Joystick Detected!\n");
+                noGamepad = false;
+                break;
+            }
+        }
+
+        if (noGamepad)
+        {
+            MessageBox(nullptr, TEXT("No controllers detected, keyboard is NOT supported if Gems are enabled for 06 Sonic."), TEXT("Sonic 06 Definitive Experience"), MB_ICONWARNING);
+        }
     }
 
     // Post init apply patches
