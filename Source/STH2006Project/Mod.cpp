@@ -129,6 +129,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
 extern "C" __declspec(dllexport) void PostInit()
 {
+    // Override score to all 0s and implement them ourselves
+    ScoreManager::applyPostInit();
+
     if (GetModuleHandle(TEXT("BetterFxPipeline.dll")) == nullptr)
     {
         MessageBox(nullptr, TEXT("This mod requires the latest version of 'Better FxPipeline' enabled."), TEXT("STH2006 Project"), MB_ICONERROR);
@@ -159,9 +162,6 @@ extern "C" __declspec(dllexport) void PostInit()
         MessageBox(nullptr, TEXT("'Customizable Results Music' mod is not compatible with this mod, please disable it."), TEXT("STH2006 Project"), MB_ICONERROR);
         exit(-1);
     }
-
-    // Override score to all 0s and implement them ourselves
-    ScoreManager::applyPostInit();
 }
 
 HOOK(LRESULT, __stdcall, WndProc, 0xE7B6C0, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
