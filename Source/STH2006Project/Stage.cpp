@@ -384,6 +384,9 @@ void Stage::applyPatches()
 
     // Disable result first sfx
     WRITE_MEMORY(0x11D24DA, int, -1);
+
+    // Always use 3D Boost navigation
+    WRITE_MEMORY(0x5295BB, uint8_t, 0xEB);
     
     //---------------------------------------------------
     // Kingdom Valley sfx
