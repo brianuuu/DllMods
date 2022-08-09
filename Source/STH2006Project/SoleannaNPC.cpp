@@ -221,7 +221,7 @@ HOOK(int, __fastcall, SoleannaNPC_CGameObject3DDestruction, 0xD5D790, Sonic::CGa
 
 HOOK(void, __fastcall, SoleannaNPC_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObject* This, void* Edx, Sonic::Message::MsgNotifyObjectEvent& message)
 {
-	if (message.m_Event == 50 && !m_spBoxes.count(This))
+	if (message.m_Event == 49 && !m_spBoxes.count(This))
 	{
 		m_spBoxes[This] = boost::make_shared<CObjTheBox>(This);
 		This->m_pMember->m_pGameDocument->AddGameObject(m_spBoxes[This]);
