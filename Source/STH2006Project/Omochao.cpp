@@ -3,6 +3,12 @@
 
 HOOK(int, __fastcall, Omochao_MsgNotifyObjectEvent, 0x114FB60, Sonic::CGameObject* This, void* Edx, Sonic::Message::MsgNotifyObjectEvent& message)
 {
+	bool subtitleEnabled = (*(uint8_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x18 })) & 0x2;
+	if (!subtitleEnabled)
+	{
+		return originalOmochao_MsgNotifyObjectEvent(This, Edx, message);
+	}
+
 	S06DE_API::ModelType modelType = S06DE_API::GetModelType();
 	switch (message.m_Event)
 	{
@@ -75,4 +81,8 @@ void Omochao::applyPatches()
 	WRITE_MEMORY(0x462C75, int, -1);
 	WRITE_MEMORY(0x1150999, int, -1);
 	WRITE_MEMORY(0x1151AC4, int, -1);
+
+	// Don't destroy omochao even if subtitle is disabled
+	WRITE_NOP(0x1154C1B, 2);
+	WRITE_NOP(0x10122AB, 6);
 }
