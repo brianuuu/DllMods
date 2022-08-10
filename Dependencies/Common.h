@@ -88,6 +88,10 @@ struct MsgGetAnimationInfo
 
 	bool IsAnimation(char const* anim)
 	{
+		if (!m_name)
+		{
+			return false;
+		}
 		return strstr(m_name, anim);
 	}
 };
