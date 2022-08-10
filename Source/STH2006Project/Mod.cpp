@@ -44,6 +44,8 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     }
 
     // -------------Patches--------------
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+
     // General application patches
     Application::applyPatches();
 

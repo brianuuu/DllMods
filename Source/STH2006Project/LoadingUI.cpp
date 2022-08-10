@@ -99,7 +99,6 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 			{
 				if (S06DE_API::IsUsingCharacterMoveset())
 				{
-					std::srand(static_cast<unsigned int>(std::time(nullptr)));
 					switch (S06DE_API::GetModelType())
 					{
 						case S06DE_API::ModelType::Sonic:
