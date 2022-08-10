@@ -1169,6 +1169,19 @@ inline void fEventTrigger(void* This, int Event)
 	fpEventTrigger(This, Event);
 }
 
+static void fDestroyGameObject
+(
+	void* pGameObject
+)
+{
+	static void* const pfDestroyGameObject = (void*)0xD5FD10;
+	__asm
+	{
+		mov		edi, pGameObject
+		call	[pfDestroyGameObject]
+	}
+}
+
 inline void ObjectCGlitterPlayerOneShot(void* pObject, Hedgehog::Base::CSharedString const& name)
 {
 	uint32_t* CGlitterPlayer = *(uint32_t**)((uint32_t)pObject + 0xF8);
