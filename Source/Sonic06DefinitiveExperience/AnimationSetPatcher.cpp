@@ -176,6 +176,7 @@ const char* volatile const AnimationSetPatcher::GreenGemAir = "GreenGemAir";
 const char* volatile const AnimationSetPatcher::SkyGem = "SkyGem";
 const char* volatile const AnimationSetPatcher::SkyGemLoop = "SkyGemLoop";
 const char* volatile const AnimationSetPatcher::SkyGemEnd = "SkyGemEnd";
+const char* volatile const AnimationSetPatcher::FloatingBoost = "FloatingBoost";
 
 void AnimationSetPatcher::applyPatches()
 {
@@ -327,6 +328,10 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationDataSuper.emplace_back(FireTornadoLoop, "sn_spin_attack_loop", 1.0f, true, nullptr);
         m_newAnimationData.emplace_back(FireTornadoEnd, "sn_spin_attack_e", 1.0f, false, nullptr);
         m_newAnimationDataSuper.emplace_back(FireTornadoEnd, "sn_spin_attack_e", 1.0f, false, nullptr);
+    
+        // Floating Boost
+        m_newAnimationData.emplace_back(FloatingBoost, "ssn_boost_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back(FloatingBoost, "ssn_boost_loop", 1.0f, true, nullptr);
     }
 
     if (!m_newAnimationData.empty())
