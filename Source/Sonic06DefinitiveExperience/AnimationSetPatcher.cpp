@@ -270,6 +270,13 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationData.emplace_back(SpinFallSpring, "sn_spin_fall_spring", 1.0f, false, SpinFallLoop);
         m_newAnimationData.emplace_back(SpinFallLoop, "sn_jump_d_loop", 1.0f, true, nullptr);
 
+        if (Configuration::m_model == Configuration::ModelType::Blaze)
+        {
+            m_newAnimationDataSuper.emplace_back(SpinFall, "sn_spin_fall", 1.0f, false, SpinFallLoop);
+            m_newAnimationDataSuper.emplace_back(SpinFallSpring, "sn_spin_fall_spring", 1.0f, false, SpinFallLoop);
+            m_newAnimationDataSuper.emplace_back(SpinFallLoop, "sn_jump_d_loop", 1.0f, true, nullptr);
+        }
+
         // Set animations to loop
         WRITE_MEMORY(0x127779C, uint8_t, 0x1D); // UpReelEnd
         WRITE_MEMORY(0x1276B84, uint8_t, 0x1D); // JumpBoard

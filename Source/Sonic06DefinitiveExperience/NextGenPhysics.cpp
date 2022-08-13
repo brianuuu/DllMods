@@ -344,7 +344,7 @@ HOOK(bool, __fastcall, NextGenPhysics_CSonicStateFallAdvance, 0x1118C50, void* T
         playerVelocity.y() = 0.0f;
         float const hSpeed = playerVelocity.norm();
 
-        if (Common::IsPlayerSuper())
+        if (Configuration::m_model != Configuration::ModelType::Blaze && Common::IsPlayerSuper())
         {
             if (vSpeed <= 0.0f)
             {
