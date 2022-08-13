@@ -493,7 +493,7 @@ void ScoreManager::applyPatches()
 	}
 
 	// Must enable Score Generations, whether for internal score system or not
-	if (!Common::IsModEnabled("Score Generations", &externIniPath))
+	if (!Common::IsModEnabled("Main", "DLLFile", "ScoreGenerations.dll", &externIniPath))
 	{
 		return;
 	}

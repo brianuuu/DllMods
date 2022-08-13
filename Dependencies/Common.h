@@ -1948,6 +1948,29 @@ inline bool IsModEnabled(std::string const& testModName, std::string* o_iniPath 
 	return false;
 }
 
+inline bool IsModEnabled(std::string const& section, std::string const& name, std::string const& str, std::string* o_iniPath = nullptr)
+{
+	std::vector<std::string> modIniList;
+	GetModIniList(modIniList);
+	for (size_t i = 0; i < modIniList.size(); i++)
+	{
+		std::string const& config = modIniList[i];
+		INIReader configReader(config);
+		std::string value = configReader.Get(section, name, "");
+		if (value == str)
+		{
+			if (o_iniPath)
+			{
+				*o_iniPath = config;
+			}
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
 inline bool TestModPriority(std::string const& currentModName, std::string const& testModName, bool higherPriority)
 {
 	printf("currentModName = %s, testModName = %s\n", currentModName.c_str(), testModName.c_str());
