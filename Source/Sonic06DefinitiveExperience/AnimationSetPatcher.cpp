@@ -225,12 +225,24 @@ void AnimationSetPatcher::applyPatches()
     m_newAnimationDataSuper.emplace_back("SkyDivingL", "ssn_move_f_loop", 1.0f, true, nullptr);
     m_newAnimationDataSuper.emplace_back("SkyDivingR", "ssn_move_f_loop", 1.0f, true, nullptr);
     m_newAnimationDataSuper.emplace_back("SkyDivingDEnd", "ssn_move_f_loop", 1.0f, true, nullptr);
-    m_newAnimationDataSuper.emplace_back("GrindQuickJumpR", "ssn_jump_loop", 1.0f, true, nullptr);
-    m_newAnimationDataSuper.emplace_back("GrindQuickJumpL", "ssn_jump_loop", 1.0f, true, nullptr);
-    m_newAnimationDataSuper.emplace_back("GrindSideRightJumpR", "ssn_jump_loop", 1.0f, true, nullptr);
-    m_newAnimationDataSuper.emplace_back("GrindSideLeftJumpR", "ssn_jump_loop", 1.0f, true, nullptr);
-    m_newAnimationDataSuper.emplace_back("GrindSideRightJumpL", "ssn_jump_loop", 1.0f, true, nullptr);
-    m_newAnimationDataSuper.emplace_back("GrindSideLeftJumpL", "ssn_jump_loop", 1.0f, true, nullptr);
+    if (Configuration::m_model == Configuration::ModelType::Blaze)
+    {
+        m_newAnimationDataSuper.emplace_back("GrindQuickJumpR", "sn_grind_jump_r", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GrindQuickJumpL", "sn_grind_jump_l", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GrindSideRightJumpR", "sn_grind_move_r_r", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GrindSideLeftJumpR", "sn_grind_move_l_r", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GrindSideRightJumpL", "sn_grind_move_r_l", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GrindSideLeftJumpL", "sn_grind_move_l_l", 1.0f, true, nullptr);
+    }
+    else
+    {
+        m_newAnimationDataSuper.emplace_back("GrindQuickJumpR", "ssn_jump_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GrindQuickJumpL", "ssn_jump_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GrindSideRightJumpR", "ssn_jump_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GrindSideLeftJumpR", "ssn_jump_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GrindSideRightJumpL", "ssn_jump_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GrindSideLeftJumpL", "ssn_jump_loop", 1.0f, true, nullptr);
+    }
     m_newAnimationDataSuper.emplace_back("GrindLandR", "ssn_grind_loop", 1.0f, true, nullptr);
     m_newAnimationDataSuper.emplace_back("GrindLandL", "ssn_grind_loop", 1.0f, true, nullptr);
     m_newAnimationDataSuper.emplace_back("GrindStandL", "ssn_grind_loop", 1.0f, true, nullptr);
