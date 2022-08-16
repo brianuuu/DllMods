@@ -184,6 +184,8 @@ void LoadingUI::startNowLoading(float countdown, bool ignoreOthers)
 {
 	if (!m_drawEnabled)
 	{
+		UIContext::clearDraw();
+
 		m_ignoreStopNowLoadingRequest = ignoreOthers;
 		if (countdown > 0.0f)
 		{

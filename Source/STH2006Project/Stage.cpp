@@ -6,6 +6,12 @@
 #include "LoadingUI.h"
 #include "MissionManager.h"
 
+HOOK(void, __fastcall, Stage_CGameplayFlowStage_CStateTitle, 0xCF8F40, void* This)
+{
+    UIContext::clearDraw();
+    originalStage_CGameplayFlowStage_CStateTitle(This);
+}
+
 //---------------------------------------------------
 // Kingdom Valley sfx
 //---------------------------------------------------
@@ -387,6 +393,9 @@ void Stage::applyPatches()
 
     // Always use 3D Boost navigation
     WRITE_MEMORY(0x5295BB, uint8_t, 0xEB);
+
+    // Clear UI at title screen
+    INSTALL_HOOK(Stage_CGameplayFlowStage_CStateTitle);
     
     //---------------------------------------------------
     // Kingdom Valley sfx
