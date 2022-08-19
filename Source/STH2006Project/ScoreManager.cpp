@@ -493,7 +493,9 @@ void ScoreManager::applyPatches()
 	}
 
 	// Must enable Score Generations, whether for internal score system or not
-	if (!Common::IsModEnabled("Main", "DLLFile", "ScoreGenerations.dll", &externIniPath))
+	if (!Common::IsModEnabled("Main", "DLLFile", "ScoreGenerations.dll", &externIniPath)
+	&& !Common::IsModEnabled("Main", "ID", "HyperBE32.Score.Generations", &externIniPath)
+	&& !Common::IsModEnabled("Main", "ID", "brianuuu.sth2006.scoresystem", &externIniPath))
 	{
 		return;
 	}
@@ -501,7 +503,10 @@ void ScoreManager::applyPatches()
 	// Ensure Score Generations is loaded LATER/higher priority than this mod
 	if (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr)
 	{
-		MessageBox(NULL, L"'Score Generations' mod detected, please put it higher priority than 'STH2006 Project'!", L"STH2006 Project", MB_ICONERROR);
+		INIReader configReader(externIniPath);
+		std::string name = configReader.Get("Desc", "Title", "Score Generations");
+		std::wstring nameW = L"'" + Common::multiByteToWideChar(name.c_str()) + L"' mod detected, please put it higher priority than 'STH2006 Project'!";
+		MessageBox(NULL, nameW.c_str(), L"STH2006 Project", MB_ICONERROR);
 		exit(-1);
 	}
 
