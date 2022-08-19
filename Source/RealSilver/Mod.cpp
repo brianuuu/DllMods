@@ -79,4 +79,20 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     INSTALL_HOOK(MsgRestartStage);
     INSTALL_HOOK(CSonicStatePluginBoostBegin);
     INSTALL_HOOK(CSonicStatePluginBoostEnd);
+
+    // Fix fire/electric damage bone location
+    WRITE_MEMORY(0x1ABD060, char*, "Needle_A_C"); // Needle_U_C
+    //WRITE_MEMORY(0x1ABD064, char*, "Hand_L"); // Hand_L
+    //WRITE_MEMORY(0x1ABD068, char*, "Hand_R"); // Hand_R
+    //WRITE_MEMORY(0x1ABD06C, char*, "Toe_L"); // Toe_L
+    //WRITE_MEMORY(0x1ABD070, char*, "Toe_R"); // Toe_R
+    WRITE_MEMORY(0x1203CA3, uint32_t, 0x1ABD05C); // electic damage use fire damage offsets
+    WRITE_MEMORY(0x1203D7C, uint32_t, 0x1ABD074);
+
+    // Fix Super pfx bone location
+    WRITE_MEMORY(0xDA26EA, char*, "Needle_A_C"); // Needle_U_C
+    //WRITE_MEMORY(0xDA273B, char*, "Hand_L"); // Hand_L
+    //WRITE_MEMORY(0xDA278C, char*, "Hand_R"); // Hand_R
+    //WRITE_MEMORY(0xDA27DD, char*, "Foot_L"); // Foot_L
+    //WRITE_MEMORY(0xDA285E, char*, "Foot_R"); // Foot_R
 }
