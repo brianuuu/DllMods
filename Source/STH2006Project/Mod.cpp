@@ -181,14 +181,14 @@ VTABLE_HOOK(HRESULT, WINAPI, IDirect3DDevice9, Reset, D3DPRESENT_PARAMETERS* pPr
     return originalIDirect3DDevice9Reset(This, pPresentationParameters);
 }
 
-bool fixedLanguage = false;
+int fixedLanguage = 0;
 SynchronizedObject** const APPLICATION_DOCUMENT = (SynchronizedObject**)0x1E66B34;
 extern "C" __declspec(dllexport) void OnFrame()
 {
-    if (!fixedLanguage)
+    if (fixedLanguage < 2) // check for 2 frames (because Better QuickBoot overrides)
     {
         // Force game language to be Japanese or English
-        fixedLanguage = true;
+        fixedLanguage++;
 
         uint32_t voiceOverAddress = Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x10 });
         if (*(LanguageType*)voiceOverAddress != LT_English && *(LanguageType*)voiceOverAddress != LT_Japanese)
