@@ -17,13 +17,22 @@
     <ClCompile Include="..\..\Dependencies\imgui\imgui_impl_dx9.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Dependencies\imgui\imgui_impl_dx11.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Dependencies\imgui\imgui_impl_win32.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Dependencies\imgui\imgui_tables.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Dependencies\imgui\imgui_widgets.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Dependencies\DDSTextureLoader\DDSTextureLoader9.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Dependencies\DDSTextureLoader\DDSTextureLoader11.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
     <ClCompile Include="MissionManager.cpp">

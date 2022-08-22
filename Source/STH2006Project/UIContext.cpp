@@ -8,7 +8,8 @@
 #include "TitleUI.h"
 
 HWND UIContext::window;
-IDirect3DDevice9* UIContext::device;
+IUnknown* UIContext::device;
+Backend UIContext::backend;
 ImFont* UIContext::font;
 ImFont* UIContext::fontSubtitle;
 
@@ -29,7 +30,12 @@ HOOK(float*, __fastcall, MsgFadeOutMtfx, 0x57B270, void* This, void* Edx, float*
     return originalMsgFadeOutMtfx(This, Edx, a2);
 }
 
-void UIContext::initialize(HWND window, IDirect3DDevice9* device)
+Backend UIContext::getBackend()
+{
+    return backend;
+}
+
+void UIContext::initialize(HWND window, IUnknown* device)
 {
     INSTALL_HOOK(MsgFadeOutFxp);
     INSTALL_HOOK(MsgFadeOutMtfx);
@@ -40,7 +46,44 @@ void UIContext::initialize(HWND window, IDirect3DDevice9* device)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
-    ImGui_ImplDX9_Init(device);
+    backend = Backend::Unknown;
+    {
+        IDirect3DDevice9* d3d9Device = nullptr;
+
+        if (SUCCEEDED(device->QueryInterface(&d3d9Device)))
+        {
+            backend = Backend::DX9;
+
+            ImGui_ImplDX9_Init(d3d9Device);
+
+            d3d9Device->Release();
+        }
+    }
+
+    if (backend == Backend::Unknown)
+    {
+        ID3D11Device* d3d11Device = nullptr;
+
+        if (SUCCEEDED(device->QueryInterface(&d3d11Device)))
+        {
+            backend = Backend::DX11;
+
+            ID3D11DeviceContext* d3d11Context = nullptr;
+            d3d11Device->GetImmediateContext(&d3d11Context);
+
+            ImGui_ImplDX11_Init(d3d11Device, d3d11Context);
+
+            d3d11Device->Release();
+            d3d11Context->Release();
+        }
+    }
+
+    if (backend == Backend::Unknown)
+    {
+        MessageBox(nullptr, TEXT("[UIContext] Failed to initialize"), TEXT("STH2006 Project"), MB_ICONERROR);
+        exit(-1);
+    }
+
     ImGui_ImplWin32_Init(window);
 
     ImGuiIO& io = ImGui::GetIO();
@@ -110,7 +153,17 @@ bool UIContext::initFontDatabase(std::wstring const& file, ImFontGlyphRangesBuil
 
 void UIContext::update()
 {
-    ImGui_ImplDX9_NewFrame();
+    switch (backend)
+    {
+    case Backend::DX9:
+        ImGui_ImplDX9_NewFrame();
+        break;
+
+    case Backend::DX11:
+        ImGui_ImplDX11_NewFrame();
+        break;
+    }
+
     ImGui_ImplWin32_NewFrame();
 
     ImGuiIO& io = ImGui::GetIO();
@@ -145,7 +198,17 @@ void UIContext::update()
 
     ImGui::EndFrame();
     ImGui::Render();
-    ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+
+    switch (backend)
+    {
+    case Backend::DX9:
+        ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+        break;
+
+    case Backend::DX11:
+        ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+        break;
+    }
 }
 
 void UIContext::clearDraw()
@@ -157,8 +220,19 @@ void UIContext::clearDraw()
 
 void UIContext::reset()
 {
-    ImGui_ImplDX9_InvalidateDeviceObjects();
+    switch (backend)
+    {
+    case Backend::DX9:
+        ImGui_ImplDX9_InvalidateDeviceObjects();
+        break;
+
+    case Backend::DX11:
+        ImGui_ImplDX11_InvalidateDeviceObjects();
+        break;
+    }
 }
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 LRESULT UIContext::wndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
