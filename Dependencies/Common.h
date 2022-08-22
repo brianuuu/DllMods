@@ -2072,4 +2072,19 @@ inline bool DoesArchiveExist(std::string const& archiveName, std::set<std::strin
 	return false;
 }
 
+inline bool DoDllsExist(std::set<std::string> dllList = {})
+{
+	for (std::string const& dllName : dllList)
+	{
+		std::string dllExt = dllName + ".dll";
+		LPCWSTR dll = std::wstring(dllExt.begin(), dllExt.end()).c_str();
+
+		if (GetModuleHandle(dll) != nullptr)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 } // namespace Common

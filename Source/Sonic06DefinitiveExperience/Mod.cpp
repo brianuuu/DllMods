@@ -45,7 +45,7 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
         exit(-1);
     }
 
-    if (Common::DoesArchiveExist("Sonic.ar.00", { modInfo->CurrentMod->Name }) || Common::DoesArchiveExist("Sonic.ar.01"))
+    if (Common::DoesArchiveExist("Sonic.ar.00", { modInfo->CurrentMod->Name }) || Common::DoesArchiveExist("Sonic.ar.01") || Common::DoDllsExist({ "LinkSonic" }))
     {
         MessageBox(nullptr, TEXT("You are NOT allowed to use other character mods with this mod, please disable them."), TEXT("Sonic 06 Definitive Experience"), MB_ICONERROR);
         exit(-1);
