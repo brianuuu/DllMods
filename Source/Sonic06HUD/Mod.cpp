@@ -51,6 +51,12 @@ extern "C" __declspec(dllexport) void PostInit()
         MessageBox(nullptr, TEXT("'Score Generations' mod must be lower priority than 'Sonic 06 HUD'!"), TEXT("Sonic 06 HUD"), MB_ICONERROR);
         exit(-1);
     }
+
+    if (GetModuleHandle(TEXT("GenerationsD3D9Ex.dll")) == nullptr)
+    {
+        MessageBox(nullptr, TEXT("This mod requires the latest version of 'Direct3D 9 Ex' enabled."), TEXT("Sonic 06 HUD"), MB_ICONERROR);
+        exit(-1);
+    }
 }
 
 HOOK(LRESULT, __stdcall, WndProc, 0xE7B6C0, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
