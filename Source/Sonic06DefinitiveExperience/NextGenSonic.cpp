@@ -219,14 +219,13 @@ HOOK(int, __fastcall, NextGenSonic_CSonicStateSlidingBegin, 0x11D7110, void* Thi
     return originalNextGenSonic_CSonicStateSlidingBegin(This);
 }
 
-HOOK(void, __fastcall, NextGenSonic_CSonicStateSlidingAdvance, 0x11D69A0, void* This)
+HOOK(void, __fastcall, NextGenSonic_CSonicStateSlidingAdvance, 0x11D69A0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     originalNextGenSonic_CSonicStateSlidingAdvance(This);
 
     bool bDown, bPressed, bReleased;
     NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
-    NextGenSonic::m_slidingTime -= Application::getDeltaTime();
-    if (bPressed || NextGenSonic::m_slidingTime <= 0.0f)
+    if (bPressed || NextGenSonic::m_slidingTime - This->m_Time <= 0.0f)
     {
         if (bPressed && NextGenPhysics::checkUseLightSpeedDash())
         {
