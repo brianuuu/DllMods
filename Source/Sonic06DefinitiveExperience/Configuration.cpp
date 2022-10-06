@@ -85,12 +85,12 @@ bool Configuration::load(const std::string& rootPath)
         bbWriter bb(rootPath + "core/bb.ini");
 
         // TODO: non-Sonic characters will edit these
-        bb.addAR("SonicActionCommon", 1);
+        bb.addAR("SonicActionCommon", 2);
         bb.addAR("#SonicActionCommonHud", 1);
         bb.addAR("SonicActionCommonHud", 1);
 
         // common
-        bb.addAR("cmn200", 1);
+        bb.addAR("cmn200", 2);
         bb.addAR("ssz202", 1);
 
         // languages
@@ -128,7 +128,7 @@ bool Configuration::load(const std::string& rootPath)
         }
 
         // TODO: non-Sonic characters will edit these
-        bb3.addAR("SonicActionCommon", 1);
+        bb3.addAR("SonicActionCommon", 2);
         bb3.addAR("#SonicActionCommonHud", 1);
         bb3.addAR("SonicActionCommonHud", 1);
 
