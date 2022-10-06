@@ -220,11 +220,6 @@ void AnimationSetPatcher::applyPatches()
     // ssn_grind_loop
     // ssn_grind_switch
     // ssn_float_loop
-    m_newAnimationDataSuper.emplace_back("SkyDivingStart", "ssn_move_f_loop", 1.0f, true, nullptr);
-    m_newAnimationDataSuper.emplace_back("SkyDiving", "ssn_move_f_loop", 1.0f, true, nullptr);
-    m_newAnimationDataSuper.emplace_back("SkyDivingL", "ssn_move_f_loop", 1.0f, true, nullptr);
-    m_newAnimationDataSuper.emplace_back("SkyDivingR", "ssn_move_f_loop", 1.0f, true, nullptr);
-    m_newAnimationDataSuper.emplace_back("SkyDivingDEnd", "ssn_move_f_loop", 1.0f, true, nullptr);
     if (Configuration::m_model == Configuration::ModelType::Blaze)
     {
         m_newAnimationDataSuper.emplace_back("GrindQuickJumpR", "sn_grind_jump_r", 1.0f, true, nullptr);
@@ -233,6 +228,15 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationDataSuper.emplace_back("GrindSideLeftJumpR", "sn_grind_move_l_r", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("GrindSideRightJumpL", "sn_grind_move_r_l", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("GrindSideLeftJumpL", "sn_grind_move_l_l", 1.0f, true, nullptr);
+
+        // SkyDive
+        m_newAnimationDataSuper.emplace_back("SkyDivingStart", "sn_dive_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("SkyDiving", "sn_dive_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("SkyDivingL", "sn_dive_l_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("SkyDivingR", "sn_dive_r_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("SkyDivingD", "sn_dive_fast_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("SkyDivingDEnd", "sn_dive_fast_e", 1.0f, false, nullptr);
+        m_newAnimationDataSuper.emplace_back("SkyDivingDamage", "sn_dive_damage_loop", 1.0f, true, nullptr);
     }
     else
     {
@@ -242,6 +246,13 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationDataSuper.emplace_back("GrindSideLeftJumpR", "ssn_jump_loop", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("GrindSideRightJumpL", "ssn_jump_loop", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("GrindSideLeftJumpL", "ssn_jump_loop", 1.0f, true, nullptr);
+
+        // SkyDive
+        m_newAnimationDataSuper.emplace_back("SkyDivingStart", "ssn_move_f_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("SkyDiving", "ssn_move_f_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("SkyDivingL", "ssn_move_f_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("SkyDivingR", "ssn_move_f_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("SkyDivingDEnd", "ssn_move_f_loop", 1.0f, true, nullptr);
     }
     m_newAnimationDataSuper.emplace_back("GrindLandR", "ssn_grind_loop", 1.0f, true, nullptr);
     m_newAnimationDataSuper.emplace_back("GrindLandL", "ssn_grind_loop", 1.0f, true, nullptr);
