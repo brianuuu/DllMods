@@ -237,6 +237,9 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationDataSuper.emplace_back("SkyDivingD", "sn_dive_fast_loop", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("SkyDivingDEnd", "sn_dive_fast_e", 1.0f, false, nullptr);
         m_newAnimationDataSuper.emplace_back("SkyDivingDamage", "sn_dive_damage_loop", 1.0f, true, nullptr);
+
+        // LightSpeedDash
+        m_newAnimationDataSuper.emplace_back("LightSpeedDash", "sn_ringdash_loop", 1.0f, true, nullptr);
     }
     else
     {
