@@ -584,4 +584,8 @@ void NextGenBlaze::applyPatches()
 
     // Change "Stomping" type object physics to "Normal"
     WRITE_MEMORY(0xE9FFC9, uint32_t, 5);
+
+    // Increase turn rate
+    static float slideTurnRate = 100.0f;
+    WRITE_MEMORY(0x11D9441, float*, &slideTurnRate);
 }
