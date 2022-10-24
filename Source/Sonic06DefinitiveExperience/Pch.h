@@ -19,6 +19,7 @@
 #include <fstream>
 #include <iomanip>
 #include <filesystem>
+#include <mutex>
 
 #include <Eigen/Core>
 #include <Eigen/Dense>

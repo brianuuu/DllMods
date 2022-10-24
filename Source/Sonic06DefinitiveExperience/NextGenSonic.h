@@ -61,5 +61,13 @@ public:
 	static bool m_skyGemCancelled;
 	static void ChangeGems(S06HUD_API::SonicGemType oldType, S06HUD_API::SonicGemType newType);
 	static void DisableGem(S06HUD_API::SonicGemType type);
+	static bool GetSkyGemHitLocation
+	(
+		Eigen::Vector4f& o_pos,
+		Hedgehog::Math::CVector position,
+		Hedgehog::Math::CVector velocity,
+		float const simRate,
+		float const maxDist
+	);
 };
 

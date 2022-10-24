@@ -1091,10 +1091,12 @@ float const cSonic_skyGemThrowSpeed = 40.0f;
 float const cSonic_skyGemGravity = -15.0f;
 float const cSonic_skyGemLaunchSpeedDummy = 20.0f;
 float const cSonic_skyGemLaunchSpeed = 50.0f;
+float const cSonic_skyGemDummyThrowTime = 0.3f;
 bool NextGenSonic::m_skyGemEnabled = false;
 bool NextGenSonic::m_skyGemLaunched = false;
 bool NextGenSonic::m_skyGemCancelled = false;
 boost::shared_ptr<Sonic::CGameObject> m_spSkyGemSingleton;
+boost::shared_ptr<Sonic::CGameObject> m_spSkyGemLockonCursor;
 
 char const* homingAttackAnim[] =
 {
@@ -1116,6 +1118,7 @@ class CObjSkyGem : public Sonic::CGameObject3D
     Hedgehog::Math::CVector m_Velocity;
     float m_Gravity;
     float m_LifeTime;
+    float m_DistTravelled;
     
 public:
     CObjSkyGem
@@ -1129,6 +1132,7 @@ public:
         , m_Velocity(_Direction.normalized() * _Speed)
         , m_Gravity(_Gravity)
         , m_LifeTime(0.0f)
+        , m_DistTravelled(0.0f)
     {}
 
     ~CObjSkyGem()
@@ -1215,6 +1219,7 @@ public:
         m_Velocity += Hedgehog::Math::CVector::UnitY() * m_Gravity * updateInfo.DeltaTime;
         Hedgehog::Math::CVector const posPrev = m_Position;
         m_Position += (velPrev + m_Velocity) * 0.5f * updateInfo.DeltaTime;
+        m_DistTravelled += (m_Position - posPrev).norm();
 
         UpdateTransform();
 
@@ -1245,7 +1250,7 @@ public:
                         )
                     )
                     {
-                        printf("[Sky Gem] Launch velocity {%.2f, %.2f, %.2f}, Speed = %.f, OutOfControl = %.2fs\n", DEBUG_VECTOR3(impulse), launchSpeed, outOfControl);
+                        printf("[Sky Gem] Launch velocity {%.2f, %.2f, %.2f}, Speed = %.f, OutOfControl = %.2fs, Dist = %.2f\n", DEBUG_VECTOR3(impulse), launchSpeed, outOfControl, m_DistTravelled);
                         alignas(16) MsgApplyImpulse message {};
                         message.m_position = context->m_spMatrixNode->m_Transform.m_Position;
                         message.m_impulse = impulse;
@@ -1305,6 +1310,157 @@ public:
 
         m_spMatrixNodeTransform->m_Transform.SetPosition(m_Position);
         m_spMatrixNodeTransform->NotifyChanged();
+    }
+};
+
+class CObjSkyGemLockonCursor : public Sonic::CGameObject
+{
+    Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectLockonCursor;
+    boost::shared_ptr<Sonic::CGameObjectCSD> m_spLockonCursor;
+    Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneLockonCursor;
+
+    Eigen::Vector4f m_pos;
+    bool m_isOutro;
+
+    std::mutex m_mutex;
+
+public:
+    CObjSkyGemLockonCursor(Eigen::Vector4f inPos)
+        : m_pos(inPos)
+        , m_isOutro(false)
+    {
+    }
+
+    ~CObjSkyGemLockonCursor()
+    {
+        if (m_spLockonCursor)
+        {
+            m_spLockonCursor->SendMessage(m_spLockonCursor->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+            m_spLockonCursor = nullptr;
+        }
+
+        Chao::CSD::CProject::DestroyScene(m_projectLockonCursor.Get(), m_sceneLockonCursor);
+        m_projectLockonCursor = nullptr;
+    }
+
+    void AddCallback
+    (
+        const Hedgehog::Base::THolder<Sonic::CWorld>& worldHolder,
+        Sonic::CGameDocument* pGameDocument,
+        const boost::shared_ptr<Hedgehog::Database::CDatabase>& spDatabase
+    ) override
+    {
+        Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
+        pGameDocument->AddUpdateUnit("1", this);
+
+        Sonic::CCsdDatabaseWrapper wrapper(m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
+        auto spCsdProject = wrapper.GetCsdProject("ui_lockon_cursor");
+        m_projectLockonCursor = spCsdProject->m_rcProject;
+        if (m_projectLockonCursor)
+        {
+            m_sceneLockonCursor = m_projectLockonCursor->CreateScene("cursor");
+            PlayIntro();
+
+            if (!m_spLockonCursor)
+            {
+                m_spLockonCursor = boost::make_shared<Sonic::CGameObjectCSD>(m_projectLockonCursor, 0.5f, "HUD_B2", false);
+                Sonic::CGameDocument::GetInstance()->AddGameObject(m_spLockonCursor, "main", this);
+            }
+        }
+    }
+
+    bool ProcessMessage
+    (
+        Hedgehog::Universe::Message& message,
+        bool flag
+    ) override
+    {
+        if (flag)
+        {
+            if (std::strstr(message.GetType(), "MsgRestartStage") != nullptr
+             || std::strstr(message.GetType(), "MsgStageClear") != nullptr)
+            {
+                Kill();
+                return true;
+            }
+        }
+
+        return Sonic::CGameObject::ProcessMessage(message, flag);
+    }
+
+    void UpdateParallel
+    (
+        const Hedgehog::Universe::SUpdateInfo& updateInfo
+    ) override
+    {
+        std::lock_guard<std::mutex> guard(m_mutex);
+
+        // loop animation
+        if (m_sceneLockonCursor && m_sceneLockonCursor->m_MotionDisableFlag)
+        {
+            if (m_isOutro)
+            {
+                Kill();
+            }
+            else
+            {
+                PlayMotion("Usual_Anim", true);
+            }
+        }
+
+        // Handle position
+        if (m_sceneLockonCursor)
+        {
+            Eigen::Vector4f screenPosition;
+            Common::fGetScreenPosition(m_pos, screenPosition);
+            m_sceneLockonCursor->SetPosition(screenPosition.x(), screenPosition.y());
+        }
+    }
+
+    void PlayIntro()
+    {
+        PlayMotion("Intro_Anim", false);
+
+        static SharedPtrTypeless soundHandle;
+        Common::SonicContextPlaySound(soundHandle, 4002012, 0);
+    }
+
+    void SetPos(Eigen::Vector4f inPos)
+    {
+        std::lock_guard<std::mutex> guard(m_mutex);
+        m_pos = inPos;
+
+        if (m_isOutro)
+        {
+            PlayIntro();
+        }
+        m_isOutro = false;
+    }
+
+    void SetOutro()
+    {
+        std::lock_guard<std::mutex> guard(m_mutex);
+        PlayMotion("Outro_Anim", false);
+        m_isOutro = true;
+    }
+
+    void PlayMotion(char const* motion, bool loop = false)
+    {
+        if (!m_sceneLockonCursor) return;
+        m_sceneLockonCursor->SetHideFlag(false);
+        m_sceneLockonCursor->SetMotion(motion);
+        m_sceneLockonCursor->m_MotionDisableFlag = false;
+        m_sceneLockonCursor->m_MotionFrame = 0.0f;
+        m_sceneLockonCursor->m_MotionSpeed = 1.0f;
+        m_sceneLockonCursor->m_MotionRepeatType = loop ? Chao::CSD::eMotionRepeatType_Loop : Chao::CSD::eMotionRepeatType_PlayOnce;
+        m_sceneLockonCursor->Update();
+    }
+
+    void Kill()
+    {
+        printf("[LockonCursor] Killed\n");
+        SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+        m_spSkyGemLockonCursor = nullptr;
     }
 };
 
@@ -1621,6 +1777,38 @@ void NextGenSonic::DisableGem(S06HUD_API::SonicGemType type)
         break;
     }
     }
+}
+
+bool NextGenSonic::GetSkyGemHitLocation
+(
+    Eigen::Vector4f& o_pos, 
+    Hedgehog::Math::CVector position, 
+    Hedgehog::Math::CVector velocity, 
+    float const simRate, 
+    float const maxDist
+)
+{
+    float distTravelled = 0.0f;
+    while (distTravelled < maxDist)
+    {
+        // Do equation of motion manually
+        Hedgehog::Math::CVector const velPrev = velocity;
+        velocity += Hedgehog::Math::CVector::UnitY() * cSonic_skyGemGravity * simRate;
+        Hedgehog::Math::CVector const posPrev = position;
+        position += (velPrev + velocity) * 0.5f * simRate;
+
+        distTravelled += (position - posPrev).norm();
+
+        Eigen::Vector4f const rayStartPos(posPrev.x(), posPrev.y(), posPrev.z(), 1.0f);
+        Eigen::Vector4f const rayEndPos(position.x(), position.y(), position.z(), 1.0f);
+        Eigen::Vector4f outNormal;
+        if (Common::fRaycast(rayStartPos, rayEndPos, o_pos, outNormal, *(uint32_t*)0x1E0AFB4))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 HOOK(int, __fastcall, NextGenSonicGems_MsgRestartStage, 0xE76810, Sonic::Player::CPlayer* player, void* Edx, void* message)
@@ -2188,7 +2376,7 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
         }
         else if (!padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger))
         {
-            skyGemThrowDummy = (This->m_Time <= 18.0f / 60.0f);
+            skyGemThrowDummy = (This->m_Time <= cSonic_skyGemDummyThrowTime);
             if (skyGemThrowDummy)
             {
                 CustomCamera::m_skyGemCameraEnabled = false;
@@ -2208,6 +2396,35 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
             CustomCamera::m_skyGemCameraEnabled = true;
         }
 
+        // Ignore dummy throw time
+        if (CustomCamera::m_skyGemCameraEnabled && !NextGenSonic::m_skyGemLaunched && 
+            ((!skyGemThrowAnimationStarted && This->m_Time > cSonic_skyGemDummyThrowTime) || skyGemThrowAnimationStarted && This->m_Time <= 4.0f / 60.0f))
+        {
+            Hedgehog::Math::CVector position = context->m_spMatrixNode->m_Transform.m_Position + Hedgehog::Math::CVector::UnitY() * 1.0f;
+            Hedgehog::Math::CVector playerRight = context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitX();
+            Hedgehog::Math::CVector playerFoward = context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitZ();
+            Hedgehog::Math::CVector direction = Eigen::AngleAxisf(CustomCamera::m_skyGemCameraPitch, playerRight) * context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitZ();
+
+            Eigen::Vector4f lockonPos;
+            if (NextGenSonic::GetSkyGemHitLocation(lockonPos, position + playerFoward * 0.4f, direction * cSonic_skyGemLaunchSpeed, 0.16666f, 100.0f))
+            {
+                // Spawn/Move lock-on cursor
+                if (m_spSkyGemLockonCursor)
+                {
+                    ((CObjSkyGemLockonCursor*)m_spSkyGemLockonCursor.get())->SetPos(lockonPos);
+                }
+                else
+                {
+                    m_spSkyGemLockonCursor = boost::make_shared<CObjSkyGemLockonCursor>(lockonPos);
+                    context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(m_spSkyGemLockonCursor);
+                }
+            }
+            else if (m_spSkyGemLockonCursor)
+            {
+                ((CObjSkyGemLockonCursor*)m_spSkyGemLockonCursor.get())->Kill();
+            }
+        }
+
         return;
     }
 
@@ -2224,6 +2441,20 @@ HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickEnd, 0x12527B0, hh::
     }
     else if (NextGenSonic::m_skyGemEnabled)
     {
+        // Remove lock-on cursor
+        if (m_spSkyGemLockonCursor)
+        {
+            CObjSkyGemLockonCursor* cursor = ((CObjSkyGemLockonCursor*)m_spSkyGemLockonCursor.get());
+            if (NextGenSonic::m_skyGemLaunched)
+            {
+                cursor->SetOutro();
+            }
+            else
+            {
+                cursor->Kill();
+            }
+        }
+
         CustomCamera::m_skyGemCameraEnabled = false;
         NextGenSonic::m_skyGemEnabled = false;
         NextGenSonic::m_skyGemLaunched = false;
