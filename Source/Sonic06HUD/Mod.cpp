@@ -92,7 +92,7 @@ extern "C" __declspec(dllexport) void OnFrame()
         if (!application)
             return;
 
-        IDirect3DDevice9* device = *(IDirect3DDevice9**)(*(uint32_t*)(application + 80) + 8);
+        IUnknown* device = *(IUnknown**)(*(uint32_t*)(application + 80) + 8);
         if (!device)
             return;
 
@@ -102,7 +102,8 @@ extern "C" __declspec(dllexport) void OnFrame()
 
         UIContext::initialize(window, device);
 
-        INSTALL_VTABLE_HOOK(IDirect3DDevice9, device, Reset, 16);
+        if (UIContext::getBackend() == Backend::DX9)
+            INSTALL_VTABLE_HOOK(IDirect3DDevice9, device, Reset, 16);
     }
 
     UIContext::update();
