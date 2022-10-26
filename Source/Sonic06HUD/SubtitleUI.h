@@ -81,6 +81,7 @@ struct CaptionData
 class SubtitleUI
 {
 public:
+	static bool m_initSuccess;
 	static void applyPatches();
 
 	static std::map<uint32_t, wchar_t> m_fontDatabase;

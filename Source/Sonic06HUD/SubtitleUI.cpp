@@ -154,23 +154,11 @@ HOOK(int, __fastcall, SubtitleUI_CLastBossCaptionKill, 0xB16490, uint32_t This, 
     return originalSubtitleUI_CLastBossCaptionKill(This, Edx, a2);
 }
 
+bool SubtitleUI::m_initSuccess = false;
 void SubtitleUI::applyPatches()
 {
-    if (initFontDatabase())
-    {
-        // Omochao subtitle
-        WRITE_JUMP(0x461402, addCaption_COmochaoFollow);
-        WRITE_JUMP(0x1155E81, addCaption_MsgOmochao_PlayVoice);
-        WRITE_JUMP(0x11F8813, (void*)0x11F8979);
-
-        // Cutscene subtitle
-        WRITE_MEMORY(0xB16D7A, uint8_t, 0); // disable original textbox
-        WRITE_JUMP(0xB16E6C, addCaption_GetCutsceneDuration);
-        WRITE_JUMP(0x6AE09D, addCaption_Cutscene);
-        INSTALL_HOOK(SubtitleUI_CEventSceneStart);
-        INSTALL_HOOK(SubtitleUI_CEventSceneAdvance);
-        INSTALL_HOOK(SubtitleUI_CLastBossCaptionKill);
-    }
+    m_initSuccess = initFontDatabase();
+    // hooks have moved to CaptionData::init()
 }
 
 std::map<uint32_t, wchar_t> SubtitleUI::m_fontDatabase;
@@ -326,6 +314,8 @@ void __cdecl SubtitleUI::addCaptionImpl(uint32_t* owner, uint32_t* caption, floa
 
 bool CaptionData::init()
 {
+    if (!SubtitleUI::m_initSuccess) return false;
+
     std::wstring const dir = Application::getModDirWString();
     bool success = true;
     success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Textbox.dds").c_str(), &m_textbox);
@@ -347,6 +337,21 @@ bool CaptionData::init()
     {
         m_captions.clear();
         MessageBox(nullptr, TEXT("Failed to load assets for custom 06 textbox, reverting to in-game textbox."), TEXT("Sonic 06 HUD"), MB_ICONWARNING);
+    }
+    else
+    {
+        // Omochao subtitle
+        WRITE_JUMP(0x461402, addCaption_COmochaoFollow);
+        WRITE_JUMP(0x1155E81, addCaption_MsgOmochao_PlayVoice);
+        WRITE_JUMP(0x11F8813, (void*)0x11F8979);
+
+        // Cutscene subtitle
+        WRITE_MEMORY(0xB16D7A, uint8_t, 0); // disable original textbox
+        WRITE_JUMP(0xB16E6C, addCaption_GetCutsceneDuration);
+        WRITE_JUMP(0x6AE09D, addCaption_Cutscene);
+        INSTALL_HOOK(SubtitleUI_CEventSceneStart);
+        INSTALL_HOOK(SubtitleUI_CEventSceneAdvance);
+        INSTALL_HOOK(SubtitleUI_CLastBossCaptionKill);
     }
 
     return success;

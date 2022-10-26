@@ -241,10 +241,28 @@ LRESULT UIContext::wndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 
 bool UIContext::loadTextureFromFile(const wchar_t* filename, PDIRECT3DTEXTURE9* out_texture, int* out_width, int* out_height)
 {
-    IDirect3DTexture9* texture;
+    IDirect3DTexture9* texture = nullptr;
+    HRESULT hr = S_FALSE;
 
     // Load texture from disk.
-    HRESULT hr = DirectX::CreateDDSTextureFromFile(device, filename, &texture);
+    switch (backend)
+    {
+    case Backend::DX9:
+    {
+        IDirect3DDevice9* d3d9Device = nullptr;
+        if (SUCCEEDED(device->QueryInterface(&d3d9Device)))
+        {
+            hr = DirectX::CreateDDSTextureFromFile(d3d9Device, filename, &texture);
+        }
+        break;
+    }
+    case Backend::DX11:
+    {
+        // TODO:
+        break;
+    }
+    }
+
     if (hr != S_OK)
     {
         printf("[UIContext] Error reading texture! (0x%08x)\n", hr);

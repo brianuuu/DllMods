@@ -55,7 +55,6 @@ bool CaptionData::init()
     {
         m_captions.clear();
         MessageBox(nullptr, TEXT("Failed to load assets for custom 06 textbox!"), TEXT("STH2006 Project"), MB_ICONWARNING);
-        exit(-1);
     }
 
     return success;
