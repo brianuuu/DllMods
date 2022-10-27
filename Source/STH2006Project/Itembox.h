@@ -50,15 +50,15 @@ public:
 
 	// Textures
 	static bool initTextures();
-	static PDIRECT3DTEXTURE9 m_item_5ring;
-	static PDIRECT3DTEXTURE9 m_item_10ring;
-	static PDIRECT3DTEXTURE9 m_item_20ring;
-	static PDIRECT3DTEXTURE9 m_item_1up;
-	static PDIRECT3DTEXTURE9 m_item_invin;
-	static PDIRECT3DTEXTURE9 m_item_speed;
-	static PDIRECT3DTEXTURE9 m_item_gauge;
-	static PDIRECT3DTEXTURE9 m_item_shield;
-	static PDIRECT3DTEXTURE9 m_item_fire;
+	static IUnknown* m_item_5ring;
+	static IUnknown* m_item_10ring;
+	static IUnknown* m_item_20ring;
+	static IUnknown* m_item_1up;
+	static IUnknown* m_item_invin;
+	static IUnknown* m_item_speed;
+	static IUnknown* m_item_gauge;
+	static IUnknown* m_item_shield;
+	static IUnknown* m_item_fire;
 	~Itembox()
 	{
 		if (m_item_5ring)  m_item_5ring->Release();

@@ -31,7 +31,7 @@ private:
 		float m_alpha;
 
 		// static members
-		PDIRECT3DTEXTURE9* m_texture;
+		IUnknown** m_texture;
 		ImVec2 m_textureSize;
 		ImVec2 m_textOffset;
 
@@ -93,18 +93,18 @@ public:
 	// Textures
 	static bool m_init;
 	static bool initTextures();
-	static PDIRECT3DTEXTURE9 m_resultRankTextures[5];
-	static PDIRECT3DTEXTURE9 m_resultNumTextures[10];
-	static PDIRECT3DTEXTURE9 m_resultTextTextures[RTT_COUNT];
-	static PDIRECT3DTEXTURE9 m_resultCommaTexture;
-	static PDIRECT3DTEXTURE9 m_resultBoxTexture;
-	static PDIRECT3DTEXTURE9 m_resultTotalBoxTexture;
-	static PDIRECT3DTEXTURE9 m_resultScoreBoxTexture;
-	static PDIRECT3DTEXTURE9 m_resultHeaderBoxTexture;
-	static PDIRECT3DTEXTURE9 m_resultHeaderShadowTexture;
-	static PDIRECT3DTEXTURE9 m_resultHeaderTextTexture;
-	static PDIRECT3DTEXTURE9 m_resultRankBoxTexture;
-	static PDIRECT3DTEXTURE9 m_resultFadeTexture;
+	static IUnknown* m_resultRankTextures[5];
+	static IUnknown* m_resultNumTextures[10];
+	static IUnknown* m_resultTextTextures[RTT_COUNT];
+	static IUnknown* m_resultCommaTexture;
+	static IUnknown* m_resultBoxTexture;
+	static IUnknown* m_resultTotalBoxTexture;
+	static IUnknown* m_resultScoreBoxTexture;
+	static IUnknown* m_resultHeaderBoxTexture;
+	static IUnknown* m_resultHeaderShadowTexture;
+	static IUnknown* m_resultHeaderTextTexture;
+	static IUnknown* m_resultRankBoxTexture;
+	static IUnknown* m_resultFadeTexture;
 	~ResultUI()
 	{
 		for (int i = 0; i < 5; i++)

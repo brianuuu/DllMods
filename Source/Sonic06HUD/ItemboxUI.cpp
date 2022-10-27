@@ -3,8 +3,8 @@
 #include "UIContext.h"
 
 std::deque<ItemboxGUI> ItemboxUI::m_guiData;
-PDIRECT3DTEXTURE9 ItemboxUI::m_item_10ring = nullptr;
-PDIRECT3DTEXTURE9 ItemboxUI::m_item_1up = nullptr;
+IUnknown* ItemboxUI::m_item_10ring = nullptr;
+IUnknown* ItemboxUI::m_item_1up = nullptr;
 
 HOOK(void, __fastcall, ItemboxUI_GetSuperRing, 0x11F2F10, uint32_t* This, void* Edx, void* message)
 {
@@ -90,7 +90,7 @@ void ItemboxUI::draw()
 	{
 		ItemboxGUI& data = m_guiData[i];
 
-		PDIRECT3DTEXTURE9* texture = nullptr;
+		IUnknown** texture = nullptr;
 		switch (data.m_type)
 		{
 		case IT_10ring:	 texture = &m_item_10ring;	break;

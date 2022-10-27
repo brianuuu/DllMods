@@ -3,18 +3,18 @@
 #include "Application.h"
 
 bool ResultUI::m_init = false;
-PDIRECT3DTEXTURE9 ResultUI::m_resultRankTextures[5] = { nullptr, nullptr, nullptr, nullptr, nullptr };
-PDIRECT3DTEXTURE9 ResultUI::m_resultNumTextures[10] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
-PDIRECT3DTEXTURE9 ResultUI::m_resultTextTextures[RTT_COUNT] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
-PDIRECT3DTEXTURE9 ResultUI::m_resultCommaTexture = nullptr;
-PDIRECT3DTEXTURE9 ResultUI::m_resultBoxTexture = nullptr;
-PDIRECT3DTEXTURE9 ResultUI::m_resultTotalBoxTexture = nullptr;
-PDIRECT3DTEXTURE9 ResultUI::m_resultScoreBoxTexture = nullptr;
-PDIRECT3DTEXTURE9 ResultUI::m_resultHeaderBoxTexture = nullptr;
-PDIRECT3DTEXTURE9 ResultUI::m_resultHeaderShadowTexture = nullptr;
-PDIRECT3DTEXTURE9 ResultUI::m_resultHeaderTextTexture = nullptr;
-PDIRECT3DTEXTURE9 ResultUI::m_resultRankBoxTexture = nullptr;
-PDIRECT3DTEXTURE9 ResultUI::m_resultFadeTexture = nullptr;
+IUnknown* ResultUI::m_resultRankTextures[5] = { nullptr, nullptr, nullptr, nullptr, nullptr };
+IUnknown* ResultUI::m_resultNumTextures[10] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+IUnknown* ResultUI::m_resultTextTextures[RTT_COUNT] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+IUnknown* ResultUI::m_resultCommaTexture = nullptr;
+IUnknown* ResultUI::m_resultBoxTexture = nullptr;
+IUnknown* ResultUI::m_resultTotalBoxTexture = nullptr;
+IUnknown* ResultUI::m_resultScoreBoxTexture = nullptr;
+IUnknown* ResultUI::m_resultHeaderBoxTexture = nullptr;
+IUnknown* ResultUI::m_resultHeaderShadowTexture = nullptr;
+IUnknown* ResultUI::m_resultHeaderTextTexture = nullptr;
+IUnknown* ResultUI::m_resultRankBoxTexture = nullptr;
+IUnknown* ResultUI::m_resultFadeTexture = nullptr;
 
 ResultUI::CScoreManager* ResultUI::m_pCScoreManager = nullptr;
 ResultUI::ScoreSystemType ResultUI::m_scoreSystem = ResultUI::ScoreSystemType::SST_None;
@@ -318,7 +318,7 @@ ResultUI::ResultUIData::ResultUIData()
 static float topBorderPosY = 0;
 static float bottomBorderPosY = 0;
 static float rightBoxPosX = 0;
-static PDIRECT3DTEXTURE9* rankTexture = nullptr;
+static IUnknown** rankTexture = nullptr;
 static float rankScale = 2.5f;
 void ResultUI::ResultUIData::reset()
 {

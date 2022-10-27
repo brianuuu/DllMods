@@ -52,9 +52,9 @@ extern "C" __declspec(dllexport) void PostInit()
         exit(-1);
     }
 
-    if (GetModuleHandle(TEXT("GenerationsD3D9Ex.dll")) == nullptr)
+    if (GetModuleHandle(TEXT("GenerationsD3D9Ex.dll")) == nullptr && GetModuleHandle(TEXT("GenerationsD3D11.dll")) == nullptr)
     {
-        MessageBox(nullptr, TEXT("This mod requires the latest version of 'Direct3D 9 Ex' enabled."), TEXT("Sonic 06 HUD"), MB_ICONERROR);
+        MessageBox(nullptr, TEXT("This mod requires the latest version of 'Direct3D 9 Ex' OR 'Direct3D 11' enabled."), TEXT("Sonic 06 HUD"), MB_ICONERROR);
         exit(-1);
     }
 }

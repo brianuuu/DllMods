@@ -492,7 +492,7 @@ float SubtitleUI::drawCaptions(Caption const& caption, float alpha, bool isShado
                 break;
             }
 
-            PDIRECT3DTEXTURE9* texture = nullptr;
+            IUnknown** texture = nullptr;
             switch (caption.m_buttons.at(i))
             {
             case CBT_A:     texture = &m_captionData.m_buttonA;      break;

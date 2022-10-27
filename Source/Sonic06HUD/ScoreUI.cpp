@@ -7,8 +7,8 @@ uint32_t ScoreUI::m_rainbowRingChain = 0;
 int ScoreUI::m_bonus = 0;
 float ScoreUI::m_bonusTimer = 0.0f;
 float ScoreUI::m_bonusDrawTimer = 0.0f;
-PDIRECT3DTEXTURE9* ScoreUI::m_bonusTexture = nullptr;
-PDIRECT3DTEXTURE9 ScoreUI::m_bonus_Great = nullptr;
+IUnknown** ScoreUI::m_bonusTexture = nullptr;
+IUnknown* ScoreUI::m_bonus_Great = nullptr;
 
 void __declspec(naked) ScoreUI_GetRainbow()
 {

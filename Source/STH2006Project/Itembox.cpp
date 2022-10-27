@@ -4,15 +4,15 @@
 #include "Configuration.h"
 
 std::deque<ItemboxGUI> Itembox::m_guiData;
-PDIRECT3DTEXTURE9 Itembox::m_item_5ring = nullptr;
-PDIRECT3DTEXTURE9 Itembox::m_item_10ring = nullptr;
-PDIRECT3DTEXTURE9 Itembox::m_item_20ring = nullptr;
-PDIRECT3DTEXTURE9 Itembox::m_item_1up = nullptr;
-PDIRECT3DTEXTURE9 Itembox::m_item_invin = nullptr;
-PDIRECT3DTEXTURE9 Itembox::m_item_speed = nullptr;
-PDIRECT3DTEXTURE9 Itembox::m_item_gauge = nullptr;
-PDIRECT3DTEXTURE9 Itembox::m_item_shield = nullptr;
-PDIRECT3DTEXTURE9 Itembox::m_item_fire = nullptr;
+IUnknown* Itembox::m_item_5ring = nullptr;
+IUnknown* Itembox::m_item_10ring = nullptr;
+IUnknown* Itembox::m_item_20ring = nullptr;
+IUnknown* Itembox::m_item_1up = nullptr;
+IUnknown* Itembox::m_item_invin = nullptr;
+IUnknown* Itembox::m_item_speed = nullptr;
+IUnknown* Itembox::m_item_gauge = nullptr;
+IUnknown* Itembox::m_item_shield = nullptr;
+IUnknown* Itembox::m_item_fire = nullptr;
 
 HOOK(void, __fastcall, Itembox_GetItem, 0xFFF810, uint32_t* This, void* Edx, void* message)
 {
@@ -327,7 +327,7 @@ void Itembox::draw()
 	{
 		ItemboxGUI& data = m_guiData[i];
 
-		PDIRECT3DTEXTURE9* texture = nullptr;
+		IUnknown** texture = nullptr;
 		switch (data.m_type)
 		{
 		case IT_5ring:	 texture = &m_item_5ring;	break;

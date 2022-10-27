@@ -35,8 +35,8 @@ public:
 
 	// Textures
 	static bool initTextures();
-	static PDIRECT3DTEXTURE9 m_item_10ring;
-	static PDIRECT3DTEXTURE9 m_item_1up;
+	static IUnknown* m_item_10ring;
+	static IUnknown* m_item_1up;
 	~ItemboxUI()
 	{
 		if (m_item_10ring) m_item_10ring->Release();

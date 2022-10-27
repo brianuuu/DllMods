@@ -24,10 +24,10 @@ uint32_t ScoreManager::m_bonus = 0;
 uint32_t ScoreManager::m_bonusToDraw = 0;
 float ScoreManager::m_bonusTimer = 0.0f;
 float ScoreManager::m_bonusDrawTimer = 0.0f;
-PDIRECT3DTEXTURE9* ScoreManager::m_bonusTexture = nullptr;
-PDIRECT3DTEXTURE9* ScoreManager::m_bonusTexturePrev = nullptr;
-PDIRECT3DTEXTURE9 ScoreManager::m_bonus_Great = nullptr;
-PDIRECT3DTEXTURE9 ScoreManager::m_bonus_Radical = nullptr;
+IUnknown** ScoreManager::m_bonusTexture = nullptr;
+IUnknown** ScoreManager::m_bonusTexturePrev = nullptr;
+IUnknown* ScoreManager::m_bonus_Great = nullptr;
+IUnknown* ScoreManager::m_bonus_Radical = nullptr;
 
 // MsgRestartStage for CScoreManager
 HOOK(void, __fastcall, CScoreManager_MsgRestartStage, 0xCF7F10, uint32_t* This, void* Edx, void* message)

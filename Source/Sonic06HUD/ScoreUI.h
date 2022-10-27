@@ -15,13 +15,13 @@ public:
 	static int m_bonus;
 	static float m_bonusTimer;
 	static float m_bonusDrawTimer;
-	static PDIRECT3DTEXTURE9* m_bonusTexture;
+	static IUnknown** m_bonusTexture;
 	static void draw();
 	static void clearDraw();
 
 	// Textures
 	static bool initTextures();
-	static PDIRECT3DTEXTURE9 m_bonus_Great;
+	static IUnknown* m_bonus_Great;
 	~ScoreUI()
 	{
 		if (m_bonus_Great)   m_bonus_Great->Release();

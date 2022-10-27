@@ -8,11 +8,11 @@ bool LoadingUI::m_drawEnabled = false;
 float LoadingUI::m_fadeInTime = 0.0f;
 int LoadingUI::m_frame = 0;
 bool LoadingUI::m_showNowLoading = false;
-PDIRECT3DTEXTURE9 LoadingUI::m_backgroundTexture = nullptr;
-PDIRECT3DTEXTURE9 LoadingUI::m_stageTexture = nullptr;
-PDIRECT3DTEXTURE9 LoadingUI::m_tipsTexture = nullptr;
-PDIRECT3DTEXTURE9 LoadingUI::m_nowLoadingTexture = nullptr;
-PDIRECT3DTEXTURE9 LoadingUI::m_arrowTexture = nullptr;
+IUnknown* LoadingUI::m_backgroundTexture = nullptr;
+IUnknown* LoadingUI::m_stageTexture = nullptr;
+IUnknown* LoadingUI::m_tipsTexture = nullptr;
+IUnknown* LoadingUI::m_nowLoadingTexture = nullptr;
+IUnknown* LoadingUI::m_arrowTexture = nullptr;
 uint32_t LoadingUI::m_stagePrevious;
 std::string LoadingUI::m_bottomText;
 

@@ -27,11 +27,11 @@ public:
 	// Textures
 	static bool m_init;
 	static bool initTextures();
-	static PDIRECT3DTEXTURE9 m_backgroundTexture;
-	static PDIRECT3DTEXTURE9 m_stageTexture;
-	static PDIRECT3DTEXTURE9 m_tipsTexture;
-	static PDIRECT3DTEXTURE9 m_nowLoadingTexture;
-	static PDIRECT3DTEXTURE9 m_arrowTexture;
+	static IUnknown* m_backgroundTexture;
+	static IUnknown* m_stageTexture;
+	static IUnknown* m_tipsTexture;
+	static IUnknown* m_nowLoadingTexture;
+	static IUnknown* m_arrowTexture;
 	~LoadingUI()
 	{
 		if (m_backgroundTexture)	m_backgroundTexture->Release();

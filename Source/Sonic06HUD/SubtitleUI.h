@@ -33,20 +33,20 @@ struct CaptionData
 	bool m_bypassLoading;
 	std::deque<Caption> m_captions;
 
-	PDIRECT3DTEXTURE9 m_textbox;
-	PDIRECT3DTEXTURE9 m_buttonA;
-	PDIRECT3DTEXTURE9 m_buttonB;
-	PDIRECT3DTEXTURE9 m_buttonX;
-	PDIRECT3DTEXTURE9 m_buttonY;
-	PDIRECT3DTEXTURE9 m_buttonLB;
-	PDIRECT3DTEXTURE9 m_buttonLT;
-	PDIRECT3DTEXTURE9 m_buttonRB;
-	PDIRECT3DTEXTURE9 m_buttonRT;
-	PDIRECT3DTEXTURE9 m_buttonStart;
-	PDIRECT3DTEXTURE9 m_buttonBack;
-	PDIRECT3DTEXTURE9 m_buttonLStick;
-	PDIRECT3DTEXTURE9 m_buttonRStick;
-	PDIRECT3DTEXTURE9 m_buttonDPad;
+	IUnknown* m_textbox;
+	IUnknown* m_buttonA;
+	IUnknown* m_buttonB;
+	IUnknown* m_buttonX;
+	IUnknown* m_buttonY;
+	IUnknown* m_buttonLB;
+	IUnknown* m_buttonLT;
+	IUnknown* m_buttonRB;
+	IUnknown* m_buttonRT;
+	IUnknown* m_buttonStart;
+	IUnknown* m_buttonBack;
+	IUnknown* m_buttonLStick;
+	IUnknown* m_buttonRStick;
+	IUnknown* m_buttonDPad;
 
 	bool init();
 	void clear()

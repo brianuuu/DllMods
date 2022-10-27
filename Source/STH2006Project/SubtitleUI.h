@@ -20,9 +20,9 @@ struct CaptionData
 	float m_yesNoColorTime;
 	float m_yesNoArrowFrame;
 
-	PDIRECT3DTEXTURE9 m_textbox;
-	PDIRECT3DTEXTURE9 m_acceptbox;
-	PDIRECT3DTEXTURE9 m_arrow;
+	IUnknown* m_textbox;
+	IUnknown* m_acceptbox;
+	IUnknown* m_arrow;
 
 	bool init();
 	void clear()

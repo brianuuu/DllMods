@@ -239,9 +239,8 @@ LRESULT UIContext::wndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
     return ImGui_ImplWin32_WndProcHandler(hWnd, Msg, wParam, lParam);
 }
 
-bool UIContext::loadTextureFromFile(const wchar_t* filename, PDIRECT3DTEXTURE9* out_texture, int* out_width, int* out_height)
+bool UIContext::loadTextureFromFile(const wchar_t* filename, IUnknown** out_texture, int* out_width, int* out_height)
 {
-    IDirect3DTexture9* texture = nullptr;
     HRESULT hr = S_FALSE;
 
     // Load texture from disk.
@@ -252,37 +251,68 @@ bool UIContext::loadTextureFromFile(const wchar_t* filename, PDIRECT3DTEXTURE9* 
         IDirect3DDevice9* d3d9Device = nullptr;
         if (SUCCEEDED(device->QueryInterface(&d3d9Device)))
         {
+            IDirect3DTexture9* texture = nullptr;
             hr = DirectX::CreateDDSTextureFromFile(d3d9Device, filename, &texture);
+            d3d9Device->Release();
+
+            if (hr == S_OK)
+            {
+                // Retrieve description of the texture surface so we can access its size.
+                D3DSURFACE_DESC my_image_desc;
+                texture->GetLevelDesc(0, &my_image_desc);
+                *out_texture = texture;
+
+                if (out_width)
+                {
+                    *out_width = (int)my_image_desc.Width;
+                }
+
+                if (out_height)
+                {
+                    *out_height = (int)my_image_desc.Height;
+                }
+
+                return true;
+            }
         }
         break;
     }
     case Backend::DX11:
     {
-        // TODO:
+        ID3D11Device* d3d11Device = nullptr;
+        if (SUCCEEDED(device->QueryInterface(&d3d11Device)))
+        {
+            ID3D11Resource* texture = nullptr;
+            ID3D11ShaderResourceView* textureView = nullptr;
+
+            hr = DirectX::CreateDDSTextureFromFile(d3d11Device, filename, &texture, &textureView);
+            d3d11Device->Release();
+
+            if (hr == S_OK)
+            {
+                ID3D11Texture2D* texture2D = (ID3D11Texture2D*)texture;
+                D3D11_TEXTURE2D_DESC my_image_desc;
+                texture2D->GetDesc(&my_image_desc);
+                *out_texture = textureView;
+
+                if (out_width)
+                {
+                    *out_width = (int)my_image_desc.Width;
+                }
+
+                if (out_height)
+                {
+                    *out_height = (int)my_image_desc.Height;
+                }
+
+                texture2D->Release();
+                return true;
+            }
+        }
         break;
     }
     }
 
-    if (hr != S_OK)
-    {
-        printf("[UIContext] Error reading texture! (0x%08x)\n", hr);
-        return false;
-    }
-
-    // Retrieve description of the texture surface so we can access its size.
-    D3DSURFACE_DESC my_image_desc;
-    texture->GetLevelDesc(0, &my_image_desc);
-    *out_texture = texture;
-
-    if (out_width)
-    {
-        *out_width = (int)my_image_desc.Width;
-    }
-
-    if (out_height)
-    {
-        *out_height = (int)my_image_desc.Height;
-    }
-
-    return true;
+    printf("[UIContext] Error reading texture! (0x%08x)\n", hr);
+    return false;
 }
