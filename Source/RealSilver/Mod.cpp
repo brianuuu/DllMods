@@ -95,4 +95,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     //WRITE_MEMORY(0xDA278C, char*, "Hand_R"); // Hand_R
     //WRITE_MEMORY(0xDA27DD, char*, "Foot_L"); // Foot_L
     //WRITE_MEMORY(0xDA285E, char*, "Foot_R"); // Foot_R
+
+    // Changed Silver boss fight tint to red
+    WRITE_MEMORY(0xE93448, uint32_t, 0x1703C08);
+    WRITE_MEMORY(0xE9345C, uint32_t, 0x14A84B8);
+    WRITE_MEMORY(0xE93467, uint32_t, 0x14A84B8);
 }
