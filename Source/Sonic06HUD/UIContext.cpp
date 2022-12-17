@@ -141,8 +141,12 @@ void UIContext::update()
     io.DisplaySize.x = (float)(*BACKBUFFER_WIDTH) * 1.1f;
     io.DisplaySize.y = (float)(*BACKBUFFER_HEIGHT)*2 * 1.1f;
 
+    float fontScale = ((float)*BACKBUFFER_WIDTH / (float)*BACKBUFFER_HEIGHT) >= (16.0f / 9.0f)
+                    ? (float)*BACKBUFFER_HEIGHT / 1080.0f
+                    : (float)*BACKBUFFER_WIDTH / 1920.0f;
+
     ImGui::NewFrame();
-    font->Scale = (float)*BACKBUFFER_WIDTH / 1920.0f;
+    font->Scale = fontScale;
     ImGui::PushFont(font);
     
     // Check if HUD is enabled
@@ -155,14 +159,14 @@ void UIContext::update()
             Stage::draw();
             ScoreUI::draw();
 
-            fontSubtitle->Scale = (float)*BACKBUFFER_WIDTH / 1920.0f;
+            fontSubtitle->Scale = fontScale;
             ImGui::PushFont(fontSubtitle);
             SubtitleUI::draw();
             ResultUI::draw();
             ImGui::PopFont();
         }
 
-        fontSubtitleBig->Scale = (float)*BACKBUFFER_WIDTH / 1920.0f;
+        fontSubtitleBig->Scale = fontScale;
         ImGui::PushFont(fontSubtitleBig);
         CustomHUD::draw();
         ImGui::PopFont();

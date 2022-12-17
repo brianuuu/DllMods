@@ -170,6 +170,10 @@ void UIContext::update()
     io.DisplaySize.x = (float)(*BACKBUFFER_WIDTH) * 1.1f;
     io.DisplaySize.y = (float)(*BACKBUFFER_HEIGHT)*2 * 1.1f;
 
+    float fontScale = ((float)*BACKBUFFER_WIDTH / (float)*BACKBUFFER_HEIGHT) >= (16.0f / 9.0f)
+                    ? (float)*BACKBUFFER_HEIGHT / 1080.0f
+                    : (float)*BACKBUFFER_WIDTH / 1920.0f;
+
     ImGui::NewFrame();
     
     // Check if HUD is enabled
@@ -180,13 +184,13 @@ void UIContext::update()
         {
             Itembox::draw();
 
-            font->Scale = (float)*BACKBUFFER_WIDTH / 1920.0f;
+            font->Scale = fontScale;
             ImGui::PushFont(font);
             TitleUI::drawMenu();
             ScoreManager::draw();
             ImGui::PopFont();
 
-            fontSubtitle->Scale = (float)*BACKBUFFER_WIDTH / 1920.0f;
+            fontSubtitle->Scale = fontScale;
             ImGui::PushFont(fontSubtitle);
             TitleUI::drawStageData();
             TitleUI::drawYesNoWindow();
