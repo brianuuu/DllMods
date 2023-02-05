@@ -687,6 +687,11 @@ public:
 
         if (sequence.m_spamCount > 0)
         {
+            if (m_sequenceID == 0)
+            {
+                static SharedPtrTypeless soundHandle;
+                Common::SonicContextPlaySound(soundHandle, 3000812999, 0);
+            }
             PlayMotion(sequence.m_boss, "Intro_Anim");
         }
     }
