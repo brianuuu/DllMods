@@ -298,6 +298,7 @@ public:
                     button.m_scene = m_rcQTE->CreateScene("btn_2");
                     button.m_scene->GetNode("img")->SetPatternIndex(1);
                     button.m_scene->GetNode("bg")->SetScale(-1.0f, 1.0f);
+                    button.m_scene->GetNode("bg")->SetPosition(2.35f, 0.0f);
                     break;
                 }
                 button.m_scene->SetHideFlag(true);
