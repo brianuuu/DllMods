@@ -130,22 +130,22 @@ enum ImpulseType : uint32_t
 struct MsgApplyImpulse
 {
 	INSERT_PADDING(0x10);
-	Eigen::Vector3f m_position;
+	Eigen::Vector3f m_position; // 0x10
 	INSERT_PADDING(0x4);
-	Eigen::Vector3f m_impulse;
+	Eigen::Vector3f m_impulse; // 0x20
 	INSERT_PADDING(0x4);
-	float m_outOfControl;
+	float m_outOfControl; // 0x30
 	INSERT_PADDING(0x4);
-	ImpulseType m_impulseType;
-	float m_keepVelocityTime;
-	bool m_notRelative; // if false, add impulse direction relative to Sonic
-	bool m_snapPosition; // snap Sonic to m_position
+	ImpulseType m_impulseType; // 0x38
+	float m_keepVelocityTime; // 0x3C
+	bool m_notRelative; // 0x40 if false, add impulse direction relative to Sonic
+	bool m_snapPosition; // 0x41 snap Sonic to m_position
 	INSERT_PADDING(0x3);
-	bool m_pathInterpolate; // linked to 80
+	bool m_pathInterpolate; // 0x45 linked to 80
 	INSERT_PADDING(0xA);
-	Eigen::Vector3f m_unknown80; // related to position interpolate?
+	Eigen::Vector3f m_unknown80; // 0x50 related to position interpolate?
 	INSERT_PADDING(0x4);
-	float m_alwaysMinusOne; // seems to be always -1.0f
+	float m_alwaysMinusOne; // 0x60 seems to be always -1.0f
 	INSERT_PADDING(0xC);
 };
 
