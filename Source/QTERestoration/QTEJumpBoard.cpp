@@ -4,6 +4,7 @@ QTEJumpBoard::Data QTEJumpBoard::m_data;
 
 float const c_qteButtonXSpacing = 115.0f;
 float const c_qteButtonYSpacing = 75.0f;
+float const c_qteButtonSpamXPos = 584.0f;
 float const c_qteButtonYPos = 360.0f;
 float const c_qteSlowTimeScale = 0.08f;
 float const c_qteSlowTimeRate = 2.0f;
@@ -23,6 +24,20 @@ float const c_qteDifficultyTimes[] =
     1.1f,
 };
 
+float const c_qteSpamDifficultyTimes[] =
+{
+    15.0f,
+    14.0f,
+    13.0f,
+    12.0f,
+    11.0f,
+    10.0f,
+    7.5f,
+    5.0f,
+    3.5f,
+    2.0f,
+};
+
 class CQTEButtonSequence : public Sonic::CGameObject
 {
     Chao::CSD::RCPtr<Chao::CSD::CProject> m_rcQTE;
@@ -38,6 +53,8 @@ class CQTEButtonSequence : public Sonic::CGameObject
     enum ButtonType { A, B, X, Y, LB, RB, COUNT };
     struct Button
     {
+        Button() : m_type(ButtonType::X) {}
+
         ButtonType m_type;
         Chao::CSD::RCPtr<Chao::CSD::CScene> m_scene;
         Chao::CSD::RCPtr<Chao::CSD::CScene> m_effect;
@@ -45,8 +62,13 @@ class CQTEButtonSequence : public Sonic::CGameObject
 
     struct Sequence
     {
+        Sequence() : m_time(5.0f), m_spamCount(0) {}
+
         float m_time;
         std::vector<Button> m_buttons;
+
+        size_t m_spamCount;
+        Chao::CSD::RCPtr<Chao::CSD::CScene> m_boss;
 
         Chao::CSD::RCPtr<Chao::CSD::CScene> m_bg;
         Chao::CSD::RCPtr<Chao::CSD::CScene> m_timer;
@@ -104,6 +126,7 @@ public:
             }
             Chao::CSD::CProject::DestroyScene(m_rcQTE.Get(), sequence.m_bg);
             Chao::CSD::CProject::DestroyScene(m_rcQTE.Get(), sequence.m_timer);
+            Chao::CSD::CProject::DestroyScene(m_rcQTE.Get(), sequence.m_boss);
         }
         Chao::CSD::CProject::DestroyScene(m_rcQTE.Get(), m_txt1);
         Chao::CSD::CProject::DestroyScene(m_rcQTE.Get(), m_txt2);
@@ -123,22 +146,48 @@ public:
         Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
         pGameDocument->AddUpdateUnit("1", this);
 
-        // extract button sequence data from m_data.m_sizeType
+        size_t mode = (m_data.m_sizeType % 10) / 2;
         uint32_t number = m_data.m_sizeType / 10;
-        while (number > 10 && m_sequences.size() < 3)
+        if (mode == 1)
         {
-            // first digit is difficulty
-            size_t difficulty = number % 10;
+            // Button spam mode
+            while (number > 100 && m_sequences.size() < 2)
+            {
+                // 1st digit is difficulty
+                size_t difficulty = number % 10;
+                number /= 10;
 
-            // 2nd digit is how many buttons
-            size_t buttonCount = (number / 10) % 10;
-            //buttonCount = min(max(buttonCount, 3), 5);
+                // 2th digit is button type
+                ButtonType type = (ButtonType)(number % 10 % ButtonType::COUNT);
+                number /= 10;
 
-            // create sequence
-            CreateSequence(difficulty, buttonCount);
+                // last 2 digits is spam count
+                size_t spamCount = number % 100;
+                spamCount = max(1, spamCount);
+                number /= 100;
 
-            // read next two digits
-            number /= 100;
+                // create sequence
+                CreateSpamSequence(difficulty, type, spamCount);
+            }
+        }
+        else
+        {
+            // extract button sequence data from m_data.m_sizeType
+            while (number > 10 && m_sequences.size() < 3)
+            {
+                // first digit is difficulty
+                size_t difficulty = number % 10;
+
+                // 2nd digit is how many buttons
+                size_t buttonCount = (number / 10) % 10;
+                buttonCount = max(1, buttonCount);
+
+                // create sequence
+                CreateSequence(difficulty, buttonCount);
+
+                // read next two digits
+                number /= 100;
+            }
         }
 
         // we have invalid number, probably Gen's trick panel
@@ -191,6 +240,11 @@ public:
             sequence.m_timer = m_rcQTE->CreateScene("m_timer");
             sequence.m_timer->SetHideFlag(true);
 
+            // spam mode
+            sequence.m_boss = m_rcQTE->CreateScene("m_boss");
+            SetSpamAmountText(sequence.m_boss, sequence.m_spamCount);
+            sequence.m_boss->SetHideFlag(true);
+
             // utterly useless code to handle more than 10 buttons with multiple rows
             size_t rowCount = ((sequence.m_buttons.size() - 1) / 10) + 1;
             std::vector<size_t> columnCounts(rowCount, sequence.m_buttons.size() / rowCount);
@@ -209,7 +263,14 @@ public:
             {
                 if (column == 0)
                 {
-                    xPos = 640.0f - (columnCounts[row] - 1) * c_qteButtonXSpacing * 0.5f;
+                    if (sequence.m_spamCount > 0)
+                    {
+                        xPos = c_qteButtonSpamXPos;
+                    }
+                    else
+                    {
+                        xPos = 640.0f - (columnCounts[row] - 1) * c_qteButtonXSpacing * 0.5f;
+                    }
                 }
 
                 Button& button = sequence.m_buttons[b];
@@ -281,6 +342,19 @@ public:
         m_sequences.push_front(sequence);
     }
 
+    void CreateSpamSequence(size_t difficulty, ButtonType type, uint32_t spamCount)
+    {
+        Sequence sequence;
+        sequence.m_spamCount = spamCount;
+        sequence.m_time = c_qteSpamDifficultyTimes[difficulty];
+
+        Button button;
+        button.m_type = type;
+        sequence.m_buttons.push_back(button);
+
+        m_sequences.push_front(sequence);
+    }
+
     bool ProcessMessage
     (
         Hedgehog::Universe::Message& message,
@@ -313,6 +387,8 @@ public:
         {
         case S_SlowTime:
         {
+            // before buttons show up, use this time to calculate where Sonic will land
+            // if QTE is successful, optimized by doing simulation over a period of time
             auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
             float gravity = -context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_Gravity);
             uint32_t simsThisFrame = 0;
@@ -348,7 +424,7 @@ public:
         }
         case S_Input:
         {
-            Sequence const& sequence = m_sequences[m_sequenceID];
+            Sequence& sequence = m_sequences[m_sequenceID];
 
             // check for any tapped buttons
             Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
@@ -387,6 +463,13 @@ public:
 
                 if (!failed)
                 {
+                    if (sequence.m_spamCount > 1)
+                    {
+                        sequence.m_spamCount--;
+                        SetSpamAmountText(sequence.m_boss, sequence.m_spamCount);
+                        break;
+                    }
+
                     // correct input
                     PlayMotion(button.m_scene, "Effect_Anim");
                     PlayMotion(button.m_effect, "Effect_Anim");
@@ -399,6 +482,7 @@ public:
 
                         sequence.m_bg->SetHideFlag(true);
                         sequence.m_timer->SetHideFlag(true);
+                        sequence.m_boss->SetHideFlag(true);
 
                         m_sequenceID++;
                         if (m_sequenceID >= m_sequences.size())
@@ -504,6 +588,7 @@ public:
                 }
                 sequence.m_bg->SetHideFlag(true);
                 sequence.m_timer->SetHideFlag(true);
+                sequence.m_boss->SetHideFlag(true);
 
                 m_txtID = 3;
                 PlayMotion(m_txt4, "Intro_Anim");
@@ -599,6 +684,23 @@ public:
         {
             PlayMotion(button.m_scene, "Intro_Anim");
         }
+
+        if (sequence.m_spamCount > 0)
+        {
+            PlayMotion(sequence.m_boss, "Intro_Anim");
+        }
+    }
+
+    void SetSpamAmountText(Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, size_t spamCount)
+    {
+        if (!scene) return;
+        std::string text = std::to_string(spamCount);
+        if (spamCount < 10)
+        {
+            text = "0" + text;
+        }
+        scene->GetNode("num")->SetText(text.c_str());
+        scene->Update();
     }
 
     void PlayMotion(Chao::CSD::RCPtr<Chao::CSD::CScene> const& scene, char const* motion, float speed = 1.0f, bool loop = false)
@@ -631,14 +733,25 @@ public:
     }
 };
 
-HOOK(void, __fastcall, QTEJumpBoard_MsgHitEventCollision, 0x1014FB0, uint32_t This, void* Edx, void* a2)
+uint32_t tempSizeType;
+void QTEJumpBoard_SaveSizeType(uint32_t const& This)
 {
     uint32_t* sizeType = (uint32_t*)(This + 0x108);
-    uint32_t temp = *sizeType;
-    *sizeType = *sizeType % 10;
+    tempSizeType = *sizeType;
+    *sizeType = *sizeType % 2;
+}
 
+void QTEJumpBoard_RestoreSizeType(uint32_t const& This)
+{
+    uint32_t* sizeType = (uint32_t*)(This + 0x108);
+    *sizeType = tempSizeType;
+}
+
+HOOK(void, __fastcall, QTEJumpBoard_MsgHitEventCollision, 0x1014FB0, uint32_t This, void* Edx, void* a2)
+{
+    QTEJumpBoard_SaveSizeType(This);
 	originalQTEJumpBoard_MsgHitEventCollision(This, Edx, a2);
-    *sizeType = temp;
+    QTEJumpBoard_RestoreSizeType(This);
 
 	QTEJumpBoard::GetQTEJumpBoardData(This);
 }
@@ -663,23 +776,17 @@ HOOK(void, __fastcall, QTEJumpBoard_MsgApplyImpulse, 0xE6CFA0, void* This, void*
 
 HOOK(bool, __fastcall, QTEJumpBoard_CObjAdlibTrickJumpInit1, 0x1014C00, uint32_t This, void* Edx, void* a2, void* a3)
 {
-    uint32_t* sizeType = (uint32_t*)(This + 0x108);
-    uint32_t temp = *sizeType;
-    *sizeType = *sizeType % 10;
-
+    QTEJumpBoard_SaveSizeType(This);
     bool result = originalQTEJumpBoard_CObjAdlibTrickJumpInit1(This, Edx, a2, a3);
-    *sizeType = temp;
+    QTEJumpBoard_RestoreSizeType(This);
     return result;
 }
 
 HOOK(bool, __fastcall, QTEJumpBoard_CObjAdlibTrickJumpInit2, 0x1015BF0, uint32_t This, void* Edx, void* a2)
 {
-    uint32_t* sizeType = (uint32_t*)(This + 0x108);
-    uint32_t temp = *sizeType;
-    *sizeType = *sizeType % 10;
-
+    QTEJumpBoard_SaveSizeType(This);
     bool result = originalQTEJumpBoard_CObjAdlibTrickJumpInit2(This, Edx, a2);
-    *sizeType = temp;
+    QTEJumpBoard_RestoreSizeType(This);
     return result;
 }
 
