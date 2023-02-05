@@ -1,4 +1,5 @@
 #include "ArchiveTreePatcher.h"
+#include "Configuration.h"
 
 vector<ArchiveDependency> ArchiveTreePatcher::m_archiveDependencies = {};
 vector<string> ArchiveTreePatcher::m_languageArchives = {};
@@ -93,8 +94,23 @@ boost::shared_ptr<hh::db::CRawData>* __fastcall ArchiveTreePatcher_GetRawDataImp
 
 void ArchiveTreePatcher::applyPatches()
 {
-    // TODO: button type settings
     m_archiveDependencies.push_back(ArchiveDependency("SonicActionCommonHudQTE", { "SonicActionCommonHud" }));
+    switch (Configuration::buttonType)
+    {
+    case Configuration::ButtonType::XSX:
+        m_archiveDependencies.push_back(ArchiveDependency("SonicActionCommonHudXS", { "SonicActionCommonHud" }));
+        break;
+    case Configuration::ButtonType::PS3:
+        m_archiveDependencies.push_back(ArchiveDependency("SonicActionCommonHudPS", { "SonicActionCommonHud" }));
+        break;
+    case Configuration::ButtonType::Switch:
+        m_archiveDependencies.push_back(ArchiveDependency("SonicActionCommonHudNS", { "SonicActionCommonHud" }));
+        break;
+    default:
+        m_archiveDependencies.push_back(ArchiveDependency("SonicActionCommonHudXB", { "SonicActionCommonHud" }));
+        break;
+    }
+
     m_archiveDependencies.push_back(ArchiveDependency("cmn200SWA", { "cmn200" }));
     INSTALL_HOOK(ParseArchiveTree);
 
