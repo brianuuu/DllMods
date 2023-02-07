@@ -94,24 +94,28 @@ boost::shared_ptr<hh::db::CRawData>* __fastcall ArchiveTreePatcher_GetRawDataImp
 
 void ArchiveTreePatcher::applyPatches()
 {
+    m_archiveDependencies.push_back(ArchiveDependency("cmn200SWA", { "cmn200" }));
     m_archiveDependencies.push_back(ArchiveDependency("SonicActionCommonHudQTE", { "SonicActionCommonHud" }));
     switch (Configuration::buttonType)
     {
     case Configuration::ButtonType::XSX:
+        m_archiveDependencies.push_back(ArchiveDependency("cmn200SWAXS", { "cmn200SWA" }));
         m_archiveDependencies.push_back(ArchiveDependency("SonicActionCommonHudXS", { "SonicActionCommonHud" }));
         break;
     case Configuration::ButtonType::PS3:
+        m_archiveDependencies.push_back(ArchiveDependency("cmn200SWAPS", { "cmn200SWA" }));
         m_archiveDependencies.push_back(ArchiveDependency("SonicActionCommonHudPS", { "SonicActionCommonHud" }));
         break;
     case Configuration::ButtonType::Switch:
+        m_archiveDependencies.push_back(ArchiveDependency("cmn200SWANS", { "cmn200SWA" }));
         m_archiveDependencies.push_back(ArchiveDependency("SonicActionCommonHudNS", { "SonicActionCommonHud" }));
         break;
     default:
+        m_archiveDependencies.push_back(ArchiveDependency("cmn200SWAXB", { "cmn200SWA" }));
         m_archiveDependencies.push_back(ArchiveDependency("SonicActionCommonHudXB", { "SonicActionCommonHud" }));
         break;
     }
 
-    m_archiveDependencies.push_back(ArchiveDependency("cmn200SWA", { "cmn200" }));
     m_archiveDependencies.push_back(ArchiveDependency("SonicTrick", { "Sonic" }));
     INSTALL_HOOK(ParseArchiveTree);
 
