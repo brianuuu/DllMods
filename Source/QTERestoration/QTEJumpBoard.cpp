@@ -1,4 +1,5 @@
 #include "QTEJumpBoard.h"
+#include "AnimationSetPatcher.h"
 
 QTEJumpBoard::Data QTEJumpBoard::m_data;
 
@@ -550,18 +551,7 @@ public:
                                 }
                             }
 
-                            switch (rand() % 3)
-                            {
-                            case 1:
-                                Common::SonicContextChangeAnimation("Trick_FinishF");
-                                break;
-                            case 2:
-                                Common::SonicContextChangeAnimation("Trick_FinishB");
-                                break;
-                            default:
-                                Common::SonicContextChangeAnimation("Trick_FinishSV");
-                                break;
-                            }
+                            Common::SonicContextChangeAnimation(AnimationSetPatcher::TrickSWA[rand() % 7]);
                             Common::SonicContextPlayVoice(voiceHandle, 3002013, 20);
 
                             m_state = S_Outro;

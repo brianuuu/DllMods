@@ -1,4 +1,5 @@
 #include "ArchiveTreePatcher.h"
+#include "AnimationSetPatcher.h"
 #include "Configuration.h"
 #include "QTEJumpBoard.h"
 #include "QTEReactionPlate.h"
@@ -12,6 +13,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 
 	// Load extra archives
 	ArchiveTreePatcher::applyPatches();
+
+	// Load extra animations
+	AnimationSetPatcher::applyPatches();
 
 	// Restore QTEs
 	QTEJumpBoard::applyPatches();

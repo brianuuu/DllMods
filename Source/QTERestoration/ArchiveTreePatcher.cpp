@@ -112,6 +112,7 @@ void ArchiveTreePatcher::applyPatches()
     }
 
     m_archiveDependencies.push_back(ArchiveDependency("cmn200SWA", { "cmn200" }));
+    m_archiveDependencies.push_back(ArchiveDependency("SonicTrick", { "Sonic" }));
     INSTALL_HOOK(ParseArchiveTree);
 
     m_languageArchives.push_back("SonicActionCommonHudQTE");

@@ -176,6 +176,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AnimationSetPatcher.cpp" />
     <ClCompile Include="ArchiveTreePatcher.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DllMain.cpp" />
@@ -194,6 +195,7 @@
     <ClCompile Include="QTEReactionPlate.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AnimationSetPatcher.h" />
     <ClInclude Include="ArchiveTreePatcher.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="Pch.h" />
