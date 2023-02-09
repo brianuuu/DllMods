@@ -159,4 +159,7 @@ void QTEReactionPlate::applyPatches()
 
     // use custom xncp
     WRITE_STRING(0x1604AEC, "ui_qte_swa");
+
+    // use stumble voice instead of damage02
+    WRITE_MEMORY(0xE5CBF9, uint32_t, 3002002);
 }
