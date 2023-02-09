@@ -1186,6 +1186,61 @@ static void fDestroyGameObject
 	}
 }
 
+static uint32_t GetButtonArrayIndex(Sonic::EKeyState key)
+{
+	// base on button mapping array at 0x15D3668
+	switch (key)
+	{
+	case Sonic::EKeyState::eKeyState_A: return 0;
+	case Sonic::EKeyState::eKeyState_B: return 1;
+	case Sonic::EKeyState::eKeyState_LeftBumper: return 2;
+	case Sonic::EKeyState::eKeyState_RightBumper: return 3;
+	case Sonic::EKeyState::eKeyState_X: return 4;
+	case Sonic::EKeyState::eKeyState_Y: return 11;
+	case Sonic::EKeyState::eKeyState_LeftStick: return 31;
+	case Sonic::EKeyState::eKeyState_RightTrigger: return 32;
+	default: return UINT32_MAX;
+	}
+}
+
+static bool fIsButtonTapped
+(
+	Sonic::EKeyState key
+)
+{
+	uint32_t index = GetButtonArrayIndex(key);
+	static void* const pfIsButtonTapped = (void*)0xD97E00;
+	__asm
+	{
+		mov		ebx, PLAYER_CONTEXT
+		mov		ebx, [ebx]
+		mov     ecx, [ebx + 534h]
+		mov     ecx, [ecx + 4h]		// StateFlags
+		mov     eax, [ebx + 11Ch]	// CInputPad
+		mov		edi, index
+		call	[pfIsButtonTapped]
+	}
+}
+
+static bool fIsButtonHeld
+(
+	Sonic::EKeyState key
+)
+{
+	uint32_t index = GetButtonArrayIndex(key);
+	static void* const pfIsButtonHeld = (void*)0xD97DA0;
+	__asm
+	{
+		mov		ebx, PLAYER_CONTEXT
+		mov		ebx, [ebx]
+		mov     ecx, [ebx + 534h]
+		mov     ecx, [ecx + 4h]		// StateFlags
+		mov     esi, [ebx + 11Ch]	// CInputPad
+		mov		edi, index
+		call	[pfIsButtonHeld]
+	}
+}
+
 inline void ObjectCGlitterPlayerOneShot(void* pObject, Hedgehog::Base::CSharedString const& name)
 {
 	uint32_t* CGlitterPlayer = *(uint32_t**)((uint32_t)pObject + 0xF8);

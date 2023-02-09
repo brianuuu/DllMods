@@ -431,7 +431,6 @@ public:
             Sequence& sequence = m_sequences[m_sequenceID];
 
             // check for any tapped buttons
-            Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
             std::vector<Sonic::EKeyState> const buttons = 
             {
                 Sonic::eKeyState_A,
@@ -444,7 +443,7 @@ public:
             Sonic::EKeyState tapped = Sonic::eKeyState_None;
             for (Sonic::EKeyState const& button : buttons)
             {
-                if (padState->IsTapped(button))
+                if (Common::fIsButtonTapped(button))
                 {
                     tapped = button;
                     break;
