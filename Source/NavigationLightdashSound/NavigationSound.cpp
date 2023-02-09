@@ -1,101 +1,116 @@
 #include "NavigationSound.h"
 #include "Configuration.h"
 
-bool NavigationSound::m_playedSoundThisFrame = false;
-float NavigationSound::m_lightdashTimer = 0.0f;
+float const c_singleButtonDelay = 2.0f;
+float NavigationSound::m_singleButtonTimer = 0.0f;
 
 HOOK(void, __fastcall, NavigationSound_CSonicUpdate, 0xE6BF20, void* This, void* Edx, float* dt)
 {
-    NavigationSound::m_lightdashTimer = max(0.0f, NavigationSound::m_lightdashTimer - *dt);
+    NavigationSound::m_singleButtonTimer = max(0.0f, NavigationSound::m_singleButtonTimer - *dt);
     originalNavigationSound_CSonicUpdate(This, Edx, dt);
 }
 
-uint32_t m_buttonType = 0;
-HOOK(void, __fastcall, MsgStartCommonButtonSign, 0x5289A0, void* This, void* Edx, uint32_t a2)
+HOOK(void, __fastcall, NavigationSound_CSonicStateGrindJumpSideBegin, 0x124A1E0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
-    // Disable Y button prompt?
-    m_buttonType = *(uint32_t*)(a2 + 16);
-    if (m_buttonType == 3 && !Configuration::m_enableLightdashPrompt)
-    {
-        return;
-    }
+    originalNavigationSound_CSonicStateGrindJumpSideBegin(This);
 
-    originalMsgStartCommonButtonSign(This, Edx, a2);
+    // send MsgEndQuickStepSign
+    uint32_t context = (uint32_t)This->GetContextBase();
+    uint32_t actorID = *(uint32_t*)(context + 4384);
+    Hedgehog::Universe::CMessageActor* actor = (Hedgehog::Universe::CMessageActor*)(*(uint32_t*)(context + 272) + 40);
+    bool isRight = *(bool*)((uint32_t)This + 0x68);
+    actor->SendMessage(actorID, boost::make_shared<Sonic::Message::MsgEndQuickStepSign>(true, isRight));
 }
 
 void PlayNavigationHintSound()
 {
-    if (NavigationSound::m_playedSoundThisFrame)
+    if (!Configuration::m_enableNavigationSound)
     {
-        printf("Navigation Sound already played this frame, ignoring...\n");
         return;
     }
 
-    if (m_buttonType == 3) // Y button
-    {
-        if (NavigationSound::m_lightdashTimer > 0.0f)
-        {
-            printf("Preventing light dash prompt spam\n");
-            return;
-        }
-        else
-        {
-            NavigationSound::m_lightdashTimer = NavigationSound::m_lightdashDelay;
-        }
-    }
-
     static SharedPtrTypeless soundHandle;
-    if (soundHandle)
-    {
-        soundHandle.reset();
-    }
-    PlaySound(GetCurrentSonicContext(), soundHandle, Configuration::m_navigationSoundType == 0 ? 3000812983 : 3000812984);
-
-    NavigationSound::m_playedSoundThisFrame = true;
-    printf("Played Navigation Sound!\n");
+    Common::SonicContextPlaySound(soundHandle, Configuration::m_navigationSoundType == 0 ? 3000812983 : 3000812984, 0);
 }
 
-#define NAVIGATION_HINT_SOUND_ASM(hintName, returnAddress) \
-    uint32_t const hintName##ReturnAddress = returnAddress; \
-    void __declspec(naked) hintName##PlaySound() \
-    { \
-        __asm \
-        { \
-            __asm mov     ecx, [ebp+8h] \
-            __asm mov     ecx, [ecx+10h] \
-            __asm mov     m_buttonType, ecx \
-            __asm call    PlayNavigationHintSound \
-            __asm lea     ecx, [esp+38h-24h] \
-            __asm push    0 \
-            __asm jmp     [hintName##ReturnAddress] \
-        } \
-    } \
-
-NAVIGATION_HINT_SOUND_ASM(boost,        0x5287B4);
-NAVIGATION_HINT_SOUND_ASM(quickstep,    0x5288E4);
-NAVIGATION_HINT_SOUND_ASM(common,       0x528A31);
-NAVIGATION_HINT_SOUND_ASM(direction,    0x528B94);
-NAVIGATION_HINT_SOUND_ASM(slide,        0x528CD4);
-NAVIGATION_HINT_SOUND_ASM(leftright,    0x528E04);
-
-#define WRITE_JUMP_NAVIGATION(address, hintName) \
-    WRITE_JUMP(address, hintName##PlaySound); \
-    WRITE_NOP(address + 0x5, 1);
-
-void NavigationSound::update()
+HOOK(void, __fastcall, NavigationSound_MsgStartBoostSign, 0x528740, void* This, void* Edx, void* message)
 {
-    m_playedSoundThisFrame = false;
+    PlayNavigationHintSound();
+    originalNavigationSound_MsgStartBoostSign(This, Edx, message);
+}
+
+HOOK(void, __fastcall, NavigationSound_MsgStartQuickStepSign, 0x528870, void* This, void* Edx, int* message)
+{
+    // QS: a2[4] = 0, a2[8] = 0, a2[12] = type (0,1,2)
+    PlayNavigationHintSound();
+    originalNavigationSound_MsgStartQuickStepSign(This, Edx, message);
+}
+
+HOOK(void, __fastcall, NavigationSound_MsgStartCommonButtonSign, 0x5289A0, void* This, void* Edx, int* message)
+{
+    // Single Button: buttonType = ? buttonType2 = -1
+    // Stick Move: buttonType = -1, buttonType2 = 10, directionType = [2-0] flipped to quick step
+
+    int buttonType = message[4];
+    int buttonType2 = message[5];
+    int directionType = message[6];
+    printf("Button %i->%i, %i\n", buttonType, buttonType2, message[17]);
+
+    // Disable Y button prompt?
+    if (buttonType == 3 && !Configuration::m_enableLightdashPrompt)
+    {
+        return;
+    }
+
+    if (buttonType2 == -1) // Single button
+    {
+        if (NavigationSound::m_singleButtonTimer <= 0.0f)
+        {
+            PlayNavigationHintSound();
+            NavigationSound::m_singleButtonTimer = c_singleButtonDelay;
+        }
+    }
+    else
+    {
+        PlayNavigationHintSound();
+        NavigationSound::m_singleButtonTimer = 0.0f;
+    }
+
+    originalNavigationSound_MsgStartCommonButtonSign(This, Edx, message);
+}
+
+HOOK(void, __fastcall, NavigationSound_MsgStartDirectionSign, 0x528B20, void* This, void* Edx, void* message)
+{
+    PlayNavigationHintSound();
+    originalNavigationSound_MsgStartDirectionSign(This, Edx, message);
+}
+
+HOOK(void, __fastcall, NavigationSound_MsgStartSlidingSign, 0x528C60, void* This, void* Edx, void* message)
+{
+    PlayNavigationHintSound();
+    originalNavigationSound_MsgStartSlidingSign(This, Edx, message);
+}
+
+HOOK(void, __fastcall, NavigationSound_MsgStartLeftRightSign, 0x528D90, void* This, void* Edx, void* message)
+{
+    PlayNavigationHintSound();
+    originalNavigationSound_MsgStartLeftRightSign(This, Edx, message);
 }
 
 void NavigationSound::applyPatches()
 {
     INSTALL_HOOK(NavigationSound_CSonicUpdate);
-    INSTALL_HOOK(MsgStartCommonButtonSign);
 
-    WRITE_JUMP_NAVIGATION(0x5287AE, boost);
-    WRITE_JUMP_NAVIGATION(0x5288DE, quickstep);
-    WRITE_JUMP_NAVIGATION(0x528A2B, common);
-    WRITE_JUMP_NAVIGATION(0x528B8E, direction);
-    WRITE_JUMP_NAVIGATION(0x528CCE, slide);
-    WRITE_JUMP_NAVIGATION(0x528DFE, leftright);
+    if (Configuration::m_enableBumperRailSwitch)
+    {
+        // send MsgEndQuickStepSign
+        INSTALL_HOOK(NavigationSound_CSonicStateGrindJumpSideBegin);
+    }
+
+    INSTALL_HOOK(NavigationSound_MsgStartBoostSign);
+    INSTALL_HOOK(NavigationSound_MsgStartQuickStepSign);
+    INSTALL_HOOK(NavigationSound_MsgStartCommonButtonSign);
+    INSTALL_HOOK(NavigationSound_MsgStartDirectionSign);
+    INSTALL_HOOK(NavigationSound_MsgStartSlidingSign);
+    INSTALL_HOOK(NavigationSound_MsgStartLeftRightSign);
 }
