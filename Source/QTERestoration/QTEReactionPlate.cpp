@@ -1,5 +1,8 @@
 #include "QTEReactionPlate.h"
 
+float const c_qteReactionMaxScore = 1500.0f;
+float const c_qteReactionMinScore = 1000.0f;
+
 void fE5CD90
 (
     uint32_t targetActorID,
@@ -96,6 +99,35 @@ HOOK(bool, __fastcall, QTEReactionPlate_CPlayerSpeedProcessMessage, 0xE6E000, hh
     return originalQTEReactionPlate_CPlayerSpeedProcessMessage(This, Edx, message, flag);
 }
 
+int m_qteReactionPlateScore = 0;
+HOOK(bool, __stdcall, QTEReactionPlate_PlayUIEffect, 0xE6F3E0, float* This, void* a2)
+{
+    bool result = originalQTEReactionPlate_PlayUIEffect(This, a2);
+    if (result)
+    {
+        float inputTime = This[12];
+        float maxTime = This[9];
+        m_qteReactionPlateScore = max(0, (int)(c_qteReactionMinScore + (c_qteReactionMaxScore - c_qteReactionMinScore) * (1.0f - inputTime / maxTime)));
+    }
+
+    return result;
+}
+
+HOOK(int, __fastcall, QTEReactionPlate_CPlayerSpeedStateReactionLandEnd, 0x124B7D0, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    uint32_t context = (uint32_t)This->GetContextBase();
+    uint32_t v3 = *(uint32_t*)(context + 2036);
+    bool success = *(bool*)(v3 + 57);
+    if (m_qteReactionPlateScore > 0 && success)
+    {
+        ScoreGenerationsAPI::AddScore(m_qteReactionPlateScore);
+        UnleashedHUD_API::AddTrickScore(m_qteReactionPlateScore);
+    }
+    m_qteReactionPlateScore = 0;
+
+    return originalQTEReactionPlate_CPlayerSpeedStateReactionLandEnd(This);
+}
+
 void QTEReactionPlate_ReactionJumpPlaySfx()
 {
     Sonic::Player::CPlayerSpeedContext::GetInstance()->PlaySound(4002047, 0);
@@ -149,6 +181,8 @@ void QTEReactionPlate::applyPatches()
 
     // main hooks
     INSTALL_HOOK(QTEReactionPlate_CPlayerSpeedProcessMessage);
+    INSTALL_HOOK(QTEReactionPlate_PlayUIEffect);
+    INSTALL_HOOK(QTEReactionPlate_CPlayerSpeedStateReactionLandEnd);
     WRITE_JUMP(0xE5D03E, QTEReactionPlate_ReactionJumpPlaySfxTrampoline);
     WRITE_JUMP(0xE5CDB3, QTEReactionPlate_ReactionJumpPlaySfxTrampoline);
     WRITE_JUMP(0x124B915, QTEReactionPlate_ReactionJumpSetAnimTrampoline);

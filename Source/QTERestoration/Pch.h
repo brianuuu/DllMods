@@ -35,6 +35,10 @@
 #include <INIReader.h>
 #include <Helpers.h>
 
+// APIs
+#include "ScoreGenerationsAPI/ScoreGenerationsAPI.h"
+#include "UnleashedHUDAPI.h"
+
 #define DEBUG_DRAW_TEXT_DLL_IMPORT
 #include <DebugDrawText.h>
 

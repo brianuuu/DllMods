@@ -11,6 +11,8 @@ float const c_qteSlowTimeScale = 0.08f;
 float const c_qteSlowTimeRate = 2.0f;
 float const c_qteAppearTime = 0.8f;
 float const c_qteSimRate = 1.0f / 60.0f;
+float const c_qteMaxScore = 5000.0f;
+float const c_qteMinScore = 3000.0f;
 float const c_qteDifficultyTimes[] =
 {
     5.0f,
@@ -486,16 +488,20 @@ public:
                         sequence.m_timer->SetHideFlag(true);
                         sequence.m_boss->SetHideFlag(true);
 
+                        int score = max(0, (int)(c_qteMinScore + (c_qteMaxScore - c_qteMinScore) * (1.0f - sequence.m_timer->m_MotionFrame * 0.01f)));
+                        ScoreGenerationsAPI::AddScore(score);
+                        UnleashedHUD_API::AddTrickScore(score);
+
                         m_sequenceID++;
                         if (m_sequenceID >= m_sequences.size())
                         {
                             // we are done!
-                            if (sequence.m_timer->m_MotionFrame < 50)
+                            if (sequence.m_timer->m_MotionFrame <= 50)
                             {
                                 m_txtID = 2;
                                 PlayMotion(m_txt3, "Intro_Anim");
                             }
-                            else if (sequence.m_timer->m_MotionFrame < 75)
+                            else if (sequence.m_timer->m_MotionFrame <= 75)
                             {
                                 m_txtID = 1;
                                 PlayMotion(m_txt2, "Intro_Anim");
