@@ -54,7 +54,6 @@ HOOK(void, __fastcall, NavigationSound_MsgStartCommonButtonSign, 0x5289A0, void*
     int buttonType = message[4];
     int buttonType2 = message[5];
     int directionType = message[6];
-    printf("Button %i->%i, %i\n", buttonType, buttonType2, message[17]);
 
     // Disable Y button prompt?
     if (buttonType == 3 && !Configuration::m_enableLightdashPrompt)

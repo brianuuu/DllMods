@@ -2,6 +2,8 @@
 
 #define WIN32_LEAN_AND_MEAN
 
+#include <BlueBlur.h>
+
 // Detours
 #include <Windows.h>
 #include <detours.h>
@@ -24,7 +26,7 @@
 // Other
 #include <INIReader.h>
 #include <Helpers.h>
-#include <Hedgehog.h>
 
 #define DEBUG_DRAW_TEXT_DLL_IMPORT
 #include <DebugDrawText.h>
+#include <Common.h>

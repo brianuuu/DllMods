@@ -1,29 +1,37 @@
 /*----------------------------------------------------------*/
-//	Author: brianuuuSonic
+//	Author: brianuuuSonic https://github.com/brianuuu
 //	Year: 2021
 //	Description: Play rank quotes at result screen
-//				 This is a modified version for Unleashed voice only
-//	Requirement: Add 6 rank slap sfx with ID [40000-40005] (S to E rank)
-//				 Also add rank quotes with ID [40010-40015]
+//	Requirement: Add 6 voices (S-E rank) with rank sfx with ID [40000-40005]
+//			     and rank slam sfx with ID [1000041-1000046]
 //			     in the .csb in SonicVoice.ar.00
 /*----------------------------------------------------------*/
 
 #pragma once
 
-struct MsgGetAnimationInfo
+enum ResultRankType : int
 {
-	INSERT_PADDING(0x14);
-	char* name;
-	float frame;
+	E = -1,
+	D,
+	C,
+	B,
+	A,
+	S
+};
+
+struct ResultData
+{
+	int m_score;
+	ResultRankType m_rank;
+	ResultRankType m_perfectRank;
+	int m_nextRankTime;
+	float m_totalProp;	// result progress bar (time prop + ring prop) 
+	float m_timeProp;	// result progress bar (time prop)
 };
 
 class RankQuote
 {
 public:
-	static uint32_t m_rank;
-	static uint32_t m_rankSfxID;
-	static bool m_playRankSfx;
-
 	static void applyPatches();
 };
 

@@ -1,198 +1,61 @@
 #include "RankQuote.h"
 
-uint32_t RankQuote::m_rank = 0;
-uint32_t RankQuote::m_rankSfxID = 1010002;
-bool RankQuote::m_playRankSfx = false;
-
-#if _DEBUG
-void __cdecl debugRank()
+ResultData m_resultData;
+HOOK(int, __fastcall, RankQuote_CStateGoalFadeBeforeBegin, 0xCFE080, uint32_t* This)
 {
-    switch (RankQuote::m_rank)
+    int result = originalRankQuote_CStateGoalFadeBeforeBegin(This);
     {
-    case 4: printf("Got S rank!\n"); break;
-    case 3: printf("Got A rank!\n"); break;
-    case 2: printf("Got B rank!\n"); break;
-    case 1: printf("Got C rank!\n"); break;
-    default: printf("Got D rank!\n"); break;
+        m_resultData = *(ResultData*)(This[2] + 0x16C);
     }
-}
-#endif
-
-uint32_t asmGetRankReturnAddress = 0xE27BC2;
-void __declspec(naked) asmGetRank()
-{
-    __asm
-    {
-        mov     eax, [esi + 0x14]
-        mov     RankQuote::m_rank, eax
-
-#if _DEBUG
-        // eax is used after
-        push    eax
-        call    debugRank
-        pop     eax
-#endif
-
-        cmp     eax, 4
-        jmp     [asmGetRankReturnAddress]
-    }
+    return result;
 }
 
-void __cdecl getRankSfx()
+void PlayRankQuote()
 {
-    /*
-    0x1E5E2F8: Modern context
-    0x1E5E304: Classic context
-    0x1E5E310: Super Sonic context
-    */
-    void* pModernSonicContext = *(void**)0x1E5E2F8;
-    if (pModernSonicContext && RankQuote::m_playRankSfx)
+    uint32_t voiceCueID = -1;
+    uint32_t slamCueID = -1;
+    switch (m_resultData.m_perfectRank)
     {
-        // S:40000 - D:40004
-        RankQuote::m_rankSfxID = 40004 - RankQuote::m_rank;
-
-        // E-Rank Generations support
-        if (RankQuote::m_rank == 4 && *(uint8_t*)0x15EFE9D == 0x45)
-        {
-            RankQuote::m_rankSfxID = 40005;
-        }
-    }
-    else
-    {
-        // Default rank sfx ID
-        RankQuote::m_rankSfxID = 1010002;
+    case ResultRankType::S: voiceCueID = 40000; slamCueID = 1000041; printf("[Rank Quote] Rank = S"); break;
+    case ResultRankType::A: voiceCueID = 40001; slamCueID = 1000042; printf("[Rank Quote] Rank = A"); break;
+    case ResultRankType::B: voiceCueID = 40002; slamCueID = 1000043; printf("[Rank Quote] Rank = B"); break;
+    case ResultRankType::C: voiceCueID = 40003; slamCueID = 1000044; printf("[Rank Quote] Rank = C"); break;
+    case ResultRankType::D: voiceCueID = 40004; slamCueID = 1000045; printf("[Rank Quote] Rank = D"); break;
+    default: voiceCueID = 40005; slamCueID = 1000046; printf("[Rank Quote] Rank = E"); break;
     }
 
-    RankQuote::m_playRankSfx = false;
+    static SharedPtrTypeless rankVoiceHandle;
+    Common::PlaySoundStatic(rankVoiceHandle, voiceCueID);
+
+    static SharedPtrTypeless rankSoundHandle;
+    Common::PlaySoundStatic(rankSoundHandle, slamCueID);
 }
 
-uint32_t asmChangeRankVoiceReturnAddress = 0x11D237E;
-void __declspec(naked) asmChangeRankSfx()
+HOOK(void, __fastcall, RankQuote_ChangeRank, 0x10B76D0, uint32_t* This)
 {
-    __asm
-    {
-        // eax is used after jumping back
-        push    eax
-        call    getRankSfx
-        pop     eax
+    WRITE_MEMORY(0x11D237A, int, -1);
+    PlayRankQuote();
 
-        push    RankQuote::m_rankSfxID
-        jmp     [asmChangeRankVoiceReturnAddress]
-    }
+    originalRankQuote_ChangeRank(This);
+    WRITE_MEMORY(0x11D237A, uint32_t, 1010002);
 }
 
-uint32_t asmSkipRankPerfectReturnAddress = 0x10B8D4A;
-void __declspec(naked) asmSkipRankPerfect()
+HOOK(void, __fastcall, RankQuote_ShowRank, 0x10B7800, uint32_t* This)
 {
-    __asm
+    FUNCTION_PTR(bool, __cdecl, IsPerfectBonus, 0x10B8A90);
+    if (!IsPerfectBonus())
     {
-        mov     RankQuote::m_playRankSfx, 1  // enable voice
-        push    [0x1693E80]         // offset aChangerank
-
-        jmp     [asmSkipRankPerfectReturnAddress]
-    }
-}
-
-uint32_t asmSkipRankReturnAddress = 0x10B8DAD;
-void __declspec(naked) asmSkipRank()
-{
-    __asm
-    {
-        mov     RankQuote::m_playRankSfx, 1  // enable voice
-        push    [0x1693E64]         // offset aRank_1
-
-        jmp     [asmSkipRankReturnAddress]
-    }
-}
-
-uint32_t asmRankPerfectReturnAddress = 0x10B77AD;
-void __declspec(naked) asmRankPerfect()
-{
-    __asm
-    {
-        mov     RankQuote::m_playRankSfx, 1  // enable voice
-        push    [0x1693E80]         // offset aChangerank
-
-        jmp     [asmRankPerfectReturnAddress]
-    }
-}
-
-uint32_t perfectBonusFunctionAddress = 0x10B8A90;
-uint32_t asmRankReturnAddress = 0x10B785B;
-void __declspec(naked) asmRank()
-{
-    __asm
-    {
-        // Only plays when there's NO pefect bonus
-        push    ecx
-        push    edx
-        call    [perfectBonusFunctionAddress]
-        pop     edx
-        pop     ecx
-
-        test    al, al
-        jnz     jump
-
-        mov     RankQuote::m_playRankSfx, 1  // enable voice
-
-        jump:
-        push    [0x1693E64]         // offset aRank_1
-        jmp     [asmRankReturnAddress]
-    }
-}
-
-using SharedPtrTypeless = boost::shared_ptr<void>;
-FUNCTION_PTR(void*, __thiscall, sub_75FA60, 0x75FA60, void* This, SharedPtrTypeless&, uint32_t cueId);
-void PlaySound(SharedPtrTypeless& soundHandle, uint32_t cueID)
-{
-    uint32_t* syncObject = *(uint32_t**)0x1E79044;
-    if (syncObject)
-    {
-        sub_75FA60((void*)syncObject[8], soundHandle, cueID);
-    }
-}
-
-HOOK(void, __stdcall, ChangeAnimation, 0xCDFC80, void* A1, SharedPtrTypeless& A2, const Hedgehog::Base::CSharedString& name)
-{
-    static SharedPtrTypeless soundHandle;
-    if (strcmp(name.m_pStr, "ResultRankS_Link") == 0)
-    {
-        PlaySound(soundHandle, *(uint8_t*)0x15EFE9D == 0x45 ? 40015 : 40010);
-    }
-    else if (strcmp(name.m_pStr, "ResultRankA_Link") == 0)
-    {
-        PlaySound(soundHandle, 40011);
-    }
-    else if (strcmp(name.m_pStr, "ResultRankB_Link") == 0)
-    {
-        PlaySound(soundHandle, 40012);
-    }
-    else if (strcmp(name.m_pStr, "ResultRankC_Link") == 0)
-    {
-        PlaySound(soundHandle, 40013);
-    }
-    else if (strcmp(name.m_pStr, "ResultRankD_Link") == 0)
-    {
-        PlaySound(soundHandle, 40014);
+        WRITE_MEMORY(0x11D237A, int, -1);
+        PlayRankQuote();
     }
 
-    originalChangeAnimation(A1, A2, name);
+    originalRankQuote_ShowRank(This);
+    WRITE_MEMORY(0x11D237A, uint32_t, 1010002);
 }
 
 void RankQuote::applyPatches()
 {
-    // Grab rank
-    WRITE_JUMP(0xE27BBC, asmGetRank);
-
-    // Change rank sfx
-    WRITE_JUMP(0x11D2379, asmChangeRankSfx);
-
-    // Functions that triggers rank sfx change
-    WRITE_JUMP(0x10B8D45, asmSkipRankPerfect);
-    WRITE_JUMP(0x10B8DA8, asmSkipRank);
-    WRITE_JUMP(0x10B77A8, asmRankPerfect);
-    WRITE_JUMP(0x10B7856, asmRank);
-
-    // Play rank quote on certain animation state
-    //INSTALL_HOOK(ChangeAnimation);
+    INSTALL_HOOK(RankQuote_CStateGoalFadeBeforeBegin);
+    INSTALL_HOOK(RankQuote_ChangeRank);
+    INSTALL_HOOK(RankQuote_ShowRank);
 }
