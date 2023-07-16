@@ -24,7 +24,7 @@ extern "C" void __declspec(dllexport) OnFrame()
     CustomCamera::advance();
 }
 
-extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
+extern "C" __declspec(dllexport) void Init(ModInfo_t * modInfo)
 {
     std::string dir = modInfo->CurrentMod->Path;
 
@@ -39,16 +39,16 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
         MessageBox(NULL, L"Failed to parse Sonic06DefinitiveExperience.ini", NULL, MB_ICONERROR);
     }
 
-    if (GetModuleHandle(TEXT("Sonic06HUD.dll")))
-    {
-        MessageBox(nullptr, TEXT("'Sonic 06 HUD' mod must be higher priority than 'Sonic 06 Definitive Experience'!"), TEXT("Sonic 06 Definitive Experience"), MB_ICONERROR);
-        exit(-1);
-    }
-
     if (Common::DoesArchiveExist("Sonic.ar.00", { modInfo->CurrentMod->Name }) || Common::DoesArchiveExist("Sonic.ar.01"))
     {
         MessageBox(nullptr, TEXT("You are NOT allowed to use other character mods with this mod, please disable them."), TEXT("Sonic 06 Definitive Experience"), MB_ICONERROR);
         exit(-1);
+    }
+
+    if (Common::IsModEnabled("Main", "DLLFile", "STH2006Project.dll"))
+    {
+        printf("[S06DE] STH2006Project.dll detected\n");
+        Configuration::m_usingSTH2006Project = true;
     }
 
     // -------------Patches--------------
@@ -118,8 +118,30 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     WRITE_MEMORY(0x1098E5F, uint8_t, 0xEB);
 }
 
-extern "C" __declspec(dllexport) void PostInit()
+extern "C" __declspec(dllexport) void PostInit(ModInfo_t * modInfo)
 {
+    auto CheckPriority = [&modInfo](std::string const& dllName, bool isHighPriority = true) -> bool
+    {
+        auto* api = modInfo->API;
+        auto* thisMod = modInfo->CurrentMod;
+
+        std::string modID;
+        if (Common::GetModIDFromDLL(dllName, modID))
+        {
+            auto* otherMod = api->FindMod(modID.c_str());
+            if (otherMod)
+            {
+                // 0 = highest priority
+                if (isHighPriority ^ otherMod->Priority < thisMod->Priority)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    };
+
     if (*(uint16_t*)0x115A6AF == 0x9090)
     {
         // Revert "No Trick Rainbow Rings" code
@@ -139,7 +161,13 @@ extern "C" __declspec(dllexport) void PostInit()
         WRITE_MEMORY(0x121EDA4, uint8_t, 0x0F, 0x84, 0xAC, 0x00, 0x00);
     }
 
-    if (GetModuleHandle(TEXT("Sonic06HUD.dll")) == nullptr)
+    if (!CheckPriority("Sonic06HUD.dll"))
+    {
+        MessageBox(nullptr, TEXT("'Sonic 06 HUD' mod must be higher priority than 'Sonic 06 Definitive Experience'!"), TEXT("Sonic 06 Definitive Experience"), MB_ICONERROR);
+        exit(-1);
+    }
+
+    if (!Common::IsModEnabled("Main", "DLLFile", "Sonic06HUD.dll"))
     {
         MessageBox(nullptr, TEXT("This mod requires the latest version of 'Sonic 06 HUD' enabled."), TEXT("Sonic 06 Definitive Experience"), MB_ICONERROR);
         exit(-1);
@@ -150,7 +178,7 @@ extern "C" __declspec(dllexport) void PostInit()
         MessageBox(NULL, L"Failed to parse Sonic06DefinitiveExperience.ini", NULL, MB_ICONERROR);
     }
 
-    if (GetModuleHandle(TEXT("CustomizableResultsMusic.dll")))
+    if (Common::IsModEnabled("Main", "DLLFile", "CustomizableResultsMusic.dll"))
     {
         MessageBox(nullptr, TEXT("'Customizable Results Music' mod is not compatible with this mod, please disable it."), TEXT("Sonic 06 Definitive Experience"), MB_ICONERROR);
         exit(-1);
@@ -164,7 +192,7 @@ extern "C" __declspec(dllexport) void PostInit()
             JOYINFO info;
             if (joyGetPos(i, &info) == JOYERR_NOERROR)
             {
-                printf("Joystick Detected!\n");
+                printf("[S06DE] Joystick Detected!\n");
                 noGamepad = false;
                 break;
             }

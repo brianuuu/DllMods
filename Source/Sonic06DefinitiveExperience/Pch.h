@@ -29,7 +29,7 @@
 #include "tinyxml2.h"
 
 // LostCodeLoader
-#include <LostCodeLoader.h>
+#include <ModLoader.h>
 
 // Other
 #include <INIReader.h>

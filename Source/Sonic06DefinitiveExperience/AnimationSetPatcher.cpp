@@ -7,7 +7,7 @@ FUNCTION_PTR(uint32_t*, __stdcall, fpGetAnimationTransitionData, 0xCDFB40, void*
 HOOK(bool, __fastcall, CAnimationControlSingle_Debug, 0x6D84F0, uint32_t** This, void* Edx, float a2, int a3)
 {
     std::string name((char*)(This[58][2]));
-    if (name.find("sn_") != string::npos)
+    if (name.find("sn_") != std::string::npos)
     {
         printf("%s\n", name.c_str());
     }
@@ -204,7 +204,7 @@ void AnimationSetPatcher::applyPatches()
     WRITE_MEMORY(0x1276D20, uint8_t, 0x1D); // DashRingL
     WRITE_MEMORY(0x1276D87, uint8_t, 0x1D); // DashRingR
 
-    if (GetModuleHandle(TEXT("STH2006Project.dll")))
+    if (Configuration::m_usingSTH2006Project)
     {
         // Use idle animation on stage gates in STH2006 Project
         WRITE_MEMORY(0x127ADF1, uint32_t, 0x15E7670);

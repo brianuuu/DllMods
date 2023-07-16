@@ -1,6 +1,6 @@
 #include "ArchiveTreePatcher.h"
 
-vector<ArchiveDependency> ArchiveTreePatcher::m_archiveDependencies = {};
+std::vector<ArchiveDependency> ArchiveTreePatcher::m_archiveDependencies = {};
 
 HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* A1, char* pData, const size_t size, void* pDatabase)
 {
@@ -24,7 +24,7 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* A1, char* pData, const s
             stream << "    <Order>" << 0 << "</Order>\n";
             stream << "    <DefAppend>" << node.m_archive << "</DefAppend>\n";
 
-            for (string const& dependency : node.m_dependencies)
+            for (std::string const& dependency : node.m_dependencies)
             {
                 stream << "    <Node>\n";
                 stream << "      <Name>" << dependency << "</Name>\n";

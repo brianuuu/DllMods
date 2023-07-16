@@ -26,6 +26,7 @@ public:
     };
 
     // General
+    static bool m_usingSTH2006Project;
     static ModelType m_model;
 
     // Camera
@@ -41,7 +42,7 @@ public:
     // Sonic
     static bool m_rapidSpindash;
     static RunResultType m_run;
-    static vector<string> m_runStages;
+    static std::vector<std::string> m_runStages;
     static bool m_unlimitedGauge;
     static bool m_gemsEnabled;
 

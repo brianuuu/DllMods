@@ -28,7 +28,7 @@ bool RankRunAnimation::checkCanPlayRunAnimation()
     if (Configuration::m_run == Configuration::RunResultType::Custom)
     {
         // Only enable for custom defined stages
-        for (string const& stage : Configuration::m_runStages)
+        for (std::string const& stage : Configuration::m_runStages)
         {
             if (Common::CheckCurrentStage(stage.c_str()))
             {
