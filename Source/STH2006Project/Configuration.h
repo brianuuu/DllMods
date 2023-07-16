@@ -17,6 +17,7 @@ public:
 
     static bool load(const std::string& rootPath);
 
+	static bool m_using06ScoreSystem;
 	static bool m_using06HUD;
 	static bool m_usingCustomWindow;
 	static TitleLogoType m_titleLogo;

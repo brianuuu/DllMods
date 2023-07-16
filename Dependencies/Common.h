@@ -2026,6 +2026,40 @@ inline bool IsModEnabled(std::string const& section, std::string const& name, st
 	return false;
 }
 
+inline bool GetModIDFromDLL(std::string const& name, std::string& o_modID)
+{
+	bool found = false;
+	o_modID.clear();
+
+	std::vector<std::string> modIniList;
+	GetModIniList(modIniList);
+	for (size_t i = 0; i < modIniList.size(); i++)
+	{
+		std::string const& config = modIniList[i];
+		INIReader configReader(config);
+		std::string value = configReader.Get("Main", "DLLFile", "");
+		if (value == name)
+		{
+			if (found)
+			{
+				MessageBox(nullptr, TEXT("There are multiple mods with the same .dll"), TEXT("ERROR"), MB_ICONERROR);
+				exit(-1);
+			}
+
+			found = true;
+			o_modID = configReader.Get("Main", "ID", "");
+
+			if (o_modID.empty())
+			{
+				MessageBox(nullptr, TEXT("One of the mods has no valid ID"), TEXT("ERROR"), MB_ICONERROR);
+				exit(-1);
+			}
+		}
+	}
+
+	return found;
+}
+
 inline bool TestModPriority(std::string const& currentModName, std::string const& testModName, bool higherPriority)
 {
 	printf("currentModName = %s, testModName = %s\n", currentModName.c_str(), testModName.c_str());

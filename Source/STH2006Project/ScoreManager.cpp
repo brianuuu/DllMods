@@ -4,7 +4,6 @@
 #include "Application.h"
 #include "UIContext.h"
 
-bool ScoreManager::m_enabled = false;
 bool ScoreManager::m_internalSystem = true;
 std::unordered_set<uint32_t*> ScoreManager::m_savedObjects;
 
@@ -472,6 +471,11 @@ void __declspec(naked) ScoreManager_CBossPerfectChaosAddScore()
 std::string externIniPath;
 void ScoreManager::applyPatches()
 {
+	if (!Configuration::m_using06ScoreSystem)
+	{
+		return;
+	}
+
 	// Check if we are using external HUD
 	std::vector<std::string> modIniList;
 	Common::GetModIniList(modIniList);
@@ -492,26 +496,7 @@ void ScoreManager::applyPatches()
 		}
 	}
 
-	// Must enable Score Generations, whether for internal score system or not
-	if (!Common::IsModEnabled("Main", "DLLFile", "ScoreGenerations.dll", &externIniPath)
-	&& !Common::IsModEnabled("Main", "ID", "HyperBE32.Score.Generations", &externIniPath)
-	&& !Common::IsModEnabled("Main", "ID", "brianuuu.sth2006.scoresystem", &externIniPath))
-	{
-		return;
-	}
-
-	// Ensure Score Generations is loaded LATER/higher priority than this mod
-	if (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr)
-	{
-		INIReader configReader(externIniPath);
-		std::string name = configReader.Get("Desc", "Title", "Score Generations");
-		std::wstring nameW = L"'" + Common::multiByteToWideChar(name.c_str()) + L"' mod detected, please put it higher priority than 'STH2006 Project'!";
-		MessageBox(NULL, nameW.c_str(), L"STH2006 Project", MB_ICONERROR);
-		exit(-1);
-	}
-
 	printf("[ScoreManager] STH2006 score system enabled\n");
-	m_enabled = true;
 
 	// Reset stage
 	INSTALL_HOOK(ScoreManager_MsgRestartStage);
@@ -542,33 +527,6 @@ void ScoreManager::applyPatches()
 	INSTALL_HOOK(ScoreManager_EnemyCrawler);
 	INSTALL_HOOK(ScoreManager_EnemySpinner);
 
-	if (m_internalSystem)
-	{
-		applyPatches_InternalSystem();
-	}
-	else
-	{
-		applyPatches_ScoreGensSystem();
-	}
-
-	// Silver boss
-	INSTALL_HOOK(ScoreManager_CRivalSilverMsgDamage);
-	WRITE_MEMORY(0xC783DE, bool, true); // Don't hide HUD after defeating
-
-	// Iblis boss
-	WRITE_JUMP(0xC0FFC5, ScoreManager_CBossPerfectChaosAddScore)
-}
-
-void ScoreManager::applyPatches_ScoreGensSystem()
-{
-	
-}
-
-void ScoreManager::applyPatches_InternalSystem()
-{
-	// Disable extern .dll in mod.ini
-	setExternalIni(false);
-
 	// Set score format
 	WRITE_MEMORY(0x1095D7D, char*, m_scoreFormat.c_str());
 
@@ -580,7 +538,7 @@ void ScoreManager::applyPatches_InternalSystem()
 	INSTALL_HOOK(CScoreManager_Destructor);
 	INSTALL_HOOK(ScoreManager_CHudSonicStageInit);
 	INSTALL_HOOK(CScoreManager_CHudSonicStageUpdate);
-	
+
 	// Hijack next rank time as next rank score
 	WRITE_STRING(0x16940F4, "%06d");
 	WRITE_JUMP(0x10B5FF6, ScoreManager_NextRankScore);
@@ -589,80 +547,13 @@ void ScoreManager::applyPatches_InternalSystem()
 
 	// Disable perfect bonus
 	INSTALL_HOOK(ScoreManager_IsPerfectBonus);
-}
 
-void ScoreManager::applyPostInit()
-{
-	if (!m_enabled) return;
+	// Silver boss
+	INSTALL_HOOK(ScoreManager_CRivalSilverMsgDamage);
+	WRITE_MEMORY(0xC783DE, bool, true); // Don't hide HUD after defeating
 
-	if (m_internalSystem)
-	{
-		// Reset extern .dll in mod.ini
-		setExternalIni(true);
-
-		// We shouldn't have loaded ScoreGenerations.dll
-		if (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr)
-		{
-			MessageBox(NULL, L"An error occured when initializing internal score system, 'Score Generations' MUST be higher priority than 'STH2006 Project'!", L"STH2006 Project", MB_ICONERROR);
-			exit(-1);
-		}
-	}
-	else
-	{
-		std::string iniFile = Application::getModDirString() + "ScoreGenerations.ini";
-		if (!Common::IsFileExist(iniFile))
-		{
-			MessageBox(NULL, L"Failed to parse ScoreGenerations.ini", L"STH2006 Project", MB_ICONERROR);
-		}
-		else
-		{
-			printf("[ScoreManager] Forcing STH2006 Project score table...\n");
-			ScoreGenerationsAPI::ForceConfiguration(iniFile.c_str());
-		}
-	}
-}
-
-void ScoreManager::setExternalIni(bool reset)
-{
-	if (Common::IsFileExist(externIniPath))
-	{
-		std::string content;
-		std::ifstream in(externIniPath);
-		if (in)
-		{
-			std::string line;
-			while (getline(in, line))
-			{
-				if (line.find("DLLFile") != std::string::npos)
-				{
-					if (reset)
-					{
-						content += "DLLFile=\"ScoreGenerations.dll\"";
-					}
-					else
-					{
-						// Absolute path doesn't work, so we have to use relative...
-						std::string const modDir = Application::getModDirString();
-						content += "DLLFile=\"..\\" + modDir.substr(modDir.find_last_of("\\/", modDir.size() - 2) + 1) + "STH2006ProjectExtra.dll\"";
-					}
-				}
-				else
-				{
-					content += line;
-				}
-
-				content += "\n";
-			}
-			in.close();
-		}
-
-		std::ofstream out(externIniPath);
-		if (out)
-		{
-			out << content;
-			out.close();
-		}
-	}
+	// Iblis boss
+	WRITE_JUMP(0xC0FFC5, ScoreManager_CBossPerfectChaosAddScore)
 }
 
 void __fastcall ScoreManager::addScore(ScoreType type, uint32_t* This)

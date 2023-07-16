@@ -1,6 +1,7 @@
 #include "ResultUI.h"
 #include "UIContext.h"
 #include "Application.h"
+#include "Configuration.h"
 
 bool ResultUI::m_init = false;
 IUnknown* ResultUI::m_resultRankTextures[5] = { nullptr, nullptr, nullptr, nullptr, nullptr };
@@ -469,7 +470,7 @@ void ResultUI::ResultUIData::nextState()
 	m_state = (ResultState)(m_state + 1);
 
 	// Skip score state if not enabled
-	if (m_state == ResultState::RS_Score && !ScoreManager::m_enabled)
+	if (m_state == ResultState::RS_Score && !Configuration::m_using06ScoreSystem)
 	{
 		m_state = (ResultState)(m_state + 1);
 	}
@@ -498,7 +499,7 @@ void ResultUI::ResultUIData::nextState()
 		printf("[ResultUI] State: Time\n");
 		ResultUIBox& box = m_boxes[ResultTextType::RTT_Time];
 		box.m_started = true;
-		box.m_finalPos = ImVec2(57, ScoreManager::m_enabled ? 225.f : 195.f);
+		box.m_finalPos = ImVec2(57, Configuration::m_using06ScoreSystem ? 225.f : 195.f);
 
 		int millisecond = (int)(m_currentTime * 1000.0f) % 1000;
 		int second = (int)m_currentTime % 60;
@@ -516,7 +517,7 @@ void ResultUI::ResultUIData::nextState()
 		ResultUIBox& box = m_boxes[ResultTextType::RTT_Rings];
 		box.m_started = true;
 		box.m_text = std::to_string(*Common::GetPlayerRingCount());
-		box.m_finalPos = ImVec2(57, ScoreManager::m_enabled ? 285.f : 255.f);
+		box.m_finalPos = ImVec2(57, Configuration::m_using06ScoreSystem ? 285.f : 255.f);
 
 		m_frame = 28.0f; 
 		break; 
@@ -526,7 +527,7 @@ void ResultUI::ResultUIData::nextState()
 		printf("[ResultUI] State: Time Bonus\n");
 		ResultUIBox& box = m_boxes[ResultTextType::RTT_TimeBonus];
 		box.m_started = true;
-		box.m_finalPos = ImVec2(57, ScoreManager::m_enabled ? 385.f : 355.f);
+		box.m_finalPos = ImVec2(57, Configuration::m_using06ScoreSystem ? 385.f : 355.f);
 
 		Common::PlaySoundStatic(soundHandle_boxIn, 1010004);
 		m_frame = 18.0f; 
@@ -537,7 +538,7 @@ void ResultUI::ResultUIData::nextState()
 		printf("[ResultUI] State: Ring Bonus\n");
 		ResultUIBox& box = m_boxes[ResultTextType::RTT_RingBonus];
 		box.m_started = true;
-		box.m_finalPos = ImVec2(57, ScoreManager::m_enabled ? 445.f : 415.f);
+		box.m_finalPos = ImVec2(57, Configuration::m_using06ScoreSystem ? 445.f : 415.f);
 
 		m_frame = 20.0f; 
 		break; 
@@ -545,7 +546,7 @@ void ResultUI::ResultUIData::nextState()
 	case RS_TimeBounsCount: 
 	{ 
 		printf("[ResultUI] State: Time Bonus Count\n");
-		if (ScoreManager::m_enabled)
+		if (Configuration::m_using06ScoreSystem)
 		{
 			m_scoreDestination = ScoreManager::m_timeBonus;
 		}
@@ -565,7 +566,7 @@ void ResultUI::ResultUIData::nextState()
 	case RS_RingBonusCount: 
 	{ 
 		printf("[ResultUI] State: Ring Bonus Count\n");
-		if (ScoreManager::m_enabled)
+		if (Configuration::m_using06ScoreSystem)
 		{
 			m_scoreDestination = *Common::GetPlayerRingCount() * 100;
 		}

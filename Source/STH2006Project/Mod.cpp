@@ -16,7 +16,7 @@
 #include "TitleUI.h"
 #include "Window.h"
 
-extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
+extern "C" __declspec(dllexport) void Init(ModInfo_t * modInfo)
 {
     std::string modDir = modInfo->CurrentMod->Path;
     size_t pos = modDir.find_last_of("\\/");
@@ -29,18 +29,6 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     if (!Configuration::load(modDir))
     {
         MessageBox(NULL, L"Failed to parse mod.ini", NULL, MB_ICONERROR);
-    }
-
-    if (GetModuleHandle(TEXT("Sonic06HUD.dll")))
-    {
-        MessageBox(nullptr, TEXT("'Sonic 06 HUD' mod detected, please put it higher priority than 'STH2006 Project'!"), TEXT("STH2006 Project"), MB_ICONERROR);
-        exit(-1);
-    }
-
-    if (GetModuleHandle(TEXT("Sonic06DefinitiveExperience.dll")))
-    {
-        MessageBox(nullptr, TEXT("'Sonic 06 Definitive Experience' mod detected, please put it higher priority than 'STH2006 Project'!"), TEXT("STH2006 Project"), MB_ICONERROR);
-        exit(-1);
     }
 
     // -------------Patches--------------
@@ -129,24 +117,62 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     WRITE_MEMORY(0x57346F, uint32_t, 0x16A36CC);
 }
 
-extern "C" __declspec(dllexport) void PostInit()
+extern "C" __declspec(dllexport) void PostInit(ModInfo_t * modInfo)
 {
-    // Override score to all 0s and implement them ourselves
-    ScoreManager::applyPostInit();
+    auto CheckPriority = [&modInfo](std::string const& dllName, bool isHighPriority = true) -> bool
+    {
+        auto* api = modInfo->API;
+        auto* thisMod = modInfo->CurrentMod;
 
-    if (GetModuleHandle(TEXT("BetterFxPipeline.dll")) == nullptr)
+        std::string modID;
+        if (Common::GetModIDFromDLL(dllName, modID))
+        {
+            auto* otherMod = api->FindMod(modID.c_str());
+            if (otherMod)
+            {
+                // 0 = highest priority
+                if (isHighPriority ^ otherMod->Priority < thisMod->Priority)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    };
+
+    // All DLL checks
+    if (!CheckPriority("Sonic06HUD.dll"))
+    {
+        MessageBox(nullptr, TEXT("'Sonic 06 HUD' mod detected, please put it higher priority than 'STH2006 Project'!"), TEXT("STH2006 Project"), MB_ICONERROR);
+        exit(-1);
+    }
+
+    if (!CheckPriority("Sonic06DefinitiveExperience.dll"))
+    {
+        MessageBox(nullptr, TEXT("'Sonic 06 Definitive Experience' mod detected, please put it higher priority than 'STH2006 Project'!"), TEXT("STH2006 Project"), MB_ICONERROR);
+        exit(-1);
+    }
+
+    if (!Common::IsModEnabled("Main", "DLLFile", "BetterFxPipeline.dll"))
     {
         MessageBox(nullptr, TEXT("This mod requires the latest version of 'Better FxPipeline' enabled."), TEXT("STH2006 Project"), MB_ICONERROR);
         exit(-1);
     }
 
-    if (GetModuleHandle(TEXT("GenerationsD3D9Ex.dll")) == nullptr && GetModuleHandle(TEXT("GenerationsD3D11.dll")) == nullptr)
+    if (!Common::IsModEnabled("Main", "DLLFile", "GenerationsD3D9Ex.dll") && !Common::IsModEnabled("Main", "DLLFile", "GenerationsD3D11.dll"))
     {
         MessageBox(nullptr, TEXT("This mod requires the latest version of 'Direct3D 9 Ex' OR 'Direct3D 11' enabled."), TEXT("STH2006 Project"), MB_ICONERROR);
         exit(-1);
     }
+    
+    if (Common::IsModEnabled("Main", "DLLFile", "ScoreGenerations.dll"))
+    {
+        MessageBox(nullptr, TEXT("To use 06 Score System, please enable '06 Score System' in configuration and disable 'Score Generations' mod."), TEXT("STH2006 Project"), MB_ICONERROR);
+        exit(-1);
+    }
 
-    if (GetModuleHandle(TEXT("Sonic06HUD.dll")) != nullptr)
+    if (Common::IsModEnabled("Main", "DLLFile", "Sonic06HUD.dll"))
     {
         Configuration::m_using06HUD = true;
 
@@ -159,7 +185,7 @@ extern "C" __declspec(dllexport) void PostInit()
         WRITE_STRING(0x16AF744, "GameHint_C06");
     }
 
-    if (GetModuleHandle(TEXT("CustomizableResultsMusic.dll")))
+    if (Common::IsModEnabled("Main", "DLLFile", "CustomizableResultsMusic.dll"))
     {
         MessageBox(nullptr, TEXT("'Customizable Results Music' mod is not compatible with this mod, please disable it."), TEXT("STH2006 Project"), MB_ICONERROR);
         exit(-1);

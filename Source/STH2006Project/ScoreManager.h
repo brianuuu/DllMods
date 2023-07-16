@@ -96,10 +96,6 @@ class ScoreManager
 {
 public:
 	static void applyPatches();
-	static void applyPatches_ScoreGensSystem();
-	static void applyPatches_InternalSystem();
-	static void applyPostInit();
-	static void setExternalIni(bool reset);
 
 	static void __fastcall addScore(ScoreType type, uint32_t* This = nullptr);
 	static ResultData* calculateResultData();
@@ -139,7 +135,6 @@ public:
 	}
 
 	// Common members
-	static bool m_enabled;
 	static bool m_internalSystem;
 	static std::unordered_set<uint32_t*> m_savedObjects;
 
