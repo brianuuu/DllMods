@@ -112,7 +112,7 @@ void __fastcall ScoreUI::addRainbowScore()
 bool ScoreUI::initTextures()
 {
 	// Only run this if player have Score Generations and NOT playing STH2006 Project
-	if (GetModuleHandle(TEXT("ScoreGenerations.dll")) == nullptr || GetModuleHandle(TEXT("STH2006Project.dll")) != nullptr)
+	if (!Common::IsModEnabled("Main", "DLLFile", "ScoreGenerations.dll") || Configuration::m_usingSTH2006Project)
 	{
 		return false;
 	}

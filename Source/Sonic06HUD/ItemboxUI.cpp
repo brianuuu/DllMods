@@ -1,5 +1,6 @@
 #include "ItemboxUI.h"
 #include "Application.h"
+#include "Configuration.h"
 #include "UIContext.h"
 
 std::deque<ItemboxGUI> ItemboxUI::m_guiData;
@@ -46,7 +47,7 @@ void ItemboxUI::addItemToGui(ItemboxType type)
 bool ItemboxUI::initTextures()
 {
 	// Only run this if player have Sonic 06 Definitive Experience and NOT playing STH2006 Project
-	if (GetModuleHandle(TEXT("Sonic06DefinitiveExperience.dll")) == nullptr || GetModuleHandle(TEXT("STH2006Project.dll")) != nullptr)
+	if (!Configuration::m_usingS06DE || Configuration::m_usingSTH2006Project)
 	{
 		return false;
 	}

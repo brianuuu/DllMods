@@ -1,6 +1,7 @@
 #include "ResultUI.h"
 #include "UIContext.h"
 #include "Application.h"
+#include "Configuration.h"
 
 bool ResultUI::m_init = false;
 IUnknown* ResultUI::m_resultRankTextures[5] = { nullptr, nullptr, nullptr, nullptr, nullptr };
@@ -89,14 +90,16 @@ void ResultUI::applyPatches()
 {
 	if (!m_init) return;
 
-	if (GetModuleHandle(TEXT("STH2006ProjectExtra.dll")) != nullptr)
+	if (Configuration::m_usingSTH2006Project && Common::IsModEnabled("Main", "ScoreSystem", "True"))
 	{
+		printf("[06HUD] Applying score system with 'STH2006 Project'\n");
 		INSTALL_HOOK(CScoreManager_MsgRestartStage);
 		INSTALL_HOOK(CScoreManager_Destructor);
 		m_scoreSystem = ScoreSystemType::SST_STH2006;
 	}
-	else if (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr)
+	else if (Common::IsModEnabled("Main", "DLLFile", "ScoreGenerations.dll"))
 	{
+		printf("[06HUD] Applying score system with 'Score Generations'\n");
 		m_scoreSystem = ScoreSystemType::SST_ScoreGens;
 	}
 

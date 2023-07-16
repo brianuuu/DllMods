@@ -30,7 +30,7 @@
 #include <DDSTextureLoader11.h>
 
 // LostCodeLoader
-#include <LostCodeLoader.h>
+#include <ModLoader.h>
 
 // Other
 #include <INIReader.h>

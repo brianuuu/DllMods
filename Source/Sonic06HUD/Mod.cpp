@@ -6,8 +6,7 @@
 #include "CustomHUD.h"
 #include "SynchronizedObject.h"
 
-bool isScoreGenLowerPriority = false;
-extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
+extern "C" __declspec(dllexport) void Init(ModInfo_t * modInfo)
 {
     std::string modDir = modInfo->CurrentMod->Path;
     size_t pos = modDir.find_last_of("\\/");
@@ -22,13 +21,17 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
         MessageBox(NULL, L"Failed to parse Config.ini", NULL, MB_ICONERROR);
     }
 
-    if (GetModuleHandle(TEXT("ChipReturns.dll")))
+    if (Common::IsModEnabled("Main", "DLLFile", "Sonic06DefinitiveExperience.dll"))
     {
-        MessageBox(nullptr, TEXT("'Chip Returns' mod must be higher priority than 'Sonic 06 HUD'!"), TEXT("Sonic 06 HUD"), MB_ICONERROR);
-        exit(-1);
+        printf("[06HUD] Sonic06DefinitiveExperience.dll detected\n");
+        Configuration::m_usingS06DE = true;
     }
 
-    isScoreGenLowerPriority = (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr || GetModuleHandle(TEXT("STH2006ProjectExtra.dll")) != nullptr);
+    if (Common::IsModEnabled("Main", "DLLFile", "STH2006Project.dll"))
+    {
+        printf("[06HUD] STH2006Project.dll detected\n");
+        Configuration::m_usingSTH2006Project = true;
+    }
 
     // -------------Patches--------------
     // General application patches
@@ -44,15 +47,43 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
     CustomHUD::applyPatches();
 }
 
-extern "C" __declspec(dllexport) void PostInit()
+extern "C" __declspec(dllexport) void PostInit(ModInfo_t * modInfo)
 {
-    if (!isScoreGenLowerPriority && (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr || GetModuleHandle(TEXT("STH2006ProjectExtra.dll")) != nullptr))
+    auto CheckPriority = [&modInfo](std::string const& dllName, bool isHighPriority = true) -> bool
+    {
+        auto* api = modInfo->API;
+        auto* thisMod = modInfo->CurrentMod;
+
+        std::string modID;
+        if (Common::GetModIDFromDLL(dllName, modID))
+        {
+            auto* otherMod = api->FindMod(modID.c_str());
+            if (otherMod)
+            {
+                // 0 = highest priority
+                if (isHighPriority ^ otherMod->Priority < thisMod->Priority)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    };
+
+    if (!CheckPriority("ScoreGenerations.dll", false))
     {
         MessageBox(nullptr, TEXT("'Score Generations' mod must be lower priority than 'Sonic 06 HUD'!"), TEXT("Sonic 06 HUD"), MB_ICONERROR);
         exit(-1);
     }
 
-    if (GetModuleHandle(TEXT("GenerationsD3D9Ex.dll")) == nullptr && GetModuleHandle(TEXT("GenerationsD3D11.dll")) == nullptr)
+    if (!CheckPriority("ChipReturns.dll"))
+    {
+        MessageBox(nullptr, TEXT("'Chip Returns' mod must be higher priority than 'Sonic 06 HUD'!"), TEXT("Sonic 06 HUD"), MB_ICONERROR);
+        exit(-1);
+    }
+
+    if (!Common::IsModEnabled("Main", "DLLFile", "GenerationsD3D9Ex.dll") && !Common::IsModEnabled("Main", "DLLFile", "GenerationsD3D11.dll"))
     {
         MessageBox(nullptr, TEXT("This mod requires the latest version of 'Direct3D 9 Ex' OR 'Direct3D 11' enabled."), TEXT("Sonic 06 HUD"), MB_ICONERROR);
         exit(-1);
