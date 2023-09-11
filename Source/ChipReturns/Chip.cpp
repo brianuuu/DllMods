@@ -1,11 +1,6 @@
 #include "Chip.h"
 #include "Configuration.h"
 
-#define PI 3.14159265
-
-void** const PLAYER_CONTEXT = (void**)0x1E5E2F0;
-void** const pModernSonicContext = (void**)0x1E5E2F8;
-void** const pClassicSonicContext = (void**)0x1E5E304;
 Chip::ChipResult Chip::m_chipResult;
 Chip::ChipFollow Chip::m_chipFollow;
 Chip::ChipEye* Chip::m_chipEyeL;
@@ -13,8 +8,6 @@ Chip::ChipEye* Chip::m_chipEyeR;
 std::vector<float> Chip::m_chipEyeEndTimes = {1, 7, 12, 16, 22, 26, 31, 37, 42, 46, 51, 54, 59};
 
 uint32_t const sub_EA0450 = 0xEA0450;
-uint32_t const CStringConstructor = 0x6621A0;
-uint32_t const CStringDestructor = 0x661550;
 
 const char* volatile const ObjectProductionChip = "ObjectProductionChip.phy.xml";
 HOOK(void, __stdcall, LoadObjectProduction, 0xEA0450, void* a1, Hedgehog::Base::CSharedString* pName)
@@ -359,7 +352,7 @@ void Chip::applyPatches()
     // Check when Chip's object physics are destructed
     INSTALL_HOOK(CGameObject3DDestruction);
 
-    if (GetModuleHandle(TEXT("Sonic06HUD.dll")) == nullptr)
+    if (!Common::IsModEnabled("Main", "DLLFile", "Sonic06HUD.dll"))
     {
         // Use Unleashed goal camera (default) param to avoid blocking Chip with HUD
         // CameraSp -> CameraSu (this doesn't read CameraSu, just fall back to default values)

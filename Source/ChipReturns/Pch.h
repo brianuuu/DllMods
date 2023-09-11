@@ -36,3 +36,5 @@
 
 #define DEBUG_DRAW_TEXT_DLL_IMPORT
 #include <DebugDrawText.h>
+
+#include <Common.h>
