@@ -18,7 +18,8 @@ void Configuration::Read()
 		if (!unleashedHUDConfig.empty() && Common::IsFileExist(unleashedHUDConfig))
 		{
 			INIReader configReader(unleashedHUDConfig);
-			buttonType = (ButtonType)configReader.GetInteger("Appearance", "buttonType", (int)buttonType);
+			buttonType = (ButtonType)configReader.GetInteger("Appearance", "buttonType", (int)buttonType); // old version compatibility
+			buttonType = (ButtonType)configReader.GetInteger("HUD", "buttonType", (int)buttonType);
 			break;
 		}
 	}
