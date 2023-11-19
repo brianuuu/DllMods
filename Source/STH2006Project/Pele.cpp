@@ -1,5 +1,6 @@
 #include "Pele.h"
 #include "PathManager.h"
+#include "Application.h"
 
 class CObjPele : public Sonic::CGameObject
 {
@@ -21,7 +22,7 @@ class CObjPele : public Sonic::CGameObject
 public:
 	CObjPele(Sonic::CGameObject* pObject)
 	{
-		if (!PathManager::parsePathXml(m_path, false, "Assets\\Stage\\Pele.path.xml") == tinyxml2::XML_SUCCESS)
+		if (!PathManager::parsePathXml(m_path, false, (Application::getModDirString() + "Assets\\Stage\\Pele.path.xml").c_str()) == tinyxml2::XML_SUCCESS)
 		{
 			MessageBox(NULL, L"Failed to parse Pele.path.xml", NULL, MB_ICONERROR);
 		}

@@ -1,4 +1,5 @@
 #include "SoleannaBoys.h"
+#include "Application.h"
 
 PathDataCollection SoleannaBoys::m_paths;
 std::deque<Sonic::CGameObject*> SoleannaBoys::m_omochaos;
@@ -147,7 +148,7 @@ HOOK(void, __fastcall, SoleannaBoys_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGame
 		{
 			if (SoleannaBoys::m_paths.empty())
 			{
-				if (!PathManager::parsePathXml(SoleannaBoys::m_paths, true, "Assets\\Stage\\SoleannaBoysChallenge.path.xml") == tinyxml2::XML_SUCCESS)
+				if (!PathManager::parsePathXml(SoleannaBoys::m_paths, true, (Application::getModDirString() + "Assets\\Stage\\SoleannaBoysChallenge.path.xml").c_str()) == tinyxml2::XML_SUCCESS)
 				{
 					MessageBox(NULL, L"Failed to parse SoleannaBoysChallenge.path.xml", NULL, MB_ICONERROR);
 				}

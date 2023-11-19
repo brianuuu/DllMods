@@ -1,6 +1,7 @@
 #include "SonicMan.h"
 #include "PathManager.h"
 #include "MissionManager.h"
+#include "Application.h"
 
 class CObjSonicMan : public Sonic::CGameObject
 {
@@ -26,7 +27,7 @@ class CObjSonicMan : public Sonic::CGameObject
 public:
 	CObjSonicMan(Sonic::CGameObject* pObject)
 	{
-		if (!PathManager::parsePathXml(m_path, false, "Assets\\Stage\\SonicMan.path.xml") == tinyxml2::XML_SUCCESS)
+		if (!PathManager::parsePathXml(m_path, false, (Application::getModDirString() + "Assets\\Stage\\SonicMan.path.xml").c_str()) == tinyxml2::XML_SUCCESS)
 		{
 			MessageBox(NULL, L"Failed to parse SonicMan.path.xml", NULL, MB_ICONERROR);
 		}
