@@ -249,6 +249,14 @@ void AnimationSetPatcher::applyPatches()
     m_newAnimationClassicData.emplace_back(SwimTired, "tc_swim_tired_s", 1.0f, false, SwimTiredLoop);
     m_newAnimationClassicData.emplace_back(SwimTiredLoop, "tc_swim_tired_loop", 1.0f, true, nullptr);
 
+    m_newAnimationClassicDataSuper.emplace_back(FlyLoop, "stc_fly_loop", 1.0f, true, nullptr);
+    m_newAnimationClassicDataSuper.emplace_back(FlyTired, "stc_fly_tired_s", 1.0f, false, FlyTiredLoop);
+    m_newAnimationClassicDataSuper.emplace_back(FlyTiredLoop, "stc_fly_tired_loop", 1.0f, true, nullptr);
+
+    m_newAnimationClassicDataSuper.emplace_back(SwimLoop, "stc_swim_loop", 1.0f, true, nullptr);
+    m_newAnimationClassicDataSuper.emplace_back(SwimTired, "stc_swim_tired_s", 1.0f, false, SwimTiredLoop);
+    m_newAnimationClassicDataSuper.emplace_back(SwimTiredLoop, "stc_swim_tired_loop", 1.0f, true, nullptr);
+
     if (!m_newAnimationData.empty())
     {
         INSTALL_HOOK(InitializeSonicAnimationList);

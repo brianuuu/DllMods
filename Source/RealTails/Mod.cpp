@@ -222,6 +222,14 @@ extern "C" __declspec(dllexport) void Init(ModInfo_t * modInfo)
 
     // Always disable JumpBall->Fall transition
     WRITE_JUMP(0x123557F, (void*)0x1235612);
+
+    // Fix fire/electric damage bone location
+    WRITE_MEMORY(0x1ABD060, char*, "Tail1_L"); // Needle_U_C
+    WRITE_MEMORY(0x1203CA3, uint32_t, 0x1ABD05C); // electic damage use fire damage offsets
+    WRITE_MEMORY(0x1203D7C, uint32_t, 0x1ABD074);
+
+    // Fix Super pfx bone location
+    WRITE_MEMORY(0xDA86C9, char*, "Tail1_L"); // Needle_U_C
 }
 
 extern "C" __declspec(dllexport) void PostInit(ModInfo_t * modInfo)
