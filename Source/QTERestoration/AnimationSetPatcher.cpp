@@ -167,6 +167,17 @@ const char* volatile const AnimationSetPatcher::TrickSWA[7] =
     "TrickSWA_G"
 };
 
+const char* volatile const AnimationSetPatcher::TrickSG[7] =
+{
+    "TrickSG_A",
+    "TrickSG_B",
+    "TrickSG_C",
+    "TrickSG_D",
+    "TrickSG_E",
+    "TrickSG_F",
+    "TrickSG_G"
+};
+
 void AnimationSetPatcher::applyPatches()
 {
     // DEBUG!!!
@@ -180,6 +191,30 @@ void AnimationSetPatcher::applyPatches()
     m_newAnimationData.emplace_back(TrickSWA[4], "sn_swa_trick_E", 1.0f, false, nullptr);
     m_newAnimationData.emplace_back(TrickSWA[5], "sn_swa_trick_F", 1.0f, false, nullptr);
     m_newAnimationData.emplace_back(TrickSWA[6], "sn_swa_trick_G", 1.0f, false, nullptr);
+
+    m_newAnimationData.emplace_back(TrickSG[0], "sn_trick_A", 1.0f, false, nullptr);
+    m_newAnimationData.emplace_back(TrickSG[1], "sn_trick_B", 1.0f, false, nullptr);
+    m_newAnimationData.emplace_back(TrickSG[2], "sn_trick_C", 1.0f, false, nullptr);
+    m_newAnimationData.emplace_back(TrickSG[3], "sn_trick_D", 1.0f, false, nullptr);
+    m_newAnimationData.emplace_back(TrickSG[4], "sn_trick_E", 1.0f, false, nullptr);
+    m_newAnimationData.emplace_back(TrickSG[5], "sn_trick_F", 1.0f, false, nullptr);
+    m_newAnimationData.emplace_back(TrickSG[6], "sn_trick_G", 1.0f, false, nullptr);
+
+    m_newAnimationDataSuper.emplace_back(TrickSWA[0], "ssn_trick_finish", 1.0f, false, nullptr);
+    m_newAnimationDataSuper.emplace_back(TrickSWA[1], "ssn_trick_finish", 1.0f, false, nullptr);
+    m_newAnimationDataSuper.emplace_back(TrickSWA[2], "ssn_trick_finish", 1.0f, false, nullptr);
+    m_newAnimationDataSuper.emplace_back(TrickSWA[3], "ssn_trick_finish", 1.0f, false, nullptr);
+    m_newAnimationDataSuper.emplace_back(TrickSWA[4], "ssn_trick_finish", 1.0f, false, nullptr);
+    m_newAnimationDataSuper.emplace_back(TrickSWA[5], "ssn_trick_finish", 1.0f, false, nullptr);
+    m_newAnimationDataSuper.emplace_back(TrickSWA[6], "ssn_trick_finish", 1.0f, false, nullptr);
+
+    m_newAnimationDataSuper.emplace_back(TrickSG[0], "ssn_trick_finish", 1.0f, false, nullptr);
+    m_newAnimationDataSuper.emplace_back(TrickSG[1], "ssn_trick_finish", 1.0f, false, nullptr);
+    m_newAnimationDataSuper.emplace_back(TrickSG[2], "ssn_trick_finish", 1.0f, false, nullptr);
+    m_newAnimationDataSuper.emplace_back(TrickSG[3], "ssn_trick_finish", 1.0f, false, nullptr);
+    m_newAnimationDataSuper.emplace_back(TrickSG[4], "ssn_trick_finish", 1.0f, false, nullptr);
+    m_newAnimationDataSuper.emplace_back(TrickSG[5], "ssn_trick_finish", 1.0f, false, nullptr);
+    m_newAnimationDataSuper.emplace_back(TrickSG[6], "ssn_trick_finish", 1.0f, false, nullptr);
 
     if (!m_newAnimationData.empty())
     {

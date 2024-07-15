@@ -330,7 +330,7 @@ public:
         context->StateFlag(eStateFlag_OutOfControl)++;
 
         // change animation
-        Common::SonicContextChangeAnimation("TrickPrepare");
+        Common::SonicContextChangeAnimation("JumpSpring");
     }
 
     void CreateSequence(size_t difficulty, uint32_t buttonCount)
@@ -512,9 +512,9 @@ public:
                             }
                             
                             // Don't bother apply impulse if the speed is the same
+                            auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
                             if (m_data.m_impulseSpeedOnBoost != m_data.m_impulseSpeedOnNormal)
                             {
-                                auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
                                 float outOfControl = 0.0f;
                                 Eigen::Vector3f impulse;
                                 float launchSpeed = m_data.m_impulseSpeedOnNormal;
@@ -556,7 +556,18 @@ public:
                                 }
                             }
 
-                            Common::SonicContextChangeAnimation(AnimationSetPatcher::TrickSWA[rand() % 7]);
+                            const char* volatile const* trickAnim = AnimationSetPatcher::TrickSG;
+                            if (context->m_pPlayer->m_spCharacterModel->GetNode("SonicRoot") != nullptr)
+                            {
+                                // Unleashed Sonic
+                                trickAnim = AnimationSetPatcher::TrickSWA;
+                            }
+                            else if (context->m_pPlayer->m_spCharacterModel->GetNode("EvilRoot") != nullptr)
+                            {
+                                // Werehog
+                            }
+
+                            Common::SonicContextChangeAnimation(trickAnim[rand() % 7]);
                             Common::SonicContextPlayVoice(voiceHandle, 3002013, 20);
 
                             m_state = S_Outro;
