@@ -131,7 +131,7 @@ extern "C" __declspec(dllexport) void PostInit(ModInfo_t * modInfo)
             if (otherMod)
             {
                 // 0 = highest priority
-                if (isHighPriority ^ otherMod->Priority < thisMod->Priority)
+                if (isHighPriority != otherMod->Priority < thisMod->Priority)
                 {
                     return false;
                 }
