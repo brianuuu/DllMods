@@ -30,6 +30,7 @@ void fE5CD90
     }
 }
 
+SharedPtrTypeless reactionPlatePfxHandle;
 void ProcMsgHitReactionPlate(Sonic::Player::CPlayerSpeed* This, const Sonic::Message::MsgHitReactionPlate& message)
 {
     const float minVelocity = message.m_JumpMinVelocity <= 0 ? 40 : message.m_JumpMinVelocity;
@@ -128,6 +129,17 @@ HOOK(int, __fastcall, QTEReactionPlate_CPlayerSpeedStateReactionLandEnd, 0x124B7
     return originalQTEReactionPlate_CPlayerSpeedStateReactionLandEnd(This);
 }
 
+HOOK(void, __fastcall, QTEReactionPlate_MsgHitEventCollision, 0x1017020, uint32_t* This, void* Edx, void* message)
+{
+    auto* player = Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer;
+    uint32_t type = This[75];
+    if (type > 0 && type < 5 && player->m_StateMachine.GetCurrentState()->GetStateName() == "ReactionJump")
+    {
+        Common::ObjectCGlitterPlayerOneShot(This, "reaction");
+    }
+    originalQTEReactionPlate_MsgHitEventCollision(This, Edx, message);
+}
+
 void QTEReactionPlate_ReactionJumpPlaySfx()
 {
     Sonic::Player::CPlayerSpeedContext::GetInstance()->PlaySound(4002047, 0);
@@ -183,6 +195,7 @@ void QTEReactionPlate::applyPatches()
     INSTALL_HOOK(QTEReactionPlate_CPlayerSpeedProcessMessage);
     INSTALL_HOOK(QTEReactionPlate_PlayUIEffect);
     INSTALL_HOOK(QTEReactionPlate_CPlayerSpeedStateReactionLandEnd);
+    INSTALL_HOOK(QTEReactionPlate_MsgHitEventCollision);
     WRITE_JUMP(0xE5D03E, QTEReactionPlate_ReactionJumpPlaySfxTrampoline);
     WRITE_JUMP(0xE5CDB3, QTEReactionPlate_ReactionJumpPlaySfxTrampoline);
     WRITE_JUMP(0x124B915, QTEReactionPlate_ReactionJumpSetAnimTrampoline);
