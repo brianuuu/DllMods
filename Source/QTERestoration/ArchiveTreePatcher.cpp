@@ -76,12 +76,12 @@ boost::shared_ptr<hh::db::CRawData>* __fastcall ArchiveTreePatcher_GetRawDataImp
     const size_t appendDataSize = strlen(appendData);
 
     const size_t newSize = rawData->m_DataSize + appendDataSize;
-    const boost::shared_ptr<char[]> buffer = boost::make_shared<char[]>(newSize);
+    const boost::shared_ptr<uint8_t[]> buffer = boost::make_shared<uint8_t[]>(newSize);
     memcpy(buffer.get(), rawData->m_spData.get(), rawData->m_DataSize);
 
-    char* insertionPos = strstr(buffer.get(), "</Language>");
+    char* insertionPos = strstr((char*)buffer.get(), "</Language>");
 
-    memmove(insertionPos + appendDataSize, insertionPos, rawData->m_DataSize - (size_t)(insertionPos - buffer.get()));
+    memmove(insertionPos + appendDataSize, insertionPos, rawData->m_DataSize - (size_t)(insertionPos - (char*)buffer.get()));
     memcpy(insertionPos, appendData, appendDataSize);
 
     rawData = boost::make_shared<hh::db::CRawData>();
