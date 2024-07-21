@@ -838,13 +838,35 @@ bool TrickJumper::SetAddRenderables
 	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
 )
 {
-    hh::mot::CSingleElementEffectMotionAll t{};
 	const char* assetName = m_Data.m_IsSideView ? "cmn_obj_ms_trickpanelL2_000" : "cmn_obj_ms_trickpanelL4_000";
 	hh::mr::CMirageDatabaseWrapper wrapper(in_spDatabase.get());
 	boost::shared_ptr<hh::mr::CModelData> spModelData = wrapper.GetModelData(assetName, 0);
 	m_spSpawnedModel = boost::make_shared<hh::mr::CSingleElement>(spModelData);
 	m_spSpawnedModel->BindMatrixNode(m_spMatrixNodeTransform);
 	Sonic::CGameObject::AddRenderable("Object", m_spSpawnedModel, true);
+
+    m_spEffectMotionAll = boost::make_shared<hh::mot::CSingleElementEffectMotionAll>();
+    m_spSpawnedModel->BindEffect(m_spEffectMotionAll);
+    boost::shared_ptr<Hedgehog::Motion::CTexcoordAnimationData> texCoordAnimData;
+
+    FUNCTION_PTR(void, __thiscall, fpGetTexCoordAnimData, 0x7597E0, 
+        hh::mot::CMotionDatabaseWrapper const& wrapper,
+        boost::shared_ptr<Hedgehog::Motion::CTexcoordAnimationData>& texCoordAnimData, 
+        hh::base::CSharedString const& name, 
+        uint32_t flag
+    );
+
+    FUNCTION_PTR(void, __thiscall, fpCreateUVAnim, 0x7537E0,
+        Hedgehog::Motion::CSingleElementEffectMotionAll* This,
+        boost::shared_ptr<hh::mr::CModelData> const& modelData,
+        boost::shared_ptr<Hedgehog::Motion::CTexcoordAnimationData> const& texCoordAnimData
+    );
+
+    hh::mot::CMotionDatabaseWrapper motWrapper(in_spDatabase.get());
+    fpGetTexCoordAnimData(motWrapper, texCoordAnimData, "panelbelt-0000", 0);
+    fpCreateUVAnim(m_spEffectMotionAll.get(), spModelData, texCoordAnimData);
+    fpGetTexCoordAnimData(motWrapper, texCoordAnimData, "jumpboard_arrow-0000", 0);
+    fpCreateUVAnim(m_spEffectMotionAll.get(), spModelData, texCoordAnimData);
 
 	return true;
 }
@@ -870,7 +892,8 @@ void TrickJumper::SetUpdateParallel
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
 )
 {
-
+    FUNCTION_PTR(void, __thiscall, fpUpdateMotionAll, 0x752F00, Hedgehog::Motion::CSingleElementEffectMotionAll* This, float dt);
+    fpUpdateMotionAll(m_spEffectMotionAll.get(), in_rUpdateInfo.DeltaTime);
 }
 
 bool TrickJumper::ProcessMessage

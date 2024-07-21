@@ -5,6 +5,12 @@
 /*----------------------------------------------------------*/
 
 #pragma once
+
+namespace Hedgehog::Motion
+{
+	class CTexcoordAnimationData;
+}
+
 class TrickJumper : public Sonic::CObjectBase, public Sonic::CSetObjectListener
 {
 public:
@@ -30,6 +36,7 @@ private:
 	Data m_Data;
 	boost::shared_ptr<hh::mr::CSingleElement> m_spSpawnedModel;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
+	boost::shared_ptr<hh::mot::CSingleElementEffectMotionAll> m_spEffectMotionAll;
 
 public:
 	void InitializeEditParam(Sonic::CEditParam& in_rEditParam) override;
