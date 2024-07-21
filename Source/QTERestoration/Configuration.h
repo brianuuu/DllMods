@@ -6,7 +6,7 @@ class Configuration
 {
 public:
 	static void Read();
-	static enum class ButtonType : int
+	enum class ButtonType : int
 	{
 		X360,
 		XSX,
