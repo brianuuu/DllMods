@@ -3,6 +3,8 @@
 #include "Configuration.h"
 #include "QTEJumpBoard.h"
 #include "QTEReactionPlate.h"
+#include "QTEReactionPlate.h"
+#include "TrickJumper.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 {
@@ -20,6 +22,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 	// Restore QTEs
 	QTEJumpBoard::applyPatches();
 	QTEReactionPlate::applyPatches();
+
+	TrickJumper::registerObject();
+	TrickJumper::applyPatches();
 }
 
 extern "C" __declspec(dllexport) void PostInit()

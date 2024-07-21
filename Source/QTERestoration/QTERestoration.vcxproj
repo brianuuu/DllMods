@@ -193,6 +193,7 @@
     </ClCompile>
     <ClCompile Include="QTEJumpBoard.cpp" />
     <ClCompile Include="QTEReactionPlate.cpp" />
+    <ClCompile Include="TrickJumper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimationSetPatcher.h" />
@@ -201,6 +202,7 @@
     <ClInclude Include="Pch.h" />
     <ClInclude Include="QTEJumpBoard.h" />
     <ClInclude Include="QTEReactionPlate.h" />
+    <ClInclude Include="TrickJumper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
