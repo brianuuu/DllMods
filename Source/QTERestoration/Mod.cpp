@@ -19,10 +19,14 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 	// Load extra animations
 	AnimationSetPatcher::applyPatches();
 
-	// Restore QTEs
-	QTEJumpBoard::applyPatches();
-	QTEReactionPlate::applyPatches();
+	// Hack AdlibTrickJump to be QTE
+	if (Configuration::m_hackAdlibTrickJump)
+	{
+		QTEJumpBoard::applyPatches();
+		QTEReactionPlate::applyPatches();
+	}
 
+	// QTE Custom Object
 	TrickJumper::registerObject();
 	TrickJumper::applyPatches();
 }

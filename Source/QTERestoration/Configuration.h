@@ -14,6 +14,10 @@ public:
 		Switch
 	};
 
-	static ButtonType buttonType;
+	// Appearance
+	static ButtonType m_buttonType;
+
+	// Settings
+	static bool m_hackAdlibTrickJump;
 };
 

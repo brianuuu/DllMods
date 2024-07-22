@@ -824,9 +824,15 @@ void QTEJumpBoard::applyPatches()
     INSTALL_HOOK(QTEJumpBoard_CObjAdlibTrickJumpInit1);
     INSTALL_HOOK(QTEJumpBoard_CObjAdlibTrickJumpInit2);
 
-    // Remove message delay for MsgFinishPause, this can cause HUD to not show up
-    // anymore if we pause before HUD show up when time is slowed down
-    WRITE_MEMORY(0x10A1500, uint8_t, 0xD9, 0xEE, 0x90, 0x90, 0x90, 0x90);
+    // Replace with Unleashed model
+    WRITE_MEMORY(0x1A47254, char*, "cmn_obj_ms_trickpanelL2_000");
+    WRITE_MEMORY(0x1A47258, char*, "cmn_obj_ms_trickpanelL4_000");
+    WRITE_MEMORY(0x1A47278, char*, "panelbelt-0000");
+    WRITE_MEMORY(0x1A4727C, char*, "panelbelt-0000");
+    WRITE_MEMORY(0x1A4726C, char*, "jumpboard_arrow-0000");
+    WRITE_MEMORY(0x1A47270, char*, "jumpboard_arrow-0000");
+    WRITE_MEMORY(0x1014EFD, uint32_t, 0xFF7448DF); // replace pt-anim with uv-anim
+    WRITE_MEMORY(0x1014F1B, uint32_t, 0xFF73E8C1); // replace pt-anim with uv-anim
 }
 
 void QTEJumpBoard::GetQTEJumpBoardData(uint32_t ptr)

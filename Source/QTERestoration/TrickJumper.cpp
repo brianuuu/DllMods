@@ -1013,5 +1013,7 @@ void TrickJumper::registerObject()
 
 void TrickJumper::applyPatches()
 {
-	
+    // Remove message delay for MsgFinishPause, this can cause HUD to not show up
+    // anymore if we pause before HUD show up when time is slowed down
+    WRITE_MEMORY(0x10A1500, uint8_t, 0xD9, 0xEE, 0x90, 0x90, 0x90, 0x90);
 }

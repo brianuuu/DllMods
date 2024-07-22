@@ -1,12 +1,13 @@
 #include "Configuration.h"
-Configuration::ButtonType Configuration::buttonType = ButtonType::X360;
+Configuration::ButtonType Configuration::m_buttonType = ButtonType::X360;
+bool Configuration::m_hackAdlibTrickJump = false;
 
 void Configuration::Read()
 {
 	INIReader reader(INI_FILE);
 
 	// Appearance
-	buttonType = (ButtonType)reader.GetInteger("Appearance", "buttonType", (int)buttonType);
+	m_buttonType = (ButtonType)reader.GetInteger("Appearance", "buttonType", (int)m_buttonType);
 
 	// Override by Unleashed HUD
 	std::vector<std::string> modIniList;
@@ -18,9 +19,12 @@ void Configuration::Read()
 		if (!unleashedHUDConfig.empty() && Common::IsFileExist(unleashedHUDConfig))
 		{
 			INIReader configReader(unleashedHUDConfig);
-			buttonType = (ButtonType)configReader.GetInteger("Appearance", "buttonType", (int)buttonType); // old version compatibility
-			buttonType = (ButtonType)configReader.GetInteger("HUD", "buttonType", (int)buttonType);
+			m_buttonType = (ButtonType)configReader.GetInteger("Appearance", "buttonType", (int)m_buttonType); // old version compatibility
+			m_buttonType = (ButtonType)configReader.GetInteger("HUD", "buttonType", (int)m_buttonType);
 			break;
 		}
 	}
+
+	// Settings
+	m_hackAdlibTrickJump = reader.GetBoolean("Settings", "hackAdlibTrickJump", m_hackAdlibTrickJump);
 }

@@ -96,7 +96,7 @@ void ArchiveTreePatcher::applyPatches()
 {
     m_archiveDependencies.push_back(ArchiveDependency("cmn200SWA", { "cmn200" }));
     m_archiveDependencies.push_back(ArchiveDependency("SonicActionCommonHudQTE", { "SonicActionCommonHud" }));
-    switch (Configuration::buttonType)
+    switch (Configuration::m_buttonType)
     {
     case Configuration::ButtonType::XSX:
         m_archiveDependencies.push_back(ArchiveDependency("cmn200SWAXS", { "cmn200SWA" }));
