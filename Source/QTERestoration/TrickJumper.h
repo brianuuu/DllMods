@@ -35,6 +35,8 @@ public:
 private:
 	Data m_Data;
 	boost::shared_ptr<hh::mr::CSingleElement> m_spSpawnedModel;
+	boost::shared_ptr<Sonic::CRigidBody> m_spRigidBody;
+	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeRigidBody;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
 	boost::shared_ptr<hh::mot::CSingleElementEffectMotionAll> m_spEffectMotionAll;
 

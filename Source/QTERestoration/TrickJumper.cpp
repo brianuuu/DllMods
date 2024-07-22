@@ -922,12 +922,27 @@ bool TrickJumper::SetAddColliders
 	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
 )
 {
+    // Rigid body
+    m_spNodeRigidBody = boost::make_shared<Sonic::CMatrixNodeTransform>();
+    m_spNodeRigidBody->m_Transform.SetPosition(hh::math::CVector::Zero());
+    m_spNodeRigidBody->NotifyChanged();
+    m_spNodeRigidBody->SetParent(m_spMatrixNodeTransform.get());
+
+    char const* rigidBodyName = m_Data.m_IsSideView ? "cmn_obj_trickpanel30M_HD" : "cmn_obj_trickpanel30L_HD";
+    AddRigidBody(m_spRigidBody, rigidBodyName, rigidBodyName, *(int*)0x01E0AF30, m_spNodeRigidBody, in_spDatabase);
+
+    // Event collision
+    float constexpr angle = 0.5f;
 	m_spNodeEventCollision = boost::make_shared<Sonic::CMatrixNodeTransform>();
-	m_spNodeEventCollision->m_Transform.SetPosition(hh::math::CVector(0, 0, 0));
+    m_spNodeEventCollision->m_Transform.SetRotationAndPosition
+    (
+        hh::math::CQuaternion(cos(angle * 0.5f), sin(angle * 0.5f), 0.0f, 0.0f),
+        hh::math::CVector(0.0f, m_Data.m_IsSideView ? 0.8f : 1.6f, 0.0f)
+    );
 	m_spNodeEventCollision->NotifyChanged();
 	m_spNodeEventCollision->SetParent(m_spMatrixNodeTransform.get());
 
-	hk2010_2_0::hkpBoxShape* shapeEventTrigger1 = m_Data.m_IsSideView ? new hk2010_2_0::hkpBoxShape(0.85f, 0.1f, 1.2f) : new hk2010_2_0::hkpBoxShape(1.9f, 0.2f, 3.0f);
+	hk2010_2_0::hkpBoxShape* shapeEventTrigger1 = new hk2010_2_0::hkpBoxShape(m_Data.m_IsSideView ? hh::math::CVector(0.85f, 0.1f, 1.2f) : hh::math::CVector(1.9f, 0.2f, 3.0f));
 	AddEventCollision("Object", shapeEventTrigger1, *reinterpret_cast<int*>(0x01E0AFD8), true, m_spNodeEventCollision);
 
 	return true;
@@ -964,7 +979,7 @@ bool TrickJumper::ProcessMessage
 
 			// apply impulse to Soniic
 			alignas(16) MsgApplyImpulse message {};
-			message.m_position = m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector::UnitY();
+			message.m_position = m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector(0.0f, m_Data.m_IsSideView ? 1.0f : 2.0f, 0.0f);
 			message.m_impulse = impulse;
 			message.m_impulseType = ImpulseType::JumpBoard;
 			message.m_outOfControl = m_Data.m_OutOfControl[0];
