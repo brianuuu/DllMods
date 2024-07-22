@@ -135,7 +135,7 @@ HOOK(void, __fastcall, QTEReactionPlate_MsgHitEventCollision, 0x1017020, uint32_
     uint32_t type = This[75];
     if (type > 0 && type < 5 && player->m_StateMachine.GetCurrentState()->GetStateName() == "ReactionJump")
     {
-        Common::ObjectCGlitterPlayerOneShot(This, "ef_cmn reaction");
+        Common::ObjectCGlitterPlayerOneShot(This, "ef_cmn_reaction");
     }
     originalQTEReactionPlate_MsgHitEventCollision(This, Edx, message);
 }
