@@ -553,7 +553,7 @@ public:
                         sequence.m_timer->SetHideFlag(true);
                         sequence.m_boss->SetHideFlag(true);
 
-                        int score = max(0, (int)(1.0f - sequence.m_timer->m_MotionFrame * 0.01f)); // TODO:
+                        int score = max(0, m_data.m_Score + 20000 * (1.0f - sequence.m_timer->m_MotionFrame * 0.01f));
                         ScoreGenerationsAPI::AddScore(score);
                         UnleashedHUD_API::AddTrickScore(score);
 
@@ -929,7 +929,7 @@ bool TrickJumper::SetAddColliders
     m_spNodeRigidBody->SetParent(m_spMatrixNodeTransform.get());
 
     char const* rigidBodyName = m_Data.m_IsSideView ? "cmn_obj_trickpanel30M_HD" : "cmn_obj_trickpanel30L_HD";
-    AddRigidBody(m_spRigidBody, rigidBodyName, rigidBodyName, *(int*)0x01E0AF30, m_spNodeRigidBody, in_spDatabase);
+    AddRigidBody(m_spRigidBody, rigidBodyName, rigidBodyName, *(int*)0x01E0AFF4, m_spNodeRigidBody, in_spDatabase);
 
     // Event collision
     float constexpr angle = 0.5f;

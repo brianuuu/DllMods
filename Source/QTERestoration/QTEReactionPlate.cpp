@@ -1,8 +1,5 @@
 #include "QTEReactionPlate.h"
 
-float const c_qteReactionMaxScore = 1500.0f;
-float const c_qteReactionMinScore = 1000.0f;
-
 void fE5CD90
 (
     uint32_t targetActorID,
@@ -30,6 +27,8 @@ void fE5CD90
     }
 }
 
+int m_qteReactionPlateBaseScore = 0;
+int m_qteReactionPlateAddScore = 0;
 SharedPtrTypeless reactionPlatePfxHandle;
 void ProcMsgHitReactionPlate(Sonic::Player::CPlayerSpeed* This, const Sonic::Message::MsgHitReactionPlate& message)
 {
@@ -70,6 +69,8 @@ void ProcMsgHitReactionPlate(Sonic::Player::CPlayerSpeed* This, const Sonic::Mes
 
             This->GetContext()->m_spMatrixNode->m_Transform.SetRotationAndPosition(rotation * This->GetContext()->m_HorizontalRotation, message.m_Position + message.m_Direction * 0.25f);
             This->GetContext()->m_spMatrixNode->NotifyChanged();
+
+            m_qteReactionPlateBaseScore = max(0, message.m_Score);
         }
     }
     else if (This->m_StateMachine.GetCurrentState()->GetStateName() != "ReactionLand")
@@ -82,7 +83,7 @@ void ProcMsgHitReactionPlate(Sonic::Player::CPlayerSpeed* This, const Sonic::Mes
             Sonic::Player::CPlayerSpeedStateReactionLand::eAnimationType_JumpSpring,
             minVelocity,
             maxVelocity,
-            1000,
+            message.m_Score,
             1
         );
     }
@@ -100,7 +101,6 @@ HOOK(bool, __fastcall, QTEReactionPlate_CPlayerSpeedProcessMessage, 0xE6E000, hh
     return originalQTEReactionPlate_CPlayerSpeedProcessMessage(This, Edx, message, flag);
 }
 
-int m_qteReactionPlateScore = 0;
 HOOK(bool, __stdcall, QTEReactionPlate_PlayUIEffect, 0xE6F3E0, float* This, void* a2)
 {
     bool result = originalQTEReactionPlate_PlayUIEffect(This, a2);
@@ -108,7 +108,7 @@ HOOK(bool, __stdcall, QTEReactionPlate_PlayUIEffect, 0xE6F3E0, float* This, void
     {
         float inputTime = This[12];
         float maxTime = This[9];
-        m_qteReactionPlateScore = max(0, (int)(c_qteReactionMinScore + (c_qteReactionMaxScore - c_qteReactionMinScore) * (1.0f - inputTime / maxTime)));
+        m_qteReactionPlateAddScore = max(0, (int)((maxTime - 0.5f) * 500.f * (maxTime - inputTime) / maxTime));
     }
 
     return result;
@@ -119,12 +119,15 @@ HOOK(int, __fastcall, QTEReactionPlate_CPlayerSpeedStateReactionLandEnd, 0x124B7
     uint32_t context = (uint32_t)This->GetContextBase();
     uint32_t v3 = *(uint32_t*)(context + 2036);
     bool success = *(bool*)(v3 + 57);
-    if (m_qteReactionPlateScore > 0 && success)
+
+    int score = m_qteReactionPlateBaseScore + m_qteReactionPlateAddScore;
+    if (score > 0 && success)
     {
-        ScoreGenerationsAPI::AddScore(m_qteReactionPlateScore);
-        UnleashedHUD_API::AddTrickScore(m_qteReactionPlateScore);
+        ScoreGenerationsAPI::AddScore(score);
+        UnleashedHUD_API::AddTrickScore(score);
     }
-    m_qteReactionPlateScore = 0;
+    m_qteReactionPlateBaseScore = 0;
+    m_qteReactionPlateAddScore = 0;
 
     return originalQTEReactionPlate_CPlayerSpeedStateReactionLandEnd(This);
 }

@@ -11,8 +11,7 @@ float const c_qteSlowTimeScale = 0.08f;
 float const c_qteSlowTimeRate = 2.0f;
 float const c_qteAppearTime = 0.8f;
 float const c_qteSimRate = 1.0f / 60.0f;
-float const c_qteMaxScore = 5000.0f;
-float const c_qteMinScore = 3000.0f;
+float const c_qteBaseScore = 3000.0f;
 float const c_qteDifficultyTimes[] =
 {
     5.0f,
@@ -410,7 +409,7 @@ public:
             SlowTime(updateInfo.DeltaTime);
             if (*GetTimeScale() <= c_qteSlowTimeScale && m_lifeTime >= c_qteAppearTime)
             {
-                printf("[QTE] Boost Land Location = {%.2f, %.2f, %.2f}\n", DEBUG_VECTOR3(m_data.m_position));
+                //printf("[QTE] Boost Land Location = {%.2f, %.2f, %.2f}\n", DEBUG_VECTOR3(m_data.m_position));
                 PlayIntroAnim();
                 m_state = S_Intro;
             }
@@ -487,7 +486,7 @@ public:
                         sequence.m_timer->SetHideFlag(true);
                         sequence.m_boss->SetHideFlag(true);
 
-                        int score = max(0, (int)(c_qteMinScore + (c_qteMaxScore - c_qteMinScore) * (1.0f - sequence.m_timer->m_MotionFrame * 0.01f)));
+                        int score = max(0, c_qteBaseScore + 20000 * (1.0f - sequence.m_timer->m_MotionFrame * 0.01f));
                         ScoreGenerationsAPI::AddScore(score);
                         UnleashedHUD_API::AddTrickScore(score);
 
@@ -535,7 +534,7 @@ public:
                                         // this makes a 0.5s not to accept MsgApplyImpulse if launched in air...? sub_E2BA00
                                         context->StateFlag(eStateFlag_NoLandOutOfControl) = 0;
 
-                                        printf("[QTE] Launch velocity = {%.2f, %.2f, %.2f}, Speed = %.2f, OutOfControl = %.2fs\n", DEBUG_VECTOR3(impulse), launchSpeed, outOfControl);
+                                        //printf("[QTE] Launch velocity = {%.2f, %.2f, %.2f}, Speed = %.2f, OutOfControl = %.2fs\n", DEBUG_VECTOR3(impulse), launchSpeed, outOfControl);
                                         alignas(16) MsgApplyImpulse message {};
                                         message.m_position = context->m_spMatrixNode->m_Transform.m_Position;
                                         message.m_impulse = impulse;
@@ -550,7 +549,7 @@ public:
                                     }
                                     else
                                     {
-                                        printf("[QTE] No solution for launch speed %.2f\n", launchSpeed);
+                                        //printf("[QTE] No solution for launch speed %.2f\n", launchSpeed);
                                         launchSpeed += 10.0f;
                                     }
                                 }
@@ -740,7 +739,7 @@ public:
 
     void Kill()
     {
-        printf("[QTE] Killed\n");
+        //printf("[QTE] Killed\n");
         SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
     }
 };
