@@ -7,8 +7,9 @@ float const c_qteButtonXSpacing = 115.0f;
 float const c_qteButtonYSpacing = 75.0f;
 float const c_qteButtonSpamXPos = 584.0f;
 float const c_qteButtonYPos = 360.0f;
-float const c_qteSlowTimeScale = 0.08f;
-float const c_qteSlowTimeRate = 2.0f;
+float const c_qteSlowTimeScale = 0.075f;
+float const c_qteSlowTimeTime = 0.6f;
+float const c_qteSlowTimeFixed = 0.17f;
 float const c_qteAppearTime = 0.8f;
 float const c_qteSimRate = 1.0f / 60.0f;
 float const c_qteBaseScore = 3000.0f;
@@ -406,8 +407,7 @@ public:
                 m_data.m_outOfControl -= c_qteSimRate;
             }
 
-            SlowTime(updateInfo.DeltaTime);
-            if (*GetTimeScale() <= c_qteSlowTimeScale && m_lifeTime >= c_qteAppearTime)
+            if (SlowTime() &&m_lifeTime >= c_qteAppearTime)
             {
                 //printf("[QTE] Boost Land Location = {%.2f, %.2f, %.2f}\n", DEBUG_VECTOR3(m_data.m_position));
                 PlayIntroAnim();
@@ -651,10 +651,28 @@ public:
         return (float*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x1A0 });
     }
 
-    void SlowTime(float dt)
+    bool SlowTime()
     {
         *(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19C }) = true;
-        *GetTimeScale() = max(*GetTimeScale() - dt * c_qteSlowTimeRate, c_qteSlowTimeScale);
+        
+        float const timeBeforeSlowDown = c_qteAppearTime - c_qteSlowTimeTime - c_qteSlowTimeFixed;
+        float const prop = (m_lifeTime - timeBeforeSlowDown) / c_qteSlowTimeTime;
+
+        if (prop <= 0.0f)
+        {
+            *GetTimeScale() = 1.0f;
+            return false;
+        }
+        else if (prop >= 1.0f)
+        {
+            *GetTimeScale() = c_qteSlowTimeScale;
+            return true;
+        }
+        else
+        {
+            *GetTimeScale() = 1.0f - (1.0f - c_qteSlowTimeScale) * prop;
+            return false;
+        }
     }
 
     void ResetTime()
