@@ -486,7 +486,8 @@ public:
                         sequence.m_timer->SetHideFlag(true);
                         sequence.m_boss->SetHideFlag(true);
 
-                        int score = max(0, c_qteBaseScore + 20000 * (1.0f - sequence.m_timer->m_MotionFrame * 0.01f));
+                        float additionalScore = 1000.0f * sequence.m_time * (1.0f - sequence.m_timer->m_MotionFrame * 0.01f);
+                        int score = max(0, c_qteBaseScore + (int)additionalScore);
                         ScoreGenerationsAPI::AddScore(score);
                         UnleashedHUD_API::AddTrickScore(score);
 
