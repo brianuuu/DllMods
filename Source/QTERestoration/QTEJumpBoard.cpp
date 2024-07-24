@@ -557,7 +557,8 @@ public:
                             }
 
                             const char* volatile const* trickAnim = AnimationSetPatcher::TrickSG;
-                            if (context->m_pPlayer->m_spCharacterModel->GetNode("SonicRoot") != nullptr)
+                            bool const isUnleashedSonic = context->m_pPlayer->m_spCharacterModel->GetNode("SonicRoot") != nullptr;
+                            if (isUnleashedSonic)
                             {
                                 // Unleashed Sonic
                                 trickAnim = AnimationSetPatcher::TrickSWA;
@@ -567,8 +568,53 @@ public:
                                 // Werehog
                             }
 
-                            Common::SonicContextChangeAnimation(trickAnim[rand() % 7]);
+                            int const randomIndex = rand() % 7;
+                            Common::SonicContextChangeAnimation(trickAnim[randomIndex]);
                             Common::SonicContextPlayVoice(voiceHandle, 3002013, 20);
+
+                            // play pfx, trick_B plays nothing
+                            if (randomIndex != 1)
+                            {
+                                static SharedPtrTypeless pfxHandle;
+                                std::string effectName = "ef_cmn_trickjump_C";
+                                std::string boneName = isUnleashedSonic ? "Tail1" : "Tail";
+                                switch (randomIndex)
+                                {
+                                case 0:
+                                    effectName = "ef_cmn_trickjump_A";
+                                    break;
+                                case 2:
+                                    effectName = "ef_cmn_trickjump_C";
+                                    break;
+                                case 3:
+                                    effectName = "ef_cmn_trickjump_D";
+                                    break;
+                                case 4:
+                                    effectName = "ef_cmn_trickjump_E";
+                                    boneName = "Index3_R";
+                                    break;
+                                case 5:
+                                    effectName = "ef_cmn_trickjump_F";
+                                    boneName = "Index3_L";
+                                    break;
+                                case 6:
+                                    effectName = "ef_cmn_trickjump_G";
+                                    break;
+                                }
+
+                                auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode(boneName.c_str());
+                                if (attachBone != nullptr)
+                                {
+                                    // play on specific bone
+                                    Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle, &attachBone, effectName.c_str(), 1);
+                                }
+                                else
+                                {
+                                    // default Sonic's middle pos
+                                    void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
+                                    Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle, matrixNode, effectName.c_str(), 1);
+                                }
+                            }
 
                             m_state = S_Outro;
                             break;
