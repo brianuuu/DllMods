@@ -293,8 +293,11 @@ public:
         m_txt4 = m_rcQTE->CreateScene("qte_txt_4");
         m_txt4->SetHideFlag(true);
 
+        float timeTotal = 0.0f;
         for (Sequence& sequence : m_sequences)
         {
+            timeTotal += sequence.m_time;
+
             sequence.m_bg = m_rcQTE->CreateScene("m_bg");
             sequence.m_bg->SetHideFlag(true);
             sequence.m_timer = m_rcQTE->CreateScene("m_timer");
@@ -379,6 +382,9 @@ public:
             }
         }
 
+        // adjust the appear time base on how long the QTE is, samples were taken at 2s
+        m_uiAppearTime -= (timeTotal - 2.0f) * c_qteUiSlowTimeScale;
+
         m_spQTE = boost::make_shared<Sonic::CGameObjectCSD>(m_rcQTE, 0.5f, "HUD_B2", false);
         Sonic::CGameDocument::GetInstance()->AddGameObject(m_spQTE, "main", this);
 
@@ -400,7 +406,7 @@ public:
             button.m_type = (ButtonType)(rand() % ButtonType::COUNT);
             sequence.m_buttons.push_back(button);
         }
-        m_sequences.push_front(sequence);
+        m_sequences.push_back(sequence);
     }
 
     void CreateSpamSequence(ButtonType type, uint32_t spamCount, float trickTime)
@@ -413,7 +419,7 @@ public:
         button.m_type = type;
         sequence.m_buttons.push_back(button);
 
-        m_sequences.push_front(sequence);
+        m_sequences.push_back(sequence);
     }
 
 	bool ProcessMessage
