@@ -65,7 +65,7 @@ void ProcMsgHitReactionPlate(Sonic::Player::CPlayerSpeed* This, const Sonic::Mes
 
             This->GetContext()->m_VerticalRotation = rotation;
             This->GetContext()->m_HorizontalRotation.setIdentity();
-            This->GetContext()->m_ModelUpDirection = (rotation * hh::math::CVector::UnitY()).normalized();
+            This->GetContext()->m_ModelUpDirection = message.m_Direction;
 
             This->GetContext()->m_spMatrixNode->m_Transform.SetRotationAndPosition(rotation * This->GetContext()->m_HorizontalRotation, message.m_Position + message.m_Direction * 0.25f);
             This->GetContext()->m_spMatrixNode->NotifyChanged();
