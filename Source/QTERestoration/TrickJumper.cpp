@@ -559,7 +559,7 @@ public:
                         sequence.m_timer->SetHideFlag(true);
                         sequence.m_boss->SetHideFlag(true);
 
-                        float additionalScore = 1000.0f * sequence.m_time * (1.0f - sequence.m_timer->m_MotionFrame * 0.01f) * (float)m_data.m_Difficulty;
+                        float additionalScore = 1000.0f * sequence.m_time * (1.0f - sequence.m_timer->m_MotionFrame * 0.01f) * (float)max(1, m_data.m_Difficulty);
                         int score = max(0, m_data.m_Score + (int)additionalScore);
                         ScoreGenerationsAPI::AddScore(score);
                         UnleashedHUD_API::AddTrickScore(score);
