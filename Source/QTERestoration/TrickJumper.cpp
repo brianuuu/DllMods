@@ -880,6 +880,10 @@ void TrickJumper::InitializeEditParam
 	in_rEditParam.CreateParamFloat(&m_Data.m_TrickTime[1], "TrickTime2");
 	in_rEditParam.CreateParamFloat(&m_Data.m_TrickTime[2], "TrickTime3");
 
+    // some params were missing in some level in Unleashed
+    m_Data.m_Difficulty = 1;
+    m_Data.m_Score = 3000.0f;
+
 	in_rEditParam.CreateParamInt(&m_Data.m_Difficulty, "m_Difficulty");
 	in_rEditParam.CreateParamInt(&m_Data.m_Score, "m_Score");
 	in_rEditParam.CreateParamBool(&m_Data.m_IsSideView, "IsSideView");
