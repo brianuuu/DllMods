@@ -484,6 +484,7 @@ public:
                     simTime += frameRate;
                 }
 
+                pos.y() -= 0.5f; // Adjustment due to going further than Unleashed
                 m_impulsePos = pos;
             }
             break;
