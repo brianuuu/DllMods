@@ -23,8 +23,10 @@ extern "C" __declspec(dllexport) void Init(ModInfo * modInfo)
 	if (Configuration::m_hackAdlibTrickJump)
 	{
 		QTEJumpBoard::applyPatches();
-		QTEReactionPlate::applyPatches();
 	}
+
+	// Reaction Plate
+	QTEReactionPlate::applyPatches();
 
 	// QTE Custom Object
 	TrickJumper::registerObject();
