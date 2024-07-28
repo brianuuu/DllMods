@@ -59,11 +59,13 @@ CAnimationStateInfo* SuperSonicAnimationList = nullptr;
 uint32_t SuperSonicAnimationListSize = 0;
 void __declspec(naked) UpdateSuperSonicAnimationListSize()
 {
-    static uint32_t returnAddress = 0xDA31CF;
+    static uint32_t fnAddress = 0x6CBFC0;
+    static uint32_t returnAddress = 0xDA31D4;
     __asm
     {
         push    SuperSonicAnimationListSize
         push    SuperSonicAnimationList
+        call    [fnAddress]
         jmp     [returnAddress]
     }
 }
@@ -73,14 +75,24 @@ HOOK(void*, __cdecl, InitializeSuperSonicAnimationList, 0x1291D60)
 {
     void* pResult = originalInitializeSuperSonicAnimationList();
     {
-        CAnimationStateInfo* pEntriesOriginal = (CAnimationStateInfo*)0x1A55980;
-        uint8_t* count = (uint8_t*)0xDA31C9;
-        SuperSonicAnimationListSize = (*count + AnimationSetPatcher::m_newAnimationDataSuper.size());
-        SuperSonicAnimationList = new CAnimationStateInfo[SuperSonicAnimationListSize];
-        std::copy(pEntriesOriginal, pEntriesOriginal + *count, SuperSonicAnimationList);
+        CAnimationStateInfo* pEntriesOriginal = *(CAnimationStateInfo**)0xDA31CB;
+        uint32_t count = *(uint8_t*)0xDA31C9;
 
-        AnimationSetPatcher::initializeAnimationList(SuperSonicAnimationList, *count, AnimationSetPatcher::m_newAnimationDataSuper);
+        // check if another DLL also has this function, get list from there
+        if (*(uint8_t*)0xDA31C8 == 0xE9)
+        {
+            count = *(uint8_t*)0xDA31CD;
+            pEntriesOriginal = *(CAnimationStateInfo**)0xDA31CE;
+        }
+        
+        SuperSonicAnimationListSize = (count + AnimationSetPatcher::m_newAnimationDataSuper.size());
+        SuperSonicAnimationList = new CAnimationStateInfo[SuperSonicAnimationListSize];
+        std::copy(pEntriesOriginal, pEntriesOriginal + count, SuperSonicAnimationList);
+
+        AnimationSetPatcher::initializeAnimationList(SuperSonicAnimationList, count, AnimationSetPatcher::m_newAnimationDataSuper);
         WRITE_JUMP(0xDA31C8, UpdateSuperSonicAnimationListSize);
+        WRITE_MEMORY(0xDA31CD, uint8_t, (uint8_t)SuperSonicAnimationListSize);
+        WRITE_MEMORY(0xDA31CE, void*, SuperSonicAnimationList);
     }
 
     return pResult;
