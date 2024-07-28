@@ -481,10 +481,17 @@ public:
                     hh::math::CVector const posPrev = pos;
                     pos += (velPrev + vel) * 0.5f * frameRate;
 
+                    if (pos.y() < posPrev.y())
+                    {
+                        // always launch at peak of arc
+                        pos = posPrev;
+                        break;
+                    }
+
                     simTime += frameRate;
                 }
 
-                pos.y() -= 0.5f; // Adjustment due to going further than Unleashed
+                pos.y() -= 1.0f; // Adjustment due to going further than Unleashed
                 m_impulsePos = pos;
             }
             break;
