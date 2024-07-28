@@ -383,7 +383,7 @@ public:
         }
 
         // adjust the appear time base on how long the QTE is, samples were taken at 2s
-        m_uiAppearTime -= (timeTotal - 2.0f) * c_qteUiSlowTimeScale;
+        m_uiAppearTime = max(0.701f, m_uiAppearTime - (timeTotal - 2.0f) * c_qteUiSlowTimeScale);
 
         m_spQTE = boost::make_shared<Sonic::CGameObjectCSD>(m_rcQTE, 0.5f, "HUD_B2", false);
         Sonic::CGameDocument::GetInstance()->AddGameObject(m_spQTE, "main", this);
