@@ -473,13 +473,13 @@ public:
                 simDuration *= c_qteUiSlowTimeScale;
 
                 float simTime = 0.0f;
-                float constexpr frameRate = 1.0f / 60.0f;
+                float constexpr frameRate = 1.0f / 30.0f;
                 while (simTime < simDuration)
                 {
                     hh::math::CVector const velPrev = vel;
                     vel += Hedgehog::Math::CVector::UnitY() * gravity * frameRate;
                     hh::math::CVector const posPrev = pos;
-                    pos += (velPrev + vel) * 0.5f * frameRate;
+                    pos += vel * frameRate;
 
                     if (pos.y() < posPrev.y())
                     {
@@ -597,7 +597,7 @@ public:
                             context->StateFlag(eStateFlag_NoLandOutOfControl) = 0;
 
                             // pitch it up, scale it
-                            hh::math::CVector pitchAxis = m_direction.cross(hh::math::CVector::UnitY());
+                            hh::math::CVector pitchAxis = m_direction.cross(hh::math::CVector::UnitY()).normalized();
                             hh::math::CVector impulse = Eigen::AngleAxisf(m_data.m_Pitch[1] * DEG_TO_RAD, pitchAxis) * m_direction * m_data.m_Speed[1];
 
                             //printf("[QTE] Dir = {%.2f, %.2f, %.2f}, Pos = {%.2f, %.2f, %.2f}\n", DEBUG_VECTOR3(m_direction), DEBUG_VECTOR3(m_uiAppearPos));
@@ -993,7 +993,7 @@ bool TrickJumper::ProcessMessage
 			dir.normalize();
 
 			// pitch it up, scale it
-            hh::math::CVector pitchAxis = dir.cross(hh::math::CVector::UnitY());
+            hh::math::CVector pitchAxis = dir.cross(hh::math::CVector::UnitY()).normalized();
             hh::math::CVector impulse = Eigen::AngleAxisf(m_Data.m_Pitch[0] * DEG_TO_RAD, pitchAxis) * dir * m_Data.m_Speed[0];
 
 			// apply impulse to Soniic
