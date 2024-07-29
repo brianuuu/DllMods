@@ -1,5 +1,24 @@
 #include "QTEReactionPlate.h"
 
+class alignas(16) MsgGetReactionPlateInfo : public Hedgehog::Universe::MessageTypeGet
+{
+public:
+    HH_FND_MSG_MAKE_TYPE(0x1680DE8);
+
+    uint32_t m_Field10;
+    uint32_t m_Field14;
+    uint32_t m_Field18;
+    uint32_t m_Field1C;
+    uint32_t m_Field20;
+    uint32_t m_Field24;
+    uint32_t m_Field28;
+    uint32_t m_Field2C;
+    float m_Field30;
+    uint32_t m_Field34;
+    float m_Field38;
+    float m_Field3C;
+};
+
 void fE5CD90
 (
     uint32_t targetActorID,
@@ -27,22 +46,67 @@ void fE5CD90
     }
 }
 
+void fE6F900
+(
+    void* a1,
+    uint32_t a2,
+    float a3,
+    float a4,
+    float a5
+)
+{
+    static uint32_t sub_E6F900 = 0xE6F900;
+    __asm
+    {
+        push a5
+        push a4
+        push a3
+        push a2
+        mov edi, a1
+        call[sub_E6F900]
+    }
+}
+
 int m_qteReactionPlateBaseScore = 0;
 int m_qteReactionPlateAddScore = 0;
 SharedPtrTypeless reactionPlatePfxHandle;
 void ProcMsgHitReactionPlate(Sonic::Player::CPlayerSpeed* This, const Sonic::Message::MsgHitReactionPlate& message)
 {
-    const float minVelocity = message.m_JumpMinVelocity <= 0 ? 40 : message.m_JumpMinVelocity;
-    const float maxVelocity = message.m_JumpMaxVelocity <= 0 ? 60 : message.m_JumpMaxVelocity;
+    const float minVelocity = message.m_JumpMinVelocity <= 0 ? This->GetContext()->m_spParameter->Get<float>(
+        Sonic::Player::ePlayerSpeedParameter_ReactionJumpMinVelocity) : message.m_JumpMinVelocity;
+
+    const float maxVelocity = message.m_JumpMaxVelocity <= 0 ? This->GetContext()->m_spParameter->Get<float>(
+        Sonic::Player::ePlayerSpeedParameter_ReactionJumpMaxVelocity) : message.m_JumpMaxVelocity;
 
     if (message.m_Type != 0) // 0 == Begin
     {
-        if (message.m_Type != 5 && This->m_StateMachine.GetCurrentState()->GetStateName() == "ReactionJump") // 5 == End
+        if (message.m_Type != 5) // 5 == End
         {
             const auto pState = This->GetContext()->ChangeState<Sonic::Player::CPlayerSpeedStateReactionLand>();
+
+            const auto reactionJumpQTE = This->GetContext()->m_spReactionJumpQTE_HUDPtr.get();
+
+            if (!*(reinterpret_cast<bool*>(reactionJumpQTE) + 0x3A))
+            {
+                const auto reactionPlateInfo = boost::make_shared<MsgGetReactionPlateInfo>();
+                This->SendMessageImm(message.m_SenderActorID, reactionPlateInfo);
+
+                fE6F900(
+                    reactionJumpQTE,
+                    reactionPlateInfo->m_Field18,
+                    reactionPlateInfo->m_Field30,
+                    reactionPlateInfo->m_Field38,
+                    reactionPlateInfo->m_Field3C);
+            }
+
+            *(reinterpret_cast<float*>(reactionJumpQTE) + 0x10) = *(reinterpret_cast<float*>(reactionJumpQTE) + 0xC);
+            *(reinterpret_cast<bool*>(reactionJumpQTE) + 0x3C) = true;
+
             pState->m_TargetActorID = message.m_TargetActorID;
             pState->m_JumpMinVelocity = minVelocity;
             pState->m_JumpMaxVelocity = maxVelocity;
+            *(reinterpret_cast<float*>(pState) + 0x1E) = *(reinterpret_cast<const float*>(&message) + 0x14);
+            *(reinterpret_cast<float*>(pState) + 0x20) = *(reinterpret_cast<const float*>(&message) + 0x16);
 
             hh::math::CVector targetPosition;
             This->SendMessageImm(message.m_TargetActorID, boost::make_shared<Sonic::Message::MsgGetPosition>(targetPosition));
@@ -73,7 +137,7 @@ void ProcMsgHitReactionPlate(Sonic::Player::CPlayerSpeed* This, const Sonic::Mes
             m_qteReactionPlateBaseScore = max(0, message.m_Score);
         }
     }
-    else if (This->m_StateMachine.GetCurrentState()->GetStateName() != "ReactionLand")
+    else
     {
         fE5CD90
         (
