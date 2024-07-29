@@ -34,6 +34,11 @@ public:
 
 private:
 	Data m_Data;
+
+	hh::math::CVector m_arcPeakPosition;
+	float m_uiAppearTime;
+	bool m_statChecked;
+
 	boost::shared_ptr<hh::mr::CSingleElement> m_spSpawnedModel;
 	boost::shared_ptr<Sonic::CRigidBody> m_spRigidBody;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeRigidBody;

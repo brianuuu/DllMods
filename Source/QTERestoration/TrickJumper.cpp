@@ -3,69 +3,6 @@
 
 BB_SET_OBJECT_MAKE_HOOK(TrickJumper)
 
-std::map<int, std::map<int, float>> const c_uiAppearSamples =
-{
-    { 10, {
-        { 25, 0.701f },
-        { 35, 0.701f },
-        { 45, 0.701f },
-        { 55, 0.701f },
-        { 65, 0.701f },
-        { 75, 0.701f },
-        { 85, 0.701f }
-     } },
-
-    { 20, {
-        { 25, 0.701f },
-        { 35, 0.701f },
-        { 45, 0.701f },
-        { 55, 0.751f },
-        { 65, 0.817f },
-        { 75, 0.851f },
-        { 85, 0.868f },
-    } },
-
-    { 30, {
-        { 25, 0.701f },
-        { 35, 0.784f },
-        { 45, 0.918f },
-        { 55, 1.001f },
-        { 65, 1.068f },
-        { 75, 1.118f },
-        { 85, 1.151f },
-    } },
-
-    { 40, {
-        { 25, 0.784f },
-        { 35, 0.951f },
-        { 45, 1.101f },
-        { 55, 1.218f },
-        { 65, 1.335f },
-        { 75, 1.401f },
-        { 85, 1.418f },
-    } },
-
-    { 50, {
-        { 25, 0.901f },
-        { 35, 1.118f },
-        { 45, 1.301f },
-        { 55, 1.485f },
-        { 65, 1.585f },
-        { 75, 1.668f },
-        { 85, 1.718f },
-    } },
-
-    { 60, {
-        { 25, 1.034f },
-        { 35, 1.285f },
-        { 45, 1.501f },
-        { 55, 1.685f },
-        { 65, 1.852f },
-        { 75, 1.952f },
-        { 85, 1.985f },
-    } },
-};
-
 float const c_qteUiButtonXSpacing = 115.0f;
 float const c_qteUiButtonYSpacing = 75.0f;
 float const c_qteUiButtonSpamXPos = 584.0f;
@@ -133,71 +70,23 @@ private:
     } m_state;
 
 public:
-	CTrickJumperUI(TrickJumper::Data const& data, hh::math::CVector const& direction)
+	CTrickJumperUI
+    (
+        TrickJumper::Data const& data, 
+        hh::math::CVector const& direction,
+        hh::math::CVector const& impulsePos,
+        float const& uiAppearTime
+    )
 		: m_data(data)
         , m_lifeTime(0.0f)
+        , m_uiAppearTime(uiAppearTime)
         , m_direction(direction)
+        , m_impulsePos(impulsePos)
         , m_txtID(3u)
         , m_sequenceID(0u)
         , m_buttonID(0u)
         , m_state(State::S_SlowTime)
 	{
-        int minSpeed = 10;
-        for (int i = 50; i >= 10; i -= 10)
-        {
-            if (i <= (int)m_data.m_Speed[0])
-            {
-                minSpeed = i;
-                break;
-            }
-        }
-
-        int maxSpeed = 60;
-        for (int i = 20; i <= 60; i += 10)
-        {
-            if (i > (int)m_data.m_Speed[0])
-            {
-                maxSpeed = i;
-                break;
-            }
-        }
-
-        int minPitch = 25;
-        for (int i = 75; i >= 25; i -= 10)
-        {
-            if (i <= (int)m_data.m_Pitch[0])
-            {
-                minPitch = i;
-                break;
-            }
-        }
-
-        int maxPitch = 85;
-        for (int i = 35; i <= 85; i += 10)
-        {
-            if (i > (int)m_data.m_Pitch[0])
-            {
-                maxPitch = i;
-                break;
-            }
-        }
-
-        float const minSpeedF = (float)minSpeed;
-        float const maxSpeedF = (float)maxSpeed;
-        float const minPitchF = (float)minPitch;
-        float const maxPitchF = (float)maxPitch;
-
-        float const x1y1 = c_uiAppearSamples.at(minSpeed).at(minPitch);
-        float const x2y1 = c_uiAppearSamples.at(maxSpeed).at(minPitch);
-        float const x1y2 = c_uiAppearSamples.at(minSpeed).at(maxPitch);
-        float const x2y2 = c_uiAppearSamples.at(maxSpeed).at(maxPitch);
-
-        float const speedProp = (m_data.m_Speed[0] - minSpeedF) / (maxSpeedF - minSpeedF);
-        float const pitchProp = (m_data.m_Pitch[0] - minPitchF) / (maxPitchF - minPitchF);
-
-        float const xy1 = x1y1 + (x2y1 - x1y1) * speedProp;
-        float const xy2 = x1y2 + (x2y2 - x1y2) * speedProp;
-        m_uiAppearTime = xy1 + (xy2 - xy1) * pitchProp;
 	}
 
 	~CTrickJumperUI()
@@ -293,11 +182,8 @@ public:
         m_txt4 = m_rcQTE->CreateScene("qte_txt_4");
         m_txt4->SetHideFlag(true);
 
-        float timeTotal = 0.0f;
         for (Sequence& sequence : m_sequences)
         {
-            timeTotal += sequence.m_time;
-
             sequence.m_bg = m_rcQTE->CreateScene("m_bg");
             sequence.m_bg->SetHideFlag(true);
             sequence.m_timer = m_rcQTE->CreateScene("m_timer");
@@ -382,9 +268,6 @@ public:
             }
         }
 
-        // adjust the appear time base on how long the QTE is, samples were taken at 2s
-        m_uiAppearTime = max(0.701f, m_uiAppearTime - (timeTotal - 2.0f) * c_qteUiSlowTimeScale);
-
         m_spQTE = boost::make_shared<Sonic::CGameObjectCSD>(m_rcQTE, 0.5f, "HUD_B2", false);
         Sonic::CGameDocument::GetInstance()->AddGameObject(m_spQTE, "main", this);
 
@@ -458,41 +341,6 @@ public:
             {
                 PlayIntroAnim();
                 m_state = S_Intro;
-
-                auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-                float const gravity = -context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_Gravity);
-                hh::math::CVector vel = context->m_Velocity;
-                hh::math::CVector pos = context->m_spMatrixNode->m_Transform.m_Position;
-
-                // simulate when Sonic will end up when QTE time out
-                float simDuration = 0.0f;
-                for (Sequence const& sequence : m_sequences)
-                {
-                    simDuration += sequence.m_time;
-                }
-                simDuration *= c_qteUiSlowTimeScale;
-
-                float simTime = 0.0f;
-                float constexpr frameRate = 1.0f / 30.0f;
-                while (simTime < simDuration)
-                {
-                    hh::math::CVector const velPrev = vel;
-                    vel += Hedgehog::Math::CVector::UnitY() * gravity * frameRate;
-                    hh::math::CVector const posPrev = pos;
-                    pos += vel * frameRate;
-
-                    if (pos.y() < posPrev.y())
-                    {
-                        // always launch at peak of arc
-                        pos = posPrev;
-                        break;
-                    }
-
-                    simTime += frameRate;
-                }
-
-                pos.y() -= 1.0f; // Adjustment due to going further than Unleashed
-                m_impulsePos = pos;
             }
             break;
         }
@@ -758,7 +606,7 @@ public:
     bool SlowTime()
     {
         *(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19C }) = true;
-
+        
         float const timeBeforeSlowDown = m_uiAppearTime - c_qteUiSlowTimeTime - c_qteUiSlowTimeFixed;
         float const prop = (m_lifeTime - timeBeforeSlowDown) / c_qteUiSlowTimeTime;
         
@@ -873,6 +721,8 @@ void TrickJumper::InitializeEditParam
 	Sonic::CEditParam& in_rEditParam
 )
 {
+    m_statChecked = false;
+
 	in_rEditParam.CreateParamFloat(&m_Data.m_OutOfControl[0], "FirstOutOfControl");
 	in_rEditParam.CreateParamFloat(&m_Data.m_Pitch[0], "FirstPitch");
 	in_rEditParam.CreateParamFloat(&m_Data.m_Speed[0], "FirstSpeed");
@@ -943,7 +793,7 @@ bool TrickJumper::SetAddColliders
 {
     // Rigid body
     m_spNodeRigidBody = boost::make_shared<Sonic::CMatrixNodeTransform>();
-    m_spNodeRigidBody->m_Transform.SetPosition(hh::math::CVector::Zero());
+    m_spNodeRigidBody->m_Transform.SetPosition(hh::math::CVector(0.0f, m_Data.m_IsSideView ? -0.05f : -0.2f, 0.0f));
     m_spNodeRigidBody->NotifyChanged();
     m_spNodeRigidBody->SetParent(m_spMatrixNodeTransform.get());
 
@@ -995,10 +845,11 @@ bool TrickJumper::ProcessMessage
 			// pitch it up, scale it
             hh::math::CVector pitchAxis = dir.cross(hh::math::CVector::UnitY()).normalized();
             hh::math::CVector impulse = Eigen::AngleAxisf(m_Data.m_Pitch[0] * DEG_TO_RAD, pitchAxis) * dir * m_Data.m_Speed[0];
+            hh::math::CVector position = m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector(0.0f, m_Data.m_IsSideView ? 0.5f : 1.0f, 0.0f);
 
 			// apply impulse to Soniic
 			alignas(16) MsgApplyImpulse message {};
-			message.m_position = m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector(0.0f, m_Data.m_IsSideView ? 1.0f : 2.0f, 0.0f);
+			message.m_position = position;
 			message.m_impulse = impulse;
 			message.m_impulseType = ImpulseType::JumpBoard;
 			message.m_outOfControl = m_Data.m_OutOfControl[0];
@@ -1010,11 +861,54 @@ bool TrickJumper::ProcessMessage
 
 			// play sound
 			Sonic::Player::CPlayerSpeedContext::GetInstance()->PlaySound(4002023, false);
+            
+            // Calculate where the peak position is
+            if (!m_statChecked)
+            {
+                m_statChecked = true;
+
+                auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+                float const gravity = -context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_Gravity);
+                hh::math::CVector vel = impulse;
+                hh::math::CVector pos = position;
+
+                float simTime = 0.0f;
+                float constexpr frameRate = 1.0f / 30.0f;
+                while (true)
+                {
+                    hh::math::CVector const velPrev = vel;
+                    vel += Hedgehog::Math::CVector::UnitY() * gravity * frameRate;
+                    hh::math::CVector const posPrev = pos;
+                    pos += vel * frameRate;
+
+                    if (pos.y() < posPrev.y())
+                    {
+                        // always launch at peak of arc
+                        m_arcPeakPosition = posPrev;
+                        break;
+                    }
+
+                    simTime += frameRate;
+                }
+
+                float trickTime = 0.0f;
+                for (int i = 0; i < 3; i++)
+                {
+                    if (m_Data.m_TrickCount[i] == 0 || m_Data.m_TrickTime[i] == 0.0f)
+                    {
+                        break;
+                    }
+
+                    trickTime += m_Data.m_TrickTime[i];
+                }
+
+                m_uiAppearTime = max(0.701f, simTime - trickTime * c_qteUiSlowTimeScale + 0.467f);
+            }
 
 			// create QTE UI when it doesn't exist
 			if (!m_spTrickJumperUI)
 			{
-				m_spTrickJumperUI = boost::make_shared<CTrickJumperUI>(m_Data, dir);
+				m_spTrickJumperUI = boost::make_shared<CTrickJumperUI>(m_Data, dir, m_arcPeakPosition, m_uiAppearTime);
 				Sonic::CGameDocument::GetInstance()->AddGameObject(m_spTrickJumperUI);
 			}
 
