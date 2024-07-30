@@ -136,25 +136,13 @@ public:
 
         for (int i = 0; i < 3; i++)
         {
-            if (m_data.m_TrickCount[i] == 0 || m_data.m_TrickTime[i] == 0.0f)
+            if (m_data.m_TrickCount[i] <= 0 || m_data.m_TrickTime[i] == 0.0f)
             {
                 break;
             }
 
             // create sequence
             CreateSequence(m_data.m_TrickCount[i], m_data.m_TrickTime[i]);
-        }
-
-        // wrong params, default to something
-        if (m_sequences.empty())
-        {
-            // create a completely random sequence
-            size_t sequenceCount = 1;// (rand() % 3) + 1;
-            while (m_sequences.size() < sequenceCount)
-            {
-                size_t buttonCount = (rand() % 3) + 3; // [3-5] buttons
-                CreateSequence(buttonCount, 3.0f);
-            }
         }
 
 #if _DEBUG
@@ -872,6 +860,34 @@ bool TrickJumper::ProcessMessage
             {
                 m_statChecked = true;
 
+                // Validate parameters
+                bool valid = true;
+                for (int i = 0; i < 3; i++)
+                {
+                    if (i == 0)
+                    {
+                        // first slot must be valid
+                        valid &= m_Data.m_TrickCount[i] > 0 && m_Data.m_TrickTime[i] != 0.0f;
+                    }
+                    else if (m_Data.m_TrickCount[i] != 0 || m_Data.m_TrickTime[i] != 0.0f)
+                    {
+                        // 2nd & 3rd slot
+                        valid &= m_Data.m_TrickCount[i] > 0 && m_Data.m_TrickTime[i] != 0.0f;
+                    }
+                }
+
+                if (!valid)
+                {
+                    // make random sequence
+                    m_Data.m_TrickCount[0] = (rand() % 3) + 3; // [3-5] buttons
+                    m_Data.m_TrickCount[1] = 0;
+                    m_Data.m_TrickCount[2] = 0;
+
+                    m_Data.m_TrickTime[0] = 3.0f;
+                    m_Data.m_TrickTime[1] = 0.0f;
+                    m_Data.m_TrickTime[2] = 0.0f;
+                }
+
                 auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
                 float const gravity = -context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_Gravity);
                 hh::math::CVector vel = impulse;
@@ -899,7 +915,7 @@ bool TrickJumper::ProcessMessage
                 float trickTime = 0.0f;
                 for (int i = 0; i < 3; i++)
                 {
-                    if (m_Data.m_TrickCount[i] == 0 || m_Data.m_TrickTime[i] == 0.0f)
+                    if (m_Data.m_TrickCount[i] <= 0 || m_Data.m_TrickTime[i] == 0.0f)
                     {
                         break;
                     }
