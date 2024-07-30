@@ -142,7 +142,14 @@ public:
             }
 
             // create sequence
-            CreateSequence(m_data.m_TrickCount[i], m_data.m_TrickTime[i]);
+            if (m_data.m_TrickTime[i] < 0.0f)
+            {
+                CreateSpamSequence((ButtonType)(m_data.m_TrickCount[i] / 100), m_data.m_TrickCount[i] % 100, abs(m_data.m_TrickTime[i]));
+            }
+            else
+            {
+                CreateSequence(m_data.m_TrickCount[i], m_data.m_TrickTime[i]);
+            }
         }
 
 #if _DEBUG
@@ -874,6 +881,12 @@ bool TrickJumper::ProcessMessage
                         // 2nd & 3rd slot
                         valid &= m_Data.m_TrickCount[i] > 0 && m_Data.m_TrickTime[i] != 0.0f;
                     }
+
+                    // button spamming
+                    if (m_Data.m_TrickTime[i] < 0.0f)
+                    {
+                        valid &= m_Data.m_TrickCount[i] <= 599 && (m_Data.m_TrickCount[i] % 100 != 0);
+                    }
                 }
 
                 if (!valid)
@@ -920,7 +933,7 @@ bool TrickJumper::ProcessMessage
                         break;
                     }
 
-                    trickTime += m_Data.m_TrickTime[i];
+                    trickTime += abs(m_Data.m_TrickTime[i]);
                 }
 
                 m_uiAppearTime = max(0.701f, simTime - trickTime * c_qteUiSlowTimeScale + 0.467f);
