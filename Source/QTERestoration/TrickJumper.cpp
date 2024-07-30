@@ -3,6 +3,9 @@
 
 BB_SET_OBJECT_MAKE_HOOK(TrickJumper)
 
+float TrickJumper::m_xAspectOffset = 0.0f;
+float TrickJumper::m_yAspectOffset = 0.0f;
+
 float const c_qteUiButtonXSpacing = 115.0f;
 float const c_qteUiButtonYSpacing = 75.0f;
 float const c_qteUiButtonSpamXPos = 584.0f;
@@ -125,6 +128,8 @@ public:
 		const boost::shared_ptr<Hedgehog::Database::CDatabase>& spDatabase
 	) override
 	{
+        TrickJumper::CalculateAspectOffsets();
+
         // Update unit 1 is unaffected by time slowing down
         Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
         pGameDocument->AddUpdateUnit("1", this);
@@ -247,14 +252,14 @@ public:
                     button.m_scene = m_rcQTE->CreateScene("btn_2");
                     button.m_scene->GetNode("img")->SetPatternIndex(1);
                     button.m_scene->GetNode("bg")->SetScale(-1.0f, 1.0f);
-                    button.m_scene->GetNode("bg")->SetPosition(2.35f, 0.0f);
+                    button.m_scene->GetNode("bg")->SetPosition(TrickJumper::m_xAspectOffset * 0.5f + 2.35f, TrickJumper::m_yAspectOffset * 0.5f);
                     break;
                 }
                 button.m_scene->SetHideFlag(true);
-                button.m_scene->GetNode("position")->SetPosition(xPos, yPos);
+                button.m_scene->GetNode("position")->SetPosition(TrickJumper::m_xAspectOffset * 0.5f + xPos, TrickJumper::m_yAspectOffset * 0.5f + yPos);
                 button.m_effect = m_rcQTE->CreateScene("qte_multi_effect");
                 button.m_effect->SetHideFlag(true);
-                button.m_effect->GetNode("position")->SetPosition(xPos, yPos);
+                button.m_effect->GetNode("position")->SetPosition(TrickJumper::m_xAspectOffset * 0.5f + xPos, TrickJumper::m_yAspectOffset * 0.5f + yPos);
 
                 xPos += c_qteUiButtonXSpacing;
                 column++;
@@ -929,4 +934,28 @@ void TrickJumper::applyPatches()
     // Remove message delay for MsgFinishPause, this can cause HUD to not show up
     // anymore if we pause before HUD show up when time is slowed down
     WRITE_MEMORY(0x10A1500, uint8_t, 0xD9, 0xEE, 0x90, 0x90, 0x90, 0x90);
+}
+
+void TrickJumper::CalculateAspectOffsets()
+{
+    if (*(size_t*)0x6F23C6 != 0x75D8C0D9) // Widescreen Support
+    {
+        const float aspect = (float)*(size_t*)0x1DFDDDC / (float)*(size_t*)0x1DFDDE0;
+
+        if (aspect * 9.0f > 16.0f)
+        {
+            m_xAspectOffset = 720.0f * aspect - 1280.0f;
+            m_yAspectOffset = 0.0f;
+        }
+        else
+        {
+            m_xAspectOffset = 0.0f;
+            m_yAspectOffset = 1280.0f / aspect - 720.0f;
+        }
+    }
+    else
+    {
+        m_xAspectOffset = 0.0f;
+        m_yAspectOffset = 0.0f;
+    }
 }

@@ -55,4 +55,8 @@ public:
 public:
     static void registerObject();
 	static void applyPatches();
+
+	static float m_xAspectOffset;
+	static float m_yAspectOffset;
+	static void CalculateAspectOffsets();
 };

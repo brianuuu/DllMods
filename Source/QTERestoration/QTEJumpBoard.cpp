@@ -1,5 +1,6 @@
 #include "QTEJumpBoard.h"
 #include "AnimationSetPatcher.h"
+#include "TrickJumper.h"
 
 QTEJumpBoard::Data QTEJumpBoard::m_data;
 
@@ -145,6 +146,8 @@ public:
         const boost::shared_ptr<Hedgehog::Database::CDatabase>& spDatabase
     ) override
     {
+        TrickJumper::CalculateAspectOffsets();
+
         // Update unit 1 is unaffected by time slowing down
         Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
         pGameDocument->AddUpdateUnit("1", this);
@@ -301,14 +304,14 @@ public:
                     button.m_scene = m_rcQTE->CreateScene("btn_2");
                     button.m_scene->GetNode("img")->SetPatternIndex(1);
                     button.m_scene->GetNode("bg")->SetScale(-1.0f, 1.0f);
-                    button.m_scene->GetNode("bg")->SetPosition(2.35f, 0.0f);
+                    button.m_scene->GetNode("bg")->SetPosition(TrickJumper::m_xAspectOffset * 0.5f + 2.35f, TrickJumper::m_yAspectOffset * 0.5f);
                     break;
                 }
                 button.m_scene->SetHideFlag(true);
-                button.m_scene->GetNode("position")->SetPosition(xPos, yPos);
+                button.m_scene->GetNode("position")->SetPosition(TrickJumper::m_xAspectOffset * 0.5f + xPos, TrickJumper::m_yAspectOffset * 0.5f + yPos);
                 button.m_effect = m_rcQTE->CreateScene("qte_multi_effect");
                 button.m_effect->SetHideFlag(true);
-                button.m_effect->GetNode("position")->SetPosition(xPos, yPos);
+                button.m_effect->GetNode("position")->SetPosition(TrickJumper::m_xAspectOffset * 0.5f + xPos, TrickJumper::m_yAspectOffset * 0.5f + yPos);
 
                 xPos += c_qteButtonXSpacing;
                 column++;
