@@ -593,47 +593,36 @@ public:
         }
 	}
 
-    bool* GetTimeScaleEnabled()
-    {
-        return (bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19C });
-    }
-
-    float* GetTimeScale()
-    {
-        return (float*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x1A0 });
-    }
-
     bool SlowTime()
     {
-        *(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19C }) = true;
-        
         float const timeBeforeSlowDown = m_uiAppearTime - c_qteUiSlowTimeTime - c_qteUiSlowTimeFixed;
         float const prop = (m_lifeTime - timeBeforeSlowDown) / c_qteUiSlowTimeTime;
         
         if (prop <= 0.0f)
         {
-            *GetTimeScale() = 1.0f;
             return false;
         }
         else if (prop >= 1.0f)
         {
-            *GetTimeScale() = c_qteUiSlowTimeScale;
+            SendSlowTimeMessage(c_qteUiSlowTimeScale, true);
             return true;
         }
         else
         {
-            *GetTimeScale() = 1.0f - (1.0f - c_qteUiSlowTimeScale) * prop;
+            SendSlowTimeMessage(1.0f - (1.0f - c_qteUiSlowTimeScale) * prop, true);
             return false;
         }
     }
 
     void ResetTime()
     {
-        if (*GetTimeScaleEnabled())
-        {
-            *GetTimeScaleEnabled() = false;
-            *GetTimeScale() = 1.0f;
-        }
+        SendSlowTimeMessage(1.0f, false);
+    }
+
+    void SendSlowTimeMessage(float scale, bool isSlowed)
+    {
+        size_t cGameplayFlowActor = *(uint32_t*)(*(uint32_t*)(*(uint32_t*)((*(uint32_t*)0x1E66B34) + 4) + 52) + 96 + 0x2C);
+        SendMessage(cGameplayFlowActor, boost::make_shared<Sonic::Message::MsgChangeGameSpeed>(scale, isSlowed ? 0 : 1));
     }
 
     void PlayIntroAnim()
@@ -876,7 +865,7 @@ bool TrickJumper::ProcessMessage
                         // first slot must be valid
                         valid &= m_Data.m_TrickCount[i] > 0 && m_Data.m_TrickTime[i] != 0.0f;
                     }
-                    else if (m_Data.m_TrickCount[i] != 0 || m_Data.m_TrickTime[i] != 0.0f)
+                    else if (m_Data.m_TrickCount[i] != 0 && m_Data.m_TrickTime[i] != 0.0f)
                     {
                         // 2nd & 3rd slot
                         valid &= m_Data.m_TrickCount[i] > 0 && m_Data.m_TrickTime[i] != 0.0f;
