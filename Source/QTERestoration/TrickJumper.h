@@ -34,6 +34,7 @@ public:
 
 private:
 	Data m_Data;
+	float m_uvAnimUpdate;
 
 	hh::math::CVector m_arcPeakPosition;
 	float m_uiAppearTime;

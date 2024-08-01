@@ -711,6 +711,7 @@ void TrickJumper::InitializeEditParam
 )
 {
     m_statChecked = false;
+    m_uvAnimUpdate = 0.0f;
 
 	in_rEditParam.CreateParamFloat(&m_Data.m_OutOfControl[0], "FirstOutOfControl");
 	in_rEditParam.CreateParamFloat(&m_Data.m_Pitch[0], "FirstPitch");
@@ -811,8 +812,20 @@ void TrickJumper::SetUpdateParallel
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
 )
 {
-    FUNCTION_PTR(void, __thiscall, fpUpdateMotionAll, 0x752F00, Hedgehog::Motion::CSingleElementEffectMotionAll* This, float dt);
-    fpUpdateMotionAll(m_spEffectMotionAll.get(), in_rUpdateInfo.DeltaTime);
+    FUNCTION_PTR(void, __thiscall, fpUpdateMotionAll, 0x752F00, Hedgehog::Motion::CSingleElementEffectMotionAll * This, float dt);
+    FUNCTION_PTR(void, __thiscall, fpUpdateCTexcoordMotion, 0x7570E0, Hedgehog::Motion::CTexcoordMotion * This, float dt);
+
+    // belt
+    fpUpdateCTexcoordMotion(&m_spEffectMotionAll->m_TexcoordMotionList[0], in_rUpdateInfo.DeltaTime);
+
+    // arrows
+    float constexpr frameRate = 1.0f / 60.0f;
+    m_uvAnimUpdate += in_rUpdateInfo.DeltaTime;
+    while (m_uvAnimUpdate >= frameRate)
+    {
+        m_uvAnimUpdate -= frameRate;
+        fpUpdateCTexcoordMotion(&m_spEffectMotionAll->m_TexcoordMotionList[1], frameRate);
+    }
 }
 
 bool TrickJumper::ProcessMessage
