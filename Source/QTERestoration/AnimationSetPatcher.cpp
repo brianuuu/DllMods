@@ -190,6 +190,8 @@ const char* volatile const AnimationSetPatcher::TrickSG[7] =
     "TrickSG_G"
 };
 
+const char* volatile const AnimationSetPatcher::TrickJumpStart = "TrickJumpStart";
+
 void AnimationSetPatcher::applyPatches()
 {
     // DEBUG!!!
@@ -227,6 +229,9 @@ void AnimationSetPatcher::applyPatches()
     m_newAnimationDataSuper.emplace_back(TrickSG[4], "ssn_trick_finish", 1.0f, false, nullptr);
     m_newAnimationDataSuper.emplace_back(TrickSG[5], "ssn_trick_finish", 1.0f, false, nullptr);
     m_newAnimationDataSuper.emplace_back(TrickSG[6], "ssn_trick_finish", 1.0f, false, nullptr);
+
+    m_newAnimationData.emplace_back(TrickJumpStart, "sn_springjump_loop", 1.0f, true, nullptr);
+    m_newAnimationDataSuper.emplace_back(TrickJumpStart, "ssn_springjump_loop", 1.0f, true, nullptr);
 
     if (!m_newAnimationData.empty())
     {

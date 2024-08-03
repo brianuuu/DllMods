@@ -65,5 +65,6 @@ public:
     // New animation states
     static const char* volatile const TrickSWA[7];
     static const char* volatile const TrickSG[7];
+    static const char* volatile const TrickJumpStart;
 };
 

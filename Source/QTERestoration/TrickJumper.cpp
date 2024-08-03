@@ -276,7 +276,7 @@ public:
         context->StateFlag(eStateFlag_OutOfControl)++;
 
         // change animation
-        Common::SonicContextChangeAnimation("JumpSpring");
+        Common::SonicContextChangeAnimation(AnimationSetPatcher::TrickJumpStart);
 	}
 
     void CreateSequence(uint32_t buttonCount, float trickTime)
