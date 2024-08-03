@@ -206,6 +206,11 @@ bool Configuration::load(const std::string& rootPath)
         bb3.addReplace("SonicTpj.ar.00", str + ".ar.00");
         bb3.addReplace("SonicTpj.arl", str + ".arl");
 
+        str = "SonicTrick";
+        bbWriter::applyModel(str, m_model);
+        bb3.addReplace("SonicTrick.ar.00", str + ".ar.00");
+        bb3.addReplace("SonicTrick.arl", str + ".arl");
+
         str = "SonicWater";
         bbWriter::applyModel(str, m_model);
         bb3.addReplace("SonicWater.ar.00", str + ".ar.00");

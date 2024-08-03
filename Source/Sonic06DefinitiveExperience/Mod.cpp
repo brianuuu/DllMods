@@ -161,6 +161,12 @@ extern "C" __declspec(dllexport) void PostInit(ModInfo_t * modInfo)
         WRITE_MEMORY(0x121EDA4, uint8_t, 0x0F, 0x84, 0xAC, 0x00, 0x00);
     }
 
+    if (CheckPriority("QTERestoration.dll"))
+    {
+        MessageBox(nullptr, TEXT("'QTE Restoration' mod must be lower priority than 'Sonic 06 Definitive Experience'!"), TEXT("Sonic 06 Definitive Experience"), MB_ICONERROR);
+        exit(-1);
+    }
+
     if (!CheckPriority("Sonic06HUD.dll"))
     {
         MessageBox(nullptr, TEXT("'Sonic 06 HUD' mod must be higher priority than 'Sonic 06 Definitive Experience'!"), TEXT("Sonic 06 Definitive Experience"), MB_ICONERROR);

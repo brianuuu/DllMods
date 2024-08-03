@@ -293,8 +293,7 @@ HOOK(int, __fastcall, NextGenPhysics_CSonicStateFallBegin, 0x1118FB0, void* This
     Common::SonicContextGetAnimationInfo(message);
     //printf("Animation = %s\n", message.m_name);
 
-    if (message.IsAnimation("TrickPrepare") ||
-        message.IsAnimation("UpReelEnd") ||
+    if (message.IsAnimation("UpReelEnd") ||
         message.IsAnimation("LookBack") ||
         message.IsAnimation("DashRingL") ||
         message.IsAnimation("DashRingR") ||
@@ -305,13 +304,33 @@ HOOK(int, __fastcall, NextGenPhysics_CSonicStateFallBegin, 0x1118FB0, void* This
         message.IsAnimation("JumpBoardSpecialR"))
     {
         // Delay transition to SpinFall until we start falling
-        pendingFallAnimation = message.IsAnimation("TrickPrepare") ? 2 : 1;
-        WRITE_JUMP(0x111911F, (void*)0x1119188);
+        pendingFallAnimation = 1;
+        
+    }
+    else if (message.IsAnimation("TrickPrepare"))
+    {
+        // fixed time to change animation
+        pendingFallAnimation = 2;
+    }
+    else if (message.IsAnimation("TrickJumpStart") || message.IsAnimation("TrickSG"))
+    {
+        // do not change animation for QTE
+        pendingFallAnimation = 3;
     }
     else
     {
-        pendingFallAnimation = false;
+        pendingFallAnimation = 0;
+    }
+
+    if (pendingFallAnimation == 0)
+    {
+        // revert default changing to Fall
         WRITE_MEMORY(0x111911F, uint8_t, 0x8D, 0x8E, 0xA0, 0x02, 0x00, 0x00);
+    }
+    else
+    {
+        // handle animation change ourself
+        WRITE_JUMP(0x111911F, (void*)0x1119188);
     }
 
     return originalNextGenPhysics_CSonicStateFallBegin(This);

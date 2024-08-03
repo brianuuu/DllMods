@@ -198,15 +198,15 @@ void AnimationSetPatcher::applyPatches()
 
     // Disable using blending animations since they cause crash
     INSTALL_HOOK(CSonic_AnimationBlending);
-    WRITE_MEMORY(0x1274A6D, uint32_t, 0x15E7670); // sn_plate_v_l
-    WRITE_MEMORY(0x1274AD4, uint32_t, 0x15E7670); // sn_plate_v_l
-    WRITE_MEMORY(0x1274B3B, uint32_t, 0x15E7670); // sn_plate_v_r
-    WRITE_MEMORY(0x1274BA2, uint32_t, 0x15E7670); // sn_plate_v_r
-    WRITE_MEMORY(0x1274C09, uint32_t, 0x15E7670); // sn_plate_h
-    WRITE_MEMORY(0x1274C70, uint32_t, 0x15E7670); // sn_plate_h
     WRITE_MEMORY(0x1278EFA, uint32_t, 0x15E7670); // sn_needle_blow_loop
     WRITE_MEMORY(0x1278F66, uint32_t, 0x15E7670); // sn_direct_l
     WRITE_MEMORY(0x1278FCD, uint32_t, 0x15E7670); // sn_direct_r
+
+    // Fix ReactionPlate animations
+    WRITE_MEMORY(0x1274C09, uint32_t, 0x15E7CF4); // sn_plate_h -> sn_airboost_loop   
+    WRITE_MEMORY(0x1274C0E, uint8_t, 0x1D); // sn_plate_h -> loop
+    WRITE_MEMORY(0x1274C70, uint32_t, 0x15E7CF4); // sn_plate_h -> sn_airboost_loop
+    WRITE_MEMORY(0x1274C75, uint8_t, 0x1D); // sn_plate_h -> loop
 
     // Change Super Form dashring to use spring jump animation
     WRITE_MEMORY(0x1293D60, uint32_t, 0x15D5D8C); // DashRingL
