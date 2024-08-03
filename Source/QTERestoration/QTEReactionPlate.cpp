@@ -115,7 +115,8 @@ void ProcMsgHitReactionPlate(Sonic::Player::CPlayerSpeed* This, const Sonic::Mes
             const auto targetDirection = (targetPosition - message.m_Position).normalized();
             const bool facesLeft = rightDirection.dot(targetDirection) < 0;
 
-            This->GetContext()->ChangeAnimation(Common::IsPlayerSuper() ? "JumpBall" : (facesLeft ? "ReactionLandL" : "ReactionLandR"));
+            bool const isUnleashedSonic = This->GetContext()->m_pPlayer->m_spCharacterModel->GetNode("SonicRoot") != nullptr;
+            This->GetContext()->ChangeAnimation(isUnleashedSonic ? (facesLeft ? "ReactionLandLSWA" : "ReactionLandRSWA") : (facesLeft ? "ReactionLandL" : "ReactionLandR"));
             pState->m_AnimationType = facesLeft ?
                 Sonic::Player::CPlayerSpeedStateReactionLand::eAnimationType_ReactionJumpL :
                 Sonic::Player::CPlayerSpeedStateReactionLand::eAnimationType_ReactionJumpR;

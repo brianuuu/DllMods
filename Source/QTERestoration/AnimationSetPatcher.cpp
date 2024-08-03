@@ -198,6 +198,7 @@ void AnimationSetPatcher::applyPatches()
     //INSTALL_HOOK(CAnimationControlSingle_Debug);
     //INSTALL_HOOK(CSonicContextChangeAnimation);
 
+    // Finish QTE aniimations
     m_newAnimationData.emplace_back(TrickSWA[0], "sn_swa_trick_A", 1.0f, false, nullptr);
     m_newAnimationData.emplace_back(TrickSWA[1], "sn_swa_trick_B", 1.0f, false, nullptr);
     m_newAnimationData.emplace_back(TrickSWA[2], "sn_swa_trick_C", 1.0f, false, nullptr);
@@ -230,8 +231,17 @@ void AnimationSetPatcher::applyPatches()
     m_newAnimationDataSuper.emplace_back(TrickSG[5], "ssn_trick_finish", 1.0f, false, nullptr);
     m_newAnimationDataSuper.emplace_back(TrickSG[6], "ssn_trick_finish", 1.0f, false, nullptr);
 
+    // Specific animation for QTE start
     m_newAnimationData.emplace_back(TrickJumpStart, "sn_springjump_loop", 1.0f, true, nullptr);
     m_newAnimationDataSuper.emplace_back(TrickJumpStart, "ssn_springjump_loop", 1.0f, true, nullptr);
+
+    // Missing Super Sonic ReactionLand animations
+    m_newAnimationDataSuper.emplace_back("ReactionLandL", "ssn_plate_v_l", 0.0f, false, nullptr);
+    m_newAnimationDataSuper.emplace_back("ReactionLandR", "ssn_plate_v_r", 0.0f, false, nullptr);
+    m_newAnimationData.emplace_back("ReactionLandLSWA", "sn_plate_v_l", 0.0f, false, nullptr);
+    m_newAnimationData.emplace_back("ReactionLandRSWA", "sn_plate_v_r", 0.0f, false, nullptr);
+    m_newAnimationDataSuper.emplace_back("ReactionLandLSWA", "ssn_swa_plate_v_l", 0.0f, false, nullptr);
+    m_newAnimationDataSuper.emplace_back("ReactionLandRSWA", "ssn_swa_plate_v_r", 0.0f, false, nullptr);
 
     if (!m_newAnimationData.empty())
     {
