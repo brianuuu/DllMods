@@ -363,15 +363,7 @@ HOOK(bool, __fastcall, NextGenPhysics_CSonicStateFallAdvance, 0x1118C50, void* T
         playerVelocity.y() = 0.0f;
         float const hSpeed = playerVelocity.norm();
 
-        if (Configuration::m_model != Configuration::ModelType::Blaze && Common::IsPlayerSuper())
-        {
-            if (vSpeed <= 0.0f)
-            {
-                Common::SonicContextChangeAnimation("Fall");
-                pendingFallAnimation = false;
-            }
-        }
-        else if (vSpeed < 5.0f)
+        if (vSpeed < 5.0f)
         {
             Common::SonicContextChangeAnimation(hSpeed <= 5.0f ? AnimationSetPatcher::SpinFallSpring : AnimationSetPatcher::SpinFall);
             pendingFallAnimation = false;
@@ -522,8 +514,7 @@ void NextGenPhysics::applyPatches()
     INSTALL_HOOK(NextGenPhysics_CSonicUpdate);
 
     // SpinFall
-    if (Configuration::m_model == Configuration::ModelType::Sonic
-     || Configuration::m_model == Configuration::ModelType::Blaze)
+    if (Configuration::m_model != Configuration::ModelType::SonicElise)
     {
         // Transition to Fall immediately without checking down speed for CPlayerSpeedStateSpecialJump
         WRITE_JUMP(0x11DE320, (void*)0x11DE344);

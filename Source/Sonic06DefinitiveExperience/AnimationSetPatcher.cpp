@@ -299,8 +299,9 @@ void AnimationSetPatcher::applyPatches()
     WRITE_STRING(0x15D5FD0, "ssn_float_loop"); // Float
 
     // SpinFall animation
-    if (Configuration::m_model == Configuration::ModelType::Sonic
-     || Configuration::m_model == Configuration::ModelType::Blaze)
+    // ssn_spin_fall
+    // ssn_spin_fall_spring
+    if (Configuration::m_model != Configuration::ModelType::SonicElise)
     {
         // Remove JumpBoard to Fall transition and add spin fall
         WRITE_JUMP(0xE1F503, (void*)0xE1F56E);
@@ -308,11 +309,18 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationData.emplace_back(SpinFallSpring, "sn_spin_fall_spring", 1.0f, false, SpinFallLoop);
         m_newAnimationData.emplace_back(SpinFallLoop, "sn_jump_d_loop", 1.0f, true, nullptr);
 
+        // Super Form
         if (Configuration::m_model == Configuration::ModelType::Blaze)
         {
             m_newAnimationDataSuper.emplace_back(SpinFall, "sn_spin_fall", 1.0f, false, SpinFallLoop);
             m_newAnimationDataSuper.emplace_back(SpinFallSpring, "sn_spin_fall_spring", 1.0f, false, SpinFallLoop);
             m_newAnimationDataSuper.emplace_back(SpinFallLoop, "sn_jump_d_loop", 1.0f, true, nullptr);
+        }
+        else
+        {
+            m_newAnimationDataSuper.emplace_back(SpinFall, "ssn_spin_fall", 1.0f, false, SpinFallLoop);
+            m_newAnimationDataSuper.emplace_back(SpinFallSpring, "ssn_spin_fall_spring", 1.0f, false, SpinFallLoop);
+            m_newAnimationDataSuper.emplace_back(SpinFallLoop, "ssn_jump_d_loop", 1.0f, true, nullptr);
         }
 
         // Set animations to loop
