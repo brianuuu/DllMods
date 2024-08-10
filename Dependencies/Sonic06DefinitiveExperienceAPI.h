@@ -10,6 +10,7 @@ public:
         Sonic,
         SonicElise,
         Blaze,
+        Shadow,
     };
 
 private:

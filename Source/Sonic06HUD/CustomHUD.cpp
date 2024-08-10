@@ -242,6 +242,7 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
     case S06DE_API::ModelType::Sonic:       iconIndex = 0; break;
     case S06DE_API::ModelType::SonicElise:  iconIndex = 0; break;
     case S06DE_API::ModelType::Blaze:       iconIndex = 8; break;
+    case S06DE_API::ModelType::Shadow:      iconIndex = 1; break;
     }
 
     if (flags & 0x1 || (Common::IsCurrentStageMission() && (flags & 0x8) == 0)) // Life

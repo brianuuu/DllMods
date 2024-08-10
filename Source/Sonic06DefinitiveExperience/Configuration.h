@@ -9,6 +9,7 @@ public:
         Sonic = 0,
         SonicElise,
         Blaze,
+        Shadow,
     };
 
     enum LanguageType

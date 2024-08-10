@@ -6,9 +6,6 @@
 const char* sth2006RunStageIDs[STH2006_RUN_STAGE_COUNT] = { "ghz200", "sph200", "ssh200", "euc200" };
 bool RankRunAnimation::checkCanPlayRunAnimation()
 {
-    if (Configuration::m_model != Configuration::ModelType::Sonic) return false;
-    if (Configuration::m_run == Configuration::RunResultType::Disable) return false;
-
     // Not Modern Sonic or currently in super form
     if (!*pModernSonicContext || Common::IsPlayerSuper() || Common::IsCurrentStageMission()) return false;
 

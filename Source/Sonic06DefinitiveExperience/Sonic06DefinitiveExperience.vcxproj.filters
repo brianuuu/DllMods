@@ -23,6 +23,7 @@
     <ClCompile Include="NextGenSonic.cpp" />
     <ClCompile Include="NextGenBlaze.cpp" />
     <ClCompile Include="APIExport.cpp" />
+    <ClCompile Include="NextGenShadow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pch.h" />
@@ -44,5 +45,6 @@
     <ClInclude Include="CustomCamera.h" />
     <ClInclude Include="NextGenSonic.h" />
     <ClInclude Include="NextGenBlaze.h" />
+    <ClInclude Include="NextGenShadow.h" />
   </ItemGroup>
 </Project>

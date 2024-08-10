@@ -18,6 +18,7 @@ void bbWriter::applyModel(string& name, Configuration::ModelType type)
 		case Configuration::ModelType::Sonic:		name = "06Sonic\\" + name; return;
 		case Configuration::ModelType::SonicElise:	name = "06Elise\\" + name; return;
 		case Configuration::ModelType::Blaze:		name = "06Blaze\\" + name; return;
+		case Configuration::ModelType::Shadow:		name = "06Shadow\\" + name; return;
 	}
 }
 /*

@@ -299,6 +299,8 @@ void AnimationSetPatcher::applyPatches()
     WRITE_STRING(0x15D5FD0, "ssn_float_loop"); // Float
 
     // SpinFall animation
+    // sn_spin_fall
+    // sn_spin_fall_spring
     // ssn_spin_fall
     // ssn_spin_fall_spring
     if (Configuration::m_model != Configuration::ModelType::SonicElise)

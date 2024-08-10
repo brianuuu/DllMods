@@ -5,6 +5,7 @@
 
 #include "NextGenSonic.h"
 #include "NextGenBlaze.h"
+#include "NextGenShadow.h"
 
 //---------------------------------------------------
 // CSonicRotation
@@ -541,6 +542,11 @@ void NextGenPhysics::applyPatches()
         NextGenBlaze::applyPatches();
         break;
     }
+    case Configuration::ModelType::Shadow:
+    {
+        NextGenShadow::applyPatches();
+        break;
+    }
     }
 
     // Fix Generations layout
@@ -592,6 +598,11 @@ void NextGenPhysics::applyCharacterAnimationSpeed()
         case Configuration::ModelType::Blaze:
         {
             NextGenBlaze::setAnimationSpeed_Blaze(m_animationData);
+            break;
+        }
+        case Configuration::ModelType::Shadow:
+        {
+            NextGenShadow::setAnimationSpeed_Shadow(m_animationData);
             break;
         }
     }

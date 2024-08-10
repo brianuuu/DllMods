@@ -190,6 +190,7 @@
     <ClCompile Include="Navigation.cpp" />
     <ClCompile Include="NextGenBlaze.cpp" />
     <ClCompile Include="NextGenPhysics.cpp" />
+    <ClCompile Include="NextGenShadow.cpp" />
     <ClCompile Include="NextGenSonic.cpp" />
     <ClCompile Include="Pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -220,6 +221,7 @@
     <ClInclude Include="Navigation.h" />
     <ClInclude Include="NextGenBlaze.h" />
     <ClInclude Include="NextGenPhysics.h" />
+    <ClInclude Include="NextGenShadow.h" />
     <ClInclude Include="NextGenSonic.h" />
     <ClInclude Include="Pch.h" />
     <ClInclude Include="RailPhysics.h" />
