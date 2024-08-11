@@ -12,5 +12,9 @@ class NextGenShadow
 public:
 	static void setAnimationSpeed_Shadow(NextGenAnimation& data);
 	static void applyPatches();
+
+	// X Action
+	static float m_xHeldTimer;
+	static bool bActionHandlerImpl();
 };
 
