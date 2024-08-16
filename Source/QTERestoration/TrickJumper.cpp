@@ -94,8 +94,6 @@ public:
 
 	~CTrickJumperUI()
 	{
-        ResetTime();
-
         if (m_spQTE)
         {
             m_spQTE->SendMessage(m_spQTE->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
@@ -702,6 +700,7 @@ public:
         //printf("[QTE] Killed\n");
         m_spTrickJumperUI = nullptr;
         SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+        ResetTime();
     }
 };
 
