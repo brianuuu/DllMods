@@ -49,6 +49,7 @@ HOOK_ENEMY_PROCESS_MESSAGE(CEnemyELauncher, 0xB82B40)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyCrawler, 0xB99E10)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyGunHunter, 0xBAA600)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyCopSpeeder, 0xBBA6B0)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyMotora, 0xBC7350)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyGanigani, 0xBCB8D0)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyLander, 0xBCF740)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyEFighter, 0xBD4DD0)
@@ -74,6 +75,7 @@ void EnemyTrigger::applyPatches()
     WRITE_MEMORY(0x16F95CC + 0x2C, uint32_t, 0xEA2940); // CEnemyCrawler
     WRITE_MEMORY(0x16F82FC + 0x2C, uint32_t, 0xEA2940); // CEnemyGunHunter
     WRITE_MEMORY(0x16F755C + 0x2C, uint32_t, 0xEA2940); // CEnemyCopSpeeder
+    WRITE_MEMORY(0x16F67C4 + 0x2C, uint32_t, 0xEA2940); // CEnemyMotora
     WRITE_MEMORY(0x16F62B4 + 0x2C, uint32_t, 0xEA2940); // CEnemyGanigani
     WRITE_MEMORY(0x16F5F64 + 0x2C, uint32_t, 0xEA2940); // CEnemyLander
     WRITE_MEMORY(0x16F593C + 0x2C, uint32_t, 0xEA2940); // CEnemyEFighter
@@ -102,6 +104,7 @@ void EnemyTrigger::applyPatches()
     INSTALL_HOOK(CEnemyCrawler_ProcessMessage);
     INSTALL_HOOK(CEnemyGunHunter_ProcessMessage);
     INSTALL_HOOK(CEnemyCopSpeeder_ProcessMessage);
+    INSTALL_HOOK(CEnemyMotora_ProcessMessage);
     INSTALL_HOOK(CEnemyGanigani_ProcessMessage);
     INSTALL_HOOK(CEnemyLander_ProcessMessage);
     INSTALL_HOOK(CEnemyEFighter_ProcessMessage);
