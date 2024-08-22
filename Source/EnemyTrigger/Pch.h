@@ -2,6 +2,9 @@
 
 #define WIN32_LEAN_AND_MEAN
 
+#include <BlueBlur.h>
+#include <BlueBlurCustom.h>
+
 // Detours
 #include <Windows.h>
 #include <detours.h>
