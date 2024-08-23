@@ -110,7 +110,7 @@ public:
 	static uint32_t m_enemyChain;
 	static uint32_t m_enemyCount;
 	static float m_enemyChainTimer;
-	static void addEnemyChain(uint32_t* This, void* message);
+	static void addEnemyChain(uint32_t* This);
 	static uint32_t calculateEnemyChainBonus();
 
 	// Bonus GUI

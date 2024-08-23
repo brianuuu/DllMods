@@ -211,7 +211,7 @@ HOOK(void, __fastcall, ScoreManager_GetPhysicsMsgNotifyObjectEvent, 0xEA4F50, So
 		int fakeEnemyType = ChaosEnergy::getFakeEnemyType(name);
 		if (fakeEnemyType)
 		{
-			ScoreManager::addEnemyChain((uint32_t*)This, nullptr);
+			ScoreManager::addEnemyChain((uint32_t*)This);
 		}
 	}
 
@@ -321,84 +321,72 @@ HOOK(void, __fastcall, ScoreManager_GetMissionDashRing, 0xEDB560, uint32_t This,
 
 HOOK(void, __fastcall, ScoreManager_EnemyGunner, 0xBAA2F0, uint32_t* This, void* Edx, void* message)
 {
-	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
 	originalScoreManager_EnemyGunner(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyStingerLancer, 0xBB01B0, uint32_t* This, void* Edx, void* message)
 {
-	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(This[104] ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, This);
 	originalScoreManager_EnemyStingerLancer(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyBuster, 0xB82900, uint32_t* This, void* Edx, void* message)
 {
-	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(ScoreType::ST_enemyMedium, This);
 	originalScoreManager_EnemyBuster(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyFlyer, 0xBA6450, uint32_t* This, void* Edx, void* message)
 {
-	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
 	originalScoreManager_EnemyFlyer(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemySearcherHunter, 0xBDC110, uint32_t* This, void* Edx, void* message)
 {
-	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(*(bool*)((uint32_t)This + 0x17C) ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, This);
 	originalScoreManager_EnemySearcherHunter(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyLiner, 0xBC7440, uint32_t* This, void* Edx, void* message)
 {
-	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
 	originalScoreManager_EnemyLiner(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyBomber, 0xBCB9A0, uint32_t* This, void* Edx, void* message)
 {
-	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
 	originalScoreManager_EnemyBomber(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyRounder, 0xBCF5E0, uint32_t* This, void* Edx, void* message)
 {
-	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
 	originalScoreManager_EnemyRounder(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyTaker, 0xBA3140, uint32_t* This, void* Edx, void* message)
 {
-	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
 	originalScoreManager_EnemyTaker(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyBiter, 0xB86850, uint32_t* This, void* Edx, void* message)
 {
-	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
 	originalScoreManager_EnemyBiter(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyCrawler, 0xB99B80, uint32_t* This, void* Edx, void* message)
 {
-	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(ScoreType::ST_enemyMedium, This);
 	originalScoreManager_EnemyCrawler(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemySpinner, 0xBBD990, uint32_t* This, void* Edx, void* message)
 {
-	ScoreManager::addEnemyChain(This, message);
 	ScoreManager::addScore(*(bool*)((uint32_t)This + 372) ? ScoreType::ST_enemyMedium : ScoreType::ST_enemySmall, This);
 	originalScoreManager_EnemySpinner(This, Edx, message);
 }
@@ -553,7 +541,7 @@ void ScoreManager::applyPatches()
 	WRITE_MEMORY(0xC783DE, bool, true); // Don't hide HUD after defeating
 
 	// Iblis boss
-	WRITE_JUMP(0xC0FFC5, ScoreManager_CBossPerfectChaosAddScore)
+	WRITE_JUMP(0xC0FFC5, ScoreManager_CBossPerfectChaosAddScore);
 }
 
 void __fastcall ScoreManager::addScore(ScoreType type, uint32_t* This)
@@ -667,22 +655,12 @@ uint32_t ScoreManager::calculateRainbowRingChainBonus()
 	}
 }
 
-void ScoreManager::addEnemyChain(uint32_t* This, void* message)
+void ScoreManager::addEnemyChain(uint32_t* This)
 {
 	// Already counted this object
 	if (!This || m_savedObjects.count(This))
 	{
 		return;
-	}
-
-	// Must be MsgNotifyObjectEvent event 12
-	if (message)
-	{
-		uint32_t* msg = (uint32_t*)message;
-		if (msg[0] != 0x016A9D98 || msg[4] != 12)
-		{
-			return;
-		}
 	}
 
 	// Add to the current enemy chain

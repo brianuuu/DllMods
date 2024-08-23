@@ -1,345 +1,118 @@
 #include "EnemyTrigger.h"
+#include "ScoreManager.h"
 
-uint32_t const MsgNotifyObjectEventOffset = 0x16811C0;
-#define DAMAGE_EVENT_ASM(enemyName, address, damageFunctionAddress) \
-    uint32_t const enemyName##DamageEventReturnAddress = address; \
-    uint32_t const enemyName##JumpToDamageCall = address + 0x0D; \
-    uint32_t enemyName##Damaging = 0; \
-    void __declspec(naked) enemyName##DamageEvent() \
+void __declspec(naked) SendEnemyEventTrigger()
+{
+    static uint32_t fpCHolderBaseDtor = 0x65FC40;
+    static uint32_t fpEventTrigger = 0xD5ED00;
+    static uint32_t returnAddress = 0xBE067A;
+    __asm
+    {
+        call    [fpCHolderBaseDtor]
+        push    4
+        push    esi
+        call    [fpEventTrigger]
+        jmp     [returnAddress]
+    }
+}
+
+void HandleEnemyMsgNotifyObjectEvent(hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message)
+{
+    auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
+    if (msg.m_Event == 12)
+    {
+        ScoreManager::addEnemyChain((uint32_t*)This);
+        This->SendMessage(This->m_ActorID, boost::make_shared<Sonic::Message::MsgDamage>
+            (
+                *(uint32_t*)0x1E0BE30, hh::math::CVector::Zero(), hh::math::CVector::Zero()
+            )
+        );
+    }
+}
+
+#define HOOK_ENEMY_PROCESS_MESSAGE(enemyName, address) \
+    HOOK(void, __fastcall, enemyName##_ProcessMessage, address, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag) \
     { \
-        __asm \
+        if (flag && message.Is<Sonic::Message::MsgNotifyObjectEvent>()) \
         { \
-            /*Test if event is "MsgNotifyObjectEvent"*/ \
-            __asm mov   eax, [esi] \
-            __asm mov   edx, [eax + 4] \
-            __asm push  [MsgNotifyObjectEventOffset] \
-            __asm mov   ecx, esi \
-            __asm call  edx \
-            __asm test  al, al \
-            __asm jz    jump \
-            /*Test if event number is 12*/ \
-            __asm mov   eax, [esi + 0x10] \
-            __asm cmp   eax, 0x0C \
-            __asm jz    jumpSuccess \
-            /*Original function (checking MsgDamage)*/ \
-            __asm jump: \
-            __asm mov   eax, [esi] \
-            __asm mov   edx, [eax + 4] \
-            __asm jmp   [enemyName##DamageEventReturnAddress] \
-            /*Success*/ \
-            __asm jumpSuccess: \
-            __asm mov   enemyName##Damaging, 1 \
-            __asm jmp   [enemyName##JumpToDamageCall] \
+            HandleEnemyMsgNotifyObjectEvent(This, Edx, message); \
         } \
-    } \
-    HOOK(void, __fastcall, enemyName##MsgDamage, damageFunctionAddress, void* This, void* Edx, uint32_t* a2) \
-    { \
-        /*Fire event 4*/ \
-        Common::fEventTrigger(This, 4); \
-        original##enemyName##MsgDamage(This, Edx, a2);\
+        original##enemyName##_ProcessMessage(This, Edx, message, flag); \
     }
 
-#define DAMAGE_EXPLODE_ASM(enemyName, failAddress, successAddress, originalASM, successASM) \
-    extern uint32_t enemyName##Damaging; \
-    void __declspec(naked) enemyName##ExplodeASM() \
-    { \
-        static uint32_t const enemyFailAddress = failAddress; \
-        static uint32_t const enemySuccessAddress = successAddress; \
-        __asm \
-        { \
-            /*test explode*/ \
-            __asm cmp     enemyName##Damaging, 1 \
-            __asm je      jumpSuccess \
-            /*original function*/ \
-            originalASM \
-            __asm jump: \
-            __asm jmp     [enemyFailAddress] \
-            /*success*/ \
-            __asm jumpSuccess: \
-            successASM \
-            __asm mov     enemyName##Damaging, 0 \
-            __asm jmp     [enemySuccessAddress] \
-        } \
-    }
-
-#define WRITE_JUMP_EVENT_TRIGGER(address, enemyName) \
-    WRITE_JUMP(address, enemyName##DamageEvent); \
-    INSTALL_HOOK(enemyName##MsgDamage);
-
-// ---------------------------------------------------
-// Enemies that explodes on spot
-// ---------------------------------------------------
-DAMAGE_EVENT_ASM(EnemyEChaserSV, 0xB763AF, 0xB76340);
-DAMAGE_EVENT_ASM(EnemyAeroCannon, 0xB7F1BF, 0xB7F100);
-DAMAGE_EVENT_ASM(EnemyBeetle, 0xBA652F, 0xBA6450);
-DAMAGE_EVENT_ASM(EnemyEggRobo, 0xBB023F, 0xBB01B0);
-DAMAGE_EVENT_ASM(EnemyGrabber, 0xBC3B4F, 0xBC39F0);
-DAMAGE_EVENT_ASM(EnemyBatabata, 0xBD7EAF, 0xBD7E60);
-DAMAGE_EVENT_ASM(EnemyBeeton, 0xBDC19F, 0xBDC110);
-
-// ---------------------------------------------------
-// Enemies that has animations when getting hit
-// ---------------------------------------------------
-DAMAGE_EVENT_ASM(EnemyELauncher, 0xB82B5F, 0xB82900);
-#define ENEMY_E_LAUNCHER_ASM __asm cmp [esp+0x20-0x11], 0 __asm jz jumpSuccess
-DAMAGE_EXPLODE_ASM(EnemyELauncher, 0xB82986, 0xB82AED, ENEMY_E_LAUNCHER_ASM, __asm nop);
-
-DAMAGE_EVENT_ASM(EnemyCrawler, 0xB99E2F, 0xB99B80);
-#define ENEMY_CRAWLER_ASM __asm mov ebx, [ebp+0x8] __asm mov ecx, [ebx+0x10]
-#define ENEMY_CRAWLER_SUCCESS_ASM __asm mov ebx, [ebp+0x8]
-DAMAGE_EXPLODE_ASM(EnemyCrawler, 0xB99D1E, 0xB99D50, ENEMY_CRAWLER_ASM, ENEMY_CRAWLER_SUCCESS_ASM);
-
-DAMAGE_EVENT_ASM(EnemyGunHunter, 0xBAA61F, 0xBAA2F0);
-#define ENEMY_GUN_HUNTER_ASM __asm cmp byte ptr [esp+0x40-0x34+0x3], 0 __asm jz jumpSuccess
-DAMAGE_EXPLODE_ASM(EnemyGunHunter, 0xBAA37B, 0xBAA585, ENEMY_GUN_HUNTER_ASM, __asm nop);
-
-DAMAGE_EVENT_ASM(EnemyCopSpeeder, 0xBBA6CF, 0xBBA530);
-#define ENEMY_COP_SPEEDER_ASM __asm test bl, bl __asm jz jumpSuccess
-DAMAGE_EXPLODE_ASM(EnemyCopSpeeder, 0xBBA59D, 0xBBA68A, ENEMY_COP_SPEEDER_ASM, __asm nop);
-
-DAMAGE_EVENT_ASM(EnemyMotora, 0xBC736F, 0xBC7440);
-#define ENEMY_MOTORA_ASM __asm test esi, esi __asm jnz jumpSuccess
-DAMAGE_EXPLODE_ASM(EnemyMotora, 0xBC74AA, 0xBC753C, ENEMY_MOTORA_ASM, __asm nop);
-
-DAMAGE_EVENT_ASM(EnemyGanigani, 0xBCB8EF, 0xBCB9A0);
-#define ENEMY_GANIGANI_ASM __asm test esi, esi __asm jnz jumpSuccess
-DAMAGE_EXPLODE_ASM(EnemyGanigani, 0xBCBA10, 0xBCBA9A, ENEMY_GANIGANI_ASM, __asm nop);
-
-DAMAGE_EVENT_ASM(EnemyLander, 0xBCF75F, 0xBCF5E0);
-#define ENEMY_LANDER_ASM __asm test bl, bl __asm jz jumpSuccess
-DAMAGE_EXPLODE_ASM(EnemyLander, 0xBCF64D, 0xBCF705, ENEMY_LANDER_ASM, __asm nop);
-
-DAMAGE_EVENT_ASM(EnemyEFighter, 0xBD4DEF, 0xBD49E0);
-#define ENEMY_E_FIGHTER_ASM __asm test esi, esi __asm jnz jumpSuccess
-DAMAGE_EXPLODE_ASM(EnemyEFighter, 0xBD4B35, 0xBD4CB7, ENEMY_E_FIGHTER_ASM, __asm nop);
-
-// ---------------------------------------------------
-// Enemies that has animations when getting hit, or need to bypass certain functions
-// ---------------------------------------------------
-DAMAGE_EVENT_ASM(EnemyNal, 0xB9EA2F, 0xB9E8D0);
-#define ENEMY_NAL_ASM __asm test bl, bl __asm jnz jump __asm push esi __asm jmp jumpSuccess
-DAMAGE_EXPLODE_ASM(EnemyNal, 0xB9E9F8, 0xB9E9D9, ENEMY_NAL_ASM, __asm push esi);
-uint32_t const sub_4F8840 = 0x4F8840;
-void __declspec(naked) EnemyNalExtraASM()
-{
-    static uint32_t const returnAddress = 0xB9E98C;
-    __asm
-    {
-        cmp     EnemyNalDamaging, 1
-        je      jump
-
-        call    [sub_4F8840]
-
-        jump:
-        jmp     [returnAddress]
-    }
-}
-
-DAMAGE_EVENT_ASM(EnemyTaker, 0xBA326F, 0xBA3140);
-DAMAGE_EVENT_ASM(EnemyBiter, 0xB869CB, 0xB86850);
-void __declspec(naked) EnemyBiterExtraASM()
-{
-    static uint32_t const returnAddress = 0xB8692D;
-    __asm
-    {
-        cmp     EnemyBiterDamaging, 1
-        je      jump
-
-        call    [sub_4F8840]
-
-        jump:
-        jmp     [returnAddress]
-    }
-}
-
-void __declspec(naked) EnemySharedExtraASM()
-{
-    static uint32_t const sub_4F87B0 = 0x4F87B0;
-    static uint32_t const returnAddress = 0xBE0C01;
-    static uint32_t const successAddress = 0xBE0C47;
-    __asm
-    {
-        /*test explode*/
-        cmp     EnemyTakerDamaging, 1
-        je      jumpEnemyTaker
-
-        cmp     EnemyBiterDamaging, 1
-        je      jumpEnemyBiter
-
-        /*original function*/
-        mov     ecx, [edi + 0x10]
-        push    ecx
-        call    [sub_4F87B0]
-        jmp     [returnAddress]
-
-        /*success*/
-        jumpEnemyTaker:
-        add     esp, 0x10
-        mov     EnemyTakerDamaging, 0
-        jmp     [successAddress]
-
-        jumpEnemyBiter:
-        add     esp, 0x10
-        mov     EnemyBiterDamaging, 0
-        jmp     [successAddress]
-    }
-}
-
-DAMAGE_EVENT_ASM(EnemySpinner, 0xBBDA4F, 0xBBD990);
-void __declspec(naked) EnemySpinnerExtraASM()
-{
-    static uint32_t const returnAddress = 0xBBD9A3;
-    static uint32_t const successAddress = 0xBBD9B9;
-    __asm
-    {
-        cmp     EnemySpinnerDamaging, 1
-        je      jump
-
-        cmp     byte ptr[esi + 239h], 0
-        jmp     [returnAddress]
-
-        jump:
-        jmp     [successAddress]
-    }
-}
-
-
-DAMAGE_EVENT_ASM(EnemyPawn, 0xB958EF, 0xB907E0);
-#define ENEMY_PAWN_ASM __asm call [sub_4F8840]
-#define ENEMY_PAWN_SUCCESS_ASM __asm add esp, 0x10
-DAMAGE_EXPLODE_ASM(EnemyPawn, 0xB935FB, 0xB93666, ENEMY_PAWN_ASM, ENEMY_PAWN_SUCCESS_ASM);
-void __declspec(naked) EnemyPawnExtraASM()
-{
-    static uint32_t const returnAddress = 0xB95A53;
-    static uint32_t const successAddress = 0xB95AB1;
-    __asm
-    {
-        cmp     EnemyPawnDamaging, 1
-        je      jump
-
-        call    [sub_4F8840]
-        jmp     [returnAddress]
-
-        jump:
-        add     esp, 0x10
-        jmp     [successAddress]
-    }
-}
-void __declspec(naked) EnemyPawnExtraASM2()
-{
-    static uint32_t const returnAddress = 0xB95B3A;
-    static uint32_t const successAddress = 0xB95CB5;
-    __asm
-    {
-        cmp     EnemyPawnDamaging, 1
-        je      jumpSuccess
-
-        cmp     [esp + 0x30 -0x1D], 0
-        jnz     jump
-        cmp     [esp + 0x30 - 0x1E], 0
-        jnz     jumpSuccess
-
-        jump:
-        jmp     [returnAddress]
-
-        jumpSuccess:
-        jmp     [successAddress]
-    }
-}
-void __declspec(naked) EnemyPawnPLAExtraASM()
-{
-    static uint32_t const returnAddress = 0xB8C602;
-    static uint32_t const successAddress = 0xB8C5EE;
-    __asm
-    {
-        // Test if event is "MsgNotifyObjectEvent"
-        call    edx
-        test    al, al
-        jz      jump
-
-        // Test if event number is 12
-        mov     eax, [esi + 0x10]
-        cmp     eax, 0x0C
-        jz      jump
-        jmp     [successAddress]
-        
-        // force run damage
-        jump:
-        jmp     [returnAddress]
-    }
-}
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyEChaserSV, 0xB76390)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyAeroCannon, 0xB7F1A0)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyBeetle, 0xBA6510) // also CEnemyMonoBeetle and CEnemyGunBeetle
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyEggRobo, 0xBB0220)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyGrabber, 0xBC3B30)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyBatabata, 0xBD7E90)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyBeeton, 0xBDC180)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyELauncher, 0xB82B40)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyCrawler, 0xB99E10)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyGunHunter, 0xBAA600)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyCopSpeeder, 0xBBA6B0)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyMotora, 0xBC7350)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyGanigani, 0xBCB8D0)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyLander, 0xBCF740)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyEFighter, 0xBD4DD0)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyNal, 0xB9EA10)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemySpinner, 0xBBDA30)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyPawnBase, 0xB958D0) // include all CEnemyPawn
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyTaker, 0xBA3250)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyBiter, 0xB869B0)
 
 void EnemyTrigger::applyPatches()
 {
-    // ---------------------------------------------------
-    // This allows ALL objects in TriggerList to inialize list
-    // Ideally just want to do that for enemies, but works for now
-    WRITE_NOP(0xD5F9CB, 0xD);
+    // Allow all enemies to send Trigger 4, call from 0xD5F9B0 (using function from CObjectPhysics)
+    WRITE_MEMORY(0x16FC414 + 0x2C, uint32_t, 0xEA2940); // CEnemyEChaserSV
+    WRITE_MEMORY(0x16FB62C + 0x2C, uint32_t, 0xEA2940); // CEnemyAeroCannon
+    WRITE_MEMORY(0x16F868C + 0x2C, uint32_t, 0xEA2940); // CEnemyBeetle
+    WRITE_MEMORY(0x16F87CC + 0x2C, uint32_t, 0xEA2940); // CEnemyMonoBeetle
+    WRITE_MEMORY(0x16F890C + 0x2C, uint32_t, 0xEA2940); // CEnemyGunBeetle
+    WRITE_MEMORY(0x16F7C9C + 0x2C, uint32_t, 0xEA2940); // CEnemyEggRobo
+    WRITE_MEMORY(0x16F6B5C + 0x2C, uint32_t, 0xEA2940); // CEnemyGrabber
+    WRITE_MEMORY(0x16F561C + 0x2C, uint32_t, 0xEA2940); // CEnemyBatabata
+    WRITE_MEMORY(0x16F517C + 0x2C, uint32_t, 0xEA2940); // CEnemyBeeton
+    WRITE_MEMORY(0x16FB1FC + 0x2C, uint32_t, 0xEA2940); // CEnemyELauncher
+    WRITE_MEMORY(0x16F95CC + 0x2C, uint32_t, 0xEA2940); // CEnemyCrawler
+    WRITE_MEMORY(0x16F82FC + 0x2C, uint32_t, 0xEA2940); // CEnemyGunHunter
+    WRITE_MEMORY(0x16F755C + 0x2C, uint32_t, 0xEA2940); // CEnemyCopSpeeder
+    WRITE_MEMORY(0x16F67C4 + 0x2C, uint32_t, 0xEA2940); // CEnemyMotora
+    WRITE_MEMORY(0x16F62B4 + 0x2C, uint32_t, 0xEA2940); // CEnemyGanigani
+    WRITE_MEMORY(0x16F5F64 + 0x2C, uint32_t, 0xEA2940); // CEnemyLander
+    WRITE_MEMORY(0x16F593C + 0x2C, uint32_t, 0xEA2940); // CEnemyEFighter
+    WRITE_MEMORY(0x16F912C + 0x2C, uint32_t, 0xEA2940); // CEnemyNal
+    WRITE_MEMORY(0x16F70BC + 0x2C, uint32_t, 0xEA2940); // CEnemySpinner
+    WRITE_MEMORY(0x16FA5F4 + 0x2C, uint32_t, 0xEA2940); // CEnemyPawnPla
+    WRITE_MEMORY(0x16F9E8C + 0x2C, uint32_t, 0xEA2940); // CEnemyPawnGun
+    WRITE_MEMORY(0x16F9A1C + 0x2C, uint32_t, 0xEA2940); // CEnemyPawnBase
+    WRITE_MEMORY(0x16FA104 + 0x2C, uint32_t, 0xEA2940); // CEnemyPawnLance
+    WRITE_MEMORY(0x16FA37C + 0x2C, uint32_t, 0xEA2940); // CEnemyPawnNormal
+    WRITE_MEMORY(0x16F8C54 + 0x2C, uint32_t, 0xEA2940); // CEnemyTaker
+    WRITE_MEMORY(0x16FAD14 + 0x2C, uint32_t, 0xEA2940); // CEnemyBiter
 
-    // ---------------------------------------------------
-    // Enemies that explodes on spot
-    // ---------------------------------------------------
-    WRITE_JUMP_EVENT_TRIGGER(0xB763AA, EnemyEChaserSV);
-    WRITE_JUMP_EVENT_TRIGGER(0xB7F1BA, EnemyAeroCannon);
-    WRITE_JUMP_EVENT_TRIGGER(0xBA652A, EnemyBeetle);
-    WRITE_JUMP_EVENT_TRIGGER(0xBB023A, EnemyEggRobo);
-    WRITE_JUMP_EVENT_TRIGGER(0xBC3B4A, EnemyGrabber);
-    WRITE_JUMP_EVENT_TRIGGER(0xBD7EAA, EnemyBatabata);
-    WRITE_JUMP_EVENT_TRIGGER(0xBDC19A, EnemyBeeton);
+    // Send EventTrigger when enemy dies (when CObjChaosEnergy spawns)
+    WRITE_JUMP(0xBE0675, SendEnemyEventTrigger);
 
-    // ---------------------------------------------------
-    // Enemies that has animations when getting hit
-    // ---------------------------------------------------
-    WRITE_JUMP_EVENT_TRIGGER(0xB82B5A, EnemyELauncher);
-    WRITE_JUMP(0xB8297B, EnemyELauncherExplodeASM);
-
-    WRITE_JUMP_EVENT_TRIGGER(0xB99E2A, EnemyCrawler);
-    WRITE_JUMP(0xB99D18, EnemyCrawlerExplodeASM);
-    WRITE_NOP(0xB99D1D, 0x1);
-
-    WRITE_JUMP_EVENT_TRIGGER(0xBAA61A, EnemyGunHunter);
-    WRITE_JUMP(0xBAA370, EnemyGunHunterExplodeASM);
-
-    WRITE_JUMP_EVENT_TRIGGER(0xBBA6CA, EnemyCopSpeeder);
-    WRITE_JUMP(0xBBA595, EnemyCopSpeederExplodeASM);
-    WRITE_NOP(0xBBA59A, 0x3);
-
-    WRITE_JUMP_EVENT_TRIGGER(0xBC736A, EnemyMotora);
-    WRITE_JUMP(0xBC74A2, EnemyMotoraExplodeASM);
-    WRITE_NOP(0xBC74A7, 0x3);
-
-    WRITE_JUMP_EVENT_TRIGGER(0xBCB8EA, EnemyGanigani);
-    WRITE_JUMP(0xBCBA08, EnemyGaniganiExplodeASM);
-    WRITE_NOP(0xBCBA0D, 0x3);
-
-    WRITE_JUMP_EVENT_TRIGGER(0xBCF75A, EnemyLander);
-    WRITE_JUMP(0xBCF645, EnemyLanderExplodeASM);
-    WRITE_NOP(0xBCF64A, 0x3);
-
-    WRITE_JUMP_EVENT_TRIGGER(0xBD4DEA, EnemyEFighter);
-    WRITE_JUMP(0xBD4B2D, EnemyEFighterExplodeASM);
-    WRITE_NOP(0xBD4B32, 0x3);
-
-    // ---------------------------------------------------
-    // Enemies that has animations when getting hit, or need to bypass certain functions
-    // ---------------------------------------------------
-    WRITE_JUMP_EVENT_TRIGGER(0xB9EA2A, EnemyNal);
-    WRITE_JUMP(0xB9E9D4, EnemyNalExplodeASM);
-    WRITE_JUMP(0xB9E987, EnemyNalExtraASM);
-
-    WRITE_JUMP_EVENT_TRIGGER(0xBBDA4A, EnemySpinner);
-    WRITE_JUMP(0xBBD99C, EnemySpinnerExtraASM);
-    WRITE_NOP(0xBBD9A1, 0x2);
-
-    WRITE_JUMP_EVENT_TRIGGER(0xB958EA, EnemyPawn);
-    WRITE_JUMP(0xB935F6, EnemyPawnExplodeASM);
-    WRITE_JUMP(0xB95A4E, EnemyPawnExtraASM);
-    WRITE_JUMP(0xB95B28, EnemyPawnExtraASM2);
-    WRITE_JUMP(0xB8C5E8, EnemyPawnPLAExtraASM);
-
-    WRITE_JUMP_EVENT_TRIGGER(0xBA326A, EnemyTaker);
-    WRITE_JUMP_EVENT_TRIGGER(0xB869C6, EnemyBiter);
-    WRITE_JUMP(0xB86928, EnemyBiterExtraASM);
-    WRITE_JUMP(0xBE0BF8, EnemySharedExtraASM);
-    WRITE_NOP(0xBE0BFD, 0x4);
+    // Handle MsgNotifyObjectEvent
+    INSTALL_HOOK(CEnemyEChaserSV_ProcessMessage);
+    INSTALL_HOOK(CEnemyAeroCannon_ProcessMessage);
+    INSTALL_HOOK(CEnemyBeetle_ProcessMessage);
+    INSTALL_HOOK(CEnemyEggRobo_ProcessMessage);
+    INSTALL_HOOK(CEnemyGrabber_ProcessMessage);
+    INSTALL_HOOK(CEnemyBatabata_ProcessMessage);
+    INSTALL_HOOK(CEnemyBeeton_ProcessMessage);
+    INSTALL_HOOK(CEnemyELauncher_ProcessMessage);
+    INSTALL_HOOK(CEnemyCrawler_ProcessMessage);
+    INSTALL_HOOK(CEnemyGunHunter_ProcessMessage);
+    INSTALL_HOOK(CEnemyCopSpeeder_ProcessMessage);
+    INSTALL_HOOK(CEnemyMotora_ProcessMessage);
+    INSTALL_HOOK(CEnemyGanigani_ProcessMessage);
+    INSTALL_HOOK(CEnemyLander_ProcessMessage);
+    INSTALL_HOOK(CEnemyEFighter_ProcessMessage);
+    INSTALL_HOOK(CEnemyNal_ProcessMessage);
+    INSTALL_HOOK(CEnemySpinner_ProcessMessage);
+    INSTALL_HOOK(CEnemyPawnBase_ProcessMessage);
+    INSTALL_HOOK(CEnemyTaker_ProcessMessage);
+    INSTALL_HOOK(CEnemyBiter_ProcessMessage);
 }
