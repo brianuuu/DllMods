@@ -260,21 +260,25 @@ HOOK(void, __fastcall, Stage_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObject*
     }
     case 300:
     {
+        // Mute
         Common::PlayStageMusic("City_Escape_Generic2", 1.5f);
         return;
     }
     case 301:
     {
+        // Soleanna Town
         Common::PlayStageMusic("Speed_Highway_Generic1", 0.0f);
         return;
     }
     case 302:
     {
+        // New City
         Common::PlayStageMusic("Speed_Highway_Generic2", 0.0f);
         return;
     }
     case 303:
     {
+        // Soleanna Forest
         Common::PlayStageMusic("Speed_Highway_Generic3", 0.0f);
         return;
     }
