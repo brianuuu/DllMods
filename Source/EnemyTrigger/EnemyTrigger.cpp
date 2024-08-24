@@ -29,13 +29,13 @@ void HandleEnemyMsgNotifyObjectEvent(hh::fnd::CMessageActor* This, void* Edx, hh
 }
 
 #define HOOK_ENEMY_PROCESS_MESSAGE(enemyName, address) \
-    HOOK(void, __fastcall, enemyName##_ProcessMessage, address, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag) \
+    HOOK(bool, __fastcall, enemyName##_ProcessMessage, address, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag) \
     { \
         if (flag && message.Is<Sonic::Message::MsgNotifyObjectEvent>()) \
         { \
             HandleEnemyMsgNotifyObjectEvent(This, Edx, message); \
         } \
-        original##enemyName##_ProcessMessage(This, Edx, message, flag); \
+        return original##enemyName##_ProcessMessage(This, Edx, message, flag); \
     }
 
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyEChaserSV, 0xB76390)
