@@ -384,6 +384,76 @@ HOOK(void, __fastcall, Stage_CTutorialImpl, 0xD24440, int This, void* Edx, int a
     originalStage_CTutorialImpl(This, Edx, a2);
 }
 
+//---------------------------------------------------
+// Enemy hitting ObjectPhysics
+//---------------------------------------------------
+HOOK(void, __fastcall, Stage_CObjectPhysics_MsgDamage, 0xEA50B0, uint32_t* This, void* Edx, Sonic::Message::MsgDamage& message)
+{
+    if (message.m_DamageType == *(uint32_t*)0x1E0BE34) // DamageID_NoAttack
+    {
+        // allow enemy damage object physics
+        message.m_DamageType = *(uint32_t*)0x1E0BE2C; // DamageID_Normal
+    }
+
+    originalStage_CObjectPhysics_MsgDamage(This, Edx, message);
+}
+
+HOOK(void, __fastcall, Stage_CEnemyGunHunter_MsgHitEventCollision, 0xBA7580, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
+{
+    if (message.m_SenderActorID == Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_ActorID)
+    {
+        originalStage_CEnemyGunHunter_MsgHitEventCollision(This, Edx, message);
+    }
+}
+
+HOOK(void, __fastcall, Stage_CEnemyELauncher_MsgHitEventCollision, 0xB7FD80, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
+{
+    if (message.m_SenderActorID == Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_ActorID)
+    {
+        originalStage_CEnemyELauncher_MsgHitEventCollision(This, Edx, message);
+    }
+}
+
+HOOK(void, __fastcall, Stage_CEnemyMotora_MsgHitEventCollision, 0xBC4DF0, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
+{
+    if (message.m_SenderActorID == Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_ActorID)
+    {
+        originalStage_CEnemyMotora_MsgHitEventCollision(This, Edx, message);
+    }
+}
+
+HOOK(void, __fastcall, Stage_CEnemyGanigani_MsgHitEventCollision, 0xBC88D0, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
+{
+    if (message.m_SenderActorID == Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_ActorID)
+    {
+        originalStage_CEnemyGanigani_MsgHitEventCollision(This, Edx, message);
+    }
+}
+
+HOOK(void, __fastcall, Stage_CEnemyLander_MsgHitEventCollision, 0xBCC9E0, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
+{
+    if (message.m_SenderActorID == Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_ActorID)
+    {
+        originalStage_CEnemyLander_MsgHitEventCollision(This, Edx, message);
+    }
+}
+
+HOOK(void, __fastcall, Stage_CEnemyTaker_MsgHitEventCollision, 0xB9F770, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
+{
+    if (message.m_SenderActorID == Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_ActorID)
+    {
+        originalStage_CEnemyTaker_MsgHitEventCollision(This, Edx, message);
+    }
+}
+
+HOOK(void, __fastcall, Stage_CEnemyBiter_MsgHitEventCollision, 0xB83A20, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
+{
+    if (message.m_SenderActorID == Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_ActorID)
+    {
+        originalStage_CEnemyBiter_MsgHitEventCollision(This, Edx, message);
+    }
+}
+
 void Stage::applyPatches()
 {
     //---------------------------------------------------
@@ -464,4 +534,17 @@ void Stage::applyPatches()
     // Shop don't change music
     WRITE_JUMP(0xD34984, (void*)0xD349E2);
     WRITE_JUMP(0xD32D4C, (void*)0xD32D8E);
+
+    //---------------------------------------------------
+    // Enemy hitting ObjectPhysics
+    //---------------------------------------------------
+    INSTALL_HOOK(Stage_CObjectPhysics_MsgDamage);
+    INSTALL_HOOK(Stage_CEnemyGunHunter_MsgHitEventCollision);
+    INSTALL_HOOK(Stage_CEnemyELauncher_MsgHitEventCollision);
+    INSTALL_HOOK(Stage_CEnemyMotora_MsgHitEventCollision);
+    INSTALL_HOOK(Stage_CEnemyGanigani_MsgHitEventCollision);
+    INSTALL_HOOK(Stage_CEnemyLander_MsgHitEventCollision);
+    INSTALL_HOOK(Stage_CEnemyTaker_MsgHitEventCollision);
+    INSTALL_HOOK(Stage_CEnemyBiter_MsgHitEventCollision);
+    WRITE_NOP(0xBDE681, 2); // Always allow MsgCheckPermissionAttack
 }
