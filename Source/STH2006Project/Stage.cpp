@@ -454,6 +454,151 @@ HOOK(void, __fastcall, Stage_CEnemyBiter_MsgHitEventCollision, 0xB83A20, Sonic::
     }
 }
 
+//---------------------------------------------------
+// Bombbox Explosion
+//---------------------------------------------------
+float const cExplosion_radius = 5.0f;
+float const cExplosion_duration = 0.3f;
+float const cExplosion_velocityObjPhy = 20.0f;
+float const cExplosion_velocityEnemy = 10.0f;
+class CObjExplosion : public Sonic::CGameObject3D
+{
+private:
+    float m_Radius;
+    float m_LifeTime;
+    Hedgehog::Math::CVector m_Position;
+    boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
+
+public:
+    CObjExplosion
+    (
+        float _Radius,
+        Hedgehog::Math::CVector const& _Position
+    )
+        : m_Radius(_Radius)
+        , m_Position(_Position)
+        , m_LifeTime(0.0f)
+    {
+
+    }
+
+    ~CObjExplosion()
+    {
+    }
+
+    void AddCallback
+    (
+        const Hedgehog::Base::THolder<Sonic::CWorld>& worldHolder,
+        Sonic::CGameDocument* pGameDocument,
+        const boost::shared_ptr<Hedgehog::Database::CDatabase>& spDatabase
+    ) override
+    {
+        Sonic::CGameObject3D::AddCallback(worldHolder, pGameDocument, spDatabase);
+
+        Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
+        pGameDocument->AddUpdateUnit("0", this);
+
+        // set initial position
+        m_spMatrixNodeTransform->m_Transform.SetPosition(m_Position);
+        m_spMatrixNodeTransform->NotifyChanged();
+
+        // set up collision with enemy
+        m_spNodeEventCollision = boost::make_shared<Sonic::CMatrixNodeTransform>();
+        m_spNodeEventCollision->m_Transform.SetPosition(hh::math::CVector(0.0f, 0.0f, 0.0f));
+        m_spNodeEventCollision->NotifyChanged();
+        m_spNodeEventCollision->SetParent(m_spMatrixNodeTransform.get());
+
+        hk2010_2_0::hkpSphereShape* shapeEventTrigger1 = new hk2010_2_0::hkpSphereShape(m_Radius);
+        AddEventCollision("Damage", shapeEventTrigger1, *reinterpret_cast<int*>(0x1E0AF84), true, m_spNodeEventCollision);
+    }
+
+    bool ProcessMessage
+    (
+        Hedgehog::Universe::Message& message,
+        bool flag
+    ) override
+    {
+        if (flag)
+        {
+            if (std::strstr(message.GetType(), "MsgRestartStage") != nullptr
+             || std::strstr(message.GetType(), "MsgStageClear") != nullptr)
+            {
+                Kill();
+                return true;
+            }
+
+            if (std::strstr(message.GetType(), "MsgHitEventCollision") != nullptr)
+            {
+                // try to get center position from lock-on
+                hh::math::CVector targetPosition = hh::math::CVector::Identity();
+                SendMessageImm(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
+                if (targetPosition.isIdentity())
+                {
+                    SendMessageImm(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgGetPosition>(&targetPosition));
+                }
+
+                // apply damage
+                if (!targetPosition.isIdentity())
+                {
+                    auto* senderMessageActor = m_pMessageManager->GetMessageActor(message.m_SenderActorID);
+                    bool isObjectPhysics = *(uint32_t*)senderMessageActor == 0x16CF58C;
+                    SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
+                        (
+                            *(uint32_t*)0x1E0BE34, // DamageID_NoAttack
+                            m_Position, 
+                            (targetPosition - m_Position) * (isObjectPhysics ? cExplosion_velocityObjPhy : cExplosion_velocityEnemy)
+                        ));
+                }
+
+                return true;
+            }
+        }
+
+        return Sonic::CGameObject::ProcessMessage(message, flag);
+    }
+
+    void UpdateParallel
+    (
+        const Hedgehog::Universe::SUpdateInfo& updateInfo
+    ) override
+    {
+        // time out
+        m_LifeTime += updateInfo.DeltaTime;
+        if (m_LifeTime >= cExplosion_duration)
+        {
+            Kill();
+        }
+    }
+
+    void Kill()
+    {
+        SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+    }
+};
+
+HOOK(void, __stdcall, Stage_PhysicsReward, 0xEA49B0, uint32_t This, int a2, void* a3, bool a4)
+{
+    // Check if it's a breakable object
+    if (!*(bool*)(This + 0x120))
+    {
+        if (!a4 || *(uint32_t*)(This + 0x108) == 1)
+        {
+            std::string name(*(char**)(This + 0x130));
+            if (name == "cmn_bombbox")
+            {
+                // spawn bombbox explosion
+                float* pos = (float*)((*(uint32_t*)(This + 0xB8)) + 0x70);
+                Eigen::Vector3f posV(pos[0], pos[1] + 1.0f, pos[2]);
+                
+                auto spExplosioin = boost::make_shared<CObjExplosion>(cExplosion_radius, posV);
+                Sonic::CGameDocument::GetInstance()->AddGameObject(spExplosioin);
+            }
+        }
+    }
+
+    originalStage_PhysicsReward(This, a2, a3, a4);
+}
+
 void Stage::applyPatches()
 {
     //---------------------------------------------------
@@ -547,4 +692,9 @@ void Stage::applyPatches()
     INSTALL_HOOK(Stage_CEnemyTaker_MsgHitEventCollision);
     INSTALL_HOOK(Stage_CEnemyBiter_MsgHitEventCollision);
     WRITE_NOP(0xBDE681, 2); // Always allow MsgCheckPermissionAttack
+
+    //---------------------------------------------------
+    // Bombbox Explosion
+    //---------------------------------------------------
+    INSTALL_HOOK(Stage_PhysicsReward);
 }
