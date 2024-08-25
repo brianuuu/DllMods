@@ -33,13 +33,6 @@ public:
 
         // tempory data, wait for MsgApplyImpulse
         uint32_t m_sizeType;
-        float m_outOfControl;
-        float m_impulseSpeedOnNormal;
-        float m_impulseSpeedOnBoost;
-
-        // data from MsgApplyImpulse
-        Eigen::Vector3f m_position;
-        Eigen::Vector3f m_velocity;
     };
 
 public:

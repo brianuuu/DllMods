@@ -50,10 +50,6 @@ class CQTEButtonSequence : public Sonic::CGameObject
     QTEJumpBoard::Data m_data;
     float m_lifeTime;
 
-    // projected position when QTE succeed
-    uint32_t m_simsPerFrame;
-    Eigen::Vector3f m_successPosition;
-
     enum ButtonType { A, B, X, Y, LB, RB, COUNT };
     struct Button
     {
@@ -107,7 +103,6 @@ public:
         , m_buttonID(0u)
         , m_state(State::S_SlowTime)
     {
-        m_simsPerFrame = (uint32_t)((m_data.m_outOfControl / c_qteAppearTime) + 1);
     }
 
     ~CQTEButtonSequence()
@@ -394,22 +389,6 @@ public:
         {
         case S_SlowTime:
         {
-            // before buttons show up, use this time to calculate where Sonic will land
-            // if QTE is successful, optimized by doing simulation over a period of time
-            auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-            float gravity = -context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_Gravity);
-            uint32_t simsThisFrame = 0;
-            while (simsThisFrame < m_simsPerFrame && m_data.m_outOfControl > 0.0f)
-            {
-                Hedgehog::Math::CVector const velPrev = m_data.m_velocity;
-                m_data.m_velocity += Hedgehog::Math::CVector::UnitY() * gravity * c_qteSimRate;
-                Hedgehog::Math::CVector const posPrev = m_data.m_position;
-                m_data.m_position += (velPrev + m_data.m_velocity) * 0.5f * c_qteSimRate;
-
-                simsThisFrame++;
-                m_data.m_outOfControl -= c_qteSimRate;
-            }
-
             if (SlowTime() &&m_lifeTime >= c_qteAppearTime)
             {
                 //printf("[QTE] Boost Land Location = {%.2f, %.2f, %.2f}\n", DEBUG_VECTOR3(m_data.m_position));
@@ -514,51 +493,7 @@ public:
                                 PlayMotion(m_txt1, "Intro_Anim");
                             }
                             
-                            // Don't bother apply impulse if the speed is the same
                             auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-                            if (m_data.m_impulseSpeedOnBoost != m_data.m_impulseSpeedOnNormal)
-                            {
-                                float outOfControl = 0.0f;
-                                Eigen::Vector3f impulse;
-                                float launchSpeed = m_data.m_impulseSpeedOnNormal;
-                                for (int i = 0; i < 10; i++)
-                                {
-                                    if (Common::SolveBallisticArc
-                                        (
-                                            context->m_spMatrixNode->m_Transform.m_Position,
-                                            m_data.m_position,
-                                            launchSpeed,
-                                            context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_Gravity),
-                                            false,
-                                            impulse,
-                                            outOfControl
-                                        )
-                                    )
-                                    {
-                                        // this makes a 0.5s not to accept MsgApplyImpulse if launched in air...? sub_E2BA00
-                                        context->StateFlag(eStateFlag_NoLandOutOfControl) = 0;
-
-                                        //printf("[QTE] Launch velocity = {%.2f, %.2f, %.2f}, Speed = %.2f, OutOfControl = %.2fs\n", DEBUG_VECTOR3(impulse), launchSpeed, outOfControl);
-                                        alignas(16) MsgApplyImpulse message {};
-                                        message.m_position = context->m_spMatrixNode->m_Transform.m_Position;
-                                        message.m_impulse = impulse;
-                                        message.m_impulseType = ImpulseType::JumpBoard;
-                                        message.m_outOfControl = outOfControl;
-                                        message.m_notRelative = true;
-                                        message.m_snapPosition = false;
-                                        message.m_pathInterpolate = false;
-                                        message.m_alwaysMinusOne = -1.0f;
-                                        Common::ApplyPlayerApplyImpulse(message);
-                                        break;
-                                    }
-                                    else
-                                    {
-                                        //printf("[QTE] No solution for launch speed %.2f\n", launchSpeed);
-                                        launchSpeed += 10.0f;
-                                    }
-                                }
-                            }
-
                             const char* volatile const* trickAnim = AnimationSetPatcher::TrickSG;
                             bool const isUnleashedSonic = context->m_pPlayer->m_spCharacterModel->GetNode("SonicRoot") != nullptr;
                             if (isUnleashedSonic)
@@ -841,10 +776,6 @@ HOOK(void, __fastcall, QTEJumpBoard_MsgApplyImpulse, 0xE6CFA0, void* This, void*
 
     if (QTEJumpBoard::m_data.m_init)
     {
-        // record some data
-        QTEJumpBoard::m_data.m_position = message->m_position;
-        QTEJumpBoard::m_data.m_velocity = message->m_impulse.normalized() * QTEJumpBoard::m_data.m_impulseSpeedOnBoost;
-
         // create QTE object
         auto object = boost::make_shared<CQTEButtonSequence>(QTEJumpBoard::m_data);
         Sonic::CGameDocument::GetInstance()->AddGameObject(object);
@@ -873,9 +804,6 @@ void QTEJumpBoard::applyPatches()
 {
 	// Make trick ramp use JumpBaord animation
 	WRITE_MEMORY(0x1014866, uint32_t, ImpulseType::JumpBoard);
-
-    // Always go lower path initially
-    WRITE_MEMORY(0x1014870, uint8_t, 0xE9, 0x1E, 0x01, 0x00, 0x00);
 
     // Disable effects
     WRITE_STRING(0x166A16C, "");
@@ -907,9 +835,6 @@ void QTEJumpBoard::GetQTEJumpBoardData(uint32_t ptr)
 	m_data = Data();
 
     m_data.m_sizeType = *(uint32_t*)(ptr + 0x108);
-	m_data.m_outOfControl = *(float*)(ptr + 0x10C);
-	m_data.m_impulseSpeedOnNormal = *(float*)(ptr + 0x110);
-	m_data.m_impulseSpeedOnBoost = *(float*)(ptr + 0x114);
 
 	m_data.m_init = true;
 }
