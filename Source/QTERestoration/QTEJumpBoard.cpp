@@ -761,13 +761,16 @@ void QTEJumpBoard_RestoreSizeType(uint32_t const& This)
     *sizeType = tempSizeType;
 }
 
-HOOK(void, __fastcall, QTEJumpBoard_MsgHitEventCollision, 0x1014FB0, uint32_t This, void* Edx, void* a2)
+HOOK(void, __fastcall, QTEJumpBoard_MsgHitEventCollision, 0x1014FB0, uint32_t This, void* Edx, hh::fnd::MessageTypeSet& message)
 {
     QTEJumpBoard_SaveSizeType(This);
-	originalQTEJumpBoard_MsgHitEventCollision(This, Edx, a2);
+	originalQTEJumpBoard_MsgHitEventCollision(This, Edx, message);
     QTEJumpBoard_RestoreSizeType(This);
 
-	QTEJumpBoard::GetQTEJumpBoardData(This);
+    if (message.m_SenderActorID == Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_ActorID)
+    {
+        QTEJumpBoard::GetQTEJumpBoardData(This);
+    }
 }
 
 HOOK(void, __fastcall, QTEJumpBoard_MsgApplyImpulse, 0xE6CFA0, void* This, void* Edx, MsgApplyImpulse* message)
