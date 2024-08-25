@@ -940,12 +940,14 @@ bool TrickJumper::ProcessMessage
                 m_uiAppearTime = max(0.701f, simTime - trickTime * c_qteUiSlowTimeScale + 0.467f);
             }
 
-			// create QTE UI when it doesn't exist
-			if (!m_spTrickJumperUI)
-			{
-				m_spTrickJumperUI = boost::make_shared<CTrickJumperUI>(m_Data, dir, m_arcPeakPosition, m_uiAppearTime);
-				Sonic::CGameDocument::GetInstance()->AddGameObject(m_spTrickJumperUI);
-			}
+			// kill any QTE that still exist
+            if (m_spTrickJumperUI)
+            {
+                ((CTrickJumperUI*)m_spTrickJumperUI.get())->Kill();
+            }
+
+			m_spTrickJumperUI = boost::make_shared<CTrickJumperUI>(m_Data, dir, m_arcPeakPosition, m_uiAppearTime);
+			Sonic::CGameDocument::GetInstance()->AddGameObject(m_spTrickJumperUI);
 
 			return true;
 		}
