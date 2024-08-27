@@ -815,7 +815,7 @@ void TrickJumper::SetUpdateParallel
     FUNCTION_PTR(void, __thiscall, fpUpdateCTexcoordMotion, 0x7570E0, Hedgehog::Motion::CTexcoordMotion * This, float dt);
 
     // belt
-    fpUpdateCTexcoordMotion(&m_spEffectMotionAll->m_TexcoordMotionList[0], in_rUpdateInfo.DeltaTime);
+    fpUpdateCTexcoordMotion(&m_spEffectMotionAll->m_TexcoordMotionList[0], in_rUpdateInfo.DeltaTime * 2.8f);
 
     // arrows
     float constexpr frameRate = 1.0f / 60.0f;
