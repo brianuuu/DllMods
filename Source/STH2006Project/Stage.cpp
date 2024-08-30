@@ -5,6 +5,7 @@
 #include "ParamManager.h"
 #include "LoadingUI.h"
 #include "MissionManager.h"
+#include "ScoreManager.h"
 
 HOOK(void, __fastcall, Stage_CGameplayFlowStage_CStateTitle, 0xCF8F40, void* This)
 {
@@ -540,14 +541,20 @@ public:
                 // apply damage
                 if (!targetPosition.isIdentity())
                 {
-                    auto* senderMessageActor = m_pMessageManager->GetMessageActor(message.m_SenderActorID);
-                    bool isObjectPhysics = *(uint32_t*)senderMessageActor == 0x16CF58C;
+                    uint32_t enemyType = 0u;
+                    SendMessageImm(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgGetEnemyType>(&enemyType));
                     SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
                         (
                             *(uint32_t*)0x1E0BE34, // DamageID_NoAttack
                             m_Position, 
-                            (targetPosition - m_Position) * (isObjectPhysics ? cExplosion_velocityObjPhy : cExplosion_velocityEnemy)
+                            (targetPosition - m_Position) * (enemyType > 0 ? cExplosion_velocityEnemy : cExplosion_velocityObjPhy)
                         ));
+
+                    if (enemyType > 0)
+                    {
+                        auto* senderMessageActor = m_pMessageManager->GetMessageActor(message.m_SenderActorID);
+                        ScoreManager::addEnemyChain((uint32_t*)((uint32_t)senderMessageActor - 0x28));
+                    }
                 }
 
                 return true;

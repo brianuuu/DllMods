@@ -21,7 +21,7 @@ void HandleEnemyMsgNotifyObjectEvent(hh::fnd::CMessageActor* This, void* Edx, hh
     auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
     if (msg.m_Event == 12)
     {
-        ScoreManager::addEnemyChain((uint32_t*)This);
+        ScoreManager::addEnemyChain((uint32_t*)((uint32_t)This - 0x28));
         This->SendMessage(This->m_ActorID, boost::make_shared<Sonic::Message::MsgDamage>
             (
                 *(uint32_t*)0x1E0BE30, hh::math::CVector::Zero(), hh::math::CVector::Zero()
@@ -33,6 +33,12 @@ void HandleEnemyMsgNotifyObjectEvent(hh::fnd::CMessageActor* This, void* Edx, hh
 #define HOOK_ENEMY_PROCESS_MESSAGE(enemyName, address) \
     HOOK(bool, __fastcall, enemyName##_ProcessMessage, address, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag) \
     { \
+        if (flag && message.Is<Sonic::Message::MsgGetEnemyType>()) \
+        { \
+            auto& msg = static_cast<Sonic::Message::MsgGetEnemyType&>(message); \
+            *msg.m_pType = 1; \
+            return true; \
+        } \
         if (flag && message.Is<Sonic::Message::MsgNotifyObjectEvent>()) \
         { \
             HandleEnemyMsgNotifyObjectEvent(This, Edx, message); \
