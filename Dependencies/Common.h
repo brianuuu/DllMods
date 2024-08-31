@@ -1186,6 +1186,21 @@ static void fDestroyGameObject
 	}
 }
 
+static void* fObjectPhysicsDynamicPosition
+(
+	void* This,
+	hh::math::CVector& pos
+)
+{
+	static void* const pfObjectPhysicsDynamicPosition = (void*)0xEA1C80;
+	__asm
+	{
+		mov		ecx, pos
+		mov		eax, This
+		call	[pfObjectPhysicsDynamicPosition]
+	}
+}
+
 static uint32_t GetButtonArrayIndex(Sonic::EKeyState key)
 {
 	// base on button mapping array at 0x15D3668

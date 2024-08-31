@@ -530,10 +530,25 @@ public:
 
             if (std::strstr(message.GetType(), "MsgHitEventCollision") != nullptr)
             {
-                // try to get center position from lock-on
+                uint32_t enemyType = 0u;
+                SendMessageImm(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgGetEnemyType>(&enemyType));
+
+                auto* senderMessageActor = m_pMessageManager->GetMessageActor(message.m_SenderActorID);
+                uint32_t* senderActor = (uint32_t*)((uint32_t)senderMessageActor - 0x28);
+                bool isObjectPhysics = *(uint32_t*)senderMessageActor == 0x16CF58C;
+
                 hh::math::CVector targetPosition = hh::math::CVector::Identity();
-                SendMessageImm(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
-                if (targetPosition.isIdentity())
+                if (enemyType > 0)
+                {
+                    // try to get center position from lock-on for enemy
+                    SendMessageImm(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
+                }
+                else if (isObjectPhysics)
+                {
+                    // get dynamic position for object physics
+                    Common::fObjectPhysicsDynamicPosition(senderActor, targetPosition);
+                }
+                else
                 {
                     SendMessageImm(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgGetPosition>(&targetPosition));
                 }
@@ -541,19 +556,16 @@ public:
                 // apply damage
                 if (!targetPosition.isIdentity())
                 {
-                    uint32_t enemyType = 0u;
-                    SendMessageImm(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgGetEnemyType>(&enemyType));
                     SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
                         (
                             *(uint32_t*)0x1E0BE34, // DamageID_NoAttack
                             m_Position, 
                             (targetPosition - m_Position) * (enemyType > 0 ? cExplosion_velocityEnemy : cExplosion_velocityObjPhy)
                         ));
-
+                
                     if (enemyType > 0)
                     {
-                        auto* senderMessageActor = m_pMessageManager->GetMessageActor(message.m_SenderActorID);
-                        ScoreManager::addEnemyChain((uint32_t*)((uint32_t)senderMessageActor - 0x28));
+                        ScoreManager::addEnemyChain(senderActor);
                     }
                 }
 
@@ -591,13 +603,13 @@ HOOK(void, __stdcall, Stage_PhysicsReward, 0xEA49B0, uint32_t This, int a2, void
         if (!a4 || *(uint32_t*)(This + 0x108) == 1)
         {
             std::string name(*(char**)(This + 0x130));
-            if (name == "cmn_bombbox")
+            if (name == "cmn_bombbox" || name == "cmn_hurt_bombbox")
             {
                 // spawn bombbox explosion
-                float* pos = (float*)((*(uint32_t*)(This + 0xB8)) + 0x70);
-                Eigen::Vector3f posV(pos[0], pos[1] + 1.0f, pos[2]);
+                hh::math::CVector pos = hh::math::CVector::Identity();
+                Common::fObjectPhysicsDynamicPosition((void*)This, pos);
                 
-                auto spExplosioin = boost::make_shared<CObjExplosion>(cExplosion_radius, posV);
+                auto spExplosioin = boost::make_shared<CObjExplosion>(cExplosion_radius, pos);
                 Sonic::CGameDocument::GetInstance()->AddGameObject(spExplosioin);
             }
         }
