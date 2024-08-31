@@ -710,7 +710,10 @@ void Stage::applyPatches()
     INSTALL_HOOK(Stage_CEnemyLander_MsgHitEventCollision);
     INSTALL_HOOK(Stage_CEnemyTaker_MsgHitEventCollision);
     INSTALL_HOOK(Stage_CEnemyBiter_MsgHitEventCollision);
-    WRITE_NOP(0xBDE681, 2); // Always allow MsgCheckPermissionAttack
+
+    // Always allow MsgCheckPermissionAttack
+    WRITE_MEMORY(0xBDE62E, uint8_t, 0xEB);
+    WRITE_NOP(0xBDE681, 2);
 
     //---------------------------------------------------
     // Bombbox Explosion
