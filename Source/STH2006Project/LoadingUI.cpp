@@ -116,6 +116,11 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 							UIContext::loadTextureFromFile((dir + L"Assets\\Title\\tips_blaze.dds").c_str(), &LoadingUI::m_tipsTexture);
 							break;
 						}
+						case S06DE_API::ModelType::Shadow:
+						{
+							UIContext::loadTextureFromFile((dir + L"Assets\\Title\\tips_shadow" + std::to_wstring(std::rand() % 3) + L".dds").c_str(), &LoadingUI::m_tipsTexture);
+							break;
+						}
 					}
 				}
 			}
