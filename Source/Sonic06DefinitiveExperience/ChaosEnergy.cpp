@@ -1,5 +1,6 @@
 #include "ChaosEnergy.h"
 #include "Configuration.h"
+#include "NextGenShadow.h"
 
 float const c_chaosEnergyReward = 5.0f;
 
@@ -238,4 +239,7 @@ void __fastcall ChaosEnergy::playChaosEnergyPfx(bool isLightcore)
 	static SharedPtrTypeless pfxHandle;
 	void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
 	Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle, matrixNode, isLightcore ? "ef_if_hud_yh1_lightcore_get" : "ef_if_hud_yh1_boostenergy_get" , 1);
+
+	// For character that use maturity gauge
+	NextGenShadow::AddChaosMaturity(c_chaosEnergyReward * 2.0f);
 }

@@ -16,5 +16,14 @@ public:
 	// X Action
 	static float m_xHeldTimer;
 	static bool bActionHandlerImpl();
+
+	// Chaos Boost
+	static uint8_t m_chaosBoostLevel;
+	static float m_chaosMaturity;
+	static bool ShouldPlayJetEffect();
+	static void SetJetEffectVisible(bool visible);
+	static void SetChaosBoostModelVisible(bool visible);
+	static void SetChaosBoostLevel(uint8_t level, bool notifyHUD);
+	static void AddChaosMaturity(float amount);
 };
 
