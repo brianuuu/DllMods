@@ -190,14 +190,14 @@ void __declspec(naked) playWaterPfx()
     }
 }
 
-HOOK(void, __stdcall, Stage_SonicChangeAnimation, 0xCDFC80, void* a1, int a2, const hh::base::CSharedString& name)
+HOOK(void, __fastcall, Stage_SonicChangeAnimation, 0xE74CC0, Sonic::Player::CPlayerSpeedContext* context, int a2, Hedgehog::Base::CSharedString const& name)
 {
-    if (Stage::m_waterRunning)
+    if (!context->m_Field168 && Stage::m_waterRunning)
     {
         // if still water running, do not use walk animation (boost)
         if (strcmp(name.c_str(), "Walk") == 0)
         {
-            originalStage_SonicChangeAnimation(a1, a2, "Sliding");
+            originalStage_SonicChangeAnimation(context, a2, "Sliding");
             return;
         }
 
@@ -211,7 +211,7 @@ HOOK(void, __stdcall, Stage_SonicChangeAnimation, 0xCDFC80, void* a1, int a2, co
         }
     }
 
-    originalStage_SonicChangeAnimation(a1, a2, name);
+    originalStage_SonicChangeAnimation(context, a2, name);
 }
 
 //---------------------------------------------------
