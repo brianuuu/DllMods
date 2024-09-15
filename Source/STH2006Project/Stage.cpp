@@ -192,7 +192,7 @@ void __declspec(naked) playWaterPfx()
 
 HOOK(void, __fastcall, Stage_SonicChangeAnimation, 0xE74CC0, Sonic::Player::CPlayerSpeedContext* context, int a2, Hedgehog::Base::CSharedString const& name)
 {
-    if (!context->m_Field168 && Stage::m_waterRunning)
+    if (context == *pModernSonicContext && !context->m_Field168 && Stage::m_waterRunning)
     {
         // if still water running, do not use walk animation (boost)
         if (strcmp(name.c_str(), "Walk") == 0)
