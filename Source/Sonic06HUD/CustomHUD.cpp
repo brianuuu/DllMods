@@ -83,6 +83,8 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneScore;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneGem;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneBossBG;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneBossBar;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneCustomBar;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneCustomLevel;
 
 Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectCountdown;
 boost::shared_ptr<Sonic::CGameObjectCSD> m_spCountdown;
@@ -123,6 +125,8 @@ void __fastcall CustomHUD::CHudSonicStageRemoveCallback(Sonic::CGameObject* This
     Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneGem);
     Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneBossBG);
     Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneBossBar);
+    Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneCustomBar);
+    Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneCustomLevel);
 
     Chao::CSD::CProject::DestroyScene(m_projectCountdown.Get(), m_sceneCountdown);
 
@@ -211,9 +215,21 @@ void CustomHUD::RestartSonicGem()
     }
 }
 
+void CustomHUD::SetShadowChaosLevel(uint8_t level, float maturity)
+{
+    if (!m_sceneCustomBar || !m_sceneCustomLevel)
+    {
+        return;
+    }
+    
+    m_sceneCustomLevel->GetNode("custom_level")->SetPatternIndex(min(3, level));
+    m_sceneCustomBar->SetMotionFrame(min(100.0f, maturity));
+}
+
 HOOK(int, __fastcall, CustomHUD_MsgRestartStage, 0x1096A40, uint32_t* This, void* Edx, void* message)
 {
     CustomHUD::RestartSonicGem();
+    CustomHUD::SetShadowChaosLevel(0, 0.0f);
     if (m_sceneInfo)
     {
         m_sceneInfo->SetHideFlag(true);
@@ -376,6 +392,15 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
             m_sceneGem = m_projectPlayScreen->CreateScene("custom_gem");
             CustomHUD::RestartSonicGem();
         }
+    }
+    else if (S06DE_API::GetModelType() == S06DE_API::ModelType::Shadow)
+    {
+        m_sceneCustomBar = m_projectPlayScreen->CreateScene("custom_bar_anime");
+        m_sceneCustomBar->m_MotionSpeed = 0.0f;
+
+        m_sceneCustomLevel = m_projectPlayScreen->CreateScene("custom_level");
+        m_sceneCustomLevel->m_MotionSpeed = 0.0f;
+        m_sceneCustomLevel->GetNode("custom_level")->SetPatternIndex(0);
     }
 
     if (Common::IsCurrentStageBoss() && (Common::GetCurrentStageID() & 0xFF) != SMT_bsd)

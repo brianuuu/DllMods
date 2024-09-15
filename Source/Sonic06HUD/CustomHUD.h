@@ -58,6 +58,7 @@ public:
 	);
 	static void ScrollSonicGem(bool toRight, bool ignoreNone);
 	static void RestartSonicGem();
+	static void SetShadowChaosLevel(uint8_t level, float maturity);
 	static void PlayInfoHUD(bool intro, bool instantStart);
 
 	// Pause

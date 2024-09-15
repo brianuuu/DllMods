@@ -27,3 +27,8 @@ extern "C" __declspec(dllexport) void API_CloseCaptionWindow()
 {
 	SubtitleUI::closeCaptionWindow();
 }
+
+extern "C" __declspec(dllexport) void API_SetShadowChaosLevel(uint8_t level, float maturity)
+{
+	CustomHUD::SetShadowChaosLevel(level, maturity);
+}
