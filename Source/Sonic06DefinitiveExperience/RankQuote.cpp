@@ -10,10 +10,14 @@ HOOK(void, __fastcall, RankQuote_MsgChangeResultState, 0xE692C0, void* This, voi
     {
         bool playStageCompleteVoice = true;
 
-        if (Configuration::m_model == Configuration::ModelType::Sonic 
-         || Configuration::m_model == Configuration::ModelType::SonicElise)
+        if (Configuration::m_model == Configuration::ModelType::Sonic)
         {
-            playStageCompleteVoice = !RankRunAnimation::checkCanPlayRunAnimation() && !Common::IsPlayerSuper();
+            playStageCompleteVoice = !RankRunAnimation::checkCanPlayRunAnimation() || Common::IsPlayerSuper();
+        }
+        else if (Configuration::m_model == Configuration::ModelType::SonicElise)
+        {
+            // no Elise voice during Super
+            playStageCompleteVoice == !Common::IsPlayerSuper();
         }
 
         if (playStageCompleteVoice)
