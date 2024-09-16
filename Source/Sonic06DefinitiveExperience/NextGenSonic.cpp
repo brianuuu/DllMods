@@ -61,7 +61,7 @@ Eigen::Vector3f NextGenSonic::m_brakeFlipDir(0, 0, 1);
 float NextGenSonic::m_squatKickSpeed = 0.0f;
 float const cSonic_squatKickPressMaxTime = 0.3f;
 
-bool slidingEndWasSliding = false;
+bool slidingEndWasSliding_Sonic = false;
 bool NextGenSonic::m_isSpindash = false;
 bool NextGenSonic::m_isSliding = false;
 float NextGenSonic::m_slidingTime = 0.0f;
@@ -242,7 +242,7 @@ HOOK(void, __fastcall, NextGenSonic_CSonicStateSlidingAdvance, 0x11D69A0, hh::fn
         else
         {
             // Cancel sliding
-            slidingEndWasSliding = NextGenSonic::m_isSliding;
+            slidingEndWasSliding_Sonic = NextGenSonic::m_isSliding;
             StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
             return;
         }
@@ -256,7 +256,7 @@ HOOK(void, __fastcall, NextGenSonic_CSonicStateSlidingAdvance, 0x11D69A0, hh::fn
     bool result = Common::IsPlayerIn2D() ? Common::GetPlayerTargetVelocity(playerVelocity) : Common::GetPlayerVelocity(playerVelocity);
     if (!result || playerVelocity.norm() <= minSpeed)
     {
-        slidingEndWasSliding = NextGenSonic::m_isSliding;
+        slidingEndWasSliding_Sonic = NextGenSonic::m_isSliding;
         StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
         return;
     }
@@ -340,7 +340,7 @@ HOOK(int*, __fastcall, NextGenSonic_CSonicStateSlidingEndAdvance, 0x1230EE0, voi
     int* result = originalNextGenSonic_CSonicStateSlidingEndAdvance(This);
     if (NextGenSonic::m_isBrakeFlip)
     {
-        if (!slidingEndWasSliding)
+        if (!slidingEndWasSliding_Sonic)
         {
             // Only detect B-action during the flip, not normal SlidingEnd
             NextGenSonic::bActionHandlerImpl();
@@ -479,7 +479,7 @@ bool __fastcall NextGenSonic_CSonicStateSquatKickAdvanceTransitionOutImpl(char c
             if (Common::GetWorldInputDirection(inputDirection) && inputDirection.isZero())
             {
                 // Stops Sonic completely if no stick input
-                slidingEndWasSliding = NextGenSonic::m_isSliding;
+                slidingEndWasSliding_Sonic = NextGenSonic::m_isSliding;
                 StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
                 return true;
             }
