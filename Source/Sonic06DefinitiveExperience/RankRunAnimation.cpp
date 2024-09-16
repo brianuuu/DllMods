@@ -9,34 +9,39 @@ bool RankRunAnimation::checkCanPlayRunAnimation()
     // Not Modern Sonic or currently in super form
     if (!*pModernSonicContext || Common::IsPlayerSuper() || Common::IsCurrentStageMission()) return false;
 
-    if (Configuration::m_run == Configuration::RunResultType::STH2006)
+    switch (Configuration::m_run)
     {
-        // Only enable for STH2006 Project stages
-        for (int i = 0; i < STH2006_RUN_STAGE_COUNT; i++)
+        case Configuration::RunResultType::EnableAll:
         {
-            if (Common::CheckCurrentStage(sth2006RunStageIDs[i]))
-            {
-                return true;
-            }
+            return true;
         }
-        return false;
+        case Configuration::RunResultType::STH2006:
+        {
+            // Only enable for STH2006 Project stages
+            for (int i = 0; i < STH2006_RUN_STAGE_COUNT; i++)
+            {
+                if (Common::CheckCurrentStage(sth2006RunStageIDs[i]))
+                {
+                    return true;
+                }
+            }
+            break;
+        }
+        case Configuration::RunResultType::Custom:
+        {
+            // Only enable for custom defined stages
+            for (std::string const& stage : Configuration::m_runStages)
+            {
+                if (Common::CheckCurrentStage(stage.c_str()))
+                {
+                    return true;
+                }
+            }
+            break;
+        }
     }
 
-    if (Configuration::m_run == Configuration::RunResultType::Custom)
-    {
-        // Only enable for custom defined stages
-        for (std::string const& stage : Configuration::m_runStages)
-        {
-            if (Common::CheckCurrentStage(stage.c_str()))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // RunResultType::EnableAll
-    return true;
+    return false;
 }
 
 HOOK(void, __fastcall, MsgChangeResultState, 0xE692C0, void* This, void* Edx, uint32_t a2)
