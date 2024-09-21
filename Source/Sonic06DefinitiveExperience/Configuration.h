@@ -50,6 +50,12 @@ public:
         static bool m_gemsEnabled;
     };
 
+    // Shadow
+    struct Shadow
+    {
+        static bool m_rapidSpindash;
+    };
+
     static bool load(const std::string& rootPath);
     static bool loadPostInit();
 };

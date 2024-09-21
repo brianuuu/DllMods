@@ -18,6 +18,8 @@ vector<string> Configuration::Sonic::m_runStages = {};
 bool Configuration::Sonic::m_unlimitedGauge = false;
 bool Configuration::Sonic::m_gemsEnabled = false;
 
+bool Configuration::Shadow::m_rapidSpindash = false;
+
 std::string iniPath;
 bool Configuration::load(const std::string& rootPath)
 {
@@ -78,6 +80,9 @@ bool Configuration::load(const std::string& rootPath)
     }
     Sonic::m_runStages.push_back(runStages);
     Sonic::m_run = (RunResultType)reader.GetInteger("Sonic", "nRun", 0);
+
+    // --------------Shadow--------------
+    Shadow::m_rapidSpindash = reader.GetBoolean("Shadow", "bRapidSpindash", false);
 
     string str;
 

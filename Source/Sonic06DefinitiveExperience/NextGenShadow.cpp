@@ -434,7 +434,7 @@ bool NextGenShadow::bActionHandlerImpl()
     }
 
     bool moving = playerVelocity.norm() > 0.2f;
-    bool canUseSpindash = !moving || (Configuration::Sonic::m_rapidSpindash && !flags->KeepRunning);
+    bool canUseSpindash = !moving || (Configuration::Shadow::m_rapidSpindash && !flags->KeepRunning);
 
     bool bDown, bPressed, bReleased;
     NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
@@ -466,7 +466,7 @@ bool NextGenShadow::bActionHandlerImpl()
             }
             else if (moving && !flags->KeepRunning && m_xHeldTimer > cShadow_squatKickPressMaxTime)
             {
-                if (Configuration::Sonic::m_rapidSpindash)
+                if (Configuration::Shadow::m_rapidSpindash)
                 {
                     // Disable anti-gravity if rapid spindash is enabled
                 }
