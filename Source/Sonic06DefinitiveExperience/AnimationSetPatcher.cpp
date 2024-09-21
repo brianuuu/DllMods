@@ -176,20 +176,32 @@ void AnimationSetPatcher::createAnimationState(void* A2, NewAnimationDataList co
 const char* volatile const AnimationSetPatcher::RunResult = "RunResult";
 const char* volatile const AnimationSetPatcher::RunResultLoop = "RunResultLoop";
 const char* volatile const AnimationSetPatcher::BrakeFlip = "BrakeFlip";
+
 const char* volatile const AnimationSetPatcher::SpinFall = "SpinFall";
 const char* volatile const AnimationSetPatcher::SpinFallSpring = "SpinFallSpring";
 const char* volatile const AnimationSetPatcher::SpinFallLoop = "SpinFallLoop";
+
 const char* volatile const AnimationSetPatcher::HomingAttackLoop = "HomingAttackLoop";
+
 const char* volatile const AnimationSetPatcher::AccelJumpLoop = "AccelJumpLoop";
 const char* volatile const AnimationSetPatcher::FireTornadoLoop = "FireTornadoLoop";
 const char* volatile const AnimationSetPatcher::FireTornadoEnd = "FireTornadoEnd";
+
 const char* volatile const AnimationSetPatcher::GreenGemGround = "GreenGemGround";
 const char* volatile const AnimationSetPatcher::GreenGemAir = "GreenGemAir";
 const char* volatile const AnimationSetPatcher::SkyGem = "SkyGem";
 const char* volatile const AnimationSetPatcher::SkyGemLoop = "SkyGemLoop";
 const char* volatile const AnimationSetPatcher::SkyGemEnd = "SkyGemEnd";
+
 const char* volatile const AnimationSetPatcher::FloatingBoost = "FloatingBoost";
+
 const char* volatile const AnimationSetPatcher::SpinFast = "SpinFast";
+const char* volatile const AnimationSetPatcher::ChaosAttack00 = "ChaosAttack00";
+const char* volatile const AnimationSetPatcher::ChaosAttack01 = "ChaosAttack01";
+const char* volatile const AnimationSetPatcher::ChaosAttack02 = "ChaosAttack02";
+const char* volatile const AnimationSetPatcher::ChaosAttack03 = "ChaosAttack03";
+const char* volatile const AnimationSetPatcher::ChaosAttack04 = "ChaosAttack04";
+const char* volatile const AnimationSetPatcher::ChaosAttackWait = "ChaosAttackWait";
 
 void AnimationSetPatcher::applyPatches()
 {
@@ -401,6 +413,13 @@ void AnimationSetPatcher::applyPatches()
         // TODO: Squat Kick and Brake Flip for Super Shadow
         //m_newAnimationDataSuper.emplace_back("SquatKick", "ssn_squat_kick", 1.0f, false, nullptr);
         //m_newAnimationDataSuper.emplace_back(BrakeFlip, "ssn_brake_flip", 1.0f, false, nullptr);
+
+        m_newAnimationData.emplace_back(ChaosAttack00, "sh_chaos_attack00", 1.0f, false, nullptr);
+        m_newAnimationData.emplace_back(ChaosAttack01, "sh_chaos_attack01", 1.0f, false, nullptr);
+        m_newAnimationData.emplace_back(ChaosAttack02, "sh_chaos_attack02", 1.0f, false, nullptr);
+        m_newAnimationData.emplace_back(ChaosAttack03, "sh_chaos_attack03", 1.0f, false, nullptr);
+        m_newAnimationData.emplace_back(ChaosAttack04, "sh_chaos_attack04", 1.0f, false, nullptr);
+        m_newAnimationData.emplace_back(ChaosAttackWait, "sh_chaos_wait_l", 1.0f, true, nullptr);
     }
 
     if (!m_newAnimationData.empty())

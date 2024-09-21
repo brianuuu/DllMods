@@ -1,4 +1,5 @@
 #include "VoiceOver.h"
+#include "Configuration.h"
 
 HOOK(int, __fastcall, VoiceOver_CSonicStateHomingAttackBegin, 0x1232040, void* This)
 {
@@ -81,9 +82,13 @@ void VoiceOver::applyPatches()
 	INSTALL_HOOK(VoiceOver_CSonicStateHomingAttackBegin);
 
 	// Change homing attack after voices to jump voices
-	WRITE_MEMORY(0x11184E4, uint32_t, 3002000);
-	WRITE_MEMORY(0x1118512, uint32_t, 3002000);
-	INSTALL_HOOK(VoiceOver_CSonicStateHomingAttackAfterBegin);
+	// Shadow handles voice itself
+	if (Configuration::m_model != Configuration::ModelType::Shadow)
+	{
+		WRITE_MEMORY(0x11184E4, uint32_t, 3002000);
+		WRITE_MEMORY(0x1118512, uint32_t, 3002000);
+		INSTALL_HOOK(VoiceOver_CSonicStateHomingAttackAfterBegin);
+	}
 
 	// Add jump voices to walljump
 	INSTALL_HOOK(VoiceOver_CSonicStateWallJumpBegin);

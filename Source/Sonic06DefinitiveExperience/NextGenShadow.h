@@ -27,6 +27,9 @@ public:
 	static bool __fastcall applySpindashImpulse(void* context);
 	static bool __fastcall applySlidingHorizontalTargetVel(void* context);
 
+	// Chaos Attack
+	static int m_chaosAttackCount;
+
 	// X Action
 	static float m_xHeldTimer;
 	static bool m_enableAutoRunAction;

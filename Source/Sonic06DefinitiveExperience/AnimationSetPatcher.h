@@ -66,19 +66,30 @@ public:
     static const char* volatile const RunResult;
     static const char* volatile const RunResultLoop;
     static const char* volatile const BrakeFlip;
+
     static const char* volatile const SpinFall;
     static const char* volatile const SpinFallSpring;
     static const char* volatile const SpinFallLoop;
+
     static const char* volatile const HomingAttackLoop;
+
     static const char* volatile const AccelJumpLoop;
     static const char* volatile const FireTornadoLoop;
     static const char* volatile const FireTornadoEnd;
+
     static const char* volatile const GreenGemGround;
     static const char* volatile const GreenGemAir;
     static const char* volatile const SkyGem;
     static const char* volatile const SkyGemLoop;
     static const char* volatile const SkyGemEnd;
     static const char* volatile const FloatingBoost;
+
     static const char* volatile const SpinFast;
+    static const char* volatile const ChaosAttack00;
+    static const char* volatile const ChaosAttack01;
+    static const char* volatile const ChaosAttack02;
+    static const char* volatile const ChaosAttack03;
+    static const char* volatile const ChaosAttack04;
+    static const char* volatile const ChaosAttackWait;
 };
 

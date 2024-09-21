@@ -1826,6 +1826,20 @@ static void SonicContextUpdateRotationToVelocity
 	}
 }
 
+static void SonicContextSetInAirData
+(
+	void* pContext
+)
+{
+	static void* const pSetInAirData = (void*)0xE4E0C0;
+	__asm
+	{
+		mov		ebx, pContext
+		mov		esi, ebx
+		call	[pSetInAirData]
+	}
+}
+
 inline void PlaySoundStatic(SharedPtrTypeless& soundHandle, uint32_t cueID)
 {
     uint32_t* syncObject = *(uint32_t**)0x1E79044;

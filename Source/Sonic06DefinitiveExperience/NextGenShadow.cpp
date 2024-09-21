@@ -2,6 +2,7 @@
 #include "Configuration.h"
 #include "Application.h"
 #include "AnimationSetPatcher.h"
+#include "VoiceOver.h"
 
 //---------------------------------------------------
 // Animation
@@ -43,6 +44,9 @@ float const cShadow_slidingSpeedMin = 10.0f;
 float const cShadow_slidingSpeedMax = 16.0f;
 float const cShadow_spindashTime = 3.0f;
 float const cShadow_spindashSpeed = 30.0f;
+
+int NextGenShadow::m_chaosAttackCount = -1;
+float const cShadow_chaosAttackWaitTime = 0.2f;
 
 float NextGenShadow::m_xHeldTimer = 0.0f;
 bool NextGenShadow::m_enableAutoRunAction = true;
@@ -172,9 +176,73 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
     }
 }
 
-HOOK(int*, __fastcall, NextGenShadow_CSonicStateHomingAttackEnd, 0x1231F80, void* This)
+HOOK(int*, __fastcall, NextGenShadow_CSonicStateHomingAttackEnd, 0x1231F80, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     return originalNextGenShadow_CSonicStateHomingAttackEnd(This);
+}
+
+HOOK(int32_t*, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterBegin, 0x1118300, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    // run the original function as some context members need to be set
+    int32_t* result = originalNextGenShadow_CSonicStateHomingAttackAfterBegin(This);
+
+    // handle Shadow stopping for chaos attack
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+    if (!context->StateFlag(eStateFlag_EnableHomingAttackOnDiving))
+    {
+        NextGenShadow::m_chaosAttackCount = 0;
+
+        Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosAttackWait);
+        Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+    }
+
+    return result;
+}
+
+HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118600, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+    if (NextGenShadow::m_chaosAttackCount >= 0)
+    {
+        Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+
+        if (This->m_Time > cShadow_chaosAttackWaitTime)
+        {
+            // timeout, resume original homing attack after
+            This->m_Time = 0.0f;
+            NextGenShadow::m_chaosAttackCount = -1;
+
+            // apply up velocity
+            Eigen::Vector3f velocity(0, 0, 0);
+            velocity.y() = context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_HomingAttackAfterUpVelocity)
+                         * context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_AttackAfterImpluseVelocityCoeff);
+            Common::SetPlayerVelocity(velocity);
+
+            // play jump sfx, vfx
+            static SharedPtrTypeless soundHandle;
+            Common::SonicContextPlaySound(soundHandle, 2002027, 1);
+            VoiceOver::playJumpVoice();
+
+            // play random homing attack after animation
+            Common::SonicContextChangeAnimation((const char*)*((uint32_t*)0x1E75E18 + rand() % 6));
+
+            // make sure it's in air again
+            Common::SonicContextSetInAirData(context);
+            return;
+        }
+    }
+    else
+    {
+        originalNextGenShadow_CSonicStateHomingAttackAfterAdvance(This);
+    }
+}
+
+HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterEnd, 0x11182F0)
+{
+    // resume ground detection
+    WRITE_MEMORY(0xE63A31, uint8_t, 0x74);
+
+    NextGenShadow::m_chaosAttackCount = -1;
 }
 
 //---------------------------------------------------
@@ -982,6 +1050,14 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_CSonicStateHomingAttackBegin);
     INSTALL_HOOK(NextGenShadow_CSonicStateHomingAttackAdvance);
     INSTALL_HOOK(NextGenShadow_CSonicStateHomingAttackEnd);
+
+    // Handle homing attack voice ourselves
+    WRITE_MEMORY(0x11184E4, int, -1);
+    WRITE_MEMORY(0x1118512, int, -1);
+
+    INSTALL_HOOK(NextGenShadow_CSonicStateHomingAttackAfterBegin);
+    INSTALL_HOOK(NextGenShadow_CSonicStateHomingAttackAfterAdvance);
+    INSTALL_HOOK(NextGenShadow_CSonicStateHomingAttackAfterEnd);
 
     //-------------------------------------------------------
     // Chaos Boost
