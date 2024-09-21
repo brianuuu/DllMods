@@ -133,6 +133,51 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdateJetEffect, 0xE6BF20, Sonic::Pla
 }
 
 //---------------------------------------------------
+// Chaos Attack
+//---------------------------------------------------
+HOOK(int, __fastcall, NextGenShadow_CSonicStateHomingAttackBegin, 0x1232040, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    return originalNextGenShadow_CSonicStateHomingAttackBegin(This);
+}
+
+HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+
+    Eigen::Vector3f velocity;
+    Common::GetPlayerVelocity(velocity);
+
+    if (!context->m_HomingAttackTargetActorID)
+    {
+        if (velocity.norm() < 10.0f)
+        {
+            // hit a wall, unable to keep velocity
+            StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
+        }
+        else
+        {
+            // No homing attack target, keep constant forward velocity
+            velocity.y() = 0.0f;
+            velocity = velocity.normalized() * context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_HomingSpeedOfDummy);
+            Common::SetPlayerVelocity(velocity);
+        }
+    }
+
+    originalNextGenShadow_CSonicStateHomingAttackAdvance(This);
+
+    // keep velocity if hitting ground
+    if (context->m_Grounded)
+    {
+        Common::SetPlayerVelocity(velocity);
+    }
+}
+
+HOOK(int*, __fastcall, NextGenShadow_CSonicStateHomingAttackEnd, 0x1231F80, void* This)
+{
+    return originalNextGenShadow_CSonicStateHomingAttackEnd(This);
+}
+
+//---------------------------------------------------
 // Chaos Boost
 //---------------------------------------------------
 HOOK(int, __fastcall, NextGenShadow_MsgRestartStage, 0xE76810, Sonic::Player::CPlayer* player, void* Edx, void* message)
@@ -924,6 +969,13 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_CSonicUpdateJetEffect);
 
     if (!Configuration::m_characterMoveset) return;
+
+    //-------------------------------------------------------
+    // Chaos Attack
+    //-------------------------------------------------------
+    INSTALL_HOOK(NextGenShadow_CSonicStateHomingAttackBegin);
+    INSTALL_HOOK(NextGenShadow_CSonicStateHomingAttackAdvance);
+    INSTALL_HOOK(NextGenShadow_CSonicStateHomingAttackEnd);
 
     //-------------------------------------------------------
     // Chaos Boost
