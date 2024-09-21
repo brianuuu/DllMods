@@ -215,6 +215,8 @@ void NextGenShadow::SetChaosBoostLevel(uint8_t level, bool notifyHUD)
 
 void NextGenShadow::AddChaosMaturity(float amount)
 {
+    if (Configuration::m_model != Configuration::ModelType::Shadow) return;
+
     float maturity = m_chaosMaturity;
     m_chaosMaturity = min(100.0f, maturity + amount);
     S06HUD_API::SetShadowChaosLevel(m_chaosBoostLevel, m_chaosMaturity);

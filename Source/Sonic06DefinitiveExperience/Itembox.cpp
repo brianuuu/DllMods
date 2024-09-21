@@ -1,5 +1,6 @@
 #include "Itembox.h"
 #include "NextGenPhysics.h"
+#include "NextGenShadow.h"
 
 // Have to use ASM to prevent double playing sfx
 void __declspec(naked) objItemPlaySfx()
@@ -91,6 +92,16 @@ HOOK(void, __fastcall, Itembox_CObjSuperRingMsgHitEventCollision, 0x11F2F10, Son
 	originalItembox_CObjSuperRingMsgHitEventCollision(This, Edx, message);
 }
 
+HOOK(void, __fastcall, Itembox_GetItem, 0xFFF810, uint32_t* This, void* Edx, void* message)
+{
+	originalItembox_GetItem(This, Edx, message);
+	
+	if (This[71] == 5)
+	{
+		NextGenShadow::AddChaosMaturity(100.0f);
+	}
+}
+
 void Itembox::applyPatches()
 {
 	// Play itembox and voice sfx for 10ring and 1up
@@ -126,6 +137,9 @@ void Itembox::applyPatches()
 
 	// Prevent bouncing off Itembox right as you land
 	INSTALL_HOOK(Itembox_CStateLandJumpShortMsgDamageSuccess);
+
+	// Handle items from STH2006 Project
+	INSTALL_HOOK(Itembox_GetItem);
 }
 
 void Itembox::playItemboxSfx()
