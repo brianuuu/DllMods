@@ -233,7 +233,7 @@ HOOK(int*, __fastcall, NextGenPhysics_CSonicStateHomingAttackEnd, 0x1231F80, voi
     }
 
     // Kill homing pfx
-    Common::fCGlitterEnd(*PLAYER_CONTEXT, homingPfxHandle, false);
+    Common::fCGlitterEnd(*PLAYER_CONTEXT, homingPfxHandle, Configuration::m_model == Configuration::ModelType::Shadow);
 
     // Disable motion blur
     WRITE_MEMORY(0x6577F4, uint8_t, 0x0F, 0x84, 0xE5, 0x01, 0x00, 0x00);

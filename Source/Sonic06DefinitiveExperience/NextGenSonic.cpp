@@ -705,7 +705,7 @@ void NextGenSonic::bounceBraceletImpl()
 //---------------------------------------------------
 // Spindashing
 //---------------------------------------------------
-void __declspec(naked) startSpindash()
+void __declspec(naked) NextGenSonic_startSpindash()
 {
     static uint32_t returnAddress = 0x1230C39;
     __asm
@@ -2648,7 +2648,7 @@ void NextGenSonic::applyPatches()
         WRITE_MEMORY(0x1230D74, uint32_t, 0x15F84F4); // slide hold animation
 
         // Use spindash when release button
-        WRITE_JUMP(0x1230BDB, startSpindash);
+        WRITE_JUMP(0x1230BDB, NextGenSonic_startSpindash);
         WRITE_MEMORY(0x1230C3A, uint32_t, 0x15F5108); // change state to sliding
 
         // If in tight spaces, still allow Sonic to unduck (aka use spindash)

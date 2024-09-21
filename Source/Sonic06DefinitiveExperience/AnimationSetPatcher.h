@@ -79,5 +79,6 @@ public:
     static const char* volatile const SkyGemLoop;
     static const char* volatile const SkyGemEnd;
     static const char* volatile const FloatingBoost;
+    static const char* volatile const SpinFast;
 };
 

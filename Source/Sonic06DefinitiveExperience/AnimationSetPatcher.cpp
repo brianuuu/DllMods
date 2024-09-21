@@ -189,6 +189,7 @@ const char* volatile const AnimationSetPatcher::SkyGem = "SkyGem";
 const char* volatile const AnimationSetPatcher::SkyGemLoop = "SkyGemLoop";
 const char* volatile const AnimationSetPatcher::SkyGemEnd = "SkyGemEnd";
 const char* volatile const AnimationSetPatcher::FloatingBoost = "FloatingBoost";
+const char* volatile const AnimationSetPatcher::SpinFast = "SpinFast";
 
 void AnimationSetPatcher::applyPatches()
 {
@@ -387,6 +388,19 @@ void AnimationSetPatcher::applyPatches()
         // Floating Boost
         m_newAnimationData.emplace_back(FloatingBoost, "ssn_boost_loop", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back(FloatingBoost, "ssn_boost_loop", 1.0f, true, nullptr);
+    }
+
+    if (Configuration::m_model == Configuration::ModelType::Shadow)
+    {
+        m_newAnimationData.emplace_back(SpinFast, "sn_ball_loop", 1.5f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back(SpinFast, "ssn_ball_loop", 1.5f, true, nullptr);
+
+        // Brake flip (for 06 physics)
+        m_newAnimationData.emplace_back(BrakeFlip, "sn_brake_flip", 1.0f, false, nullptr);
+
+        // TODO: Squat Kick and Brake Flip for Super Shadow
+        //m_newAnimationDataSuper.emplace_back("SquatKick", "ssn_squat_kick", 1.0f, false, nullptr);
+        //m_newAnimationDataSuper.emplace_back(BrakeFlip, "ssn_brake_flip", 1.0f, false, nullptr);
     }
 
     if (!m_newAnimationData.empty())
