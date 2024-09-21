@@ -964,6 +964,10 @@ void NextGenShadow::applyPatches()
     WRITE_MEMORY(0x1203CA3, uint32_t, 0x1ABD05C); // electic damage use fire damage offsets
     WRITE_MEMORY(0x1203D7C, uint32_t, 0x1ABD074);
 
+    // Always disable stomp voice and sfx
+    WRITE_MEMORY(0x1254E04, int, -1);
+    WRITE_MEMORY(0x1254F23, int, -1);
+
     // Handle model hide/unhide, jet effect
     INSTALL_HOOK(NextGenShadow_MsgRestartStage);
     INSTALL_HOOK(NextGenShadow_CSonicUpdateJetEffect);
@@ -1034,7 +1038,7 @@ void NextGenShadow::applyPatches()
     WRITE_MEMORY(0xE9FFC9, uint32_t, 5);
 
     // Play chaos attack voice
-    WRITE_MEMORY(0x1252740, uint32_t, 3002031);
+    WRITE_MEMORY(0x1252740, uint32_t, 3002032);
 
     //-------------------------------------------------------
     // Anti-Gravity
