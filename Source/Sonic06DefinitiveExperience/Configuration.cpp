@@ -12,11 +12,11 @@ bool Configuration::m_camera = false;
 bool Configuration::m_cameraInvertX = false;
 bool Configuration::m_cameraInvertY = false;
 
-bool Configuration::m_rapidSpindash = false;
-Configuration::RunResultType Configuration::m_run = Configuration::RunResultType::Disable;
-vector<string> Configuration::m_runStages = {};
-bool Configuration::m_unlimitedGauge = false;
-bool Configuration::m_gemsEnabled = false;
+bool Configuration::Sonic::m_rapidSpindash = false;
+Configuration::RunResultType Configuration::Sonic::m_run = Configuration::RunResultType::Disable;
+vector<string> Configuration::Sonic::m_runStages = {};
+bool Configuration::Sonic::m_unlimitedGauge = false;
+bool Configuration::Sonic::m_gemsEnabled = false;
 
 std::string iniPath;
 bool Configuration::load(const std::string& rootPath)
@@ -62,8 +62,8 @@ bool Configuration::load(const std::string& rootPath)
     m_noTrick = reader.GetBoolean("Physics", "bNoTrick", false);
 
     // --------------Sonic--------------
-    m_rapidSpindash = reader.GetBoolean("Sonic", "bRapidSpindash", false);
-    m_unlimitedGauge = reader.GetBoolean("Sonic", "bUnlimitedGauge", false);
+    Sonic::m_rapidSpindash = reader.GetBoolean("Sonic", "bRapidSpindash", false);
+    Sonic::m_unlimitedGauge = reader.GetBoolean("Sonic", "bUnlimitedGauge", false);
 
     // Get running goal custom stage list
     string runStages = reader.Get("Sonic", "sRunStages", "");
@@ -73,11 +73,11 @@ bool Configuration::load(const std::string& rootPath)
     while ((pos = runStages.find(delimiter)) != string::npos)
     {
         token = runStages.substr(0, pos);
-        m_runStages.push_back(token);
+        Sonic::m_runStages.push_back(token);
         runStages.erase(0, pos + delimiter.length());
     }
-    m_runStages.push_back(runStages);
-    m_run = (RunResultType)reader.GetInteger("Sonic", "nRun", 0);
+    Sonic::m_runStages.push_back(runStages);
+    Sonic::m_run = (RunResultType)reader.GetInteger("Sonic", "nRun", 0);
 
     string str;
 
@@ -288,7 +288,7 @@ bool Configuration::loadPostInit()
     bool bGemSky    = reader.GetBoolean("Sonic", "bGemSky",     false);
     bool bGemWhite  = reader.GetBoolean("Sonic", "bGemWhite",   false);
     bool bGemYellow = reader.GetBoolean("Sonic", "bGemYellow",  false);
-    m_gemsEnabled = bGemBlue || bGemRed || bGemGreen || bGemPurple || bGemSky || bGemWhite || bGemYellow;
+    Sonic::m_gemsEnabled = bGemBlue || bGemRed || bGemGreen || bGemPurple || bGemSky || bGemWhite || bGemYellow;
 
     S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Blue, bGemBlue);
     S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Red, bGemRed);
@@ -297,7 +297,7 @@ bool Configuration::loadPostInit()
     S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Sky, bGemSky);
     S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_White, bGemWhite);
     S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Yellow, bGemYellow);
-    S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_None, m_gemsEnabled);
+    S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_None, Sonic::m_gemsEnabled);
 
     return true;
 }

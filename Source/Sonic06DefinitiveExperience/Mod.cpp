@@ -190,7 +190,7 @@ extern "C" __declspec(dllexport) void PostInit(ModInfo_t * modInfo)
         exit(-1);
     }
 
-    if (Configuration::m_model == Configuration::ModelType::Sonic && Configuration::m_gemsEnabled)
+    if (Configuration::m_model == Configuration::ModelType::Sonic && Configuration::Sonic::m_gemsEnabled)
     {
         bool noGamepad = true;
         for (UINT i = 0; i <= 15; i++)

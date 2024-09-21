@@ -603,7 +603,7 @@ bool NextGenSonic::bActionHandlerImpl()
     }
 
     bool moving = playerVelocity.norm() > 0.2f;
-    bool canUseSpindash = !moving || (Configuration::m_rapidSpindash && !flags->KeepRunning);
+    bool canUseSpindash = !moving || (Configuration::Sonic::m_rapidSpindash && !flags->KeepRunning);
 
     bool bDown, bPressed, bReleased; 
     NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
@@ -641,7 +641,7 @@ bool NextGenSonic::bActionHandlerImpl()
             }
             else if (moving && !flags->KeepRunning && m_xHeldTimer > cSonic_squatKickPressMaxTime)
             {
-                if (!m_isElise && Configuration::m_rapidSpindash)
+                if (!m_isElise && Configuration::Sonic::m_rapidSpindash)
                 {
                     // Disable anti-gravity if rapid spindash is enabled
                 }
@@ -2486,7 +2486,7 @@ void NextGenSonic::applyPatches()
         // Don't change to ball model during drift
         WRITE_NOP(0xDF30AB, 0xD);
 
-        if (Configuration::m_unlimitedGauge)
+        if (Configuration::Sonic::m_unlimitedGauge)
         {
             INSTALL_HOOK(NextGenSonic_CHudSonicStageUpdate);
         }
@@ -2707,7 +2707,7 @@ void NextGenSonic::applyPatchesPostInit()
     //-------------------------------------------------------
     // Gems
     //-------------------------------------------------------
-    if (!m_isElise && Configuration::m_gemsEnabled)
+    if (!m_isElise && Configuration::Sonic::m_gemsEnabled)
     {
         INSTALL_HOOK(NextGenSonicGems_CSonicUpdate);
 

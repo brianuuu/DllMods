@@ -9,7 +9,7 @@ bool RankRunAnimation::checkCanPlayRunAnimation()
     // Not Modern Sonic or currently in super form
     if (!*pModernSonicContext || Common::IsPlayerSuper() || Common::IsCurrentStageMission()) return false;
 
-    switch (Configuration::m_run)
+    switch (Configuration::Sonic::m_run)
     {
         case Configuration::RunResultType::EnableAll:
         {
@@ -30,7 +30,7 @@ bool RankRunAnimation::checkCanPlayRunAnimation()
         case Configuration::RunResultType::Custom:
         {
             // Only enable for custom defined stages
-            for (std::string const& stage : Configuration::m_runStages)
+            for (std::string const& stage : Configuration::Sonic::m_runStages)
             {
                 if (Common::CheckCurrentStage(stage.c_str()))
                 {
@@ -66,7 +66,7 @@ HOOK(void, __fastcall, MsgChangeResultState, 0xE692C0, void* This, void* Edx, ui
 void RankRunAnimation::applyPatches()
 {
     if (Configuration::m_model != Configuration::ModelType::Sonic) return;
-    if (Configuration::m_run == Configuration::RunResultType::Disable) return;
+    if (Configuration::Sonic::m_run == Configuration::RunResultType::Disable) return;
 
     // Play animation when screen faded to white
     // Ignore original change animation during result screen

@@ -41,11 +41,14 @@ public:
     static bool m_noTrick;
 
     // Sonic
-    static bool m_rapidSpindash;
-    static RunResultType m_run;
-    static std::vector<std::string> m_runStages;
-    static bool m_unlimitedGauge;
-    static bool m_gemsEnabled;
+    struct Sonic
+    {
+        static bool m_rapidSpindash;
+        static RunResultType m_run;
+        static std::vector<std::string> m_runStages;
+        static bool m_unlimitedGauge;
+        static bool m_gemsEnabled;
+    };
 
     static bool load(const std::string& rootPath);
     static bool loadPostInit();
