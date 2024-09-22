@@ -28,7 +28,9 @@ public:
 	static bool __fastcall applySlidingHorizontalTargetVel(void* context);
 
 	// Chaos Attack
+	static Eigen::Vector3f m_holdPosition;
 	static int m_chaosAttackCount;
+	static bool m_chaosAttackBuffered;
 
 	// X Action
 	static float m_xHeldTimer;

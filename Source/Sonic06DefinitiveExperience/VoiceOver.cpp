@@ -82,8 +82,8 @@ void VoiceOver::applyPatches()
 	INSTALL_HOOK(VoiceOver_CSonicStateHomingAttackBegin);
 
 	// Change homing attack after voices to jump voices
-	// Shadow handles voice itself
-	if (Configuration::m_model != Configuration::ModelType::Shadow)
+	// Shadow with custom moveset handles voice itself
+	if (Configuration::m_model != Configuration::ModelType::Shadow || !Configuration::m_characterMoveset)
 	{
 		WRITE_MEMORY(0x11184E4, uint32_t, 3002000);
 		WRITE_MEMORY(0x1118512, uint32_t, 3002000);

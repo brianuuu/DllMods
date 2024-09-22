@@ -85,11 +85,7 @@ public:
     static const char* volatile const FloatingBoost;
 
     static const char* volatile const SpinFast;
-    static const char* volatile const ChaosAttack00;
-    static const char* volatile const ChaosAttack01;
-    static const char* volatile const ChaosAttack02;
-    static const char* volatile const ChaosAttack03;
-    static const char* volatile const ChaosAttack04;
+    static const char* volatile const ChaosAttack[5];
     static const char* volatile const ChaosAttackWait;
 };
 

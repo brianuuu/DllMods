@@ -196,11 +196,14 @@ const char* volatile const AnimationSetPatcher::SkyGemEnd = "SkyGemEnd";
 const char* volatile const AnimationSetPatcher::FloatingBoost = "FloatingBoost";
 
 const char* volatile const AnimationSetPatcher::SpinFast = "SpinFast";
-const char* volatile const AnimationSetPatcher::ChaosAttack00 = "ChaosAttack00";
-const char* volatile const AnimationSetPatcher::ChaosAttack01 = "ChaosAttack01";
-const char* volatile const AnimationSetPatcher::ChaosAttack02 = "ChaosAttack02";
-const char* volatile const AnimationSetPatcher::ChaosAttack03 = "ChaosAttack03";
-const char* volatile const AnimationSetPatcher::ChaosAttack04 = "ChaosAttack04";
+const char* volatile const AnimationSetPatcher::ChaosAttack[5] = 
+{ 
+    "ChaosAttack00",
+    "ChaosAttack01",
+    "ChaosAttack02",
+    "ChaosAttack03",
+    "ChaosAttack04"
+};
 const char* volatile const AnimationSetPatcher::ChaosAttackWait = "ChaosAttackWait";
 
 void AnimationSetPatcher::applyPatches()
@@ -414,11 +417,11 @@ void AnimationSetPatcher::applyPatches()
         //m_newAnimationDataSuper.emplace_back("SquatKick", "ssn_squat_kick", 1.0f, false, nullptr);
         //m_newAnimationDataSuper.emplace_back(BrakeFlip, "ssn_brake_flip", 1.0f, false, nullptr);
 
-        m_newAnimationData.emplace_back(ChaosAttack00, "sh_chaos_attack00", 1.0f, false, nullptr);
-        m_newAnimationData.emplace_back(ChaosAttack01, "sh_chaos_attack01", 1.0f, false, nullptr);
-        m_newAnimationData.emplace_back(ChaosAttack02, "sh_chaos_attack02", 1.0f, false, nullptr);
-        m_newAnimationData.emplace_back(ChaosAttack03, "sh_chaos_attack03", 1.0f, false, nullptr);
-        m_newAnimationData.emplace_back(ChaosAttack04, "sh_chaos_attack04", 1.0f, false, nullptr);
+        m_newAnimationData.emplace_back(ChaosAttack[0], "sh_chaos_attack00", 1.0f, false, ChaosAttackWait);
+        m_newAnimationData.emplace_back(ChaosAttack[1], "sh_chaos_attack01", 1.0f, false, ChaosAttackWait);
+        m_newAnimationData.emplace_back(ChaosAttack[2], "sh_chaos_attack02", 1.0f, false, ChaosAttackWait);
+        m_newAnimationData.emplace_back(ChaosAttack[3], "sh_chaos_attack03", 1.0f, false, ChaosAttackWait);
+        m_newAnimationData.emplace_back(ChaosAttack[4], "sh_chaos_attack04", 1.0f, false, ChaosAttackWait);
         m_newAnimationData.emplace_back(ChaosAttackWait, "sh_chaos_wait_l", 1.0f, true, nullptr);
     }
 

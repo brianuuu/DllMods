@@ -2,7 +2,6 @@
 #include "Configuration.h"
 #include "Application.h"
 #include "AnimationSetPatcher.h"
-#include "VoiceOver.h"
 
 //---------------------------------------------------
 // Animation
@@ -45,7 +44,9 @@ float const cShadow_slidingSpeedMax = 16.0f;
 float const cShadow_spindashTime = 3.0f;
 float const cShadow_spindashSpeed = 30.0f;
 
+Eigen::Vector3f NextGenShadow::m_holdPosition = Eigen::Vector3f::Zero();
 int NextGenShadow::m_chaosAttackCount = -1;
+bool NextGenShadow::m_chaosAttackBuffered = false;
 float const cShadow_chaosAttackWaitTime = 0.2f;
 
 float NextGenShadow::m_xHeldTimer = 0.0f;
@@ -139,6 +140,11 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdateJetEffect, 0xE6BF20, Sonic::Pla
 //---------------------------------------------------
 // Chaos Attack
 //---------------------------------------------------
+HOOK(int, __stdcall, NextGenShadow_HomingUpdate, 0xE5FF10, CSonicContext* context)
+{
+    return originalNextGenShadow_HomingUpdate(context);
+}
+
 HOOK(int, __fastcall, NextGenShadow_CSonicStateHomingAttackBegin, 0x1232040, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     return originalNextGenShadow_CSonicStateHomingAttackBegin(This);
@@ -188,12 +194,17 @@ HOOK(int32_t*, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterBegin, 0x11
 
     // handle Shadow stopping for chaos attack
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
-    if (!context->StateFlag(eStateFlag_EnableHomingAttackOnDiving))
+    if (!context->StateFlag(eStateFlag_EnableHomingAttackOnDiving) && !context->StateFlag(eStateFlag_KeepRunning))
     {
+        NextGenShadow::m_holdPosition = context->m_spMatrixNode->m_Transform.m_Position;
         NextGenShadow::m_chaosAttackCount = 0;
+        NextGenShadow::m_chaosAttackBuffered = false;
 
         Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosAttackWait);
         Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+
+        // Disable force landing after 1 second in air
+        WRITE_MEMORY(0xE33AC7, uint8_t, 0xEB);
     }
 
     return result;
@@ -205,30 +216,95 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
     if (NextGenShadow::m_chaosAttackCount >= 0)
     {
         Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+        Common::SetPlayerPosition(NextGenShadow::m_holdPosition);
 
-        if (This->m_Time > cShadow_chaosAttackWaitTime)
+        alignas(16) MsgGetAnimationInfo message {};
+        Common::SonicContextGetAnimationInfo(message);
+
+        Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+        bool const isPressedA = padState->IsTapped(Sonic::EKeyState::eKeyState_A);
+
+        static SharedPtrTypeless soundHandleSfx;
+        static SharedPtrTypeless soundHandleVfx;
+
+        if (message.IsAnimation(AnimationSetPatcher::ChaosAttackWait))
         {
-            // timeout, resume original homing attack after
+            bool const nextAttackNotBuffered = NextGenShadow::m_chaosAttackCount > 0 && !NextGenShadow::m_chaosAttackBuffered;
+            if (This->m_Time > cShadow_chaosAttackWaitTime || nextAttackNotBuffered)
+            {
+                // timeout, resume original homing attack after
+                This->m_Time = 0.0f;
+                NextGenShadow::m_chaosAttackCount = -1;
+
+                // apply up velocity
+                Eigen::Vector3f velocity(0, 0, 0);
+                velocity.y() = context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_HomingAttackAfterUpVelocity)
+                             * context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_AttackAfterImpluseVelocityCoeff);
+                Common::SetPlayerVelocity(velocity);
+
+                // play jump sfx, voice as sound to prevent replacing previous voice
+                Common::SonicContextPlaySound(soundHandleSfx, 2002027, 1);
+                Common::SonicContextPlaySound(soundHandleVfx, 3002000, 0);
+
+                // play random homing attack after animation
+                Common::SonicContextChangeAnimation((const char*)*((uint32_t*)0x1E75E18 + rand() % 6));
+
+                // make sure it's in air again
+                Common::SonicContextSetInAirData(context);
+                return;
+            }
+
+            // Next attack
+            if ((NextGenShadow::m_chaosAttackCount == 0 && isPressedA) || NextGenShadow::m_chaosAttackCount > 0 && NextGenShadow::m_chaosAttackBuffered)
+            {
+                NextGenShadow::m_chaosAttackCount++;
+                NextGenShadow::m_chaosAttackBuffered = false;
+
+                Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosAttack[NextGenShadow::m_chaosAttackCount - 1]);
+                Common::SonicContextPlayVoice(soundHandleVfx, NextGenShadow::m_chaosAttackCount < 5 ? 3002032 : 3002031, 10 + NextGenShadow::m_chaosAttackCount);
+            
+                if (context->m_HomingAttackTargetActorID)
+                {
+                    hh::math::CVector targetPosition = hh::math::CVector::Identity();
+                    context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
+                
+                    // Apply damage to lock-on target
+                    context->m_pPlayer->SendMessage
+                    (
+                        context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgDamage>
+                        (
+                            *(uint32_t*)0x1E61B90, // DamageTypeSonicHoming
+                            context->m_spMatrixNode->m_Transform.m_Position,
+                            (targetPosition - context->m_spMatrixNode->m_Transform.m_Position).normalized() * context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_HomingSpeed)
+                        )
+                    );
+
+                    // resume disable lock-on cursor
+                    WRITE_MEMORY(0xDEBAA0, uint8_t, 0x75);
+                    originalNextGenShadow_HomingUpdate(context);
+                }
+            }
+        }
+        else
+        {
+            // buffer next attack during attack animation
             This->m_Time = 0.0f;
-            NextGenShadow::m_chaosAttackCount = -1;
+            if (NextGenShadow::m_chaosAttackCount < 5 && !NextGenShadow::m_chaosAttackBuffered)
+            {
+                NextGenShadow::m_chaosAttackBuffered = isPressedA;
+            }
 
-            // apply up velocity
-            Eigen::Vector3f velocity(0, 0, 0);
-            velocity.y() = context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_HomingAttackAfterUpVelocity)
-                         * context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_AttackAfterImpluseVelocityCoeff);
-            Common::SetPlayerVelocity(velocity);
-
-            // play jump sfx, vfx
-            static SharedPtrTypeless soundHandle;
-            Common::SonicContextPlaySound(soundHandle, 2002027, 1);
-            VoiceOver::playJumpVoice();
-
-            // play random homing attack after animation
-            Common::SonicContextChangeAnimation((const char*)*((uint32_t*)0x1E75E18 + rand() % 6));
-
-            // make sure it's in air again
-            Common::SonicContextSetInAirData(context);
-            return;
+            if (NextGenShadow::m_chaosAttackCount == 1 || NextGenShadow::m_chaosAttackCount == 5)
+            {
+                // resume disable lock-on cursor
+                WRITE_MEMORY(0xDEBAA0, uint8_t, 0x75);
+            }
+            else
+            {
+                // Do not disable lock-on cursor
+                WRITE_MEMORY(0xDEBAA0, uint8_t, 0xEB);
+            }
+            originalNextGenShadow_HomingUpdate(context);
         }
     }
     else
@@ -242,7 +318,14 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterEnd, 0x11182F0)
     // resume ground detection
     WRITE_MEMORY(0xE63A31, uint8_t, 0x74);
 
+    // resume force landing
+    WRITE_MEMORY(0xE33AC7, uint8_t, 0x76);
+
+    // resume disable lock-on cursor
+    WRITE_MEMORY(0xDEBAA0, uint8_t, 0x75);
+
     NextGenShadow::m_chaosAttackCount = -1;
+    NextGenShadow::m_chaosAttackBuffered = false;
 }
 
 //---------------------------------------------------
