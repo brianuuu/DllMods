@@ -251,6 +251,8 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
 
                 // make sure it's in air again
                 Common::SonicContextSetInAirData(context);
+                context->StateFlag(eStateFlag_EnableHomingAttack) = true;
+                context->StateFlag(eStateFlag_EnableAirOnceAction) = true;
                 return;
             }
 
