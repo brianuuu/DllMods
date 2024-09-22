@@ -279,9 +279,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
                         )
                     );
 
-                    // resume disable lock-on cursor
-                    WRITE_MEMORY(0xDEBAA0, uint8_t, 0x75);
-                    originalNextGenShadow_HomingUpdate(context);
+                    context->m_HomingAttackTargetActorID = 0;
                 }
             }
         }
@@ -294,17 +292,17 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
                 NextGenShadow::m_chaosAttackBuffered = isPressedA;
             }
 
-            if (NextGenShadow::m_chaosAttackCount == 1 || NextGenShadow::m_chaosAttackCount == 5)
-            {
-                // resume disable lock-on cursor
-                WRITE_MEMORY(0xDEBAA0, uint8_t, 0x75);
-            }
-            else
+            originalNextGenShadow_HomingUpdate(context);
+            if (context->m_HomingAttackTargetActorID)
             {
                 // Do not disable lock-on cursor
                 WRITE_MEMORY(0xDEBAA0, uint8_t, 0xEB);
             }
-            originalNextGenShadow_HomingUpdate(context);
+            else
+            {
+                // resume disable lock-on cursor
+                WRITE_MEMORY(0xDEBAA0, uint8_t, 0x75);
+            }
         }
     }
     else
