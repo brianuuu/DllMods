@@ -1014,6 +1014,16 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateSquatEnd, 0x12309A0, void* This)
     return originalNextGenShadow_CSonicStateSquatEnd(This);
 }
 
+HOOK(void, __fastcall, NextGenShadow_CRASH, 0x8CD0F0, void* This, void* Edx, uint16_t* a2, int a3, void* a4)
+{
+    if (*a2 == 0xA)
+    {
+        printf("\n\n\n\n*********************************\nCRASH DETECTED\n*********************************\n\n\n\n");
+        *a2 = 0;
+    }
+    originalNextGenShadow_CRASH(This, Edx, a2, a3, a4);
+}
+
 //---------------------------------------------------
 // Main Apply Patches
 //---------------------------------------------------
@@ -1170,4 +1180,7 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_CSonicStateSquatBegin);
     INSTALL_HOOK(NextGenShadow_CSonicStateSquatAdvance);
     INSTALL_HOOK(NextGenShadow_CSonicStateSquatEnd);
+
+    // HACK: CRASH PREVENTION
+    INSTALL_HOOK(NextGenShadow_CRASH);
 }
