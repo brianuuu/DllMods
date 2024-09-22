@@ -261,6 +261,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
                 NextGenShadow::m_chaosAttackBuffered = false;
 
                 Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosAttack[NextGenShadow::m_chaosAttackCount - 1]);
+                Common::SonicContextPlaySound(soundHandleVfx, 80041028, 1);
                 Common::SonicContextPlayVoice(soundHandleVfx, NextGenShadow::m_chaosAttackCount < 5 ? 3002032 : 3002031, 10 + NextGenShadow::m_chaosAttackCount);
             
                 if (context->m_HomingAttackTargetActorID)
@@ -372,7 +373,8 @@ void NextGenShadow::AddChaosMaturity(float amount)
 
     if (m_chaosMaturity == 100.0f && maturity < 100.0f)
     {
-        // TODO: play sfx
+        static SharedPtrTypeless soundHandle;
+        Common::SonicContextPlaySound(soundHandle, 80041040, 1);
     }
 }
 
@@ -707,9 +709,11 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateSquatKickBegin, 0x12526D0, void*
         NextGenShadow::m_squatKickSpeed = playerVelocity.norm();
     }
 
-    // TODO: Play squat kick sfx and pfx
+    // Play squat kick sfx
     static SharedPtrTypeless soundHandle;
-    //Common::SonicContextPlaySound(soundHandle, 80041021, 1); 
+    Common::SonicContextPlaySound(soundHandle, 80041030, 1);
+
+    // TODO: triple kick
 
     NextGenShadow::m_isSquatKick = true;
     return originalNextGenShadow_CSonicStateSquatKickBegin(This);
