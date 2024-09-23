@@ -68,7 +68,7 @@ bool NextGenShadow::ShouldPlayJetEffect()
         "Dash", "DashL", "DashR",
         "Jet", "JetL", "JetR", "JetWallL", "JetWallR",
         "Boost", "BoostL", "BoostR", "BoostWallL", "BoostWallR",
-        "AirBoost"
+        "AirBoost", "RunQuickStepL", "RunQuickStepR"
     };
 
     alignas(16) MsgGetAnimationInfo message {};
@@ -114,6 +114,20 @@ void NextGenShadow::SetJetEffectVisible(bool visible)
         jetRightBack = nullptr;
         jetLeftFront = nullptr;
         jetLeftBack = nullptr;
+    }
+}
+
+bool jetSoundIsLeft = false;
+HOOK(int, __fastcall, NextGenShadow_AssignFootstepFloorCues, 0xDFD420, Sonic::Player::CPlayerSpeedContext* context, void* Edx, int stepID)
+{
+    if ((stepID == 0 || stepID == 1) && NextGenShadow::ShouldPlayJetEffect()) // welk or run
+    {
+        jetSoundIsLeft = !jetSoundIsLeft;
+        return jetSoundIsLeft ? 80041041 : 80041042;
+    }
+    else
+    {
+        return originalNextGenShadow_AssignFootstepFloorCues(context, Edx, stepID);
     }
 }
 
@@ -1138,6 +1152,7 @@ void NextGenShadow::applyPatches()
     // Handle model hide/unhide, jet effect
     INSTALL_HOOK(NextGenShadow_MsgRestartStage);
     INSTALL_HOOK(NextGenShadow_CSonicUpdateJetEffect);
+    INSTALL_HOOK(NextGenShadow_AssignFootstepFloorCues);
 
     if (!Configuration::m_characterMoveset) return;
 
