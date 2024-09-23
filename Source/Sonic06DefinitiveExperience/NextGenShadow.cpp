@@ -285,14 +285,18 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
                     hh::math::CVector targetPosition = hh::math::CVector::Identity();
                     context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
                 
+                    hh::math::CVector applyVelocity = targetPosition - context->m_spMatrixNode->m_Transform.m_Position;
+                    applyVelocity.y() = max(0.0f, applyVelocity.y());
+                    applyVelocity = applyVelocity.normalized() * context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_HomingSpeed);
+
                     // Apply damage to lock-on target
                     context->m_pPlayer->SendMessage
                     (
                         context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgDamage>
                         (
-                            *(uint32_t*)0x1E61B90, // DamageTypeSonicHoming
-                            context->m_spMatrixNode->m_Transform.m_Position,
-                            (targetPosition - context->m_spMatrixNode->m_Transform.m_Position).normalized() * context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_HomingSpeed)
+                            *(uint32_t*)0x1E61B90, // DamageTypeSonicSquatKick
+                            targetPosition,
+                            applyVelocity
                         )
                     );
 
