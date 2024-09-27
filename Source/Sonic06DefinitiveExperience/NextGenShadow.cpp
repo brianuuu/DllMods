@@ -273,13 +273,30 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
             // Next attack
             if ((NextGenShadow::m_chaosAttackCount == 0 && isPressedA) || NextGenShadow::m_chaosAttackCount > 0 && NextGenShadow::m_chaosAttackBuffered)
             {
+                Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosAttack[NextGenShadow::m_chaosAttackCount]);
+                Common::SonicContextPlaySound(soundHandleVfx, 80041028, 1);
+                Common::SonicContextPlayVoice(soundHandleVfx, NextGenShadow::m_chaosAttackCount < 4 ? 3002032 : 3002031, 10 + NextGenShadow::m_chaosAttackCount);
+            
+                // kick effect (may not exist)
+                static SharedPtrTypeless chaosAttackKickPfx[5];
+                {
+                    auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("Root");
+                    Common::fCGlitterCreate(*PLAYER_CONTEXT, chaosAttackKickPfx[NextGenShadow::m_chaosAttackCount], &attachBone, ("ef_ch_sh_chaosattack0" + std::to_string(NextGenShadow::m_chaosAttackCount)).c_str(), 0);
+                }
+
+                // glow effect
+                static SharedPtrTypeless chaosAttackPfx[5];
+                {
+                    auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode
+                    (
+                        NextGenShadow::m_chaosAttackCount == 0 ? "Nose" : (NextGenShadow::m_chaosAttackCount == 2 ? "LeftToeBase" : "RightToeBase")
+                    );
+                    Common::fCGlitterCreate(*PLAYER_CONTEXT, chaosAttackPfx[NextGenShadow::m_chaosAttackCount], &attachBone, ("ef_ch_sh_chaosattack0" + std::to_string(NextGenShadow::m_chaosAttackCount) + "_kick").c_str(), 0);
+                }
+
                 NextGenShadow::m_chaosAttackCount++;
                 NextGenShadow::m_chaosAttackBuffered = false;
 
-                Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosAttack[NextGenShadow::m_chaosAttackCount - 1]);
-                Common::SonicContextPlaySound(soundHandleVfx, 80041028, 1);
-                Common::SonicContextPlayVoice(soundHandleVfx, NextGenShadow::m_chaosAttackCount < 5 ? 3002032 : 3002031, 10 + NextGenShadow::m_chaosAttackCount);
-            
                 if (context->m_HomingAttackTargetActorID)
                 {
                     hh::math::CVector targetPosition = hh::math::CVector::Identity();
