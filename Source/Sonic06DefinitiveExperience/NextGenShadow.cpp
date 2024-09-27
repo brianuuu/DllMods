@@ -1170,6 +1170,10 @@ void NextGenShadow::applyPatches()
     WRITE_MEMORY(0x1254E04, int, -1);
     WRITE_MEMORY(0x1254F23, int, -1);
 
+    // Don't change to ball model during drift
+    WRITE_NOP(0xDF30AB, 0xD);
+    WRITE_MEMORY(0xDF2B24, char*, AnimationSetPatcher::SpinFast);
+
     // Handle model hide/unhide, jet effect
     INSTALL_HOOK(NextGenShadow_MsgRestartStage);
     INSTALL_HOOK(NextGenShadow_CSonicUpdateJetEffect);
