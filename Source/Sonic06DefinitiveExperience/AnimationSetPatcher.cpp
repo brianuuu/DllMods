@@ -205,6 +205,12 @@ const char* volatile const AnimationSetPatcher::ChaosAttack[5] =
     "ChaosAttack04"
 };
 const char* volatile const AnimationSetPatcher::ChaosAttackWait = "ChaosAttackWait";
+const char* volatile const AnimationSetPatcher::SpinAttack[3] =
+{
+    "SpinAttack00",
+    "SpinAttack01",
+    "SpinAttack02"
+};
 
 void AnimationSetPatcher::applyPatches()
 {
@@ -423,6 +429,10 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationData.emplace_back(ChaosAttack[3], "sh_chaos_attack03", 1.0f, false, ChaosAttackWait);
         m_newAnimationData.emplace_back(ChaosAttack[4], "sh_chaos_attack04", 1.0f, false, ChaosAttackWait);
         m_newAnimationData.emplace_back(ChaosAttackWait, "sh_chaos_wait_l", 1.0f, true, nullptr);
+
+        m_newAnimationData.emplace_back(SpinAttack[0], "sh_spin_attack01_Root", 1.0f, false, nullptr);
+        m_newAnimationData.emplace_back(SpinAttack[1], "sh_spin_attack02_Root", 1.0f, false, nullptr);
+        m_newAnimationData.emplace_back(SpinAttack[2], "sh_spin_attack03_Root", 1.0f, false, nullptr);
     }
 
     if (!m_newAnimationData.empty())

@@ -1351,6 +1351,29 @@ inline bool IsPlayerHangOn()
 	return *(uint32_t*)((uint32_t)*PLAYER_CONTEXT + 0x7D8) != 0;
 }
 
+static bool IsPlayerAnimationFinished
+(
+	Sonic::Player::CPlayer* pPlayer
+)
+{
+	static void* const pfIsPlayerAnimationFinished = (void*)0xCDF4C0;
+	__asm
+	{
+		mov		eax, pPlayer
+		cmp     dword ptr [eax + 244h], 0
+		jz		jump
+
+		mov     esi, [eax + 244h]
+		call	[pfIsPlayerAnimationFinished]
+		jmp		end
+
+		jump:
+		mov     al, 0
+
+		end:
+	}
+}
+
 inline bool IsAtLoadingScreen()
 {
 	uint32_t** hudCount = (uint32_t**)0x1E66B40;

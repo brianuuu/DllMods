@@ -18,6 +18,10 @@ public:
 	static bool m_isBrakeFlip;
 	static Eigen::Vector3f m_brakeFlipDir;
 	static float m_squatKickSpeed;
+	static int m_tripleKickCount;
+	static bool m_tripleKickBuffered;
+	static bool m_tripleKickShockWaveSpawned;
+	static void NextTripleKick();
 
 	// Spindash/Sliding
 	static bool m_isSpindash;

@@ -87,5 +87,6 @@ public:
     static const char* volatile const SpinFast;
     static const char* volatile const ChaosAttack[5];
     static const char* volatile const ChaosAttackWait;
+    static const char* volatile const SpinAttack[3];
 };
 

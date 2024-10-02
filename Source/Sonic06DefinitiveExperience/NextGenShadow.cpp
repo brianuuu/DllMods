@@ -31,7 +31,14 @@ bool NextGenShadow::m_isSquatKick = false;
 bool NextGenShadow::m_isBrakeFlip = false;
 Eigen::Vector3f NextGenShadow::m_brakeFlipDir(0, 0, 1);
 float NextGenShadow::m_squatKickSpeed = 0.0f;
+int NextGenShadow::m_tripleKickCount = -1;
+bool NextGenShadow::m_tripleKickBuffered = false;
+bool NextGenShadow::m_tripleKickShockWaveSpawned = false;
 float const cShadow_squatKickPressMaxTime = 0.3f;
+float const cShadow_tripleKickShockWaveSpawn = 0.2f;
+float const cShadow_tripleKickShockWaveDuration = 0.5f;
+float const cShadow_tripleKickShockWaveHeight = 0.5f;
+float const cShadow_tripleKickShockWaveRadius = 4.0f;
 
 bool slidingEndWasSliding_Shadow = false;
 bool NextGenShadow::m_isSpindash = false;
@@ -683,9 +690,10 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateSlidingEndBegin, 0x1230F80, void*
 {
     // For Sonic only, do a flip if no stick input
     Eigen::Vector3f inputDirection;
-    if (Common::GetWorldInputDirection(inputDirection) && inputDirection.isZero())
+    if (NextGenShadow::m_tripleKickCount >= 0 || (Common::GetWorldInputDirection(inputDirection) && inputDirection.isZero()))
     {
         // Do brake flip animation
+        NextGenShadow::m_tripleKickCount = -1;
         NextGenShadow::m_isBrakeFlip = true;
         WRITE_MEMORY(0x1230F88, char*, AnimationSetPatcher::BrakeFlip);
     }
@@ -725,6 +733,7 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateSlidingEndAdvance, 0x1230EE0, vo
 
 HOOK(int*, __fastcall, NextGenShadow_CSonicStateSlidingEndEnd, 0x1230E60, void* This)
 {
+    NextGenShadow::m_tripleKickCount = -1;
     NextGenShadow::m_isBrakeFlip = false;
     return originalNextGenShadow_CSonicStateSlidingEndEnd(This);
 }
@@ -732,6 +741,20 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateSlidingEndEnd, 0x1230E60, void* 
 //---------------------------------------------------
 // CSonicStateSquatKick
 //---------------------------------------------------
+void NextGenShadow::NextTripleKick()
+{
+    // next kick
+    m_tripleKickCount++;
+    m_tripleKickBuffered = false;
+    m_tripleKickShockWaveSpawned = false;
+    Common::SonicContextChangeAnimation(AnimationSetPatcher::SpinAttack[m_tripleKickCount]);
+
+    static SharedPtrTypeless soundHandle;
+    static SharedPtrTypeless voiceHandle;
+    Common::SonicContextPlayVoice(voiceHandle, m_tripleKickCount == 2 ? 3002031 : 3002032, 10 + m_tripleKickCount);
+    Common::SonicContextPlaySound(soundHandle, 80041029, 1);
+}
+
 HOOK(int*, __fastcall, NextGenShadow_CSonicStateSquatKickBegin, 0x12526D0, void* This)
 {
     // Don't allow direction change for squat kick
@@ -753,19 +776,73 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateSquatKickBegin, 0x12526D0, void*
         NextGenShadow::m_squatKickSpeed = playerVelocity.norm();
     }
 
-    // Play squat kick sfx
-    static SharedPtrTypeless soundHandle;
-    Common::SonicContextPlaySound(soundHandle, 80041030, 1);
+    NextGenShadow::m_tripleKickCount = -1;
+    if (NextGenShadow::m_squatKickSpeed == 0.0f)
+    {
+        // start triple kick
+        NextGenShadow::NextTripleKick();
 
-    // TODO: triple kick
+        // Stop moving
+        Common::GetSonicStateFlags()->OutOfControl = true;
+        return nullptr;
+    }
+    else
+    {
+        // Play squat kick sfx
+        static SharedPtrTypeless soundHandle;
+        Common::SonicContextPlaySound(soundHandle, 80041030, 1);
 
-    NextGenShadow::m_isSquatKick = true;
-    return originalNextGenShadow_CSonicStateSquatKickBegin(This);
+        NextGenShadow::m_isSquatKick = true;
+        return originalNextGenShadow_CSonicStateSquatKickBegin(This);
+    }
 }
 
-HOOK(void, __fastcall, NextGenShadow_CSonicStateSquatKickAdvance, 0x1252810, void* This)
+HOOK(void, __fastcall, NextGenShadow_CSonicStateSquatKickAdvance, 0x1252810, hh::fnd::CStateMachineBase::CStateBase* This)
 {
-    originalNextGenShadow_CSonicStateSquatKickAdvance(This);
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+    if (NextGenShadow::m_tripleKickCount >= 0)
+    {
+        // triple kick
+        if (Common::IsPlayerAnimationFinished(context->m_pPlayer))
+        {
+            if (NextGenShadow::m_tripleKickCount == 2)
+            {
+                // finished
+                StateManager::ChangeState(StateAction::Stand, *PLAYER_CONTEXT);
+            }
+            else if (NextGenShadow::m_tripleKickBuffered)
+            {
+                NextGenShadow::NextTripleKick();
+                This->m_Time = 0.0f;
+            }
+            else
+            {
+                // no input for next attack
+                StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
+            }
+        }
+        else
+        {
+            if (!NextGenShadow::m_tripleKickShockWaveSpawned && This->m_Time >= cShadow_tripleKickShockWaveSpawn)
+            {
+                NextGenShadow::m_tripleKickShockWaveSpawned = true;
+
+                Hedgehog::Math::CVector const pos = context->m_spMatrixNode->m_Transform.m_Position;
+                Common::CreatePlayerSupportShockWave(pos, cShadow_tripleKickShockWaveHeight, cShadow_tripleKickShockWaveRadius, cShadow_tripleKickShockWaveDuration);
+            }
+
+            if (!NextGenShadow::m_tripleKickBuffered)
+            {
+                Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+                NextGenShadow::m_tripleKickBuffered = padState->IsTapped(Sonic::EKeyState::eKeyState_X);
+            }
+        }
+    }
+    else
+    {
+        // sweep kick
+        originalNextGenShadow_CSonicStateSquatKickAdvance(This);
+    }
 
     // Lock squat kick's rotation if not moving
     if (NextGenShadow::m_squatKickSpeed == 0.0f)
@@ -825,9 +902,23 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateSquatKickEnd, 0x12527B0, void* T
 {
     // Unlock direction change for sliding/spindash
     WRITE_MEMORY(0x11D943D, uint8_t, 0x74);
+    
+    if (NextGenShadow::m_tripleKickCount >= 0)
+    {
+        Common::GetSonicStateFlags()->OutOfControl = false;
+        if (NextGenShadow::m_tripleKickCount == 2)
+        {
+            NextGenShadow::m_tripleKickCount = -1;
+        }
 
-    NextGenShadow::m_isSquatKick = false;
-    return originalNextGenShadow_CSonicStateSquatKickEnd(This);
+        // m_tripleKickCount gets reset in SlidingEnd state
+        return nullptr;
+    }
+    else
+    {
+        NextGenShadow::m_isSquatKick = false;
+        return originalNextGenShadow_CSonicStateSquatKickEnd(This);
+    }
 }
 
 //---------------------------------------------------
