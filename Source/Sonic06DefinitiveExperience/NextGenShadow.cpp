@@ -712,6 +712,13 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateSlidingEndAdvance, 0x1230EE0, vo
         // Enforce brake flip rotation
         alignas(16) float dir[4] = { NextGenShadow::m_brakeFlipDir.x(), NextGenShadow::m_brakeFlipDir.y(), NextGenShadow::m_brakeFlipDir.z(), 0 };
         NextGenPhysics::applyCSonicRotationAdvance(This, dir);
+
+        // Move during flip
+        Eigen::Vector3f inputDirection;
+        if (Common::GetWorldInputDirection(inputDirection) && !inputDirection.isZero())
+        {
+            StateManager::ChangeState(StateAction::Walk, *PLAYER_CONTEXT);
+        }
     }
     return result;
 }
