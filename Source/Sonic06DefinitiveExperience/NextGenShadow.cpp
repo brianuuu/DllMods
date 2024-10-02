@@ -208,7 +208,7 @@ HOOK(int32_t*, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterBegin, 0x11
 
     // handle Shadow stopping for chaos attack
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
-    if (!context->StateFlag(eStateFlag_EnableHomingAttackOnDiving) && !context->StateFlag(eStateFlag_KeepRunning))
+    if (!context->StateFlag(eStateFlag_EnableHomingAttackOnDiving) && !context->StateFlag(eStateFlag_KeepRunning) && Common::GetCurrentStageID() != SMT_bsl)
     {
         NextGenShadow::m_holdPosition = context->m_spMatrixNode->m_Transform.m_Position;
         NextGenShadow::m_chaosAttackCount = 0;
