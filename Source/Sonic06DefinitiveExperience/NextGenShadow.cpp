@@ -1277,6 +1277,9 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_CSonicUpdateJetEffect);
     INSTALL_HOOK(NextGenShadow_AssignFootstepFloorCues);
 
+    // HACK: CRASH PREVENTION
+    INSTALL_HOOK(NextGenShadow_CRASH);
+
     if (!Configuration::m_characterMoveset) return;
 
     //-------------------------------------------------------
@@ -1405,7 +1408,4 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_CSonicStateSquatBegin);
     INSTALL_HOOK(NextGenShadow_CSonicStateSquatAdvance);
     INSTALL_HOOK(NextGenShadow_CSonicStateSquatEnd);
-
-    // HACK: CRASH PREVENTION
-    INSTALL_HOOK(NextGenShadow_CRASH);
 }
