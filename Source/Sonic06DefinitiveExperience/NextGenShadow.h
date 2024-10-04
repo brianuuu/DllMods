@@ -21,7 +21,7 @@ public:
 	static int m_tripleKickCount;
 	static bool m_tripleKickBuffered;
 	static bool m_tripleKickShockWaveSpawned;
-	static void NextTripleKick();
+	static void NextTripleKick(Sonic::Player::CPlayerSpeedContext* context);
 
 	// Spindash/Sliding
 	static bool m_isSpindash;

@@ -741,7 +741,9 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateSlidingEndEnd, 0x1230E60, void* 
 //---------------------------------------------------
 // CSonicStateSquatKick
 //---------------------------------------------------
-void NextGenShadow::NextTripleKick()
+static SharedPtrTypeless tripleKickPfxR;
+static SharedPtrTypeless tripleKickPfxL;
+void NextGenShadow::NextTripleKick(Sonic::Player::CPlayerSpeedContext* context)
 {
     // next kick
     m_tripleKickCount++;
@@ -753,9 +755,13 @@ void NextGenShadow::NextTripleKick()
     static SharedPtrTypeless voiceHandle;
     Common::SonicContextPlayVoice(voiceHandle, m_tripleKickCount == 2 ? 3002031 : 3002032, 10 + m_tripleKickCount);
     Common::SonicContextPlaySound(soundHandle, 80041029, 1);
+
+    static SharedPtrTypeless tripleKickPfx[3];
+    auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("Root");
+    Common::fCGlitterCreate(*PLAYER_CONTEXT, tripleKickPfx[m_tripleKickCount], &attachBone, ("ef_ch_sh_spinattack0" + std::to_string(m_tripleKickCount)).c_str(), 0);
 }
 
-HOOK(int*, __fastcall, NextGenShadow_CSonicStateSquatKickBegin, 0x12526D0, void* This)
+HOOK(int*, __fastcall, NextGenShadow_CSonicStateSquatKickBegin, 0x12526D0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     // Don't allow direction change for squat kick
     WRITE_MEMORY(0x11D943D, uint8_t, 0xEB);
@@ -780,7 +786,18 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateSquatKickBegin, 0x12526D0, void*
     if (NextGenShadow::m_squatKickSpeed == 0.0f)
     {
         // start triple kick
-        NextGenShadow::NextTripleKick();
+        auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+        NextGenShadow::NextTripleKick(context);
+        Common::SonicContextSetCollision(SonicCollision::TypeSonicSquatKick, true);
+
+        /*{
+            auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("RightToeBase");
+            Common::fCGlitterCreate(*PLAYER_CONTEXT, tripleKickPfxR, &attachBone, "ef_ch_sh_spinattack_kickR", 0);
+        }
+        {
+            auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("LeftToeBase");
+            Common::fCGlitterCreate(*PLAYER_CONTEXT, tripleKickPfxL, &attachBone, "ef_ch_sh_spinattack_kickL", 0);
+        }*/
 
         // Stop moving
         Common::GetSonicStateFlags()->OutOfControl = true;
@@ -812,7 +829,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateSquatKickAdvance, 0x1252810, hh:
             }
             else if (NextGenShadow::m_tripleKickBuffered)
             {
-                NextGenShadow::NextTripleKick();
+                NextGenShadow::NextTripleKick(context);
                 This->m_Time = 0.0f;
             }
             else
@@ -827,8 +844,9 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateSquatKickAdvance, 0x1252810, hh:
             {
                 NextGenShadow::m_tripleKickShockWaveSpawned = true;
 
-                Hedgehog::Math::CVector const pos = context->m_spMatrixNode->m_Transform.m_Position;
-                Common::CreatePlayerSupportShockWave(pos, cShadow_tripleKickShockWaveHeight, cShadow_tripleKickShockWaveRadius, cShadow_tripleKickShockWaveDuration);
+                Hedgehog::Math::CVector pos = context->m_spMatrixNode->m_Transform.m_Position;
+                pos.y() += 0.1;
+                Common::CreatePlayerSupportShockWave(pos, cShadow_tripleKickShockWaveHeight, cShadow_tripleKickShockWaveRadius + NextGenShadow::m_tripleKickCount, cShadow_tripleKickShockWaveDuration);
             }
 
             if (!NextGenShadow::m_tripleKickBuffered)
@@ -905,11 +923,15 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateSquatKickEnd, 0x12527B0, void* T
     
     if (NextGenShadow::m_tripleKickCount >= 0)
     {
+        Common::SonicContextSetCollision(SonicCollision::TypeSonicSquatKick, false);
         Common::GetSonicStateFlags()->OutOfControl = false;
         if (NextGenShadow::m_tripleKickCount == 2)
         {
             NextGenShadow::m_tripleKickCount = -1;
         }
+
+        //Common::fCGlitterEnd(*PLAYER_CONTEXT, tripleKickPfxR, true);
+        //Common::fCGlitterEnd(*PLAYER_CONTEXT, tripleKickPfxL, true);
 
         // m_tripleKickCount gets reset in SlidingEnd state
         return nullptr;
