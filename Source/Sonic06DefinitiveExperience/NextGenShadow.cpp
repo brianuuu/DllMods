@@ -271,6 +271,9 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
                 Common::SonicContextSetInAirData(context);
                 context->StateFlag(eStateFlag_EnableHomingAttack) = true;
                 context->StateFlag(eStateFlag_EnableAirOnceAction) = true;
+
+                Common::SonicContextHudHomingAttackClear(context);
+                context->m_HomingAttackTargetActorID = 0;
                 return;
             }
 
@@ -321,6 +324,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
                         )
                     );
 
+                    Common::SonicContextHudHomingAttackOutro(context);
                     context->m_HomingAttackTargetActorID = 0;
                 }
             }
@@ -334,7 +338,11 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
                 NextGenShadow::m_chaosAttackBuffered = isPressedA;
             }
 
-            originalNextGenShadow_HomingUpdate(context);
+            if (NextGenShadow::m_chaosAttackCount < 5)
+            {
+                originalNextGenShadow_HomingUpdate(context);
+            }
+
             if (context->m_HomingAttackTargetActorID)
             {
                 // Do not disable lock-on cursor

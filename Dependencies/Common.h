@@ -1863,6 +1863,24 @@ static void SonicContextSetInAirData
 	}
 }
 
+inline void SonicContextHudHomingAttackOutro(Sonic::Player::CPlayerSpeedContext* context)
+{
+	if (context->m_spSonicHudHomingAttackImpl)
+	{
+		FUNCTION_PTR(int, __thiscall, SonicHudHomingAttackOutro, 0xDEBC90, Sonic::Player::CSonicHudHomingAttackImpl * This);
+		SonicHudHomingAttackOutro(context->m_spSonicHudHomingAttackImpl.get());
+	}
+}
+
+inline void SonicContextHudHomingAttackClear(Sonic::Player::CPlayerSpeedContext* context)
+{
+	if (context->m_spSonicHudHomingAttackImpl)
+	{
+		FUNCTION_PTR(void, __thiscall, SonicHudHomingAttackClear, 0xDEBC50, Sonic::Player::CSonicHudHomingAttackImpl * This);
+		SonicHudHomingAttackClear(context->m_spSonicHudHomingAttackImpl.get());
+	}
+}
+
 inline void PlaySoundStatic(SharedPtrTypeless& soundHandle, uint32_t cueID)
 {
     uint32_t* syncObject = *(uint32_t**)0x1E79044;
