@@ -37,7 +37,7 @@ bool NextGenShadow::m_tripleKickShockWaveSpawned = false;
 float const cShadow_squatKickPressMaxTime = 0.3f;
 float const cShadow_tripleKickShockWaveSpawn = 0.2f;
 float const cShadow_tripleKickShockWaveDuration = 0.5f;
-float const cShadow_tripleKickShockWaveHeight = 0.5f;
+float const cShadow_tripleKickShockWaveHeight = 1.0f;
 float const cShadow_tripleKickShockWaveRadius = 4.0f;
 
 bool slidingEndWasSliding_Shadow = false;
@@ -822,7 +822,11 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateSquatKickAdvance, 0x1252810, hh:
         // triple kick
         if (Common::IsPlayerAnimationFinished(context->m_pPlayer))
         {
-            if (NextGenShadow::m_tripleKickCount == 2)
+            if (!context->m_Grounded)
+            {
+                StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
+            }
+            else if (NextGenShadow::m_tripleKickCount == 2)
             {
                 // finished
                 StateManager::ChangeState(StateAction::Stand, *PLAYER_CONTEXT);
