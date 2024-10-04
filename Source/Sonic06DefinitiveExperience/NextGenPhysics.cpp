@@ -148,6 +148,23 @@ HOOK(void, __fastcall, NextGenPhysics_CSonicSetMaxSpeedBasis, 0xDFBCA0, int* Thi
 }
 
 //---------------------------------------------------
+// CEnemyPawnSheild
+//---------------------------------------------------
+HOOK(bool, __fastcall, NextGenPhysics_CEnemyPawnSheildMsgHitEventCollision, 0xB87A50, bool* This, void* Edx, hh::fnd::Message& message)
+{
+    bool result = originalNextGenPhysics_CEnemyPawnSheildMsgHitEventCollision(This, Edx, message);
+   
+    // don't get stuck in guard state if not hit by Sonic
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+    if (message.m_SenderActorID != context->m_pPlayer->m_ActorID)
+    {
+        This[769] = 0;
+    }
+
+    return result;
+}
+
+//---------------------------------------------------
 // Trick System
 //---------------------------------------------------
 HOOK(void, __fastcall, NextGenPhysics_MsgApplyImpulse, 0xE6CFA0, void* This, void* Edx, MsgApplyImpulse* message)
@@ -459,6 +476,18 @@ void NextGenPhysics::applyPatches()
 
         // Make board speed slightly faster
         INSTALL_HOOK(NextGenPhysics_CSonicSetMaxSpeedBasis);
+    }
+
+    // CShockWave changes
+    {
+        // Set CShockWave to use DamageID_SonicMedium
+        WRITE_MEMORY(0x123CE81, uint32_t, 0x1E0BE2C);
+
+        // Prevent crashing if damage type is outside array
+        WRITE_JUMP(0x4F8818, (void*)0x4F8837);
+
+        // Fix CEnemyPawnSheild if it got hit by something other than Sonic
+        INSTALL_HOOK(NextGenPhysics_CEnemyPawnSheildMsgHitEventCollision);
     }
 
     // Change all actions to X button, change boost to R2
