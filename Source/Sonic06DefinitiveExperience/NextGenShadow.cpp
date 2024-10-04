@@ -223,9 +223,6 @@ HOOK(int32_t*, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterBegin, 0x11
 
         Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosAttackWait);
         Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
-
-        // Disable force landing after 1 second in air
-        WRITE_MEMORY(0xE33AC7, uint8_t, 0xEB);
     }
 
     return result;
@@ -360,9 +357,6 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterEnd, 0x11182F0)
 {
     // resume ground detection
     WRITE_MEMORY(0xE63A31, uint8_t, 0x74);
-
-    // resume force landing
-    WRITE_MEMORY(0xE33AC7, uint8_t, 0x76);
 
     // resume disable lock-on cursor
     WRITE_MEMORY(0xDEBAA0, uint8_t, 0x75);
@@ -1307,6 +1301,12 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_CRASH);
 
     if (!Configuration::m_characterMoveset) return;
+
+    // Disable force landing after 1 second in air
+    WRITE_MEMORY(0xE33AC7, uint8_t, 0xEB);
+
+    // Disable stomping
+    WRITE_MEMORY(0xDFDDB3, uint8_t, 0xEB);
 
     //-------------------------------------------------------
     // Chaos Attack
