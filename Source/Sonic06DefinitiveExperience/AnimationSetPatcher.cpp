@@ -211,6 +211,12 @@ const char* volatile const AnimationSetPatcher::SpinAttack[3] =
     "SpinAttack01",
     "SpinAttack02"
 };
+const char* volatile const AnimationSetPatcher::SpearWait = "SpearWait";
+const char* volatile const AnimationSetPatcher::SpearWaitLoop = "SpearWaitLoop";
+const char* volatile const AnimationSetPatcher::SpearShot = "SpearShot";
+const char* volatile const AnimationSetPatcher::SpearShotLoop = "SpearShotLoop";
+const char* volatile const AnimationSetPatcher::ChaosBoost = "ChaosBoost";
+const char* volatile const AnimationSetPatcher::ChaosBoostLoop = "ChaosBoostLoop";
 
 void AnimationSetPatcher::applyPatches()
 {
@@ -423,6 +429,7 @@ void AnimationSetPatcher::applyPatches()
         //m_newAnimationDataSuper.emplace_back("SquatKick", "ssn_squat_kick", 1.0f, false, nullptr);
         //m_newAnimationDataSuper.emplace_back(BrakeFlip, "ssn_brake_flip", 1.0f, false, nullptr);
 
+        // Chaos Attack
         m_newAnimationData.emplace_back(ChaosAttack[0], "sh_chaos_attack00", 1.0f, false, ChaosAttackWait);
         m_newAnimationData.emplace_back(ChaosAttack[1], "sh_chaos_attack01", 1.0f, false, ChaosAttackWait);
         m_newAnimationData.emplace_back(ChaosAttack[2], "sh_chaos_attack02", 1.0f, false, ChaosAttackWait);
@@ -430,9 +437,18 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationData.emplace_back(ChaosAttack[4], "sh_chaos_attack04", 1.0f, false, ChaosAttackWait);
         m_newAnimationData.emplace_back(ChaosAttackWait, "sh_chaos_wait_l", 1.0f, true, nullptr);
 
+        // Triple Kick
         m_newAnimationData.emplace_back(SpinAttack[0], "sh_spin_attack01_Root", 1.0f, false, nullptr);
         m_newAnimationData.emplace_back(SpinAttack[1], "sh_spin_attack02_Root", 1.0f, false, nullptr);
         m_newAnimationData.emplace_back(SpinAttack[2], "sh_spin_attack03_Root", 1.0f, false, nullptr);
+
+        // Chaos Spea/Chaos Boost
+        m_newAnimationData.emplace_back(SpearWait, "sh_spear_wait_s_Root", 1.0f, false, SpearWaitLoop);
+        m_newAnimationData.emplace_back(SpearWaitLoop, "sh_spear_wait_l_Root", 1.0f, true, nullptr);
+        m_newAnimationData.emplace_back(SpearShot, "sh_spear_shot_s_Root", 1.0f, false, SpearShotLoop);
+        m_newAnimationData.emplace_back(SpearShotLoop, "sh_spear_shot_l_Root", 1.0f, true, nullptr);
+        m_newAnimationData.emplace_back(ChaosBoost, "sh_spear_free_s_Root", 1.0f, false, ChaosBoostLoop);
+        m_newAnimationData.emplace_back(ChaosBoostLoop, "sh_spear_free_l_Root", 1.0f, true, nullptr);
     }
 
     if (!m_newAnimationData.empty())

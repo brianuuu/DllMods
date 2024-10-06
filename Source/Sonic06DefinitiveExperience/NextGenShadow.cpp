@@ -31,14 +31,21 @@ bool NextGenShadow::m_isSquatKick = false;
 bool NextGenShadow::m_isBrakeFlip = false;
 Eigen::Vector3f NextGenShadow::m_brakeFlipDir(0, 0, 1);
 float NextGenShadow::m_squatKickSpeed = 0.0f;
+float const cShadow_squatKickPressMaxTime = 0.3f;
+
 int NextGenShadow::m_tripleKickCount = -1;
 bool NextGenShadow::m_tripleKickBuffered = false;
 bool NextGenShadow::m_tripleKickShockWaveSpawned = false;
-float const cShadow_squatKickPressMaxTime = 0.3f;
 float const cShadow_tripleKickShockWaveSpawn = 0.2f;
 float const cShadow_tripleKickShockWaveDuration = 0.5f;
 float const cShadow_tripleKickShockWaveHeight = 1.0f;
 float const cShadow_tripleKickShockWaveRadius = 4.0f;
+
+float const cShadow_chaosSpearSpeed = 50.0f;
+float const cShadow_chaosSpearLife = 1.0f;
+float const cShadow_chaosSpearAccumulate = 0.5f;
+float const cShadow_chaosSpearStiffening = 0.3f;
+float const cShadow_chaosSpearDownAngle = 30.0f * DEG_TO_RAD;
 
 bool slidingEndWasSliding_Shadow = false;
 bool NextGenShadow::m_isSpindash = false;
@@ -62,6 +69,7 @@ bool NextGenShadow::m_enableAutoRunAction = true;
 // Chaos Boost
 uint8_t NextGenShadow::m_chaosBoostLevel = 0u;
 float NextGenShadow::m_chaosMaturity = 0.0f;
+NextGenShadow::OverrideType NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_SpearWait;
 
 //---------------------------------------------------
 // Jet Effect
@@ -425,47 +433,32 @@ void NextGenShadow::AddChaosMaturity(float amount)
 }
 
 //-------------------------------------------------------
-// Chaos Spear/Chaos Blast
+// Chaos Spear/Chaos Blast/Chaos Boost
 //-------------------------------------------------------
-void __declspec(naked) NextGenShadow_AirAction()
-{
-    static uint32_t successAddress = 0xDFFEBA;
-    static uint32_t returnAddress = 0xDFFEAD;
-    static uint32_t fnButtonPress = 0xD97E00;
-    __asm
-    {
-        // original function
-        original:
-        mov     eax, [esi + 11Ch]
-        jmp     [returnAddress]
-
-        jump:
-        jmp     [successAddress]
-    }
-}
-
 class CObjChaosSpear : public Sonic::CGameObject3D
 {
 private:
-    uint32_t m_OwnerActorID; // same for CSkateBoardAttack
+    uint32_t m_TargetID;
 
     Hedgehog::Math::CVector m_Position;
     Hedgehog::Math::CVector m_Velocity;
     float m_LifeTime;
 
-    Sonic::CGlitterPlayer* m_pGlitterPlayer;
+    SharedPtrTypeless spearHandle;
+    SharedPtrTypeless spearTailHandle;
+    SharedPtrTypeless spearVanishHandle;
     boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
 
 public:
     CObjChaosSpear
     (
-        uint32_t _OwnerActorID,
+        uint32_t _TargetID,
         Hedgehog::Math::CVector const& _Position,
-        Hedgehog::Math::CVector const& _TargetPosition
+        Hedgehog::Math::CVector const& _StartDir
     )
-        : m_OwnerActorID(_OwnerActorID)
+        : m_TargetID(_TargetID)
         , m_Position(_Position)
-        , m_Velocity((_TargetPosition - _Position).normalized() * 40.0f) // TODO
+        , m_Velocity(_StartDir.normalized() * cShadow_chaosSpearSpeed)
         , m_LifeTime(0.0f)
     {
 
@@ -473,7 +466,6 @@ public:
 
     ~CObjChaosSpear()
     {
-        delete m_pGlitterPlayer;
     }
 
     void AddCallback
@@ -488,18 +480,12 @@ public:
         Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
         pGameDocument->AddUpdateUnit("0", this);
 
-        // Set initial rotation
-        Hedgehog::Math::CVector const dir = m_Velocity.normalized();
-        Hedgehog::Math::CVector dirXZ = dir; dirXZ.y() = 0.0f;
-        Hedgehog::Math::CQuaternion rotYaw = Hedgehog::Math::CQuaternion::FromTwoVectors(Hedgehog::Math::CVector::UnitZ(), dirXZ.head<3>());
-        Hedgehog::Math::CQuaternion rotPitch = Hedgehog::Math::CQuaternion::FromTwoVectors(dirXZ.head<3>(), dir.head<3>());
-        m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(rotPitch * rotYaw, m_Position);
-        m_spMatrixNodeTransform->NotifyChanged();
+        // Set initial transform
+        UpdateTransform();
 
         // play pfx
-        m_pGlitterPlayer = Sonic::CGlitterPlayer::Make(pGameDocument);
-        m_pGlitterPlayer->PlayContinuous(Sonic::CGameDocument::GetInstance(), m_spMatrixNodeTransform, "ef_bo_sha_yh2_spear", 1.0f, 10, 0);
-        m_pGlitterPlayer->PlayContinuous(Sonic::CGameDocument::GetInstance(), m_spMatrixNodeTransform, "ef_bo_sha_yh2_spear_tail", 1.0f, 10, 0);
+        Common::fCGlitterCreate(*PLAYER_CONTEXT, spearHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_spear", 1);
+        Common::fCGlitterCreate(*PLAYER_CONTEXT, spearTailHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_spear_tail", 1);
     
         // set up collision with enemy
         m_spNodeEventCollision = boost::make_shared<Sonic::CMatrixNodeTransform>();
@@ -507,8 +493,11 @@ public:
         m_spNodeEventCollision->NotifyChanged();
         m_spNodeEventCollision->SetParent(m_spMatrixNodeTransform.get());
 
-        hk2010_2_0::hkpSphereShape* shapeEventTrigger1 = new hk2010_2_0::hkpSphereShape(0.3f);
-        AddEventCollision("Damage", shapeEventTrigger1, *reinterpret_cast<int*>(0x1E0AF84), true, m_spNodeEventCollision);
+        hk2010_2_0::hkpCapsuleShape* eventTriggerDamage = new hk2010_2_0::hkpCapsuleShape(hh::math::CVector(0.f, 0.f, 0.f), hh::math::CVector(0.f, 0.f, -1.f), 0.2f);
+        AddEventCollision("Damage", eventTriggerDamage, *reinterpret_cast<int*>(0x1E0AF84), true, m_spNodeEventCollision); // SpikeAttack
+
+        hk2010_2_0::hkpCapsuleShape* eventTriggerTerrain = new hk2010_2_0::hkpCapsuleShape(hh::math::CVector(0.f, 0.f, -0.3f), hh::math::CVector(0.f, 0.f, -1.f), 0.05f);
+        AddEventCollision("Terrain", eventTriggerTerrain, *reinterpret_cast<int*>(0x1E0AFAC), true, m_spNodeEventCollision); // BasicAndTerrainCheck
     }
 
     bool ProcessMessage
@@ -528,8 +517,17 @@ public:
 
             if (std::strstr(message.GetType(), "MsgHitEventCollision") != nullptr)
             {
-                FUNCTION_PTR(void, __thiscall, CSkateBoardAttack_MsgHitEventCollision, 0xE2A750, void* This, Hedgehog::Universe::Message& message);
-                CSkateBoardAttack_MsgHitEventCollision(this, message);
+                Common::fCGlitterCreate(*PLAYER_CONTEXT, spearVanishHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_spear_vanish", 1);
+                SendMessage
+                (
+                    message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
+                    (
+                        *(uint32_t*)0x1E0BE30, // DamageID_SonicLight
+                        m_Position,
+                        hh::math::CVector::Identity()
+                    )
+                );
+
                 Kill();
                 return true;
             }
@@ -543,41 +541,223 @@ public:
         const Hedgehog::Universe::SUpdateInfo& updateInfo
     ) override
     {
-        Hedgehog::Math::CVector const posPrev = m_Position;
-        UpdatePosition(m_Position + m_Velocity * updateInfo.DeltaTime);
-
-        Eigen::Vector4f const rayStartPos(posPrev.x(), posPrev.y(), posPrev.z(), 1.0f);
-        Eigen::Vector4f const rayEndPos(m_Position.x(), m_Position.y(), m_Position.z(), 1.0f);
-        Eigen::Vector4f outPos;
-        Eigen::Vector4f outNormal;
-        if (Common::fRaycast(rayStartPos, rayEndPos, outPos, outNormal, *(uint32_t*)0x1E0AFB4))
+        if (m_TargetID)
         {
-            // hit terrain
-            Kill();
-        }
-        else
-        {
-            // time out
-            m_LifeTime += updateInfo.DeltaTime;
-            if (m_LifeTime >= 5.0f)
+            // get current target position
+            hh::math::CVector targetPosition = hh::math::CVector::Identity();
+            SendMessageImm(m_TargetID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
+            if (!targetPosition.isIdentity())
             {
-                Kill();
+                m_Velocity = (targetPosition - m_Position).normalized() * cShadow_chaosSpearSpeed;
             }
+        }
+
+        m_Position += m_Velocity * updateInfo.DeltaTime;
+        UpdateTransform();
+
+        // time out
+        m_LifeTime += updateInfo.DeltaTime;
+        if (m_LifeTime >= cShadow_chaosSpearLife)
+        {
+            Kill();
         }
     }
 
-    void UpdatePosition(Hedgehog::Math::CVector const& _Position)
+    void UpdateTransform()
     {
-        m_Position = _Position;
-        m_spMatrixNodeTransform->m_Transform.SetPosition(m_Position);
+        // Rotate gem to correct rotation
+        Hedgehog::Math::CVector const dir = m_Velocity.normalized();
+        Hedgehog::Math::CVector dirXZ = dir; dirXZ.y() = 0.0f;
+        Hedgehog::Math::CQuaternion rotYaw = Hedgehog::Math::CQuaternion::FromTwoVectors(Hedgehog::Math::CVector::UnitZ(), dirXZ.head<3>());
+        Hedgehog::Math::CQuaternion rotPitch = Hedgehog::Math::CQuaternion::FromTwoVectors(dirXZ.head<3>(), dir.head<3>());
+
+        m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(rotPitch * rotYaw, m_Position);
         m_spMatrixNodeTransform->NotifyChanged();
     }
 
     void Kill()
     {
+        Common::fCGlitterEnd(*PLAYER_CONTEXT, spearHandle, true);
+        Common::fCGlitterEnd(*PLAYER_CONTEXT, spearTailHandle, false);
+
         SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
     }
 };
+
+bool NextGenShadow::AirActionCheck()
+{
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+    if (context->StateFlag(eStateFlag_KeepRunning))
+    {
+        return false;
+    }
+
+    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+    if (padState->IsTapped(Sonic::EKeyState::eKeyState_X))
+    {
+        if (NextGenPhysics::checkUseLightSpeedDash())
+        {
+            return true;
+        }
+
+        m_overrideType = OverrideType::SH_SpearWait;
+        StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
+        return true;
+    }
+
+    return false;
+}
+
+void __declspec(naked) NextGenShadow_AirAction()
+{
+    static uint32_t successAddress = 0xDFFEDC;
+    static uint32_t returnAddress = 0xDFFEAD;
+    static uint32_t fnButtonPress = 0xD97E00;
+    __asm
+    {
+        call    NextGenShadow::AirActionCheck
+        test    al, al
+        jnz     jump
+
+        // original function
+        mov     eax, [esi + 11Ch]
+        jmp     [returnAddress]
+
+        jump:
+        jmp     [successAddress]
+    }
+}
+
+static SharedPtrTypeless soundHandle_TrickAttack;
+static SharedPtrTypeless pfxHandle_TrickAttack;
+HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    static SharedPtrTypeless voiceHandle;
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+
+    switch (NextGenShadow::m_overrideType)
+    {
+    case NextGenShadow::OverrideType::SH_SpearWait:
+    {
+        NextGenShadow::m_holdPosition = context->m_spMatrixNode->m_Transform.m_Position;
+        Common::SonicContextChangeAnimation(AnimationSetPatcher::SpearWait);
+
+        // sound, voice, pfx
+        Common::SonicContextPlaySound(soundHandle_TrickAttack, 80041031, 1);
+        Common::SonicContextPlayVoice(voiceHandle, 3002030, 10);
+
+        auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("RightHandMiddle1");
+        Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle_TrickAttack, &attachBone, "ef_bo_sha_yh2_spear_charge", 1);
+        break;
+    }
+    }
+
+    return 0;
+}
+
+HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    static SharedPtrTypeless soundHandle;
+    static SharedPtrTypeless voiceHandle;
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+
+    Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+    Common::SetPlayerPosition(NextGenShadow::m_holdPosition);
+
+    switch (NextGenShadow::m_overrideType)
+    {
+    case NextGenShadow::OverrideType::SH_SpearWait:
+    {
+        if (context->m_Grounded)
+        {
+            StateManager::ChangeState(StateAction::LandJumpShort, *PLAYER_CONTEXT);
+            return nullptr;
+        }
+
+        originalNextGenShadow_HomingUpdate(context);
+
+        Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+        if (!padState->IsDown(Sonic::EKeyState::eKeyState_X))
+        {
+            NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_SpearShot;
+            Common::SonicContextChangeAnimation(AnimationSetPatcher::SpearShot);
+
+            hh::math::CVector targetPosition = hh::math::CVector::Identity();
+            if (context->m_HomingAttackTargetActorID)
+            {
+                // get initial target position
+                context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
+
+                // clean up target and HUD
+                Common::SonicContextHudHomingAttackOutro(context);
+                context->m_HomingAttackTargetActorID = 0;
+            }
+
+            // spawn chaos spear
+            Hedgehog::Math::CVector position = context->m_spMatrixNode->m_Transform.m_Position + Hedgehog::Math::CVector::UnitY() * 0.7f;
+            Hedgehog::Math::CVector direction = context->m_HorizontalRotation * Hedgehog::Math::CVector::UnitZ();
+            if (targetPosition.isIdentity())
+            {
+                // pitch down if no target
+                Hedgehog::Math::CVector playerRight = context->m_HorizontalRotation * Hedgehog::Math::CVector::UnitX();
+                direction = Eigen::AngleAxisf(cShadow_chaosSpearDownAngle, playerRight) * context->m_HorizontalRotation * Hedgehog::Math::CVector::UnitZ();
+            }
+            else
+            {
+                // has a target
+                direction = targetPosition - position;
+            }
+            context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjChaosSpear>(context->m_HomingAttackTargetActorID, position, direction));
+
+            // only play one sound, not per spear
+            soundHandle_TrickAttack.reset();
+            Common::fCGlitterEnd(*PLAYER_CONTEXT, pfxHandle_TrickAttack, true);
+            Common::SonicContextPlaySound(soundHandle, 80041032, 1);
+            This->m_Time = 0.0f;
+
+            // Set OutOfControl
+            FUNCTION_PTR(int, __stdcall, SetOutOfControl, 0xE5AC00, CSonicContext * context, float duration);
+            SetOutOfControl(*pModernSonicContext, cShadow_chaosSpearStiffening);
+            break;
+        }
+
+        break;
+    }
+    case NextGenShadow::OverrideType::SH_SpearShot:
+    {
+        if (context->m_Grounded)
+        {
+            StateManager::ChangeState(StateAction::LandJumpShort, *PLAYER_CONTEXT);
+            return nullptr;
+        }
+
+        if (This->m_Time > cShadow_chaosSpearStiffening)
+        {
+            Common::SonicContextPlaySound(soundHandle, 2002027, 1);
+            Common::SonicContextPlaySound(voiceHandle, 3002000, 0);
+
+            Common::CStateSetStringBool(This, "ContinuesAnimation", true);
+            Common::SonicContextChangeAnimation("HomingAttackAfter1");
+
+            StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
+            break;
+        }
+
+        break;
+    }
+    }
+
+    return nullptr;
+}
+
+HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+
+    soundHandle_TrickAttack.reset();
+    Common::fCGlitterEnd(*PLAYER_CONTEXT, pfxHandle_TrickAttack, true);
+    Common::SonicContextHudHomingAttackClear(context);
+}
 
 //---------------------------------------------------
 // X Button Action
@@ -851,7 +1031,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateSquatKickAdvance, 0x1252810, hh:
                 NextGenShadow::m_tripleKickShockWaveSpawned = true;
 
                 Hedgehog::Math::CVector pos = context->m_spMatrixNode->m_Transform.m_Position;
-                pos.y() += 0.1;
+                pos.y() += 0.1f;
                 Common::CreatePlayerSupportShockWave(pos, cShadow_tripleKickShockWaveHeight, cShadow_tripleKickShockWaveRadius + NextGenShadow::m_tripleKickCount, cShadow_tripleKickShockWaveDuration);
             }
 
@@ -1332,13 +1512,12 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_CSonicStateHomingAttackAfterEnd);
 
     //-------------------------------------------------------
-    // Chaos Boost
-    //-------------------------------------------------------
-
-    //-------------------------------------------------------
-    // Chaos Spear/Chaos Blast
+    // Chaos Spear/Chaos Blast/Chaos Boost
     //-------------------------------------------------------
     WRITE_JUMP(0xDFFEA3, NextGenShadow_AirAction);
+    INSTALL_HOOK(NextGenShadow_CSonicStateTrickAttackBegin);
+    INSTALL_HOOK(NextGenShadow_CSonicStateTrickAttackAdvance);
+    INSTALL_HOOK(NextGenShadow_CSonicStateTrickAttackEnd);
 
     //-------------------------------------------------------
     // X-Action State handling

@@ -49,5 +49,12 @@ public:
 	static void SetChaosBoostModelVisible(bool visible);
 	static void SetChaosBoostLevel(uint8_t level, bool notifyHUD);
 	static void AddChaosMaturity(float amount);
+	static bool AirActionCheck();
+
+	static enum class OverrideType
+	{
+		SH_SpearWait,
+		SH_SpearShot,
+	} m_overrideType;
 };
 

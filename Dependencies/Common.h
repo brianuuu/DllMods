@@ -1881,6 +1881,23 @@ inline void SonicContextHudHomingAttackClear(Sonic::Player::CPlayerSpeedContext*
 	}
 }
 
+static void CStateSetStringBool
+(
+	hh::fnd::CStateMachineBase::CStateBase* This,
+	Hedgehog::Base::CSharedString const& name,
+	bool const& condition
+)
+{
+	static void* const pCStateSetStringBool = (void*)0x50DD40;
+	__asm
+	{
+		push	condition
+		mov		edi, name
+		mov		eax, This
+		call	[pCStateSetStringBool]
+	}
+}
+
 inline void PlaySoundStatic(SharedPtrTypeless& soundHandle, uint32_t cueID)
 {
     uint32_t* syncObject = *(uint32_t**)0x1E79044;
