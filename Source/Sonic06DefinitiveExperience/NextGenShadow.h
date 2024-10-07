@@ -51,6 +51,16 @@ public:
 	static void AddChaosMaturity(float amount);
 	static bool AirActionCheck();
 
+	// Chaos Spear
+	struct TargetData
+	{
+		uint32_t m_actorID;
+		float m_dist;
+		uint32_t m_priority;
+	};
+	static std::vector<TargetData> m_targetData;
+	static void AddTargetData(uint32_t actorID, float dist, uint32_t priority);
+
 	static enum class OverrideType
 	{
 		SH_SpearWait,

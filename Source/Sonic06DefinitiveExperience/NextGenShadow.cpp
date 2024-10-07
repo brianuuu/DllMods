@@ -41,6 +41,8 @@ float const cShadow_tripleKickShockWaveDuration = 0.5f;
 float const cShadow_tripleKickShockWaveHeight = 1.0f;
 float const cShadow_tripleKickShockWaveRadius = 4.0f;
 
+std::vector<NextGenShadow::TargetData> NextGenShadow::m_targetData;
+uint8_t const cShadow_chaosSpearMaxCount = 5;
 float const cShadow_chaosSpearSpeed = 50.0f;
 float const cShadow_chaosSpearLife = 1.0f;
 float const cShadow_chaosSpearAccumulate = 0.5f;
@@ -608,6 +610,11 @@ bool NextGenShadow::AirActionCheck()
     return false;
 }
 
+void NextGenShadow::AddTargetData(uint32_t actorID, float dist, uint32_t priority)
+{
+    NextGenShadow::m_targetData.push_back(NextGenShadow::TargetData{ actorID, dist, priority });
+}
+
 void __declspec(naked) NextGenShadow_AirAction()
 {
     static uint32_t successAddress = 0xDFFEDC;
@@ -625,6 +632,28 @@ void __declspec(naked) NextGenShadow_AirAction()
 
         jump:
         jmp     [successAddress]
+    }
+}
+
+void __declspec(naked) NextGenShadow_GetAllHomingTargets()
+{
+    static uint32_t returnAddress = 0xE7484F;
+    __asm
+    {
+        mov     esi, [esp + 18h]
+        mov     ecx, [esp + 14h]
+        mov     eax, [esp + 34h]
+
+        push    esi
+        push    ecx
+        push    eax
+        call    NextGenShadow::AddTargetData
+        add     esp, 0xC
+
+        // original function
+        fstp    [esp + 14h]
+        fld     [esp + 14h]
+        jmp     [returnAddress]
     }
 }
 
@@ -674,7 +703,16 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             return nullptr;
         }
 
+        // Ignore priority comparison
+        WRITE_NOP(0xE74593, 6);
+        WRITE_JUMP(0xE74847, NextGenShadow_GetAllHomingTargets);
+
+        NextGenShadow::m_targetData.clear();
         originalNextGenShadow_HomingUpdate(context);
+
+        // Resume
+        WRITE_MEMORY(0xE74593, uint8_t, 0x0F, 0x8C, 0xE5, 0x02, 0x00, 0x00);
+        WRITE_MEMORY(0xE74847, uint8_t, 0xD9, 0x5C, 0x24, 0x14, 0xD9);
 
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
         if (!padState->IsDown(Sonic::EKeyState::eKeyState_X))
@@ -682,32 +720,71 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_SpearShot;
             Common::SonicContextChangeAnimation(AnimationSetPatcher::SpearShot);
 
-            hh::math::CVector targetPosition = hh::math::CVector::Identity();
-            if (context->m_HomingAttackTargetActorID)
+            if (This->m_Time >= cShadow_chaosSpearAccumulate)
             {
-                // get initial target position
-                context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
+                while (NextGenShadow::m_targetData.size() < cShadow_chaosSpearMaxCount)
+                {
+                    // add dummy targets
+                    NextGenShadow::m_targetData.push_back(NextGenShadow::TargetData{ 0, 0.0f, 0 });
+                }
 
-                // clean up target and HUD
+                // sort by priority then distance
+                std::sort(NextGenShadow::m_targetData.begin(), NextGenShadow::m_targetData.end(),
+                    [](NextGenShadow::TargetData const& a, NextGenShadow::TargetData const& b)
+                    {
+                        return a.m_priority > b.m_priority || (a.m_priority == b.m_priority && a.m_dist < b.m_dist);
+                    }
+                );
+            }
+            else
+            {
+                // m_HomingAttackTargetActorID can be 0
+                NextGenShadow::m_targetData.clear();
+                NextGenShadow::m_targetData.push_back(NextGenShadow::TargetData{ context->m_HomingAttackTargetActorID, 0.0f, 0 });
                 Common::SonicContextHudHomingAttackOutro(context);
                 context->m_HomingAttackTargetActorID = 0;
             }
 
-            // spawn chaos spear
-            Hedgehog::Math::CVector position = context->m_spMatrixNode->m_Transform.m_Position + Hedgehog::Math::CVector::UnitY() * 0.7f;
-            Hedgehog::Math::CVector direction = context->m_HorizontalRotation * Hedgehog::Math::CVector::UnitZ();
-            if (targetPosition.isIdentity())
+            int noTargetCount = 0;
+            for (uint8_t i = 0; i < NextGenShadow::m_targetData.size() && i < cShadow_chaosSpearMaxCount; i++)
             {
-                // pitch down if no target
-                Hedgehog::Math::CVector playerRight = context->m_HorizontalRotation * Hedgehog::Math::CVector::UnitX();
-                direction = Eigen::AngleAxisf(cShadow_chaosSpearDownAngle, playerRight) * context->m_HorizontalRotation * Hedgehog::Math::CVector::UnitZ();
+                NextGenShadow::TargetData const& data = NextGenShadow::m_targetData[i];
+
+                // get initial target position
+                hh::math::CVector targetPosition = hh::math::CVector::Zero();
+                if (data.m_actorID)
+                {
+                    // get initial target position
+                    context->m_pPlayer->SendMessageImm(data.m_actorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
+                }
+
+                // spawn chaos spear
+                Hedgehog::Math::CVector position = context->m_spMatrixNode->m_Transform.m_Position + Hedgehog::Math::CVector::UnitY() * 0.7f;
+                Hedgehog::Math::CVector direction = context->m_HorizontalRotation * Hedgehog::Math::CVector::UnitZ();
+                if (targetPosition.isZero())
+                {
+                    // spread out targets
+                    noTargetCount++;
+                    float yawAngle = 0.0f;
+                    switch (noTargetCount)
+                    {
+                    case 2: yawAngle = 10.0f * DEG_TO_RAD; break;
+                    case 3: yawAngle = -10.0f * DEG_TO_RAD; break;
+                    case 4: yawAngle = 20.0f * DEG_TO_RAD; break;
+                    case 5: yawAngle = -20.0f * DEG_TO_RAD; break;
+                    }
+
+                    // pitch down if no target
+                    Hedgehog::Math::CVector playerRight = context->m_HorizontalRotation * Hedgehog::Math::CVector::UnitX();
+                    direction = Eigen::AngleAxisf(yawAngle, hh::math::CVector::UnitY()) * Eigen::AngleAxisf(cShadow_chaosSpearDownAngle, playerRight) * context->m_HorizontalRotation * Hedgehog::Math::CVector::UnitZ();
+                }
+                else
+                {
+                    // has a target
+                    direction = targetPosition - position;
+                }
+                context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjChaosSpear>(data.m_actorID, position, direction));
             }
-            else
-            {
-                // has a target
-                direction = targetPosition - position;
-            }
-            context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjChaosSpear>(context->m_HomingAttackTargetActorID, position, direction));
 
             // only play one sound, not per spear
             soundHandle_TrickAttack.reset();
