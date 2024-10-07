@@ -546,10 +546,11 @@ public:
         if (m_TargetID)
         {
             // get current target position
-            hh::math::CVector targetPosition = hh::math::CVector::Identity();
-            SendMessageImm(m_TargetID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
-            if (!targetPosition.isIdentity())
+            hh::math::CVector targetPosition = hh::math::CVector::Zero();
+            SendMessageImm(m_TargetID, boost::make_shared<Sonic::Message::MsgGetPosition>(&targetPosition));
+            if (!targetPosition.isZero())
             {
+                SendMessageImm(m_TargetID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
                 m_Velocity = (targetPosition - m_Position).normalized() * cShadow_chaosSpearSpeed;
             }
         }
