@@ -48,6 +48,7 @@ float const cShadow_chaosSpearLife = 1.0f;
 float const cShadow_chaosSpearAccumulate = 0.5f;
 float const cShadow_chaosSpearStiffening = 0.3f;
 float const cShadow_chaosSpearDownAngle = 30.0f * DEG_TO_RAD;
+float const cShadow_chaosSpearTurnRate = 180.0f * DEG_TO_RAD;
 
 bool slidingEndWasSliding_Shadow = false;
 bool NextGenShadow::m_isSpindash = false;
@@ -543,6 +544,7 @@ public:
         const Hedgehog::Universe::SUpdateInfo& updateInfo
     ) override
     {
+        hh::math::CVector newDirection = hh::math::CVector::Zero();
         if (m_TargetID)
         {
             // get current target position
@@ -551,11 +553,28 @@ public:
             if (!targetPosition.isZero())
             {
                 SendMessageImm(m_TargetID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
-                m_Velocity = (targetPosition - m_Position).normalized() * cShadow_chaosSpearSpeed;
+                newDirection = (targetPosition - m_Position).normalized();
             }
         }
 
-        // TODO: max turning angle
+        if (!newDirection.isZero())
+        {
+            hh::math::CVector oldDirection = m_Velocity.normalized();
+            float dot = oldDirection.dot(newDirection);
+            Common::ClampFloat(dot, -1.0f, 1.0f);
+
+            float const angle = acos(dot);
+            float const maxAngle = updateInfo.DeltaTime * cShadow_chaosSpearTurnRate;
+            if (angle > maxAngle)
+            {
+                hh::math::CVector cross = oldDirection.cross(newDirection).normalized();
+                Eigen::AngleAxisf rot(maxAngle, cross);
+                newDirection = rot * oldDirection;
+            }
+
+            m_Velocity = newDirection * cShadow_chaosSpearSpeed;
+        }
+
         m_Position += m_Velocity * updateInfo.DeltaTime;
         UpdateTransform();
 
