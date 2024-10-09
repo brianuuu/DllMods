@@ -38,6 +38,7 @@ public:
     // Physics
     static bool m_physics;
     static bool m_characterMoveset;
+    static bool m_noCursor;
     static bool m_noTrick;
 
     // Sonic

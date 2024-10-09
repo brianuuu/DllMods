@@ -6,6 +6,7 @@ Configuration::ModelType Configuration::m_model = Configuration::ModelType::Soni
 
 bool Configuration::m_physics = false;
 bool Configuration::m_characterMoveset = false;
+bool Configuration::m_noCursor = false;
 bool Configuration::m_noTrick = false;
 
 bool Configuration::m_camera = false;
@@ -61,6 +62,7 @@ bool Configuration::load(const std::string& rootPath)
     // --------------Physics--------------
     m_physics = reader.GetBoolean("Physics", "bPhysics", false);
     m_characterMoveset = reader.GetBoolean("Physics", "bCharacterMoveset", false);
+    m_noCursor = reader.GetBoolean("Physics", "bNoCursor", false);
     m_noTrick = reader.GetBoolean("Physics", "bNoTrick", false);
 
     // --------------Sonic--------------
@@ -252,7 +254,7 @@ bool Configuration::load(const std::string& rootPath)
 
     // Optional codes
     // Patch "Disable Homing Reticle" by "Hyper"
-    if (reader.GetBoolean("Physics", "bNoCursor", false))
+    if (m_noCursor)
     {
         WRITE_MEMORY(0xB6AB8C, uint8_t, 0xE9, 0xF7, 0x01, 0x00, 0x00);
         WRITE_MEMORY(0xDEBC36, uint8_t, 0x00);

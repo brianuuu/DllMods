@@ -1898,6 +1898,21 @@ static void CStateSetStringBool
 	}
 }
 
+static void CopyCCsdProject
+(
+	Sonic::CCsdProject* pCsdProject, 
+	Chao::CSD::RCPtr<Chao::CSD::CProject>& rcptr
+)
+{
+	static void* const pCopyCCsdProject = (void*)0x10DCE40;
+	__asm
+	{
+		push	rcptr
+		mov		eax, pCsdProject
+		call	[pCopyCCsdProject]
+	}
+}
+
 inline void PlaySoundStatic(SharedPtrTypeless& soundHandle, uint32_t cueID)
 {
     uint32_t* syncObject = *(uint32_t**)0x1E79044;

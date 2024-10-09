@@ -555,6 +555,7 @@ public:
             }
         }
 
+        // TODO: max turning angle
         m_Position += m_Velocity * updateInfo.DeltaTime;
         UpdateTransform();
 
@@ -587,6 +588,153 @@ public:
     }
 };
 
+class CObjChaosLockonCursor : public Sonic::CGameObject
+{
+    Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectLockonCursor;
+    boost::shared_ptr<Sonic::CGameObjectCSD> m_spLockonCursor;
+    Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneLockonCursor;
+
+    Eigen::Vector4f m_pos;
+    bool m_isOutro;
+
+    std::mutex m_mutex;
+
+public:
+    CObjChaosLockonCursor(Eigen::Vector4f inPos)
+        : m_pos(inPos)
+        , m_isOutro(false)
+    {
+    }
+
+    ~CObjChaosLockonCursor()
+    {
+        if (m_spLockonCursor)
+        {
+            m_spLockonCursor->SendMessage(m_spLockonCursor->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+            m_spLockonCursor = nullptr;
+        }
+
+        Chao::CSD::CProject::DestroyScene(m_projectLockonCursor.Get(), m_sceneLockonCursor);
+        m_projectLockonCursor = nullptr;
+    }
+
+    void AddCallback
+    (
+        const Hedgehog::Base::THolder<Sonic::CWorld>& worldHolder,
+        Sonic::CGameDocument* pGameDocument,
+        const boost::shared_ptr<Hedgehog::Database::CDatabase>& spDatabase
+    ) override
+    {
+        Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
+        pGameDocument->AddUpdateUnit("1", this);
+
+        Sonic::CCsdDatabaseWrapper wrapper(m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
+        auto spCsdProject = wrapper.GetCsdProject("ui_lockon_cursor");
+        Common::CopyCCsdProject(spCsdProject.get(), m_projectLockonCursor);
+
+        if (m_projectLockonCursor)
+        {
+            m_sceneLockonCursor = m_projectLockonCursor->CreateScene("cursor");
+            PlayIntro();
+
+            if (!m_spLockonCursor)
+            {
+                m_spLockonCursor = boost::make_shared<Sonic::CGameObjectCSD>(m_projectLockonCursor, 0.5f, "HUD", false);
+                Sonic::CGameDocument::GetInstance()->AddGameObject(m_spLockonCursor, "main", this);
+            }
+        }
+    }
+
+    bool ProcessMessage
+    (
+        Hedgehog::Universe::Message& message,
+        bool flag
+    ) override
+    {
+        if (flag)
+        {
+            if (std::strstr(message.GetType(), "MsgRestartStage") != nullptr
+                || std::strstr(message.GetType(), "MsgStageClear") != nullptr)
+            {
+                Kill();
+                return true;
+            }
+        }
+
+        return Sonic::CGameObject::ProcessMessage(message, flag);
+    }
+
+    void UpdateParallel
+    (
+        const Hedgehog::Universe::SUpdateInfo& updateInfo
+    ) override
+    {
+        std::lock_guard<std::mutex> guard(m_mutex);
+
+        // loop animation
+        if (m_sceneLockonCursor && m_sceneLockonCursor->m_MotionDisableFlag)
+        {
+            if (m_isOutro)
+            {
+                Kill();
+            }
+            else
+            {
+                PlayMotion("Usual_Anim", true);
+            }
+        }
+
+        // Handle position
+        if (m_sceneLockonCursor)
+        {
+            Eigen::Vector4f screenPosition;
+            Common::fGetScreenPosition(m_pos, screenPosition);
+            m_sceneLockonCursor->SetPosition(screenPosition.x(), screenPosition.y());
+        }
+    }
+
+    void PlayIntro()
+    {
+        PlayMotion("Intro_Anim", false);
+    }
+
+    void SetPos(Eigen::Vector4f inPos)
+    {
+        std::lock_guard<std::mutex> guard(m_mutex);
+        m_pos = inPos;
+
+        if (m_isOutro)
+        {
+            PlayIntro();
+        }
+        m_isOutro = false;
+    }
+
+    void SetOutro()
+    {
+        std::lock_guard<std::mutex> guard(m_mutex);
+        PlayMotion("Outro_Anim", false);
+        m_isOutro = true;
+    }
+
+    void PlayMotion(char const* motion, bool loop = false)
+    {
+        if (!m_sceneLockonCursor) return;
+        m_sceneLockonCursor->SetHideFlag(false);
+        m_sceneLockonCursor->SetMotion(motion);
+        m_sceneLockonCursor->m_MotionDisableFlag = false;
+        m_sceneLockonCursor->m_MotionFrame = 0.0f;
+        m_sceneLockonCursor->m_MotionSpeed = 1.0f;
+        m_sceneLockonCursor->m_MotionRepeatType = loop ? Chao::CSD::eMotionRepeatType_Loop : Chao::CSD::eMotionRepeatType_PlayOnce;
+        m_sceneLockonCursor->Update();
+    }
+
+    void Kill()
+    {
+        SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+    }
+};
+
 bool NextGenShadow::AirActionCheck()
 {
     auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
@@ -613,7 +761,10 @@ bool NextGenShadow::AirActionCheck()
 
 void NextGenShadow::AddTargetData(uint32_t actorID, float dist, uint32_t priority)
 {
-    NextGenShadow::m_targetData.push_back(NextGenShadow::TargetData{ actorID, dist, priority });
+    if (m_targetData.size() < cShadow_chaosSpearMaxCount)
+    {
+        m_targetData.push_back(TargetData{ actorID, dist, priority });
+    }
 }
 
 void __declspec(naked) NextGenShadow_AirAction()
@@ -660,6 +811,7 @@ void __declspec(naked) NextGenShadow_GetAllHomingTargets()
 
 static SharedPtrTypeless soundHandle_TrickAttack;
 static SharedPtrTypeless pfxHandle_TrickAttack;
+std::map<uint32_t, boost::shared_ptr<CObjChaosLockonCursor>> m_spLockonCursors;
 HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     static SharedPtrTypeless voiceHandle;
@@ -715,29 +867,103 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
         WRITE_MEMORY(0xE74593, uint8_t, 0x0F, 0x8C, 0xE5, 0x02, 0x00, 0x00);
         WRITE_MEMORY(0xE74847, uint8_t, 0xD9, 0x5C, 0x24, 0x14, 0xD9);
 
+        // handle multiple lock-on targets and HUD
+        if (This->m_Time >= cShadow_chaosSpearAccumulate)
+        {
+            // main lock-on target may or may not in the list
+            bool foundMainTarget = false;
+            for (NextGenShadow::TargetData const& data : NextGenShadow::m_targetData)
+            {
+                if (context->m_HomingAttackTargetActorID == data.m_actorID)
+                {
+                    foundMainTarget = true;
+                    break;
+                }
+            }
+            if (!foundMainTarget)
+            {
+                NextGenShadow::m_targetData.push_back(NextGenShadow::TargetData{ context->m_HomingAttackTargetActorID, 0.0f, 100 });
+            }
+
+            // sort by priority then distance
+            std::sort(NextGenShadow::m_targetData.begin(), NextGenShadow::m_targetData.end(),
+                [](NextGenShadow::TargetData const& a, NextGenShadow::TargetData const& b)
+                {
+                    return a.m_priority > b.m_priority || (a.m_priority == b.m_priority && a.m_dist < b.m_dist);
+                }
+            );
+
+            // record new targets (except for main target)
+            std::set<uint32_t> lockonActors;
+            for (NextGenShadow::TargetData const& data : NextGenShadow::m_targetData)
+            {
+                if (data.m_actorID != context->m_HomingAttackTargetActorID && lockonActors.size() < cShadow_chaosSpearMaxCount - 1)
+                {
+                    lockonActors.insert(data.m_actorID);
+                }
+            }
+
+            // push dummy targets
+            while (NextGenShadow::m_targetData.size() < cShadow_chaosSpearMaxCount)
+            {
+                NextGenShadow::m_targetData.push_back(NextGenShadow::TargetData{ 0, 0.0f, 0 });
+            }
+
+            if (!Configuration::m_noCursor)
+            {
+                // update existing cursors
+                for (auto iter = m_spLockonCursors.begin(); iter != m_spLockonCursors.end();)
+                {
+                    uint32_t actorID = iter->first;
+                    auto& spLockonCursor = iter->second;
+
+                    // check if actor still locked
+                    if (lockonActors.count(actorID))
+                    {
+                        hh::math::CVector targetPosition = hh::math::CVector::Zero();
+                        context->m_pPlayer->SendMessageImm(actorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
+
+                        Eigen::Vector4f pos4f(targetPosition.x(), targetPosition.y(), targetPosition.z(), 1.0f);
+                        spLockonCursor->SetPos(pos4f);
+
+                        lockonActors.erase(actorID);
+                        iter++;
+                    }
+                    else
+                    {
+                        spLockonCursor->Kill();
+                        iter = m_spLockonCursors.erase(iter);
+                    }
+                }
+
+                // create cursors for new targets
+                if (!lockonActors.empty())
+                {
+                    // play single lock-on sound
+                    static SharedPtrTypeless soundHandle;
+                    Common::SonicContextPlaySound(soundHandle, 4002012, 0);
+
+                    for (uint32_t actorID : lockonActors)
+                    {
+                        hh::math::CVector targetPosition = hh::math::CVector::Zero();
+                        context->m_pPlayer->SendMessageImm(actorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
+
+                        Eigen::Vector4f pos4f(targetPosition.x(), targetPosition.y(), targetPosition.z(), 1.0f);
+                        m_spLockonCursors[actorID] = boost::make_shared<CObjChaosLockonCursor>(pos4f);
+
+                        context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(m_spLockonCursors[actorID]);
+                    }
+                }
+            }
+        }
+
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
         if (!padState->IsDown(Sonic::EKeyState::eKeyState_X))
         {
             NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_SpearShot;
             Common::SonicContextChangeAnimation(AnimationSetPatcher::SpearShot);
 
-            if (This->m_Time >= cShadow_chaosSpearAccumulate)
-            {
-                while (NextGenShadow::m_targetData.size() < cShadow_chaosSpearMaxCount)
-                {
-                    // add dummy targets
-                    NextGenShadow::m_targetData.push_back(NextGenShadow::TargetData{ 0, 0.0f, 0 });
-                }
-
-                // sort by priority then distance
-                std::sort(NextGenShadow::m_targetData.begin(), NextGenShadow::m_targetData.end(),
-                    [](NextGenShadow::TargetData const& a, NextGenShadow::TargetData const& b)
-                    {
-                        return a.m_priority > b.m_priority || (a.m_priority == b.m_priority && a.m_dist < b.m_dist);
-                    }
-                );
-            }
-            else
+            if (This->m_Time < cShadow_chaosSpearAccumulate)
             {
                 // m_HomingAttackTargetActorID can be 0
                 NextGenShadow::m_targetData.clear();
@@ -787,6 +1013,14 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
                 context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjChaosSpear>(data.m_actorID, position, direction));
             }
 
+            // clear lock-on cursors
+            for (auto& iter : m_spLockonCursors)
+            {
+                auto& spLockonCursor = iter.second;
+                spLockonCursor->SetOutro();
+            }
+            m_spLockonCursors.clear();
+
             // only play one sound, not per spear
             soundHandle_TrickAttack.reset();
             Common::fCGlitterEnd(*PLAYER_CONTEXT, pfxHandle_TrickAttack, true);
@@ -835,6 +1069,14 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::f
     soundHandle_TrickAttack.reset();
     Common::fCGlitterEnd(*PLAYER_CONTEXT, pfxHandle_TrickAttack, true);
     Common::SonicContextHudHomingAttackClear(context);
+
+    // clear cursors if not already
+    for (auto& iter : m_spLockonCursors)
+    {
+        auto& spLockonCursor = iter.second;
+        spLockonCursor->Kill();
+    }
+    m_spLockonCursors.clear();
 }
 
 //---------------------------------------------------
