@@ -50,6 +50,8 @@ float const cShadow_chaosSpearStiffening = 0.3f;
 float const cShadow_chaosSpearDownAngle = 30.0f * DEG_TO_RAD;
 float const cShadow_chaosSpearTurnRate = 180.0f * DEG_TO_RAD;
 
+float const cShadow_chaosBoostStartTime = 1.2f;
+
 bool slidingEndWasSliding_Shadow = false;
 bool NextGenShadow::m_isSpindash = false;
 bool NextGenShadow::m_isSliding = false;
@@ -420,6 +422,34 @@ void NextGenShadow::SetChaosBoostLevel(uint8_t level, bool notifyHUD)
     }
 }
 
+bool NextGenShadow::CheckChaosBoost()
+{
+    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+    if (!padState->IsTapped(Sonic::EKeyState::eKeyState_RightStick))
+    {
+        return false;
+    }
+
+    if (*Common::GetPlayerBoost() == 0.0f || m_chaosMaturity < 100.0f)
+    {
+        return false;
+    }
+
+    if (m_chaosBoostLevel == 3)
+    {
+        // TODO: ???
+    }
+    else
+    {
+        m_overrideType = OverrideType::SH_ChaosBoost;
+        StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
+
+        return true;
+    }
+
+    return false;
+}
+
 void NextGenShadow::AddChaosMaturity(float amount)
 {
     if (Configuration::m_model != Configuration::ModelType::Shadow) return;
@@ -763,6 +793,8 @@ bool NextGenShadow::AirActionCheck()
     }
 
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+
+    // Chaos Spear
     if (padState->IsTapped(Sonic::EKeyState::eKeyState_X))
     {
         if (NextGenPhysics::checkUseLightSpeedDash())
@@ -772,6 +804,12 @@ bool NextGenShadow::AirActionCheck()
 
         m_overrideType = OverrideType::SH_SpearWait;
         StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
+        return true;
+    }
+
+    // Chaos Boost
+    if (CheckChaosBoost())
+    {
         return true;
     }
 
@@ -851,6 +889,20 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
         Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle_TrickAttack, &attachBone, "ef_bo_sha_yh2_spear_charge", 1);
         break;
     }
+    case NextGenShadow::OverrideType::SH_ChaosBoost:
+    {
+        Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosBoost);
+        context->StateFlag(eStateFlag_OutOfControl)++;
+        context->StateFlag(eStateFlag_NoDamage)++;
+        context->m_GravityTimer = -100000000.0f;
+        
+        Common::SonicContextPlaySound(soundHandle_TrickAttack, 80041035, 1);
+        void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
+        Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle_TrickAttack, matrixNode, "ef_ch_sh_chaosboost", 1);
+
+        NextGenShadow::SetChaosBoostLevel(NextGenShadow::m_chaosBoostLevel + 1, true);
+        break;
+    }
     }
 
     return 0;
@@ -862,9 +914,6 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
     static SharedPtrTypeless voiceHandle;
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
 
-    Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
-    Common::SetPlayerPosition(NextGenShadow::m_holdPosition);
-
     switch (NextGenShadow::m_overrideType)
     {
     case NextGenShadow::OverrideType::SH_SpearWait:
@@ -874,6 +923,9 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             StateManager::ChangeState(StateAction::LandJumpShort, *PLAYER_CONTEXT);
             return nullptr;
         }
+
+        Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+        Common::SetPlayerPosition(NextGenShadow::m_holdPosition);
 
         // Ignore priority comparison
         WRITE_NOP(0xE74593, 6);
@@ -987,8 +1039,6 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
                 // m_HomingAttackTargetActorID can be 0
                 NextGenShadow::m_targetData.clear();
                 NextGenShadow::m_targetData.push_back(NextGenShadow::TargetData{ context->m_HomingAttackTargetActorID, 0.0f, 0 });
-                Common::SonicContextHudHomingAttackOutro(context);
-                context->m_HomingAttackTargetActorID = 0;
             }
 
             int noTargetCount = 0;
@@ -1002,6 +1052,13 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
                 {
                     // get initial target position
                     context->m_pPlayer->SendMessageImm(data.m_actorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
+                
+                    // clear main target HUD
+                    if (data.m_actorID == context->m_HomingAttackTargetActorID)
+                    {
+                        Common::SonicContextHudHomingAttackOutro(context);
+                        context->m_HomingAttackTargetActorID = 0;
+                    }
                 }
 
                 // spawn chaos spear
@@ -1062,7 +1119,10 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             return nullptr;
         }
 
-        if (This->m_Time > cShadow_chaosSpearStiffening)
+        Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+        Common::SetPlayerPosition(NextGenShadow::m_holdPosition);
+
+        if (This->m_Time >= cShadow_chaosSpearStiffening)
         {
             Common::SonicContextPlaySound(soundHandle, 2002027, 1);
             Common::SonicContextPlaySound(voiceHandle, 3002000, 0);
@@ -1071,6 +1131,18 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             Common::SonicContextChangeAnimation("HomingAttackAfter1");
 
             StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
+            break;
+        }
+
+        break;
+    }
+    case NextGenShadow::OverrideType::SH_ChaosBoost:
+    {
+        Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+
+        if (This->m_Time >= cShadow_chaosBoostStartTime)
+        {
+            StateManager::ChangeState(context->m_Grounded ? StateAction::Stand : StateAction::Fall, *PLAYER_CONTEXT);
             break;
         }
 
@@ -1085,17 +1157,33 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::f
 {
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
 
-    soundHandle_TrickAttack.reset();
-    Common::fCGlitterEnd(*PLAYER_CONTEXT, pfxHandle_TrickAttack, true);
-    Common::SonicContextHudHomingAttackClear(context);
-
-    // clear cursors if not already
-    for (auto& iter : m_spLockonCursors)
+    switch (NextGenShadow::m_overrideType)
     {
-        auto& spLockonCursor = iter.second;
-        spLockonCursor->Kill();
+    case NextGenShadow::OverrideType::SH_SpearWait:
+    case NextGenShadow::OverrideType::SH_SpearShot:
+    {
+        soundHandle_TrickAttack.reset();
+        Common::fCGlitterEnd(*PLAYER_CONTEXT, pfxHandle_TrickAttack, true);
+        Common::SonicContextHudHomingAttackClear(context);
+
+        // clear cursors if not already
+        for (auto& iter : m_spLockonCursors)
+        {
+            auto& spLockonCursor = iter.second;
+            spLockonCursor->Kill();
+        }
+        m_spLockonCursors.clear();
+
+        break;
     }
-    m_spLockonCursors.clear();
+    case NextGenShadow::OverrideType::SH_ChaosBoost:
+    {
+        context->StateFlag(eStateFlag_OutOfControl)--;
+        context->StateFlag(eStateFlag_NoDamage)--;
+        context->m_GravityTimer = 1000.0f;
+        break;
+    }
+    }
 }
 
 //---------------------------------------------------
@@ -1149,6 +1237,12 @@ bool NextGenShadow::bActionHandlerImpl()
     {
         // Cannot use any action during auto run
         return false;
+    }
+
+    // activate chaos boost on ground
+    if (CheckChaosBoost())
+    {
+        return true;
     }
 
     bool moving = playerVelocity.norm() > 0.2f;

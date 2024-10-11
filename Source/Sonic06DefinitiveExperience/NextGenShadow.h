@@ -48,6 +48,7 @@ public:
 	static void SetJetEffectVisible(bool visible);
 	static void SetChaosBoostModelVisible(bool visible);
 	static void SetChaosBoostLevel(uint8_t level, bool notifyHUD);
+	static bool CheckChaosBoost();
 	static void AddChaosMaturity(float amount);
 	static bool AirActionCheck();
 
@@ -65,6 +66,7 @@ public:
 	{
 		SH_SpearWait,
 		SH_SpearShot,
+		SH_ChaosBoost,
 	} m_overrideType;
 };
 
