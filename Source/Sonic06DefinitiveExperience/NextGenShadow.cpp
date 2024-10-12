@@ -74,6 +74,7 @@ bool NextGenShadow::m_enableAutoRunAction = true;
 // Chaos Boost
 uint8_t NextGenShadow::m_chaosBoostLevel = 0u;
 float NextGenShadow::m_chaosMaturity = 0.0f;
+bool NextGenShadow::m_chaosSnapNoDamage = false;
 NextGenShadow::OverrideType NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_SpearWait;
 
 //---------------------------------------------------
@@ -172,9 +173,10 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
         if (NextGenShadow::m_chaosBoostLevel > 0)
         {
             float* currentBoost = Common::GetPlayerBoost();
+            float const previousBoost = *currentBoost;
             *currentBoost = max(0.0f, *currentBoost - (NextGenShadow::m_chaosBoostLevel + 1) * *dt);
 
-            if (*currentBoost == 0.0f)
+            if (previousBoost > 0.0f && *currentBoost == 0.0f)
             {
                 NextGenShadow::SetChaosBoostLevel(0, true);
             }
@@ -185,7 +187,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
 }
 
 //---------------------------------------------------
-// Chaos Attack
+// Chaos Attack/Chaos Snap
 //---------------------------------------------------
 HOOK(int, __stdcall, NextGenShadow_HomingUpdate, 0xE5FF10, CSonicContext* context)
 {
@@ -194,7 +196,34 @@ HOOK(int, __stdcall, NextGenShadow_HomingUpdate, 0xE5FF10, CSonicContext* contex
 
 HOOK(int, __fastcall, NextGenShadow_CSonicStateHomingAttackBegin, 0x1232040, hh::fnd::CStateMachineBase::CStateBase* This)
 {
-    return originalNextGenShadow_CSonicStateHomingAttackBegin(This);
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+
+    // Chaos Snap
+    bool const hasChaosSnapTarget = NextGenShadow::m_chaosBoostLevel > 0 && context->m_HomingAttackTargetActorID;
+    if (hasChaosSnapTarget)
+    {
+        // Disable homing trail
+        WRITE_JUMP(0x1232508, (void*)0x1232511);
+
+        // Replace sfx to warp
+        WRITE_MEMORY(0x12324AF, uint32_t, 80041038);
+
+        // Change animation to ChaosAttackWait
+        WRITE_MEMORY(0x1232056, char*, AnimationSetPatcher::ChaosAttackWait);
+    }
+
+    int result = originalNextGenShadow_CSonicStateHomingAttackBegin(This);
+
+    // Chaos Snap
+    if (hasChaosSnapTarget)
+    {
+        hh::math::CVector currentPosition = context->m_spMatrixNode->m_Transform.m_Position;
+        currentPosition.y() -= 0.5f;
+        hh::math::CVector targetPosition = context->m_HomingAttackPosition - (context->m_HomingAttackPosition - currentPosition).normalized() * 0.5f;
+        Common::SetPlayerPosition(targetPosition);
+    }
+
+    return true;
 }
 
 HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, hh::fnd::CStateMachineBase::CStateBase* This)
@@ -204,6 +233,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
     Eigen::Vector3f velocity;
     Common::GetPlayerVelocity(velocity);
 
+    // velocity control
     if (!context->m_HomingAttackTargetActorID)
     {
         if (velocity.norm() < 10.0f)
@@ -231,7 +261,46 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
 
 HOOK(int*, __fastcall, NextGenShadow_CSonicStateHomingAttackEnd, 0x1231F80, hh::fnd::CStateMachineBase::CStateBase* This)
 {
+    // if Chaos Snap didn't hit any target, reset count
+    if (!StateManager::isCurrentAction(StateAction::HomingAttackAfter))
+    {
+        NextGenShadow::m_chaosAttackCount = -1;
+    }
+
+    // resume homing trail/sfx/animation
+    WRITE_MEMORY(0x1232508, uint8_t, 0x6A, 0x00, 0x8B, 0xC3, 0xE8);
+    WRITE_MEMORY(0x12324AF, uint32_t, 2002029);
+    WRITE_MEMORY(0x1232056, uint32_t, 0x15F84E8);
+
     return originalNextGenShadow_CSonicStateHomingAttackEnd(This);
+}
+
+void PlayNextChaosAttack()
+{
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+    static SharedPtrTypeless soundHandleSfx;
+    static SharedPtrTypeless soundHandleVfx;
+
+    Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosAttack[NextGenShadow::m_chaosAttackCount]);
+    Common::SonicContextPlaySound(soundHandleSfx, 80041028, 1);
+    Common::SonicContextPlayVoice(soundHandleVfx, NextGenShadow::m_chaosAttackCount < 4 ? 3002032 : 3002031, 10 + NextGenShadow::m_chaosAttackCount);
+
+    // kick effect (may not exist)
+    static SharedPtrTypeless chaosAttackKickPfx[5];
+    {
+        auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("Root");
+        Common::fCGlitterCreate(*PLAYER_CONTEXT, chaosAttackKickPfx[NextGenShadow::m_chaosAttackCount], &attachBone, ("ef_ch_sh_chaosattack0" + std::to_string(NextGenShadow::m_chaosAttackCount)).c_str(), 0);
+    }
+
+    // glow effect
+    static SharedPtrTypeless chaosAttackPfx[5];
+    {
+        auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode
+        (
+            NextGenShadow::m_chaosAttackCount == 0 ? "Nose" : (NextGenShadow::m_chaosAttackCount == 2 ? "LeftToeBase" : "RightToeBase")
+        );
+        Common::fCGlitterCreate(*PLAYER_CONTEXT, chaosAttackPfx[NextGenShadow::m_chaosAttackCount], &attachBone, ("ef_ch_sh_chaosattack0" + std::to_string(NextGenShadow::m_chaosAttackCount) + "_kick").c_str(), 0);
+    }
 }
 
 HOOK(int32_t*, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterBegin, 0x1118300, hh::fnd::CStateMachineBase::CStateBase* This)
@@ -244,11 +313,35 @@ HOOK(int32_t*, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterBegin, 0x11
     if (!context->StateFlag(eStateFlag_EnableHomingAttackOnDiving) && !context->StateFlag(eStateFlag_KeepRunning) && Common::GetCurrentStageID() != SMT_bsl)
     {
         NextGenShadow::m_holdPosition = context->m_spMatrixNode->m_Transform.m_Position;
-        NextGenShadow::m_chaosAttackCount = 0;
         NextGenShadow::m_chaosAttackBuffered = false;
 
-        Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosAttackWait);
-        Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+        // chaos snap immediately goes to next attack
+        if (NextGenShadow::m_chaosBoostLevel > 0)
+        {
+            // first attack
+            if (NextGenShadow::m_chaosAttackCount < 0)
+            {
+                NextGenShadow::m_chaosAttackCount = 0;
+            }
+
+            PlayNextChaosAttack();
+            NextGenShadow::m_chaosAttackCount++;
+        }
+        else if (NextGenShadow::m_chaosAttackCount < 0 || NextGenShadow::m_chaosBoostLevel == 0)
+        {
+            // normal chaos attack
+            NextGenShadow::m_chaosAttackCount = 0;
+
+            Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosAttackWait);
+            Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+        }
+
+        // No damage during Chaos Snap
+        if (NextGenShadow::m_chaosBoostLevel > 0 && !NextGenShadow::m_chaosSnapNoDamage)
+        {
+            NextGenShadow::m_chaosSnapNoDamage = true;
+            context->StateFlag(eStateFlag_NoDamage)++;
+        }
     }
 
     return result;
@@ -267,14 +360,21 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
 
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
         bool const isPressedA = padState->IsTapped(Sonic::EKeyState::eKeyState_A);
+        bool const isHoldingA = padState->IsDown(Sonic::EKeyState::eKeyState_A);
 
         static SharedPtrTypeless soundHandleSfx;
         static SharedPtrTypeless soundHandleVfx;
 
         if (message.IsAnimation(AnimationSetPatcher::ChaosAttackWait))
         {
+            bool const isChaosSnapSearch = isHoldingA && NextGenShadow::m_chaosBoostLevel > 0 && NextGenShadow::m_chaosAttackCount < 5;
             bool const nextAttackNotBuffered = NextGenShadow::m_chaosAttackCount > 0 && !NextGenShadow::m_chaosAttackBuffered;
-            if (This->m_Time > cShadow_chaosAttackWaitTime || nextAttackNotBuffered)
+
+            if (isChaosSnapSearch)
+            {
+                originalNextGenShadow_HomingUpdate(context);
+            }
+            else if (This->m_Time > cShadow_chaosAttackWaitTime || nextAttackNotBuffered)
             {
                 // timeout, resume original homing attack after
                 This->m_Time = 0.0f;
@@ -304,29 +404,18 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
             }
 
             // Next attack
-            if ((NextGenShadow::m_chaosAttackCount == 0 && isPressedA) || NextGenShadow::m_chaosAttackCount > 0 && NextGenShadow::m_chaosAttackBuffered)
+            bool useNextAttack = false;
+            useNextAttack |= NextGenShadow::m_chaosAttackCount == 0 && isPressedA;
+            useNextAttack |= NextGenShadow::m_chaosAttackCount > 0 && NextGenShadow::m_chaosAttackBuffered;
+
+            if (isChaosSnapSearch && context->m_HomingAttackTargetActorID)
             {
-                Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosAttack[NextGenShadow::m_chaosAttackCount]);
-                Common::SonicContextPlaySound(soundHandleVfx, 80041028, 1);
-                Common::SonicContextPlayVoice(soundHandleVfx, NextGenShadow::m_chaosAttackCount < 4 ? 3002032 : 3002031, 10 + NextGenShadow::m_chaosAttackCount);
-            
-                // kick effect (may not exist)
-                static SharedPtrTypeless chaosAttackKickPfx[5];
-                {
-                    auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("Root");
-                    Common::fCGlitterCreate(*PLAYER_CONTEXT, chaosAttackKickPfx[NextGenShadow::m_chaosAttackCount], &attachBone, ("ef_ch_sh_chaosattack0" + std::to_string(NextGenShadow::m_chaosAttackCount)).c_str(), 0);
-                }
-
-                // glow effect
-                static SharedPtrTypeless chaosAttackPfx[5];
-                {
-                    auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode
-                    (
-                        NextGenShadow::m_chaosAttackCount == 0 ? "Nose" : (NextGenShadow::m_chaosAttackCount == 2 ? "LeftToeBase" : "RightToeBase")
-                    );
-                    Common::fCGlitterCreate(*PLAYER_CONTEXT, chaosAttackPfx[NextGenShadow::m_chaosAttackCount], &attachBone, ("ef_ch_sh_chaosattack0" + std::to_string(NextGenShadow::m_chaosAttackCount) + "_kick").c_str(), 0);
-                }
-
+                // Chaos Snap immediately goes to next target if found
+                StateManager::ChangeState(StateAction::HomingAttack, *PLAYER_CONTEXT);
+            }
+            else if (useNextAttack)
+            {
+                PlayNextChaosAttack();
                 NextGenShadow::m_chaosAttackCount++;
                 NextGenShadow::m_chaosAttackBuffered = false;
 
@@ -389,13 +478,26 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
 
 HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterEnd, 0x11182F0)
 {
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+
     // resume ground detection
     WRITE_MEMORY(0xE63A31, uint8_t, 0x74);
 
     // resume disable lock-on cursor
     WRITE_MEMORY(0xDEBAA0, uint8_t, 0x75);
 
-    NextGenShadow::m_chaosAttackCount = -1;
+    // resume damage
+    if (NextGenShadow::m_chaosSnapNoDamage)
+    {
+        NextGenShadow::m_chaosSnapNoDamage = false;
+        context->StateFlag(eStateFlag_NoDamage)--;
+    }
+
+    // Chaos Snap retains previous count
+    if (NextGenShadow::m_chaosBoostLevel == 0)
+    {
+        NextGenShadow::m_chaosAttackCount = -1;
+    }
     NextGenShadow::m_chaosAttackBuffered = false;
 }
 
@@ -1997,7 +2099,7 @@ void NextGenShadow::applyPatches()
     WRITE_MEMORY(0xDFDDB3, uint8_t, 0xEB);
 
     //-------------------------------------------------------
-    // Chaos Attack
+    // Chaos Attack/Chaos Snap
     //-------------------------------------------------------
     INSTALL_HOOK(NextGenShadow_CSonicStateHomingAttackBegin);
     INSTALL_HOOK(NextGenShadow_CSonicStateHomingAttackAdvance);

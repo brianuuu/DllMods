@@ -1,9 +1,17 @@
 #include "VoiceOver.h"
+#include "NextGenShadow.h"
 #include "Configuration.h"
 
-HOOK(int, __fastcall, VoiceOver_CSonicStateHomingAttackBegin, 0x1232040, void* This)
+HOOK(int, __fastcall, VoiceOver_CSonicStateHomingAttackBegin, 0x1232040, hh::fnd::CStateMachineBase::CStateBase* This)
 {
-	VoiceOver::playHomingAttackVoice();
+	auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+	bool disableVoice = NextGenShadow::m_chaosBoostLevel > 0 && context->m_HomingAttackTargetActorID;
+	
+	if (!disableVoice)
+	{
+		VoiceOver::playHomingAttackVoice();
+	}
+
 	return originalVoiceOver_CSonicStateHomingAttackBegin(This);
 }
 
