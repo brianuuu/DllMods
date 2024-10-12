@@ -61,6 +61,7 @@ public:
 		float turnRate2 = c_funcMaxTurnRate
 	);
 
+	static void killHomingAttackParticle();
 	static void getActionButtonStates(bool& bDown, bool& bPressed, bool& bReleased);
 	static bool checkUseLightSpeedDash();
 	static void keepConstantHorizontalVelocity(float hSpeed);

@@ -198,6 +198,31 @@ HOOK(int, __stdcall, NextGenShadow_HomingUpdate, 0xE5FF10, CSonicContext* contex
 
 bool hasChaosSnapHiddenModel = false;
 bool hasChaosSnapTeleported = false;
+void PlayChaosSnap()
+{
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+
+    // warp start pfx
+    SharedPtrTypeless warpHandle;
+    void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x10);
+    Common::fCGlitterCreate(*PLAYER_CONTEXT, warpHandle, matrixNode, "ef_ch_sha_warp_s", 1);
+
+    SharedPtrTypeless soundHandle;
+    Common::SonicContextPlaySound(soundHandle, 80041038, 1);
+
+    // hide all model
+    context->StateFlag(eStateFlag_NoDamage)++;
+    NextGenShadow::SetChaosBoostModelVisible(true, true);
+    hasChaosSnapHiddenModel = true;
+    hasChaosSnapTeleported = false;
+
+    // Stop in air
+    Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+
+    // Freeze camera
+    CustomCamera::m_freezeCameraEnabled = true;
+}
+
 HOOK(int, __fastcall, NextGenShadow_CSonicStateHomingAttackBegin, 0x1232040, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
@@ -208,36 +233,17 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateHomingAttackBegin, 0x1232040, hh:
         // Skip initial velocity
         WRITE_JUMP(0x1232102, (void*)0x123211C);
 
-        // Disable homing trail
+        // Disable homing trail/sfx
         WRITE_JUMP(0x1232508, (void*)0x1232511);
-
-        // Replace sfx to warp
-        WRITE_MEMORY(0x12324AF, uint32_t, 80041038);
+        WRITE_MEMORY(0x12324AF, int, -1);
 
         // Change animation to ChaosAttackWait
         WRITE_MEMORY(0x1232056, char*, AnimationSetPatcher::ChaosAttackWait);
 
-        // warp start pfx
-        SharedPtrTypeless warpHandle;
-        void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x10);
-        Common::fCGlitterCreate(*PLAYER_CONTEXT, warpHandle, matrixNode, "ef_ch_sha_warp_s", 1);
-
-        // hide all model
-        context->StateFlag(eStateFlag_NoDamage)++;
-        NextGenShadow::SetChaosBoostModelVisible(true, true);
-        hasChaosSnapHiddenModel = true;
-        hasChaosSnapTeleported = false;
-
-        // Stop in air
-        Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
-
-        // Freeze camera
-        CustomCamera::m_freezeCameraEnabled = true;
+        PlayChaosSnap();
     }
 
-    int result = originalNextGenShadow_CSonicStateHomingAttackBegin(This);
-
-    return true;
+    return originalNextGenShadow_CSonicStateHomingAttackBegin(This);
 }
 
 HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, hh::fnd::CStateMachineBase::CStateBase* This)
@@ -265,31 +271,68 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
     }
 
     // Chaos Snap
-    if (NextGenShadow::m_chaosBoostLevel > 0 && context->m_HomingAttackTargetActorID && !hasChaosSnapTeleported && This->m_Time >= cShadow_chaosSnapWaitTime)
+    if (NextGenShadow::m_chaosBoostLevel > 0 && !hasChaosSnapTeleported)
     {
-        hasChaosSnapTeleported = true;
-
-        hh::math::CVector targetPosition = hh::math::CVector::Zero();
-        context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetPosition>(&targetPosition));
-
-        if (targetPosition.isZero())
+        // teleport after 0.1s
+        if (context->m_HomingAttackTargetActorID && This->m_Time >= cShadow_chaosSnapWaitTime)
         {
-            // lost target
-            StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
+            hasChaosSnapTeleported = true;
+
+            hh::math::CVector targetPosition = hh::math::CVector::Zero();
+            context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetPosition>(&targetPosition));
+
+            if (targetPosition.isZero())
+            {
+                // lost target
+                StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
+            }
+            else
+            {
+                hh::math::CVector currentPosition = context->m_spMatrixNode->m_Transform.m_Position;
+                currentPosition.y() -= 0.5f;
+
+                // set velocity for MsgDamage reference
+                hh::math::CVector direction = (context->m_HomingAttackPosition - currentPosition).normalized();
+                Common::SetPlayerVelocity(direction * context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_HomingSpeed));
+                Common::SonicContextUpdateRotationToVelocity(context, &context->m_Velocity, true);
+
+                // teleport
+                hh::math::CVector targetPosition = context->m_HomingAttackPosition - direction * 0.5f;
+                Common::SetPlayerPosition(targetPosition);
+            }
         }
-        else
+
+        // try to find target during dummy homing
+        if (!context->m_HomingAttackTargetActorID)
         {
-            hh::math::CVector currentPosition = context->m_spMatrixNode->m_Transform.m_Position;
-            currentPosition.y() -= 0.5f;
+            Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+            if (padState->IsDown(Sonic::EKeyState::eKeyState_A))
+            {
+                originalNextGenShadow_HomingUpdate(context);
 
-            // set velocity for MsgDamage reference
-            hh::math::CVector direction = (context->m_HomingAttackPosition - currentPosition).normalized();
-            Common::SetPlayerVelocity(direction * context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_HomingSpeed));
-            Common::SonicContextUpdateRotationToVelocity(context, &context->m_Velocity, true);
+                if (context->m_HomingAttackTargetActorID)
+                {
+                    context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&context->m_HomingAttackPosition));
+                    Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+                    Common::SonicContextHudHomingAttackOutro(context);
 
-            // teleport
-            hh::math::CVector targetPosition = context->m_HomingAttackPosition - direction * 0.5f;
-            Common::SetPlayerPosition(targetPosition);
+                    // kill homing attack effects
+                    NextGenPhysics::killHomingAttackParticle();
+                    if (context->m_pSparkEffectManager)
+                    {
+                        FUNCTION_PTR(int, __stdcall, StopLocusEffect, 0xE8C940, Sonic::CSparkEffectManager * pSparkEffectManager, int sharedString);
+                        StopLocusEffect(context->m_pSparkEffectManager, 0x1E61C48);
+                    }
+
+                    // Send MsgStartHomingChase message to homing target actor
+                    context->m_pPlayer->SendMessage(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgStartHomingChase>());
+
+                    // play animations
+                    This->m_Time = 0.0f;
+                    PlayChaosSnap();
+                    Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosAttackWait);
+                }
+            }
         }
     }
 
@@ -327,9 +370,10 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateHomingAttackEnd, 0x1231F80, hh::
         Common::fCGlitterCreate(*PLAYER_CONTEXT, warpHandle, matrixNode, "ef_ch_sha_warp_e", 1);
 
         // Unhide model
-        context->StateFlag(eStateFlag_NoDamage)++;
+        context->StateFlag(eStateFlag_NoDamage)--;
         NextGenShadow::SetChaosBoostModelVisible(NextGenShadow::m_chaosBoostLevel > 0);
         hasChaosSnapHiddenModel = false;
+        hasChaosSnapTeleported = false;
         
         // Unfreeze camera
         CustomCamera::m_freezeCameraEnabled = false;

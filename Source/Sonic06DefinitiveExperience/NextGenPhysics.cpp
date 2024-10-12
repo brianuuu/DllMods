@@ -264,6 +264,12 @@ HOOK(int*, __fastcall, NextGenPhysics_CSonicStateHomingAttackEnd, 0x1231F80, voi
     return originalNextGenPhysics_CSonicStateHomingAttackEnd(This);
 }
 
+void NextGenPhysics::killHomingAttackParticle()
+{
+    // Kill homing pfx
+    Common::fCGlitterEnd(*PLAYER_CONTEXT, homingPfxHandle, true);
+}
+
 void __declspec(naked) noAirDashOutOfControl()
 {
     static uint32_t returnAddress = 0x1232445;
