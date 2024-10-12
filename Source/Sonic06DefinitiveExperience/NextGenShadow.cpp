@@ -151,10 +151,11 @@ HOOK(int, __fastcall, NextGenShadow_AssignFootstepFloorCues, 0xDFD420, Sonic::Pl
     }
 }
 
-HOOK(void, __fastcall, NextGenShadow_CSonicUpdateJetEffect, 0xE6BF20, Sonic::Player::CPlayerSpeed* This, void* Edx, float* dt)
+HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPlayerSpeed* This, void* Edx, float* dt)
 {
     if (*pModernSonicContext)
     {
+        // jet effect
         if (NextGenShadow::ShouldPlayJetEffect())
         {
             if (!jetRightFront)
@@ -166,9 +167,21 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdateJetEffect, 0xE6BF20, Sonic::Pla
         {
             NextGenShadow::SetJetEffectVisible(false);
         }
+
+        // chaos boost drain
+        if (NextGenShadow::m_chaosBoostLevel > 0)
+        {
+            float* currentBoost = Common::GetPlayerBoost();
+            *currentBoost = max(0.0f, *currentBoost - (NextGenShadow::m_chaosBoostLevel + 1) * *dt);
+
+            if (*currentBoost == 0.0f)
+            {
+                NextGenShadow::SetChaosBoostLevel(0, true);
+            }
+        }
     }
 
-    originalNextGenShadow_CSonicUpdateJetEffect(This, Edx, dt);
+    originalNextGenShadow_CSonicUpdate(This, Edx, dt);
 }
 
 //---------------------------------------------------
@@ -1969,7 +1982,7 @@ void NextGenShadow::applyPatches()
 
     // Handle model hide/unhide, jet effect
     INSTALL_HOOK(NextGenShadow_MsgRestartStage);
-    INSTALL_HOOK(NextGenShadow_CSonicUpdateJetEffect);
+    INSTALL_HOOK(NextGenShadow_CSonicUpdate);
     INSTALL_HOOK(NextGenShadow_AssignFootstepFloorCues);
 
     // HACK: CRASH PREVENTION
