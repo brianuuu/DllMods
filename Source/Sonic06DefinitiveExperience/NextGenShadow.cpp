@@ -221,6 +221,14 @@ void PlayChaosSnap()
 
     // Freeze camera
     CustomCamera::m_freezeCameraEnabled = true;
+
+    // kill homing attack effects
+    NextGenPhysics::killHomingAttackParticle();
+    if (context->m_pSparkEffectManager)
+    {
+        FUNCTION_PTR(int, __stdcall, StopLocusEffect, 0xE8C940, Sonic::CSparkEffectManager * pSparkEffectManager, int sharedString);
+        StopLocusEffect(context->m_pSparkEffectManager, 0x1E61C48);
+    }
 }
 
 HOOK(int, __fastcall, NextGenShadow_CSonicStateHomingAttackBegin, 0x1232040, hh::fnd::CStateMachineBase::CStateBase* This)
@@ -315,14 +323,6 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
                     context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&context->m_HomingAttackPosition));
                     Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
                     Common::SonicContextHudHomingAttackOutro(context);
-
-                    // kill homing attack effects
-                    NextGenPhysics::killHomingAttackParticle();
-                    if (context->m_pSparkEffectManager)
-                    {
-                        FUNCTION_PTR(int, __stdcall, StopLocusEffect, 0xE8C940, Sonic::CSparkEffectManager * pSparkEffectManager, int sharedString);
-                        StopLocusEffect(context->m_pSparkEffectManager, 0x1E61C48);
-                    }
 
                     // Send MsgStartHomingChase message to homing target actor
                     context->m_pPlayer->SendMessage(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgStartHomingChase>());
