@@ -268,6 +268,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
         {
             // hit a wall, unable to keep velocity
             StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
+            return;
         }
         else
         {
@@ -293,6 +294,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
             {
                 // lost target
                 StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
+                return;
             }
             else
             {
@@ -507,6 +509,13 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
 
                 Common::SonicContextHudHomingAttackClear(context);
                 context->m_HomingAttackTargetActorID = 0;
+
+                // resume damage
+                if (NextGenShadow::m_chaosSnapNoDamage)
+                {
+                    NextGenShadow::m_chaosSnapNoDamage = false;
+                    context->StateFlag(eStateFlag_NoDamage)--;
+                }
                 return;
             }
 
