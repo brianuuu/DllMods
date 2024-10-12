@@ -178,7 +178,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
             float const previousBoost = *currentBoost;
             *currentBoost = max(0.0f, *currentBoost - (NextGenShadow::m_chaosBoostLevel + 1) * *dt);
 
-            if (previousBoost > 0.0f && *currentBoost == 0.0f)
+            if (*currentBoost == 0.0f)
             {
                 NextGenShadow::SetChaosBoostLevel(0, true);
             }
