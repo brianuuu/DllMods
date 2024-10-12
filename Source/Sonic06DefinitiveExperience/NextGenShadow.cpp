@@ -2,6 +2,7 @@
 #include "Configuration.h"
 #include "Application.h"
 #include "AnimationSetPatcher.h"
+#include "CustomCamera.h"
 
 //---------------------------------------------------
 // Animation
@@ -229,6 +230,9 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateHomingAttackBegin, 0x1232040, hh:
 
         // Stop in air
         Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+
+        // Freeze camera
+        CustomCamera::m_freezeCameraEnabled = true;
     }
 
     int result = originalNextGenShadow_CSonicStateHomingAttackBegin(This);
@@ -326,6 +330,9 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateHomingAttackEnd, 0x1231F80, hh::
         context->StateFlag(eStateFlag_NoDamage)++;
         NextGenShadow::SetChaosBoostModelVisible(NextGenShadow::m_chaosBoostLevel > 0);
         hasChaosSnapHiddenModel = false;
+        
+        // Unfreeze camera
+        CustomCamera::m_freezeCameraEnabled = false;
     }
 
     return originalNextGenShadow_CSonicStateHomingAttackEnd(This);
@@ -843,7 +850,7 @@ public:
 
     void UpdateTransform()
     {
-        // Rotate gem to correct rotation
+        // Rotate spear to correct rotation
         Hedgehog::Math::CVector const dir = m_Velocity.normalized();
         Hedgehog::Math::CVector dirXZ = dir; dirXZ.y() = 0.0f;
         Hedgehog::Math::CQuaternion rotYaw = Hedgehog::Math::CQuaternion::FromTwoVectors(Hedgehog::Math::CVector::UnitZ(), dirXZ.head<3>());

@@ -52,6 +52,14 @@ bool m_skyGemCameraUpdated = false;
 Hedgehog::Math::CVector m_skyGemCameraReleasedPosition;
 Hedgehog::Math::CQuaternion m_skyGemCameraReleasedRotation;
 
+// freeze camera
+float const cCamera_freezeFactorRate = 10.0f;
+bool CustomCamera::m_freezeCameraEnabled = false;
+float m_freezeCameraFactor = 0.0f;
+bool m_freezeCameraUpdated = false;
+Hedgehog::Math::CVector m_freezeCameraPosition;
+Hedgehog::Math::CQuaternion m_freezeCameraRotation;
+
 HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
 {
     uint32_t offset = (uint32_t)This;
@@ -327,7 +335,37 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
         }
     }
 
+    // Interpolate freeze camera
+    if (!m_freezeCameraUpdated)
+    {
+        if (CustomCamera::m_freezeCameraEnabled)
+        {
+            if (m_freezeCameraFactor < 1.0f)
+            {
+                m_freezeCameraPosition = camera.m_Position;
+                m_freezeCameraRotation = camera.m_View.rotation().inverse();
+            }
+            m_freezeCameraFactor = 1.0f;
+        }
+        else
+        {
+            m_freezeCameraFactor = max(0.0f, m_freezeCameraFactor - in_rUpdateInfo.DeltaTime * cCamera_freezeFactorRate);
+        }
+    }
+
+    if (m_freezeCameraFactor > 0.0f)
+    {
+        // Interpolate position
+        camera.m_Position = camera.m_Position + (m_freezeCameraPosition - camera.m_Position) * m_freezeCameraFactor;
+
+        // Interpolate rotation
+        Hedgehog::Math::CQuaternion rotationSlerp = Hedgehog::Math::CQuaternion(camera.m_View.rotation().inverse()).slerp(m_freezeCameraFactor, m_freezeCameraRotation);
+        camera.m_View = (Eigen::Translation3f(camera.m_Position) * rotationSlerp).inverse().matrix();
+        camera.m_InputView = camera.m_View;
+    }
+
     m_skyGemCameraUpdated = true;
+    m_freezeCameraUpdated = true;
 }
 
 void CustomCamera::applyPatches()
@@ -375,6 +413,7 @@ void CustomCamera::advance()
     }
     m_usedCustomCamera = false;
     m_skyGemCameraUpdated = false;
+    m_freezeCameraUpdated = false;
 }
 
 Eigen::Vector3f CustomCamera::calculateCameraPos
