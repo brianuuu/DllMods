@@ -47,7 +47,7 @@ public:
 	static bool m_chaosSnapNoDamage;
 	static bool ShouldPlayJetEffect();
 	static void SetJetEffectVisible(bool visible);
-	static void SetChaosBoostModelVisible(bool visible);
+	static void SetChaosBoostModelVisible(bool visible, bool allInvisible = false);
 	static void SetChaosBoostLevel(uint8_t level, bool notifyHUD);
 	static bool CheckChaosBoost();
 	static void AddChaosMaturity(float amount);

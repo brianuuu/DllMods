@@ -217,7 +217,7 @@ void __declspec(naked) noTrickRainbowRing()
 float NextGenPhysics::m_homingDownSpeed = 0.0f;
 float const c_homingDownSpeedAdd = 15.0f;
 SharedPtrTypeless homingPfxHandle;
-HOOK(int, __fastcall, NextGenPhysics_CSonicStateHomingAttackBegin, 0x1232040, void* This)
+HOOK(int, __fastcall, NextGenPhysics_CSonicStateHomingAttackBegin, 0x1232040, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     // Remember down speed just before homing attack
     if (Configuration::m_physics)
@@ -228,9 +228,15 @@ HOOK(int, __fastcall, NextGenPhysics_CSonicStateHomingAttackBegin, 0x1232040, vo
         //printf("Down speed = %.3f\n", NextGenPhysics::m_homingDownSpeed);
     }
 
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+    bool disableEffect = NextGenShadow::m_chaosBoostLevel > 0 && context->m_HomingAttackTargetActorID;
+
     // Play homing attack pfx
-    void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
-    Common::fCGlitterCreate(*PLAYER_CONTEXT, homingPfxHandle, matrixNode, "ef_ch_sng_homing", 1);
+    if (!disableEffect)
+    {
+        void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
+        Common::fCGlitterCreate(*PLAYER_CONTEXT, homingPfxHandle, matrixNode, "ef_ch_sng_homing", 1);
+    }
 
     // Apply motion blur
     WRITE_NOP(0x6577F4, 6);

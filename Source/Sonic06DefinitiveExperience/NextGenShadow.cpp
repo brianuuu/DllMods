@@ -51,6 +51,7 @@ float const cShadow_chaosSpearDownAngle = 30.0f * DEG_TO_RAD;
 float const cShadow_chaosSpearTurnRate = 180.0f * DEG_TO_RAD;
 
 float const cShadow_chaosBoostStartTime = 1.2f;
+float const cShadow_chaosSnapWaitTime = 0.1f;
 
 bool slidingEndWasSliding_Shadow = false;
 bool NextGenShadow::m_isSpindash = false;
@@ -194,14 +195,18 @@ HOOK(int, __stdcall, NextGenShadow_HomingUpdate, 0xE5FF10, CSonicContext* contex
     return originalNextGenShadow_HomingUpdate(context);
 }
 
+bool hasChaosSnapHiddenModel = false;
+bool hasChaosSnapTeleported = false;
 HOOK(int, __fastcall, NextGenShadow_CSonicStateHomingAttackBegin, 0x1232040, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
 
     // Chaos Snap
-    bool const hasChaosSnapTarget = NextGenShadow::m_chaosBoostLevel > 0 && context->m_HomingAttackTargetActorID;
-    if (hasChaosSnapTarget)
+    if (NextGenShadow::m_chaosBoostLevel > 0 && context->m_HomingAttackTargetActorID)
     {
+        // Skip initial velocity
+        WRITE_JUMP(0x1232102, (void*)0x123211C);
+
         // Disable homing trail
         WRITE_JUMP(0x1232508, (void*)0x1232511);
 
@@ -210,18 +215,23 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateHomingAttackBegin, 0x1232040, hh:
 
         // Change animation to ChaosAttackWait
         WRITE_MEMORY(0x1232056, char*, AnimationSetPatcher::ChaosAttackWait);
+
+        // warp start pfx
+        SharedPtrTypeless warpHandle;
+        void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x10);
+        Common::fCGlitterCreate(*PLAYER_CONTEXT, warpHandle, matrixNode, "ef_ch_sha_warp_s", 1);
+
+        // hide all model
+        context->StateFlag(eStateFlag_NoDamage)++;
+        NextGenShadow::SetChaosBoostModelVisible(true, true);
+        hasChaosSnapHiddenModel = true;
+        hasChaosSnapTeleported = false;
+
+        // Stop in air
+        Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
     }
 
     int result = originalNextGenShadow_CSonicStateHomingAttackBegin(This);
-
-    // Chaos Snap
-    if (hasChaosSnapTarget)
-    {
-        hh::math::CVector currentPosition = context->m_spMatrixNode->m_Transform.m_Position;
-        currentPosition.y() -= 0.5f;
-        hh::math::CVector targetPosition = context->m_HomingAttackPosition - (context->m_HomingAttackPosition - currentPosition).normalized() * 0.5f;
-        Common::SetPlayerPosition(targetPosition);
-    }
 
     return true;
 }
@@ -250,6 +260,35 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
         }
     }
 
+    // Chaos Snap
+    if (NextGenShadow::m_chaosBoostLevel > 0 && context->m_HomingAttackTargetActorID && !hasChaosSnapTeleported && This->m_Time >= cShadow_chaosSnapWaitTime)
+    {
+        hasChaosSnapTeleported = true;
+
+        hh::math::CVector targetPosition = hh::math::CVector::Zero();
+        context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetPosition>(&targetPosition));
+
+        if (targetPosition.isZero())
+        {
+            // lost target
+            StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
+        }
+        else
+        {
+            hh::math::CVector currentPosition = context->m_spMatrixNode->m_Transform.m_Position;
+            currentPosition.y() -= 0.5f;
+
+            // set velocity for MsgDamage reference
+            hh::math::CVector direction = (context->m_HomingAttackPosition - currentPosition).normalized();
+            Common::SetPlayerVelocity(direction * context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_HomingSpeed));
+            Common::SonicContextUpdateRotationToVelocity(context, &context->m_Velocity, true);
+
+            // teleport
+            hh::math::CVector targetPosition = context->m_HomingAttackPosition - direction * 0.5f;
+            Common::SetPlayerPosition(targetPosition);
+        }
+    }
+
     originalNextGenShadow_CSonicStateHomingAttackAdvance(This);
 
     // keep velocity if hitting ground
@@ -261,16 +300,33 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
 
 HOOK(int*, __fastcall, NextGenShadow_CSonicStateHomingAttackEnd, 0x1231F80, hh::fnd::CStateMachineBase::CStateBase* This)
 {
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+
     // if Chaos Snap didn't hit any target, reset count
     if (!StateManager::isCurrentAction(StateAction::HomingAttackAfter))
     {
         NextGenShadow::m_chaosAttackCount = -1;
     }
 
-    // resume homing trail/sfx/animation
+    // resume Chaos Snap modification
+    WRITE_MEMORY(0x1232102, uint8_t, 0x0F, 0x28, 0x44, 0x24, 0x5C);
     WRITE_MEMORY(0x1232508, uint8_t, 0x6A, 0x00, 0x8B, 0xC3, 0xE8);
     WRITE_MEMORY(0x12324AF, uint32_t, 2002029);
     WRITE_MEMORY(0x1232056, uint32_t, 0x15F84E8);
+
+    // Unhide model
+    if (hasChaosSnapHiddenModel)
+    {
+        // warp end pfx
+        SharedPtrTypeless warpHandle;
+        void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x10);
+        Common::fCGlitterCreate(*PLAYER_CONTEXT, warpHandle, matrixNode, "ef_ch_sha_warp_e", 1);
+
+        // Unhide model
+        context->StateFlag(eStateFlag_NoDamage)++;
+        NextGenShadow::SetChaosBoostModelVisible(NextGenShadow::m_chaosBoostLevel > 0);
+        hasChaosSnapHiddenModel = false;
+    }
 
     return originalNextGenShadow_CSonicStateHomingAttackEnd(This);
 }
@@ -374,7 +430,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
             {
                 originalNextGenShadow_HomingUpdate(context);
             }
-            else if (This->m_Time > cShadow_chaosAttackWaitTime || nextAttackNotBuffered)
+            else if (This->m_Time >= cShadow_chaosAttackWaitTime || nextAttackNotBuffered)
             {
                 // timeout, resume original homing attack after
                 This->m_Time = 0.0f;
@@ -524,14 +580,14 @@ SharedPtrTypeless chaosBoostLeftHand;
 SharedPtrTypeless chaosBoostRightHand;
 SharedPtrTypeless chaosBoostLeftFoot;
 SharedPtrTypeless chaosBoostRightFoot;
-void NextGenShadow::SetChaosBoostModelVisible(bool visible)
+void NextGenShadow::SetChaosBoostModelVisible(bool visible, bool allInvisible)
 {
     auto const& model = Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_spCharacterModel;
-    model->m_spModel->m_NodeGroupModels[0]->m_Visible = !visible;
-    model->m_spModel->m_NodeGroupModels[1]->m_Visible = visible;
+    model->m_spModel->m_NodeGroupModels[0]->m_Visible = !visible && !allInvisible;
+    model->m_spModel->m_NodeGroupModels[1]->m_Visible = visible && !allInvisible;
 
     auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-    if (visible)
+    if (visible && !allInvisible)
     {
         if (!chaosBoostSpine)
         {
@@ -563,12 +619,12 @@ void NextGenShadow::SetChaosBoostModelVisible(bool visible)
     }
     else if (chaosBoostSpine)
     {
-        Common::fCGlitterEnd(*PLAYER_CONTEXT, chaosBoostSpine, false);
-        Common::fCGlitterEnd(*PLAYER_CONTEXT, chaosBoostTopHair, false);
-        Common::fCGlitterEnd(*PLAYER_CONTEXT, chaosBoostLeftHand, false);
-        Common::fCGlitterEnd(*PLAYER_CONTEXT, chaosBoostRightHand, false);
-        Common::fCGlitterEnd(*PLAYER_CONTEXT, chaosBoostLeftFoot, false);
-        Common::fCGlitterEnd(*PLAYER_CONTEXT, chaosBoostRightFoot, false);
+        Common::fCGlitterEnd(*PLAYER_CONTEXT, chaosBoostSpine, allInvisible);
+        Common::fCGlitterEnd(*PLAYER_CONTEXT, chaosBoostTopHair, allInvisible);
+        Common::fCGlitterEnd(*PLAYER_CONTEXT, chaosBoostLeftHand, allInvisible);
+        Common::fCGlitterEnd(*PLAYER_CONTEXT, chaosBoostRightHand, allInvisible);
+        Common::fCGlitterEnd(*PLAYER_CONTEXT, chaosBoostLeftFoot, allInvisible);
+        Common::fCGlitterEnd(*PLAYER_CONTEXT, chaosBoostRightFoot, allInvisible);
 
         chaosBoostSpine = nullptr;
         chaosBoostTopHair = nullptr;
