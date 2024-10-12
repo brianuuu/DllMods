@@ -403,11 +403,65 @@ HOOK(int, __fastcall, NextGenShadow_MsgRestartStage, 0xE76810, Sonic::Player::CP
     return result;
 }
 
+SharedPtrTypeless chaosBoostSpine;
+SharedPtrTypeless chaosBoostTopHair;
+SharedPtrTypeless chaosBoostLeftHand;
+SharedPtrTypeless chaosBoostRightHand;
+SharedPtrTypeless chaosBoostLeftFoot;
+SharedPtrTypeless chaosBoostRightFoot;
 void NextGenShadow::SetChaosBoostModelVisible(bool visible)
 {
     auto const& model = Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_spCharacterModel;
     model->m_spModel->m_NodeGroupModels[0]->m_Visible = !visible;
     model->m_spModel->m_NodeGroupModels[1]->m_Visible = visible;
+
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+    if (visible)
+    {
+        if (!chaosBoostSpine)
+        {
+            {
+                auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("Spine");
+                Common::fCGlitterCreate(*PLAYER_CONTEXT, chaosBoostSpine, &attachBone, "ef_ch_sh_yh1_forceaura2", 1);
+            }
+            {
+                auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("TopHair");
+                Common::fCGlitterCreate(*PLAYER_CONTEXT, chaosBoostTopHair, &attachBone, "ef_ch_sh_yh1_forceaura1", 1);
+            }
+            {
+                auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("LeftHand");
+                Common::fCGlitterCreate(*PLAYER_CONTEXT, chaosBoostLeftHand, &attachBone, "ef_ch_sh_yh1_forceaura1", 1);
+            }
+            {
+                auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("RightHand");
+                Common::fCGlitterCreate(*PLAYER_CONTEXT, chaosBoostRightHand, &attachBone, "ef_ch_sh_yh1_forceaura1", 1);
+            }
+            {
+                auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("LeftFoot");
+                Common::fCGlitterCreate(*PLAYER_CONTEXT, chaosBoostLeftFoot, &attachBone, "ef_ch_sh_yh1_forceaura1", 1);
+            }
+            {
+                auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("RightFoot");
+                Common::fCGlitterCreate(*PLAYER_CONTEXT, chaosBoostRightFoot, &attachBone, "ef_ch_sh_yh1_forceaura1", 1);
+            }
+        }
+    }
+    else if (chaosBoostSpine)
+    {
+        Common::fCGlitterEnd(*PLAYER_CONTEXT, chaosBoostSpine, false);
+        Common::fCGlitterEnd(*PLAYER_CONTEXT, chaosBoostTopHair, false);
+        Common::fCGlitterEnd(*PLAYER_CONTEXT, chaosBoostLeftHand, false);
+        Common::fCGlitterEnd(*PLAYER_CONTEXT, chaosBoostRightHand, false);
+        Common::fCGlitterEnd(*PLAYER_CONTEXT, chaosBoostLeftFoot, false);
+        Common::fCGlitterEnd(*PLAYER_CONTEXT, chaosBoostRightFoot, false);
+
+        chaosBoostSpine = nullptr;
+        chaosBoostTopHair = nullptr;
+        chaosBoostLeftHand = nullptr;
+        chaosBoostRightHand = nullptr;
+        chaosBoostLeftFoot = nullptr;
+        chaosBoostRightFoot = nullptr;
+    }
 }
 
 void NextGenShadow::SetChaosBoostLevel(uint8_t level, bool notifyHUD)
@@ -1142,7 +1196,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
 
         if (This->m_Time >= cShadow_chaosBoostStartTime)
         {
-            StateManager::ChangeState(context->m_Grounded ? StateAction::Stand : StateAction::Fall, *PLAYER_CONTEXT);
+            StateManager::ChangeState(context->m_Grounded ? StateAction::LandJumpShort : StateAction::Fall, *PLAYER_CONTEXT);
             break;
         }
 
