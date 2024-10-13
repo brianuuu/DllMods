@@ -236,7 +236,7 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateHomingAttackBegin, 0x1232040, hh:
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
 
     // Chaos Snap
-    if (NextGenShadow::m_chaosBoostLevel > 0 && context->m_HomingAttackTargetActorID)
+    if (NextGenShadow::CheckChaosSnapTarget())
     {
         // Skip initial velocity
         WRITE_JUMP(0x1232102, (void*)0x123211C);
@@ -283,7 +283,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
     if (NextGenShadow::m_chaosBoostLevel > 0 && !hasChaosSnapTeleported)
     {
         // teleport after 0.1s
-        if (context->m_HomingAttackTargetActorID && This->m_Time >= cShadow_chaosSnapWaitTime)
+        if (NextGenShadow::CheckChaosSnapTarget() && This->m_Time >= cShadow_chaosSnapWaitTime)
         {
             hasChaosSnapTeleported = true;
 
@@ -313,14 +313,14 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
         }
 
         // try to find target during dummy homing
-        if (!context->m_HomingAttackTargetActorID)
+        if (!context->m_HomingAttackTargetActorID && Configuration::Shadow::m_chaosSnapAll)
         {
             Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
             if (padState->IsDown(Sonic::EKeyState::eKeyState_A))
             {
                 originalNextGenShadow_HomingUpdate(context);
 
-                if (context->m_HomingAttackTargetActorID)
+                if (NextGenShadow::CheckChaosSnapTarget())
                 {
                     context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&context->m_HomingAttackPosition));
                     Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
@@ -524,7 +524,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
             useNextAttack |= NextGenShadow::m_chaosAttackCount == 0 && isPressedA;
             useNextAttack |= NextGenShadow::m_chaosAttackCount > 0 && NextGenShadow::m_chaosAttackBuffered;
 
-            if (isChaosSnapSearch && context->m_HomingAttackTargetActorID)
+            if (isChaosSnapSearch && NextGenShadow::CheckChaosSnapTarget())
             {
                 // Chaos Snap immediately goes to next target if found
                 StateManager::ChangeState(StateAction::HomingAttack, *PLAYER_CONTEXT);
@@ -738,6 +738,34 @@ bool NextGenShadow::CheckChaosBoost()
         return true;
     }
 
+    return false;
+}
+
+bool NextGenShadow::CheckChaosSnapTarget()
+{
+    if (NextGenShadow::m_chaosBoostLevel == 0)
+    {
+        return false;
+    }
+
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+    if (!context->m_HomingAttackTargetActorID)
+    {
+        return false;
+    }
+
+    if (Configuration::Shadow::m_chaosSnapAll)
+    {
+        return true;
+    }
+
+    uint32_t enemyType = 0u;
+    context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetEnemyType>(&enemyType));
+    if (enemyType > 0)
+    {
+        return true;
+    }
+    
     return false;
 }
 

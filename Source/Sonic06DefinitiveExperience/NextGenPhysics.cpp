@@ -229,7 +229,7 @@ HOOK(int, __fastcall, NextGenPhysics_CSonicStateHomingAttackBegin, 0x1232040, hh
     }
 
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
-    bool disableEffect = NextGenShadow::m_chaosBoostLevel > 0 && context->m_HomingAttackTargetActorID;
+    bool disableEffect = NextGenShadow::CheckChaosSnapTarget();
 
     // Play homing attack pfx
     if (!disableEffect)
@@ -293,6 +293,21 @@ void __declspec(naked) noAirDashOutOfControl()
         push    ebx
         jmp     [returnAddress]
     }
+}
+
+//---------------------------------------------------
+// Handle MsgGetEnemyType (for Shadow's Chaos Snap)
+//---------------------------------------------------
+HOOK(bool, __fastcall, NextGenPhysics_CEnemyBaseProcessMessage, 0xBE0790, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
+{
+    if (flag && message.Is<Sonic::Message::MsgGetEnemyType>())
+    {
+        auto& msg = static_cast<Sonic::Message::MsgGetEnemyType&>(message);
+        *msg.m_pType = 1;
+        return true;
+    }
+
+    return originalNextGenPhysics_CEnemyBaseProcessMessage(This, Edx, message, flag);
 }
 
 //---------------------------------------------------
@@ -460,6 +475,9 @@ void NextGenPhysics::applyPatches()
     // Apply Motion Blur during Homing Attack
     INSTALL_HOOK(NextGenPhysics_CSonicStateHomingAttackBegin);
     INSTALL_HOOK(NextGenPhysics_CSonicStateHomingAttackEnd);
+
+    // Handle MsgGetEnemyType
+    INSTALL_HOOK(NextGenPhysics_CEnemyBaseProcessMessage);
 
     // Disable trick system
     if (Configuration::m_noTrick)

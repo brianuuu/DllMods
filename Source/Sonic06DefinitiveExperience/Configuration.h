@@ -55,6 +55,7 @@ public:
     struct Shadow
     {
         static bool m_rapidSpindash;
+        static bool m_chaosSnapAll;
     };
 
     static bool load(const std::string& rootPath);

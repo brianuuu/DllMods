@@ -20,6 +20,7 @@ bool Configuration::Sonic::m_unlimitedGauge = false;
 bool Configuration::Sonic::m_gemsEnabled = false;
 
 bool Configuration::Shadow::m_rapidSpindash = true;
+bool Configuration::Shadow::m_chaosSnapAll = true;
 
 std::string iniPath;
 bool Configuration::load(const std::string& rootPath)
@@ -85,6 +86,7 @@ bool Configuration::load(const std::string& rootPath)
 
     // --------------Shadow--------------
     Shadow::m_rapidSpindash = reader.GetBoolean("Shadow", "bRapidSpindash", Shadow::m_rapidSpindash);
+    Shadow::m_chaosSnapAll = reader.GetBoolean("Shadow", "bChaosSnapAll", Shadow::m_chaosSnapAll);
 
     string str;
 

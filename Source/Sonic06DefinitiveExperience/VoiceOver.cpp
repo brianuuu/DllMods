@@ -5,7 +5,7 @@
 HOOK(int, __fastcall, VoiceOver_CSonicStateHomingAttackBegin, 0x1232040, hh::fnd::CStateMachineBase::CStateBase* This)
 {
 	auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
-	bool disableVoice = NextGenShadow::m_chaosBoostLevel > 0 && context->m_HomingAttackTargetActorID;
+	bool disableVoice = NextGenShadow::CheckChaosSnapTarget();
 	
 	if (!disableVoice)
 	{
