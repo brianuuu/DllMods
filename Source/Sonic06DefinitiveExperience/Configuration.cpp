@@ -4,12 +4,12 @@
 bool Configuration::m_usingSTH2006Project = false;
 Configuration::ModelType Configuration::m_model = Configuration::ModelType::Sonic;
 
-bool Configuration::m_physics = false;
-bool Configuration::m_characterMoveset = false;
-bool Configuration::m_noCursor = false;
-bool Configuration::m_noTrick = false;
+bool Configuration::m_physics = true;
+bool Configuration::m_characterMoveset = true;
+bool Configuration::m_noCursor = true;
+bool Configuration::m_noTrick = true;
 
-bool Configuration::m_camera = false;
+bool Configuration::m_camera = true;
 bool Configuration::m_cameraInvertX = false;
 bool Configuration::m_cameraInvertY = false;
 
@@ -19,7 +19,7 @@ vector<string> Configuration::Sonic::m_runStages = {};
 bool Configuration::Sonic::m_unlimitedGauge = false;
 bool Configuration::Sonic::m_gemsEnabled = false;
 
-bool Configuration::Shadow::m_rapidSpindash = false;
+bool Configuration::Shadow::m_rapidSpindash = true;
 
 std::string iniPath;
 bool Configuration::load(const std::string& rootPath)
@@ -55,19 +55,19 @@ bool Configuration::load(const std::string& rootPath)
     }
 
     // --------------Camera--------------
-    m_camera = reader.GetBoolean("Camera", "bCamera", false);
-    m_cameraInvertX = reader.GetBoolean("Camera", "bCameraInvertX", false);
-    m_cameraInvertY = reader.GetBoolean("Camera", "bCameraInvertY", false);
+    m_camera = reader.GetBoolean("Camera", "bCamera", m_camera);
+    m_cameraInvertX = reader.GetBoolean("Camera", "bCameraInvertX", m_cameraInvertX);
+    m_cameraInvertY = reader.GetBoolean("Camera", "bCameraInvertY", m_cameraInvertY);
 
     // --------------Physics--------------
-    m_physics = reader.GetBoolean("Physics", "bPhysics", false);
-    m_characterMoveset = reader.GetBoolean("Physics", "bCharacterMoveset", false);
-    m_noCursor = reader.GetBoolean("Physics", "bNoCursor", false);
-    m_noTrick = reader.GetBoolean("Physics", "bNoTrick", false);
+    m_physics = reader.GetBoolean("Physics", "bPhysics", m_physics);
+    m_characterMoveset = reader.GetBoolean("Physics", "bCharacterMoveset", m_characterMoveset);
+    m_noCursor = reader.GetBoolean("Physics", "bNoCursor", m_noCursor);
+    m_noTrick = reader.GetBoolean("Physics", "bNoTrick", m_noTrick);
 
     // --------------Sonic--------------
-    Sonic::m_rapidSpindash = reader.GetBoolean("Sonic", "bRapidSpindash", false);
-    Sonic::m_unlimitedGauge = reader.GetBoolean("Sonic", "bUnlimitedGauge", false);
+    Sonic::m_rapidSpindash = reader.GetBoolean("Sonic", "bRapidSpindash", Sonic::m_rapidSpindash);
+    Sonic::m_unlimitedGauge = reader.GetBoolean("Sonic", "bUnlimitedGauge", Sonic::m_unlimitedGauge);
 
     // Get running goal custom stage list
     string runStages = reader.Get("Sonic", "sRunStages", "");
@@ -84,7 +84,7 @@ bool Configuration::load(const std::string& rootPath)
     Sonic::m_run = (RunResultType)reader.GetInteger("Sonic", "nRun", 0);
 
     // --------------Shadow--------------
-    Shadow::m_rapidSpindash = reader.GetBoolean("Shadow", "bRapidSpindash", false);
+    Shadow::m_rapidSpindash = reader.GetBoolean("Shadow", "bRapidSpindash", Shadow::m_rapidSpindash);
 
     string str;
 
@@ -269,7 +269,7 @@ bool Configuration::load(const std::string& rootPath)
 
     // Patch "All Rings Can Be Light Dashed" by "Skyth"
     // Patch "Disable Light Dash Particles" by "Hyper"
-    if (reader.GetBoolean("Physics", "bLightdashAll", false))
+    if (reader.GetBoolean("Physics", "bLightdashAll", true))
     {
         WRITE_MEMORY(0x105334D, uint32_t, 0x10C47C6);
         WRITE_NOP(0x1053351, 16);
@@ -288,13 +288,13 @@ bool Configuration::loadPostInit()
     }
 
     // --------------Sonic--------------
-    bool bGemBlue   = reader.GetBoolean("Sonic", "bGemBlue",    false);
-    bool bGemRed    = reader.GetBoolean("Sonic", "bGemRed",     false);
-    bool bGemGreen  = reader.GetBoolean("Sonic", "bGemGreen",   false);
-    bool bGemPurple = reader.GetBoolean("Sonic", "bGemPurple",  false);
-    bool bGemSky    = reader.GetBoolean("Sonic", "bGemSky",     false);
-    bool bGemWhite  = reader.GetBoolean("Sonic", "bGemWhite",   false);
-    bool bGemYellow = reader.GetBoolean("Sonic", "bGemYellow",  false);
+    bool bGemBlue   = reader.GetBoolean("Sonic", "bGemBlue",    true);
+    bool bGemRed    = reader.GetBoolean("Sonic", "bGemRed",     true);
+    bool bGemGreen  = reader.GetBoolean("Sonic", "bGemGreen",   true);
+    bool bGemPurple = reader.GetBoolean("Sonic", "bGemPurple",  true);
+    bool bGemSky    = reader.GetBoolean("Sonic", "bGemSky",     true);
+    bool bGemWhite  = reader.GetBoolean("Sonic", "bGemWhite",   true);
+    bool bGemYellow = reader.GetBoolean("Sonic", "bGemYellow",  true);
     Sonic::m_gemsEnabled = bGemBlue || bGemRed || bGemGreen || bGemPurple || bGemSky || bGemWhite || bGemYellow;
 
     S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Blue, bGemBlue);
