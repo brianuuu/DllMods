@@ -38,6 +38,26 @@ HOOK(void, __stdcall, ChaosEnergy_PhysicsReward, 0xEA49B0, uint32_t This, int a2
 	originalChaosEnergy_PhysicsReward(This, a2, a3, a4);
 }
 
+HOOK(bool, __fastcall, ChaosEnergy_CObjectPhysicsProcessMessage, 0xEA5370, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
+{
+	if (flag && message.Is<Sonic::Message::MsgGetEnemyType>())
+	{
+		auto& msg = static_cast<Sonic::Message::MsgGetEnemyType&>(message);
+
+		uint32_t pObjectBase = (uint32_t)static_cast<Sonic::CObjectBase*>(This);
+		std::string name(*(char**)(pObjectBase + 0x130));
+		int fakeEnemyType = ChaosEnergy::getFakeEnemyType(name);
+		if (fakeEnemyType)
+		{
+			*msg.m_pType = 1;
+		}
+
+		return true;
+	}
+
+	return originalChaosEnergy_CObjectPhysicsProcessMessage(This, Edx, message, flag);
+}
+
 void __declspec(naked) setChaosEnergySfxPfx()
 {
 	static uint32_t returnAddress = 0x112459F;
@@ -170,6 +190,7 @@ void ChaosEnergy::applyPatches()
 
 	// Spawn Chaos Energy on fake enemy object physics
 	INSTALL_HOOK(ChaosEnergy_PhysicsReward);
+	INSTALL_HOOK(ChaosEnergy_CObjectPhysicsProcessMessage);
 }
 
 uint32_t __fastcall ChaosEnergy::getEnemyChaosEnergyTypeImpl(uint32_t* pEnemy, uint32_t amount)

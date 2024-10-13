@@ -33,12 +33,6 @@ void HandleEnemyMsgNotifyObjectEvent(hh::fnd::CMessageActor* This, void* Edx, hh
 #define HOOK_ENEMY_PROCESS_MESSAGE(enemyName, address) \
     HOOK(bool, __fastcall, enemyName##_ProcessMessage, address, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag) \
     { \
-        if (flag && message.Is<Sonic::Message::MsgGetEnemyType>()) \
-        { \
-            auto& msg = static_cast<Sonic::Message::MsgGetEnemyType&>(message); \
-            *msg.m_pType = 1; \
-            return true; \
-        } \
         if (flag && message.Is<Sonic::Message::MsgNotifyObjectEvent>()) \
         { \
             HandleEnemyMsgNotifyObjectEvent(This, Edx, message); \
@@ -66,6 +60,18 @@ HOOK_ENEMY_PROCESS_MESSAGE(CEnemySpinner, 0xBBDA30)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyPawnBase, 0xB958D0) // include all CEnemyPawn
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyTaker, 0xBA3250)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyBiter, 0xB869B0)
+
+HOOK(bool, __fastcall, CEnemyBase_ProcessMessage, 0xBE0790, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
+{
+    if (flag && message.Is<Sonic::Message::MsgGetEnemyType>())
+    {
+        auto& msg = static_cast<Sonic::Message::MsgGetEnemyType&>(message);
+        *msg.m_pType = 1;
+        return true;
+    }
+
+    return originalCEnemyBase_ProcessMessage(This, Edx, message, flag);
+}
 
 void EnemyTrigger::applyPatches()
 {
@@ -121,4 +127,7 @@ void EnemyTrigger::applyPatches()
     INSTALL_HOOK(CEnemyPawnBase_ProcessMessage);
     INSTALL_HOOK(CEnemyTaker_ProcessMessage);
     INSTALL_HOOK(CEnemyBiter_ProcessMessage);
+
+    // Handle MsgGetEnemyType
+    INSTALL_HOOK(CEnemyBase_ProcessMessage);
 }
