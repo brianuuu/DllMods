@@ -7,7 +7,7 @@ namespace Sonic::Message
     class MsgGetEnemyType : public Hedgehog::Universe::MessageTypeSet
     {
     public:
-        HH_FND_MSG_MAKE_TYPE(0x1681D0C);
+        HH_FND_MSG_MAKE_TYPE(0x1681D28);
 
 		uint32_t* m_pType;
 
