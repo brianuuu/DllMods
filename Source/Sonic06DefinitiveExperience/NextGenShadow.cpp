@@ -610,7 +610,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterEnd, 0x11182F0)
     }
 
     // Chaos Snap retains previous count
-    if (NextGenShadow::m_chaosBoostLevel == 0)
+    if (NextGenShadow::m_chaosBoostLevel == 0 || !StateManager::isCurrentAction(StateAction::HomingAttack))
     {
         NextGenShadow::m_chaosAttackCount = -1;
     }
@@ -711,6 +711,12 @@ bool NextGenShadow::CheckChaosBoost()
 {
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
     if (!padState->IsTapped(Sonic::EKeyState::eKeyState_RightStick))
+    {
+        return false;
+    }
+
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+    if (context->StateFlag(eStateFlag_KeepRunning))
     {
         return false;
     }
