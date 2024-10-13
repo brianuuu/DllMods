@@ -190,7 +190,9 @@ extern "C" __declspec(dllexport) void PostInit(ModInfo_t * modInfo)
         exit(-1);
     }
 
-    if (Configuration::m_model == Configuration::ModelType::Sonic && Configuration::Sonic::m_gemsEnabled)
+    bool const isSonicCheck = Configuration::m_model == Configuration::ModelType::Sonic && Configuration::Sonic::m_gemsEnabled;
+    bool const isShadowCheck = Configuration::m_model == Configuration::ModelType::Shadow && Configuration::m_characterMoveset;
+    if (isSonicCheck || isShadowCheck)
     {
         bool noGamepad = true;
         for (UINT i = 0; i <= 15; i++)
@@ -206,7 +208,14 @@ extern "C" __declspec(dllexport) void PostInit(ModInfo_t * modInfo)
 
         if (noGamepad)
         {
-            MessageBox(nullptr, TEXT("No controllers detected, keyboard is NOT supported if Gems are enabled for 06 Sonic."), TEXT("Sonic 06 Definitive Experience"), MB_ICONWARNING);
+            if (isSonicCheck)
+            {
+                MessageBox(nullptr, TEXT("No controllers detected, keyboard is NOT supported if Gems are enabled for 06 Sonic."), TEXT("Sonic 06 Definitive Experience"), MB_ICONWARNING);
+            }
+            else if (isShadowCheck)
+            {
+                MessageBox(nullptr, TEXT("No controllers detected, it is required to make full use of 06 Shadow movesets."), TEXT("Sonic 06 Definitive Experience"), MB_ICONWARNING);
+            }
         }
     }
 
