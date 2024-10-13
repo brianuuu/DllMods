@@ -392,7 +392,7 @@ void PlayNextChaosAttack()
 
     Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosAttack[NextGenShadow::m_chaosAttackCount]);
     Common::SonicContextPlaySound(soundHandleSfx, 80041028, 1);
-    Common::SonicContextPlayVoice(soundHandleVfx, NextGenShadow::m_chaosAttackCount < 4 ? 3002032 : 3002031, 10 + NextGenShadow::m_chaosAttackCount);
+    Common::SonicContextPlayVoice(soundHandleVfx, NextGenShadow::m_chaosAttackCount < 4 ? 3002032 : 3002031, 11 + NextGenShadow::m_chaosAttackCount);
 
     // kick effect (may not exist)
     static SharedPtrTypeless chaosAttackKickPfx[5];
