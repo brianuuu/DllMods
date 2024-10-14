@@ -51,8 +51,10 @@ float const cShadow_chaosSpearStiffening = 0.3f;
 float const cShadow_chaosSpearDownAngle = 30.0f * DEG_TO_RAD;
 float const cShadow_chaosSpearTurnRate = 180.0f * DEG_TO_RAD;
 
-float const cShadow_chaosBoostStartTime = 1.2f;
+// Chaos Snap
+bool NextGenShadow::m_chaosSnapNoDamage = false;
 float const cShadow_chaosSnapWaitTime = 0.1f;
+float const cShadow_chaosSnapStartHold = 0.25f;
 
 bool slidingEndWasSliding_Shadow = false;
 bool NextGenShadow::m_isSpindash = false;
@@ -76,7 +78,8 @@ bool NextGenShadow::m_enableAutoRunAction = true;
 // Chaos Boost
 uint8_t NextGenShadow::m_chaosBoostLevel = 0u;
 float NextGenShadow::m_chaosMaturity = 0.0f;
-bool NextGenShadow::m_chaosSnapNoDamage = false;
+float const cShadow_chaosBoostStartTime = 1.2f;
+
 NextGenShadow::OverrideType NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_SpearWait;
 
 //---------------------------------------------------
@@ -231,11 +234,13 @@ void PlayChaosSnap()
     }
 }
 
+float chaosSnapHoldDuration = 0.0f;
 HOOK(int, __fastcall, NextGenShadow_CSonicStateHomingAttackBegin, 0x1232040, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
 
     // Chaos Snap
+    chaosSnapHoldDuration = 0.0f;
     if (NextGenShadow::CheckChaosSnapTarget())
     {
         // Skip initial velocity
@@ -279,11 +284,22 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
         }
     }
 
+    // hold duration for auto target
+    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+    if (padState->IsDown(Sonic::EKeyState::eKeyState_A))
+    {
+        chaosSnapHoldDuration += This->GetDeltaTime();
+    }
+    else
+    {
+        chaosSnapHoldDuration = 0.0f;
+    }
+
     // Chaos Snap
     if (NextGenShadow::m_chaosBoostLevel > 0 && !hasChaosSnapTeleported)
     {
         // teleport after 0.1s
-        if (NextGenShadow::CheckChaosSnapTarget() && This->m_Time >= cShadow_chaosSnapWaitTime)
+        if (hasChaosSnapHiddenModel && This->m_Time >= cShadow_chaosSnapWaitTime)
         {
             hasChaosSnapTeleported = true;
 
@@ -311,29 +327,25 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
                 Common::SetPlayerPosition(targetPosition);
             }
         }
-
-        // try to find target during dummy homing
-        if (!context->m_HomingAttackTargetActorID && Configuration::Shadow::m_chaosSnapAll)
+        else if (!hasChaosSnapHiddenModel && chaosSnapHoldDuration >= cShadow_chaosSnapStartHold)
         {
-            Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-            if (padState->IsDown(Sonic::EKeyState::eKeyState_A))
+            // try to find target if not teleported
+            originalNextGenShadow_HomingUpdate(context);
+
+            // always allow Chaos Snap if holding A
+            if (context->m_HomingAttackTargetActorID)
             {
-                originalNextGenShadow_HomingUpdate(context);
+                context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&context->m_HomingAttackPosition));
+                Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+                Common::SonicContextHudHomingAttackOutro(context);
 
-                if (NextGenShadow::CheckChaosSnapTarget())
-                {
-                    context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&context->m_HomingAttackPosition));
-                    Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
-                    Common::SonicContextHudHomingAttackOutro(context);
+                // Send MsgStartHomingChase message to homing target actor
+                context->m_pPlayer->SendMessage(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgStartHomingChase>());
 
-                    // Send MsgStartHomingChase message to homing target actor
-                    context->m_pPlayer->SendMessage(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgStartHomingChase>());
-
-                    // play animations
-                    This->m_Time = 0.0f;
-                    PlayChaosSnap();
-                    Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosAttackWait);
-                }
+                // play animations
+                This->m_Time = 0.0f;
+                PlayChaosSnap();
+                Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosAttackWait);
             }
         }
     }
