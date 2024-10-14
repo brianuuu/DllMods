@@ -241,6 +241,7 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateHomingAttackBegin, 0x1232040, hh:
 
     // Chaos Snap
     chaosSnapHoldDuration = 0.0f;
+    hasChaosSnapTeleported = false;
     if (NextGenShadow::CheckChaosSnapTarget())
     {
         // Skip initial velocity
@@ -367,6 +368,7 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateHomingAttackEnd, 0x1231F80, hh::
     if (!StateManager::isCurrentAction(StateAction::HomingAttackAfter))
     {
         NextGenShadow::m_chaosAttackCount = -1;
+        hasChaosSnapTeleported = false;
     }
 
     // resume Chaos Snap modification
@@ -387,7 +389,6 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateHomingAttackEnd, 0x1231F80, hh::
         context->StateFlag(eStateFlag_NoDamage)--;
         NextGenShadow::SetChaosBoostModelVisible(NextGenShadow::m_chaosBoostLevel > 0);
         hasChaosSnapHiddenModel = false;
-        hasChaosSnapTeleported = false;
         
         // Unfreeze camera
         CustomCamera::m_freezeCameraEnabled = false;
@@ -436,8 +437,8 @@ HOOK(int32_t*, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterBegin, 0x11
         NextGenShadow::m_holdPosition = context->m_spMatrixNode->m_Transform.m_Position;
         NextGenShadow::m_chaosAttackBuffered = false;
 
-        // chaos snap immediately goes to next attack
-        if (NextGenShadow::m_chaosBoostLevel > 0)
+        // Chaos Snap immediately goes to next attack
+        if (NextGenShadow::m_chaosBoostLevel > 0 && hasChaosSnapTeleported)
         {
             // first attack
             if (NextGenShadow::m_chaosAttackCount < 0)
@@ -465,6 +466,7 @@ HOOK(int32_t*, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterBegin, 0x11
         }
     }
 
+    hasChaosSnapTeleported = false;
     return result;
 }
 
@@ -533,8 +535,9 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
 
             // Next attack
             bool useNextAttack = false;
-            useNextAttack |= NextGenShadow::m_chaosAttackCount == 0 && isPressedA;
-            useNextAttack |= NextGenShadow::m_chaosAttackCount > 0 && NextGenShadow::m_chaosAttackBuffered;
+            useNextAttack |= NextGenShadow::m_chaosAttackCount == 0 && isPressedA; // first attack must press A to start
+            useNextAttack |= NextGenShadow::m_chaosAttackCount > 0 && NextGenShadow::m_chaosAttackBuffered; // next attacks can be buffered
+            useNextAttack |= NextGenShadow::m_chaosAttackCount == 0 && NextGenShadow::m_chaosBoostLevel > 0 && isHoldingA; // Chaos Snap immediately goes to next attack
 
             if (isChaosSnapSearch && NextGenShadow::CheckChaosSnapTarget())
             {
