@@ -490,7 +490,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
 
         if (message.IsAnimation(AnimationSetPatcher::ChaosAttackWait))
         {
-            bool const isChaosSnapSearch = isHoldingA && NextGenShadow::m_chaosBoostLevel > 0 && NextGenShadow::m_chaosAttackCount < 5;
+            bool const isChaosSnapSearch = isHoldingA && NextGenShadow::m_chaosBoostLevel > 0 && NextGenShadow::m_chaosAttackCount > 0 && NextGenShadow::m_chaosAttackCount < 5;
             bool const nextAttackNotBuffered = NextGenShadow::m_chaosAttackCount > 0 && !NextGenShadow::m_chaosAttackBuffered;
 
             if (isChaosSnapSearch)
@@ -587,17 +587,6 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
             if (NextGenShadow::m_chaosAttackCount < 5)
             {
                 originalNextGenShadow_HomingUpdate(context);
-            }
-
-            if (context->m_HomingAttackTargetActorID)
-            {
-                // Do not disable lock-on cursor
-                WRITE_MEMORY(0xDEBAA0, uint8_t, 0xEB);
-            }
-            else
-            {
-                // resume disable lock-on cursor
-                WRITE_MEMORY(0xDEBAA0, uint8_t, 0x75);
             }
         }
     }
