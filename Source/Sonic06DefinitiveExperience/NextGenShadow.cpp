@@ -715,7 +715,7 @@ void NextGenShadow::SetChaosBoostLevel(uint8_t level, bool notifyHUD)
 bool NextGenShadow::CheckChaosBoost()
 {
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-    if (!padState->IsTapped(Sonic::EKeyState::eKeyState_B))
+    if (!padState->IsTapped(Sonic::EKeyState::eKeyState_RightStick))
     {
         return false;
     }
