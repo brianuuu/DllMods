@@ -491,7 +491,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
 
         if (message.IsAnimation(AnimationSetPatcher::ChaosAttackWait))
         {
-            bool const isChaosSnapSearch = isHoldingA && NextGenShadow::m_chaosBoostLevel > 0 && NextGenShadow::m_chaosAttackCount > 0 && NextGenShadow::m_chaosAttackCount < 5;
+            bool const isChaosSnapSearch = isHoldingA && NextGenShadow::m_chaosBoostLevel > 0 && NextGenShadow::m_chaosAttackCount > 0 && NextGenShadow::m_chaosAttackCount < 5 && !NextGenShadow::m_chaosAttackBuffered;
             bool const nextAttackNotBuffered = NextGenShadow::m_chaosAttackCount > 0 && !NextGenShadow::m_chaosAttackBuffered;
 
             if (isChaosSnapSearch)
