@@ -107,6 +107,21 @@ void ResultUI::applyPatches()
 	INSTALL_HOOK(ResultUI_CEventScene);
 	INSTALL_HOOK(ResultUI_CStateGoalFadeBefore);
 	INSTALL_HOOK(ResultUI_CHudResultAdvance);
+
+	// replace ui_result
+	if (Configuration::m_uiColor)
+	{
+		switch (S06DE_API::GetModelType())
+		{
+		case S06DE_API::ModelType::Shadow:
+			WRITE_MEMORY(0x10B09D8, char*, "ui_result_sh");
+			WRITE_MEMORY(0x10B25BF, char*, "ui_result_sh");
+			WRITE_MEMORY(0x10B48BF, char*, "ui_result_sh");
+			WRITE_MEMORY(0x10B53ED, char*, "ui_result_sh");
+			WRITE_MEMORY(0x10B9008, char*, "ui_result_sh");
+			break;
+		}
+	}
 }
 
 bool ResultUI::initTextures()
@@ -125,17 +140,26 @@ bool ResultUI::initTextures()
 		m_init &= UIContext::loadTextureFromFile((dir + L"Assets\\Result\\Result_" + std::to_wstring(i) + L".dds").c_str(), &m_resultNumTextures[i]);
 	}
 
+	std::wstring characterString;
+	if (Configuration::m_uiColor)
+	{
+		switch (S06DE_API::GetModelType())
+		{
+		case S06DE_API::ModelType::Shadow: characterString = L"_sh"; break;
+		}
+	}
+
 	for (int i = 0; i < RTT_COUNT; i++)
 	{
 		std::wstring file;
 		switch (i)
 		{
-		case RTT_Score:		 file = L"Result_TextScore.dds"; break;
-		case RTT_Time:		 file = L"Result_TextTime.dds"; break;
-		case RTT_Rings:		 file = L"Result_TextRings.dds"; break;
-		case RTT_TimeBonus:	 file = L"Result_TextTimeBonus.dds"; break;
-		case RTT_RingBonus:	 file = L"Result_TextRingBonus.dds"; break;
-		case RTT_TotalScore: file = L"Result_TextTotalScore.dds"; break;
+		case RTT_Score:		 file = L"Result_TextScore" + characterString + L".dds"; break;
+		case RTT_Time:		 file = L"Result_TextTime" + characterString + L".dds"; break;
+		case RTT_Rings:		 file = L"Result_TextRings" + characterString + L".dds"; break;
+		case RTT_TimeBonus:	 file = L"Result_TextTimeBonus" + characterString + L".dds"; break;
+		case RTT_RingBonus:	 file = L"Result_TextRingBonus" + characterString + L".dds"; break;
+		case RTT_TotalScore: file = L"Result_TextTotalScore" + characterString + L".dds"; break;
 		case RTT_Rank:		 file = L"Result_TextRank.dds"; break;
 		default:			 m_init = false; break;
 		}
@@ -143,12 +167,12 @@ bool ResultUI::initTextures()
 	}
 	
 	m_init &= UIContext::loadTextureFromFile((dir + L"Assets\\Result\\Result_Comma.dds").c_str(), &m_resultCommaTexture);
-	m_init &= UIContext::loadTextureFromFile((dir + L"Assets\\Result\\Result_Box.dds").c_str(), &m_resultBoxTexture);
-	m_init &= UIContext::loadTextureFromFile((dir + L"Assets\\Result\\Result_Total.dds").c_str(), &m_resultTotalBoxTexture);
-	m_init &= UIContext::loadTextureFromFile((dir + L"Assets\\Result\\Result_Score.dds").c_str(), &m_resultScoreBoxTexture);
-	m_init &= UIContext::loadTextureFromFile((dir + L"Assets\\Result\\Result_Board.dds").c_str(), &m_resultHeaderBoxTexture);
+	m_init &= UIContext::loadTextureFromFile((dir + L"Assets\\Result\\Result_Box" + characterString + L".dds").c_str(), &m_resultBoxTexture);
+	m_init &= UIContext::loadTextureFromFile((dir + L"Assets\\Result\\Result_Total" + characterString + L".dds").c_str(), &m_resultTotalBoxTexture);
+	m_init &= UIContext::loadTextureFromFile((dir + L"Assets\\Result\\Result_Score" + characterString + L".dds").c_str(), &m_resultScoreBoxTexture);
+	m_init &= UIContext::loadTextureFromFile((dir + L"Assets\\Result\\Result_Board" + characterString + L".dds").c_str(), &m_resultHeaderBoxTexture);
 	m_init &= UIContext::loadTextureFromFile((dir + L"Assets\\Result\\Result_BoardShadow.dds").c_str(), &m_resultHeaderShadowTexture);
-	m_init &= UIContext::loadTextureFromFile((dir + L"Assets\\Result\\Result_Header.dds").c_str(), &m_resultHeaderTextTexture);
+	m_init &= UIContext::loadTextureFromFile((dir + L"Assets\\Result\\Result_Header" + characterString + L".dds").c_str(), &m_resultHeaderTextTexture);
 	m_init &= UIContext::loadTextureFromFile((dir + L"Assets\\Result\\Result_Rank.dds").c_str(), &m_resultRankBoxTexture);
 	m_init &= UIContext::loadTextureFromFile((dir + L"Assets\\Result\\Result_Fade.dds").c_str(), &m_resultFadeTexture);
 

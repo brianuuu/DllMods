@@ -245,8 +245,17 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
     originalCustomHUD_CHudSonicStageInit(This);
     CustomHUD::CHudSonicStageRemoveCallback(This, nullptr, nullptr);
 
+    std::string playScreenName = "maindisplay";
+    if (Configuration::m_uiColor)
+    {
+        switch (S06DE_API::GetModelType())
+        {
+        case S06DE_API::ModelType::Shadow: playScreenName = "maindisplay_sh"; break;
+        }
+    }
+
     Sonic::CCsdDatabaseWrapper wrapper(This->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
-    m_projectPlayScreen = wrapper.GetCsdProject("maindisplay")->m_rcProject;
+    m_projectPlayScreen = wrapper.GetCsdProject(playScreenName.c_str())->m_rcProject;
     m_projectCountdown = wrapper.GetCsdProject("time")->m_rcProject;
 
     size_t& flags = ((size_t*)This)[151];

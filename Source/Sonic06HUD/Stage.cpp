@@ -211,6 +211,19 @@ void Stage::applyPatches()
     WRITE_MEMORY(0x168E148, char*, "Failed_SWA");
     WRITE_MEMORY(0x168E154, char*, "Failed_SWA");
     WRITE_JUMP(0x42D661, (void*)0x42D68C);
+    if (Configuration::m_uiColor)
+    {
+        switch (S06DE_API::GetModelType())
+        {
+        case S06DE_API::ModelType::Shadow: 
+            WRITE_MEMORY(0xCFDE20, char*, "ui_gp_signal_sh");
+            WRITE_MEMORY(0x113A5E8, char*, "ui_gp_signal_sh");
+            WRITE_MEMORY(0x109E3D5, char*, "ui_gp_signal_sh");
+            WRITE_MEMORY(0x42D6F8, char*, "ui_gp_signal_sh");
+            WRITE_MEMORY(0x4A4C86, char*, "ui_gp_signal_sh");
+            break;
+        }
+    }
 
     // Unleashed game over (remove yes no confirm, force yes)
     //WRITE_MEMORY(0xCFE9FF, char*, "Game_over_SWA");
