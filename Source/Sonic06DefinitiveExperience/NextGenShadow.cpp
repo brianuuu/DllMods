@@ -364,13 +364,6 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateHomingAttackEnd, 0x1231F80, hh::
 {
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
 
-    // if Chaos Snap didn't hit any target, reset count
-    if (!StateManager::isCurrentAction(StateAction::HomingAttackAfter))
-    {
-        NextGenShadow::m_chaosAttackCount = -1;
-        hasChaosSnapTeleported = false;
-    }
-
     // resume Chaos Snap modification
     WRITE_MEMORY(0x1232102, uint8_t, 0x0F, 0x28, 0x44, 0x24, 0x5C);
     WRITE_MEMORY(0x1232508, uint8_t, 0x6A, 0x00, 0x8B, 0xC3, 0xE8);
@@ -389,9 +382,17 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateHomingAttackEnd, 0x1231F80, hh::
         context->StateFlag(eStateFlag_NoDamage)--;
         NextGenShadow::SetChaosBoostModelVisible(NextGenShadow::m_chaosBoostLevel > 0);
         hasChaosSnapHiddenModel = false;
+        hasChaosSnapTeleported = true;
         
         // Unfreeze camera
         CustomCamera::m_freezeCameraEnabled = false;
+    }
+
+    // if Chaos Snap didn't hit any target, reset count
+    if (!StateManager::isCurrentAction(StateAction::HomingAttackAfter))
+    {
+        NextGenShadow::m_chaosAttackCount = -1;
+        hasChaosSnapTeleported = false;
     }
 
     return originalNextGenShadow_CSonicStateHomingAttackEnd(This);
