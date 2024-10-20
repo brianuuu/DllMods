@@ -3,6 +3,7 @@
 #include "Application.h"
 #include "AnimationSetPatcher.h"
 #include "CustomCamera.h"
+#include "EnemyShock.h"
 
 //---------------------------------------------------
 // Animation
@@ -50,6 +51,7 @@ float const cShadow_chaosSpearAccumulate = 0.5f;
 float const cShadow_chaosSpearStiffening = 0.3f;
 float const cShadow_chaosSpearDownAngle = 30.0f * DEG_TO_RAD;
 float const cShadow_chaosSpearTurnRate = 180.0f * DEG_TO_RAD;
+float const cShadow_chaosSpearShockDuration = 8.0f;
 
 // Chaos Snap
 bool NextGenShadow::m_chaosSnapNoDamage = false;
@@ -800,6 +802,7 @@ private:
     Hedgehog::Math::CVector m_Position;
     Hedgehog::Math::CVector m_Velocity;
     float m_LifeTime;
+    bool m_IsDamage;
 
     SharedPtrTypeless spearHandle;
     SharedPtrTypeless spearTailHandle;
@@ -811,12 +814,14 @@ public:
     (
         uint32_t _TargetID,
         Hedgehog::Math::CVector const& _Position,
-        Hedgehog::Math::CVector const& _StartDir
+        Hedgehog::Math::CVector const& _StartDir,
+        bool _IsDamage
     )
         : m_TargetID(_TargetID)
         , m_Position(_Position)
         , m_Velocity(_StartDir.normalized() * cShadow_chaosSpearSpeed)
         , m_LifeTime(0.0f)
+        , m_IsDamage(_IsDamage)
     {
 
     }
@@ -841,8 +846,16 @@ public:
         UpdateTransform();
 
         // play pfx
-        Common::fCGlitterCreate(*PLAYER_CONTEXT, spearHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_spear", 1);
-        Common::fCGlitterCreate(*PLAYER_CONTEXT, spearTailHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_spear_tail", 1);
+        if (m_IsDamage)
+        {
+            Common::fCGlitterCreate(*PLAYER_CONTEXT, spearHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_lance", 1);
+            Common::fCGlitterCreate(*PLAYER_CONTEXT, spearTailHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_lance_tail", 1);
+        }
+        else
+        {
+            Common::fCGlitterCreate(*PLAYER_CONTEXT, spearHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_spear", 1);
+            Common::fCGlitterCreate(*PLAYER_CONTEXT, spearTailHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_spear_tail", 1);
+        }
     
         // set up collision with enemy
         m_spNodeEventCollision = boost::make_shared<Sonic::CMatrixNodeTransform>();
@@ -874,16 +887,30 @@ public:
 
             if (std::strstr(message.GetType(), "MsgHitEventCollision") != nullptr)
             {
-                Common::fCGlitterCreate(*PLAYER_CONTEXT, spearVanishHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_spear_vanish", 1);
-                SendMessage
-                (
-                    message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
+                if (m_IsDamage)
+                {
+                    Common::fCGlitterCreate(*PLAYER_CONTEXT, spearVanishHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_lance_vanish", 1);
+                    SendMessage
                     (
-                        *(uint32_t*)0x1E0BE30, // DamageID_SonicLight
-                        m_Position,
-                        hh::math::CVector::Identity()
-                    )
-                );
+                        message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
+                        (
+                            *(uint32_t*)0x1E0BE30, // DamageID_SonicLight
+                            m_Position,
+                            hh::math::CVector::Identity()
+                            )
+                    );
+                }
+                else
+                {
+                    Common::fCGlitterCreate(*PLAYER_CONTEXT, spearVanishHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_spear_vanish", 1);
+                    SendMessage
+                    (
+                        message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgNotifyShockWave>
+                        (
+                            cShadow_chaosSpearShockDuration
+                        )
+                    );
+                }
 
                 Kill();
                 return true;
@@ -1210,7 +1237,7 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
         Common::SonicContextPlayVoice(voiceHandle, 3002030, 10);
 
         auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("RightHandMiddle1");
-        Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle_TrickAttack, &attachBone, "ef_bo_sha_yh2_spear_charge", 1);
+        Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle_TrickAttack, &attachBone, NextGenShadow::m_chaosBoostLevel >= 2 ? "ef_bo_sha_yh2_lance_attack" : "ef_bo_sha_yh2_spear_charge", 1);
         break;
     }
     case NextGenShadow::OverrideType::SH_ChaosBoost:
@@ -1410,7 +1437,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
                     // has a target
                     direction = targetPosition - position;
                 }
-                context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjChaosSpear>(data.m_actorID, position, direction));
+                context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjChaosSpear>(data.m_actorID, position, direction, NextGenShadow::m_chaosBoostLevel >= 2));
             }
 
             // clear lock-on cursors
@@ -2279,6 +2306,7 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_CSonicStateTrickAttackBegin);
     INSTALL_HOOK(NextGenShadow_CSonicStateTrickAttackAdvance);
     INSTALL_HOOK(NextGenShadow_CSonicStateTrickAttackEnd);
+    EnemyShock::applyPatches();
 
     //-------------------------------------------------------
     // X-Action State handling
