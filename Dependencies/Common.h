@@ -1934,6 +1934,37 @@ static void* ObjectPlaySound
 	}
 }
 
+static void EnemyChangeState
+(
+	void* pCEnemyBase,
+	Hedgehog::Base::CSharedString const& name
+)
+{
+	static void* const pEnemyChangeState = (void*)0xBDDE60;
+	__asm
+	{
+		push	pCEnemyBase
+		mov		eax, name
+		call	[pEnemyChangeState]
+	}
+}
+
+static void NPCAnimationChangeState
+(
+	void* pCEnemyBase,
+	Hedgehog::Base::CSharedString const& name
+)
+{
+	static void* const pNPCAnimationChangeState = (void*)0xB679A0;
+	__asm
+	{
+		mov		esi, pCEnemyBase
+		mov     edx, [esi + 124h]
+		mov		eax, name
+		call	[pNPCAnimationChangeState]
+	}
+}
+
 inline void PlaySoundStatic(SharedPtrTypeless& soundHandle, uint32_t cueID)
 {
     uint32_t* syncObject = *(uint32_t**)0x1E79044;

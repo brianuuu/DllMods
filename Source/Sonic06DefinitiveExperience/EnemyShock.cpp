@@ -124,6 +124,16 @@ void HandleEnemyAddShock(hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Messa
             pObjectBase->m_pMember->m_pGameDocument->AddGameObject(shockData.m_Effect);
         }
     }
+
+    // some enemies requiire changing state
+    bool isIn3D = *(bool*)(pCEnemyBase + 0x120);
+    switch (*(uint32_t*)pCEnemyBase)
+    {
+    case 0x16FAD14: // CEnemyBiter
+        Common::NPCAnimationChangeState((void*)pCEnemyBase, isIn3D ? "FireEndFV" : "FireEndSV");
+        Common::EnemyChangeState((void*)pCEnemyBase, "BackStep");
+        break;
+    }
 }
 
 void HandleEnemyRemoveShock(uint32_t pCEnemyBase)
