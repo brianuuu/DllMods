@@ -6,45 +6,126 @@
     <ClCompile Include="Mod.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="bbWriter.cpp" />
-    <ClCompile Include="RankQuote.cpp" />
-    <ClCompile Include="RankRunAnimation.cpp" />
-    <ClCompile Include="SuperSonic.cpp" />
-    <ClCompile Include="Navigation.cpp" />
     <ClCompile Include="tinyxml2.cpp" />
-    <ClCompile Include="RailPhysics.cpp" />
-    <ClCompile Include="Application.cpp" />
-    <ClCompile Include="Itembox.cpp" />
-    <ClCompile Include="ArchiveTreePatcher.cpp" />
-    <ClCompile Include="NextGenPhysics.cpp" />
-    <ClCompile Include="AnimationSetPatcher.cpp" />
-    <ClCompile Include="VoiceOver.cpp" />
-    <ClCompile Include="ChaosEnergy.cpp" />
-    <ClCompile Include="CustomCamera.cpp" />
-    <ClCompile Include="NextGenSonic.cpp" />
-    <ClCompile Include="NextGenBlaze.cpp" />
     <ClCompile Include="APIExport.cpp" />
-    <ClCompile Include="NextGenShadow.cpp" />
+    <ClCompile Include="NextGenBlaze.cpp">
+      <Filter>Character</Filter>
+    </ClCompile>
+    <ClCompile Include="NextGenPhysics.cpp">
+      <Filter>Character</Filter>
+    </ClCompile>
+    <ClCompile Include="NextGenShadow.cpp">
+      <Filter>Character</Filter>
+    </ClCompile>
+    <ClCompile Include="NextGenSonic.cpp">
+      <Filter>Character</Filter>
+    </ClCompile>
+    <ClCompile Include="ChaosEnergy.cpp">
+      <Filter>Stage</Filter>
+    </ClCompile>
+    <ClCompile Include="Itembox.cpp">
+      <Filter>Stage</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation.cpp">
+      <Filter>Stage</Filter>
+    </ClCompile>
+    <ClCompile Include="SuperSonic.cpp">
+      <Filter>Stage</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomCamera.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="VoiceOver.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="RailPhysics.cpp">
+      <Filter>Stage</Filter>
+    </ClCompile>
+    <ClCompile Include="RankQuote.cpp">
+      <Filter>Stage</Filter>
+    </ClCompile>
+    <ClCompile Include="RankRunAnimation.cpp">
+      <Filter>Stage</Filter>
+    </ClCompile>
+    <ClCompile Include="Application.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationSetPatcher.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="ArchiveTreePatcher.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="EnemyShock.cpp">
+      <Filter>Stage</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pch.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="bbWriter.h" />
-    <ClInclude Include="RankQuote.h" />
-    <ClInclude Include="RankRunAnimation.h" />
-    <ClInclude Include="SuperSonic.h" />
-    <ClInclude Include="Navigation.h" />
     <ClInclude Include="tinyxml2.h" />
-    <ClInclude Include="RailPhysics.h" />
-    <ClInclude Include="Application.h" />
-    <ClInclude Include="Itembox.h" />
-    <ClInclude Include="ArchiveTreePatcher.h" />
-    <ClInclude Include="NextGenPhysics.h" />
-    <ClInclude Include="AnimationSetPatcher.h" />
-    <ClInclude Include="VoiceOver.h" />
-    <ClInclude Include="ChaosEnergy.h" />
-    <ClInclude Include="CustomCamera.h" />
-    <ClInclude Include="NextGenSonic.h" />
-    <ClInclude Include="NextGenBlaze.h" />
-    <ClInclude Include="NextGenShadow.h" />
+    <ClInclude Include="NextGenBlaze.h">
+      <Filter>Character</Filter>
+    </ClInclude>
+    <ClInclude Include="NextGenPhysics.h">
+      <Filter>Character</Filter>
+    </ClInclude>
+    <ClInclude Include="NextGenShadow.h">
+      <Filter>Character</Filter>
+    </ClInclude>
+    <ClInclude Include="NextGenSonic.h">
+      <Filter>Character</Filter>
+    </ClInclude>
+    <ClInclude Include="ChaosEnergy.h">
+      <Filter>Stage</Filter>
+    </ClInclude>
+    <ClInclude Include="Itembox.h">
+      <Filter>Stage</Filter>
+    </ClInclude>
+    <ClInclude Include="Navigation.h">
+      <Filter>Stage</Filter>
+    </ClInclude>
+    <ClInclude Include="SuperSonic.h">
+      <Filter>Stage</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomCamera.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="VoiceOver.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="RailPhysics.h">
+      <Filter>Stage</Filter>
+    </ClInclude>
+    <ClInclude Include="RankQuote.h">
+      <Filter>Stage</Filter>
+    </ClInclude>
+    <ClInclude Include="RankRunAnimation.h">
+      <Filter>Stage</Filter>
+    </ClInclude>
+    <ClInclude Include="Application.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationSetPatcher.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="ArchiveTreePatcher.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="EnemyShock.h">
+      <Filter>Stage</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Character">
+      <UniqueIdentifier>{15eb62a4-3b14-455d-ac00-527715f3ed67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Stage">
+      <UniqueIdentifier>{253eaa9d-e746-44d5-9ae1-2629ff49b553}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{bf38077e-6a3f-4dde-bc22-ccda8f039b58}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

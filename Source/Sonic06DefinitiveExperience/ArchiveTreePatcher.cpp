@@ -60,6 +60,7 @@ void ArchiveTreePatcher::applyPatches()
 {
     // Usage: m_archiveDependencies.push_back(ArchiveDependency( ARCHIVE, { DEPEND_ON_1, DEPEND_ON_2, ... }));
 
+    m_archiveDependencies.push_back(ArchiveDependency("EnemyShock", { "EnemyCommon" }));
     if (!m_archiveDependencies.empty())
     {
         INSTALL_HOOK(ParseArchiveTree);
