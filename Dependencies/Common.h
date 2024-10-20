@@ -1913,6 +1913,27 @@ static void CopyCCsdProject
 	}
 }
 
+static void* ObjectPlaySound
+(
+	void* pObject,
+	uint32_t cue,
+	SharedPtrTypeless& soundHandle
+)
+{
+	static void* const pObjectPlaySound = (void*)0xD6E970;
+	__asm
+	{
+		mov		ecx, pObject
+		mov     eax, [ecx + 0B8h]
+		mov     ecx, [ecx + 0FCh]
+		add     eax, 70h
+		push    eax
+		mov     eax, cue
+		mov		edi, soundHandle
+		call	[pObjectPlaySound]
+	}
+}
+
 inline void PlaySoundStatic(SharedPtrTypeless& soundHandle, uint32_t cueID)
 {
     uint32_t* syncObject = *(uint32_t**)0x1E79044;
