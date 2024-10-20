@@ -890,7 +890,7 @@ public:
             }
         }
 
-        return Sonic::CGameObject::ProcessMessage(message, flag);
+        return Sonic::CGameObject3D::ProcessMessage(message, flag);
     }
 
     void UpdateParallel
