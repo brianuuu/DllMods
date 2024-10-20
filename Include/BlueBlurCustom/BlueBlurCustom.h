@@ -7,5 +7,6 @@
 #include <Sonic/Message/MsgEndQuickStepSign.h>
 #include <Sonic/Message/MsgGetEnemyType.h>
 #include <Sonic/Message/MsgNotifyObjectEvent.h>
+#include <Sonic/Message/MsgNotifyShockWave.h>
 
 #include <Sonic/CGlitterPlayer.h>
