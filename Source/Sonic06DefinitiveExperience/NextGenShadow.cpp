@@ -216,7 +216,6 @@ void PlayChaosSnap()
     Common::SonicContextPlaySound(soundHandle, 80041038, 1);
 
     // hide all model
-    context->StateFlag(eStateFlag_NoDamage)++;
     NextGenShadow::SetChaosBoostModelVisible(true, true);
     hasChaosSnapHiddenModel = true;
     hasChaosSnapTeleported = false;
@@ -381,7 +380,6 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateHomingAttackEnd, 0x1231F80, hh::
         Common::fCGlitterCreate(*PLAYER_CONTEXT, warpHandle, matrixNode, "ef_ch_sha_warp_e", 1);
 
         // Unhide model
-        context->StateFlag(eStateFlag_NoDamage)--;
         NextGenShadow::SetChaosBoostModelVisible(NextGenShadow::m_chaosBoostLevel > 0);
         hasChaosSnapHiddenModel = false;
         hasChaosSnapTeleported = true;
