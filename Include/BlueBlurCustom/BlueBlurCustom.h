@@ -8,5 +8,6 @@
 #include <Sonic/Message/MsgGetEnemyType.h>
 #include <Sonic/Message/MsgNotifyObjectEvent.h>
 #include <Sonic/Message/MsgNotifyShockWave.h>
+#include <Sonic/Message/MsgShakeCamera.h>
 
 #include <Sonic/CGlitterPlayer.h>
