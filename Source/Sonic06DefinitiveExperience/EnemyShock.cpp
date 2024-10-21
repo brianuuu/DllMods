@@ -99,8 +99,31 @@ public:
 void HandleEnemyAddShock(hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message)
 {
     auto& msg = static_cast<Sonic::Message::MsgNotifyShockWave&>(message);
-
     uint32_t pCEnemyBase = ((uint32_t)This - 0x28);
+
+    // some enemies requiire changing state
+    bool isIn3D = *(bool*)(pCEnemyBase + 0x120);
+    switch (*(uint32_t*)pCEnemyBase)
+    {
+    case 0x16FAD14: // CEnemyBiter
+    {
+        Common::NPCAnimationChangeState((void*)pCEnemyBase, isIn3D ? "FireEndFV" : "FireEndSV");
+        Common::EnemyChangeState((void*)pCEnemyBase, "BackStep");
+        break;
+    } 
+    case 0x16F70BC: // CEnemySpinner
+    {
+        bool isDischarging = *(bool*)(pCEnemyBase + 0x239);
+        if (isDischarging)
+        {
+            // stops discharging forever
+            *(float*)(pCEnemyBase + 0x228) = 0.0f;
+            return;
+        }
+        break;
+    }
+    }
+
     uint32_t pAimTargetParams = *(uint32_t*)(pCEnemyBase + 0x11C);
     bool isCrisisCityEnemy = *(bool*)(pAimTargetParams + 0x28);
 
@@ -123,16 +146,6 @@ void HandleEnemyAddShock(hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Messa
             shockData.m_Effect = boost::make_shared<CObjShock>(pObjectBase->m_ActorID, targetPosition, isCrisisCityEnemy);
             pObjectBase->m_pMember->m_pGameDocument->AddGameObject(shockData.m_Effect);
         }
-    }
-
-    // some enemies requiire changing state
-    bool isIn3D = *(bool*)(pCEnemyBase + 0x120);
-    switch (*(uint32_t*)pCEnemyBase)
-    {
-    case 0x16FAD14: // CEnemyBiter
-        Common::NPCAnimationChangeState((void*)pCEnemyBase, isIn3D ? "FireEndFV" : "FireEndSV");
-        Common::EnemyChangeState((void*)pCEnemyBase, "BackStep");
-        break;
     }
 }
 
