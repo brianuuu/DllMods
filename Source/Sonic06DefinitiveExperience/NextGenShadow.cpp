@@ -1979,6 +1979,11 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateSlidingAdvance, 0x11D69A0, hh::f
 {
     originalNextGenShadow_CSonicStateSlidingAdvance(This);
 
+    if (NextGenShadow::CheckChaosBoost())
+    {
+        return;
+    }
+
     bool bDown, bPressed, bReleased;
     NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
     if (bPressed || NextGenShadow::m_slidingTime - This->m_Time <= 0.0f)
