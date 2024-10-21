@@ -609,8 +609,8 @@ HOOK(void, __stdcall, Stage_PhysicsReward, 0xEA49B0, uint32_t This, int a2, void
                 hh::math::CVector pos = hh::math::CVector::Identity();
                 Common::fObjectPhysicsDynamicPosition((void*)This, pos);
                 
-                auto spExplosioin = boost::make_shared<CObjExplosion>(cExplosion_radius, pos);
-                Sonic::CGameDocument::GetInstance()->AddGameObject(spExplosioin);
+                auto spExplosion = boost::make_shared<CObjExplosion>(cExplosion_radius, pos);
+                Sonic::CGameDocument::GetInstance()->AddGameObject(spExplosion);
             }
         }
     }
