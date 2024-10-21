@@ -69,6 +69,8 @@ public:
 		SH_SpearWait,
 		SH_SpearShot,
 		SH_ChaosBoost,
+		SH_ChaosBlastWait,
+		SH_ChaosBlast,
 	} m_overrideType;
 };
 

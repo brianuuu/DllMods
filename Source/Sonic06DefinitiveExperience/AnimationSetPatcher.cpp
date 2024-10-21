@@ -217,6 +217,10 @@ const char* volatile const AnimationSetPatcher::SpearShot = "SpearShot";
 const char* volatile const AnimationSetPatcher::SpearShotLoop = "SpearShotLoop";
 const char* volatile const AnimationSetPatcher::ChaosBoost = "ChaosBoost";
 const char* volatile const AnimationSetPatcher::ChaosBoostLoop = "ChaosBoostLoop";
+const char* volatile const AnimationSetPatcher::ChaosBlastWait = "ChaosBlastWait";
+const char* volatile const AnimationSetPatcher::ChaosBlastWaitLoop = "ChaosBlastWaitLoop";
+const char* volatile const AnimationSetPatcher::ChaosBlast = "ChaosBlast";
+const char* volatile const AnimationSetPatcher::ChaosBlastLoop = "ChaosBlastLoop";
 
 void AnimationSetPatcher::applyPatches()
 {
@@ -442,13 +446,19 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationData.emplace_back(SpinAttack[1], "sh_spin_attack02_Root", 1.0f, false, nullptr);
         m_newAnimationData.emplace_back(SpinAttack[2], "sh_spin_attack03_Root", 1.0f, false, nullptr);
 
-        // Chaos Spea/Chaos Boost
+        // Chaos Spear/Chaos Boost
         m_newAnimationData.emplace_back(SpearWait, "sh_spear_wait_s_Root", 1.0f, false, SpearWaitLoop);
         m_newAnimationData.emplace_back(SpearWaitLoop, "sh_spear_wait_l_Root", 1.0f, true, nullptr);
         m_newAnimationData.emplace_back(SpearShot, "sh_spear_shot_s_Root", 1.0f, false, SpearShotLoop);
         m_newAnimationData.emplace_back(SpearShotLoop, "sh_spear_shot_l_Root", 1.0f, true, nullptr);
         m_newAnimationData.emplace_back(ChaosBoost, "sh_spear_free_s_Root", 1.0f, false, ChaosBoostLoop);
         m_newAnimationData.emplace_back(ChaosBoostLoop, "sh_spear_free_l_Root", 1.0f, true, nullptr);
+
+        // Chaos Blast
+        m_newAnimationData.emplace_back(ChaosBlastWait, "sh_chaosblast_s_Root", 1.0f, false, ChaosBlastWaitLoop);
+        m_newAnimationData.emplace_back(ChaosBlastWaitLoop, "sh_chaosblast_wait_l_Root", 1.0f, true, nullptr);
+        m_newAnimationData.emplace_back(ChaosBlast, "sh_chaosblast_attack_s_Root", 1.0f, false, ChaosBlastLoop);
+        m_newAnimationData.emplace_back(ChaosBlastLoop, "sh_chaosblast_attack_l_Root", 1.0f, true, nullptr);
     }
 
     if (!m_newAnimationData.empty())
