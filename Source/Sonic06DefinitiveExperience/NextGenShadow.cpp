@@ -1250,7 +1250,7 @@ public:
                             *(uint32_t*)0x1E0BE34, // DamageID_NoAttack
                             m_Position, 
                             (targetPosition - m_Position) * (enemyType > 0 ? cShadow_chaosBlastVelocityEnemy : cShadow_chaosBlastVelocityObjPhy)
-                        ));
+                        ), (targetPosition - m_Position).norm() * 0.2f / m_Radius); // delay base on distance
                 }
 
                 return true;
