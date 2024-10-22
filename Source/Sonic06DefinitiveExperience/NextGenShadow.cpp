@@ -1418,6 +1418,8 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
         context->m_GravityTimer = -100000000.0f;
 
         Common::SonicContextPlayVoice(voiceHandle, 3002034, 20);
+        void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
+        Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle_TrickAttack, matrixNode, "ef_ch_sh_chaosblast_charge", 1);
         break;
     }
     }
@@ -1676,7 +1678,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             Common::SonicContextPlaySound(soundHandle_TrickAttack, 80041037, 1);
 
             void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
-            Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle_TrickAttack, matrixNode, "ef_ch_sh_chaosboost", 1);
+            Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle_TrickAttack, matrixNode, "ef_ch_sh_chaosblast", 1);
 
             boost::shared_ptr<Sonic::CCamera> const& spCamera = context->m_pPlayer->m_pMember->m_pWorld->GetCamera();
             hh::fnd::CMessageActor* cameraMessageActor = (hh::fnd::CMessageActor*)((uint32_t)spCamera.get() + 0x28);
