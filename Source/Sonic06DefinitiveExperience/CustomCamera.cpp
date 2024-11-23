@@ -52,13 +52,27 @@ bool m_skyGemCameraUpdated = false;
 Hedgehog::Math::CVector m_skyGemCameraReleasedPosition;
 Hedgehog::Math::CQuaternion m_skyGemCameraReleasedRotation;
 
-// freeze camera
+// Freeze camera
 float const cCamera_freezeFactorRate = 10.0f;
 bool CustomCamera::m_freezeCameraEnabled = false;
 float m_freezeCameraFactor = 0.0f;
 bool m_freezeCameraUpdated = false;
 Hedgehog::Math::CVector m_freezeCameraPosition;
 Hedgehog::Math::CQuaternion m_freezeCameraRotation;
+
+// Chaos Blast camera
+bool CustomCamera::m_chaosBlastCameraEnabled = false;
+float m_chaosBlastCameraFactor = 0.0f;
+bool m_chaosBlastCameraUpdated = false;
+float const cCamera_chaosBlastYaw_Start = 30.0f * DEG_TO_RAD;
+float const cCamera_chaosBlastYaw_End = -90.0f * DEG_TO_RAD;
+float const cCamera_chaosBlastPitch_Start = -20.0f * DEG_TO_RAD;
+float const cCamera_chaosBlastPitch_End = 0.0f * DEG_TO_RAD;
+float const cCamera_chaosBlastDist_Start = 3.0f;
+float const cCamera_chaosBlastDist_End = 1.5f;
+float const cCamera_chaosBlastHeight = 0.7f;
+float const cCamera_chaosBlastFactorRate = 0.8f;
+float const cCamera_chaosBlastFactorRateReturn = 2.5f;
 
 HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
 {
@@ -103,6 +117,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
     float const dt = 1.0f / 60.0f; // this always run at 60fps
     bool isReset = !Common::IsPlayerControlLocked() && padState->IsTapped(Sonic::EKeyState::eKeyState_LeftTrigger);
     isReset |= NextGenSonic::m_skyGemEnabled && !NextGenSonic::m_skyGemLaunched && m_skyGemCameraFactor >= 1.0f;
+    isReset |= m_chaosBlastCameraFactor >= 1.0f;
 
     // Calculate current pitch correction
     float pitchCorrection = cCamera_pitchCorrection;
@@ -263,6 +278,9 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
 {
     originalCustomCamera_CCameraUpdateParallel(This, Edx, in_rUpdateInfo);
 
+    //-----------------------------------------------------------------------------
+    // Sky Gem
+    //-----------------------------------------------------------------------------
     // Change factor to interpolate camera
     if (!m_skyGemCameraUpdated)
     {
@@ -335,6 +353,9 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
         }
     }
 
+    //-----------------------------------------------------------------------------
+    // Freeze Camera
+    //-----------------------------------------------------------------------------
     // Interpolate freeze camera
     if (!m_freezeCameraUpdated)
     {
@@ -364,8 +385,60 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
         camera.m_InputView = camera.m_View;
     }
 
+    //-----------------------------------------------------------------------------
+    // Chaos Blast
+    //-----------------------------------------------------------------------------
+    if (!m_chaosBlastCameraUpdated)
+    {
+        if (CustomCamera::m_chaosBlastCameraEnabled)
+        {
+            CustomCamera::m_chaosBlastCameraEnabled = false;
+            m_chaosBlastCameraFactor = 2.0f;
+        }
+        else
+        {
+            if (m_chaosBlastCameraFactor > 1.0f)
+            {
+                m_chaosBlastCameraFactor = max(0.0f, m_chaosBlastCameraFactor - in_rUpdateInfo.DeltaTime * cCamera_chaosBlastFactorRate);
+            }
+            else
+            {
+                m_chaosBlastCameraFactor = max(0.0f, m_chaosBlastCameraFactor - in_rUpdateInfo.DeltaTime * cCamera_chaosBlastFactorRateReturn);
+            }
+        }
+    }
+
+    if (m_chaosBlastCameraFactor > 0.0f)
+    {
+        Hedgehog::Math::CVector playerRight = context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitX();
+        Hedgehog::Math::CVector playerUp = context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitY();
+        Hedgehog::Math::CVector playerForward = context->m_spMatrixNode->m_Transform.m_Rotation * Hedgehog::Math::CVector::UnitZ();
+        Hedgehog::Math::CVector playerPosition = context->m_spMatrixNode->m_Transform.m_Position + playerUp * cCamera_chaosBlastHeight;
+
+        float const currentPitch = cCamera_chaosBlastPitch_End - (cCamera_chaosBlastPitch_End - cCamera_chaosBlastPitch_Start) * max(0.0f, m_chaosBlastCameraFactor - 1.0f);
+        float const currentYaw = cCamera_chaosBlastYaw_End - (cCamera_chaosBlastYaw_End - cCamera_chaosBlastYaw_Start) * max(0.0f, m_chaosBlastCameraFactor - 1.0f);
+        float const currentDist = cCamera_chaosBlastDist_End - (cCamera_chaosBlastDist_End - cCamera_chaosBlastDist_Start) * max(0.0f, m_chaosBlastCameraFactor - 1.0f);
+
+        // Camera vectors
+        const Eigen::AngleAxisf rotPitch(currentPitch, playerRight);
+        const Eigen::AngleAxisf rotYaw(currentYaw, playerUp);
+        Hedgehog::Math::CVector cameraForward = rotPitch * rotYaw * playerForward;
+        Hedgehog::Math::CQuaternion cameraRotation = rotYaw * rotPitch * context->m_spMatrixNode->m_Transform.m_Rotation;
+
+        // Interpolate position
+        Hedgehog::Math::CVector targetPosition = playerPosition + cameraForward * currentDist;
+        camera.m_Position = m_chaosBlastCameraFactor > 1.0f ? targetPosition : camera.m_Position + (targetPosition - camera.m_Position) * m_chaosBlastCameraFactor;
+        camera.m_Direction = cameraForward;
+
+        // Interpolate rotation
+        Hedgehog::Math::CQuaternion rotationSlerp = m_chaosBlastCameraFactor > 1.0f ? cameraRotation : Hedgehog::Math::CQuaternion(camera.m_View.rotation().inverse()).slerp(m_chaosBlastCameraFactor, cameraRotation);
+        camera.m_View = (Eigen::Translation3f(camera.m_Position) * rotationSlerp).inverse().matrix();
+        camera.m_InputView = camera.m_View;
+    }
+
     m_skyGemCameraUpdated = true;
     m_freezeCameraUpdated = true;
+    m_chaosBlastCameraUpdated = true;
 }
 
 void CustomCamera::applyPatches()
@@ -414,6 +487,7 @@ void CustomCamera::advance()
     m_usedCustomCamera = false;
     m_skyGemCameraUpdated = false;
     m_freezeCameraUpdated = false;
+    m_chaosBlastCameraUpdated = false;
 }
 
 Eigen::Vector3f CustomCamera::calculateCameraPos

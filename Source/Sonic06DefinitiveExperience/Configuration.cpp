@@ -21,6 +21,7 @@ bool Configuration::Sonic::m_gemsEnabled = false;
 
 bool Configuration::Shadow::m_rapidSpindash = true;
 bool Configuration::Shadow::m_chaosSnapAll = false;
+bool Configuration::Shadow::m_chaosBlastCamera = true;
 
 std::string iniPath;
 bool Configuration::load(const std::string& rootPath)
@@ -87,6 +88,7 @@ bool Configuration::load(const std::string& rootPath)
     // --------------Shadow--------------
     Shadow::m_rapidSpindash = reader.GetBoolean("Shadow", "bRapidSpindash", Shadow::m_rapidSpindash);
     Shadow::m_chaosSnapAll = reader.GetBoolean("Shadow", "bChaosSnapAll", Shadow::m_chaosSnapAll);
+    Shadow::m_chaosBlastCamera = reader.GetBoolean("Shadow", "bChaosBlastCamera", Shadow::m_chaosBlastCamera);
 
     string str;
 

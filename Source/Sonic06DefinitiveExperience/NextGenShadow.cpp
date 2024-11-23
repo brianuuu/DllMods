@@ -1420,6 +1420,8 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
         Common::SonicContextPlayVoice(voiceHandle, 3002034, 20);
         void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
         Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle_TrickAttack, matrixNode, "ef_ch_sh_chaosblast_charge", 1);
+        
+        CustomCamera::m_chaosBlastCameraEnabled = true;
         break;
     }
     }

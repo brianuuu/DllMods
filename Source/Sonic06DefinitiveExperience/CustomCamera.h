@@ -18,5 +18,6 @@ public:
 	static bool m_skyGemCameraEnabled;
 
 	static bool m_freezeCameraEnabled;
+	static bool m_chaosBlastCameraEnabled;
 };
 

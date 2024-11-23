@@ -56,6 +56,7 @@ public:
     {
         static bool m_rapidSpindash;
         static bool m_chaosSnapAll;
+        static bool m_chaosBlastCamera;
     };
 
     static bool load(const std::string& rootPath);
