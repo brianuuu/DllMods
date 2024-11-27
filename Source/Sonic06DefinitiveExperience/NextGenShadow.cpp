@@ -68,6 +68,12 @@ float const cShadow_chaosBlastDuration = 0.3f;
 float const cShadow_chaosBlastVelocityObjPhy = 30.0f;
 float const cShadow_chaosBlastVelocityEnemy = 15.0f;
 
+// Chaos Control
+float const cShadow_chaosControlDuration = 10.0f;
+float const cShadow_chaosControlSlowScale = 0.1f;
+float const cShadow_chaosControlSlowTime = 0.5f;
+bool isChaosControl = false;
+
 // Sliding/Spindash
 bool slidingEndWasSliding_Shadow = false;
 bool NextGenShadow::m_isSpindash = false;
@@ -93,7 +99,7 @@ uint8_t NextGenShadow::m_chaosBoostLevel = 0u;
 float NextGenShadow::m_chaosMaturity = 0.0f;
 float const cShadow_chaosBoostStartTime = 1.2f;
 
-NextGenShadow::OverrideType NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_SpearWait;
+NextGenShadow::OverrideType NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_None;
 
 //---------------------------------------------------
 // Jet Effect
@@ -731,22 +737,25 @@ bool NextGenShadow::CheckChaosBoost()
         return false;
     }
 
+    if (*Common::GetPlayerBoost() == 0.0f || m_chaosMaturity < 100.0f)
+    {
+        return false;
+    }
+
+    // chaos control, can use while auto run
+    if (m_chaosBoostLevel == 3 && !isChaosControl)
+    {
+        Common::SonicContextAddPlugin("TimeBreak");
+    }
+
     auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
     if (context->StateFlag(eStateFlag_KeepRunning))
     {
         return false;
     }
 
-    if (*Common::GetPlayerBoost() == 0.0f || m_chaosMaturity < 100.0f)
-    {
-        return false;
-    }
-
-    if (m_chaosBoostLevel == 3)
-    {
-        // TODO: ???
-    }
-    else
+    // level up
+    if (m_chaosBoostLevel < 3)
     {
         m_overrideType = OverrideType::SH_ChaosBoost;
         StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
@@ -790,7 +799,7 @@ void NextGenShadow::AddChaosMaturity(float amount)
     if (Configuration::m_model != Configuration::ModelType::Shadow) return;
 
     float maturity = m_chaosMaturity;
-    m_chaosMaturity = min(100.0f, maturity + amount);
+    m_chaosMaturity = max(0.0f, min(100.0f, maturity + amount));
     S06HUD_API::SetShadowChaosLevel(m_chaosBoostLevel, m_chaosMaturity);
 
     if (m_chaosMaturity == 100.0f && maturity < 100.0f)
@@ -1748,6 +1757,105 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::f
         break;
     }
     }
+
+    NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_None;
+}
+
+//---------------------------------------------------
+// Chaos Control
+//---------------------------------------------------
+float timeBreakDeltaTime_Shadow;
+HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStatePluginTimeBreakBegin, 0x111AF10, int This)
+{
+    isChaosControl = true;
+
+    static SharedPtrTypeless voiceHandle;
+    Common::SonicContextPlayVoice(voiceHandle, 3002033, 20);
+
+    static SharedPtrTypeless pfxHandle;
+    void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
+    Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle, matrixNode, "ef_ch_sh_chaoscontrol", 1);
+
+    timeBreakDeltaTime_Shadow = 0.0f;
+    *(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19D }) = true;
+    *(float*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x1A4 }) = cShadow_chaosControlSlowScale;
+
+    // don't use state time to quit
+    WRITE_JUMP(0x111B03D, (void*)0x111B0F3);
+
+    originalNextGenShadow_CPlayerSpeedStatePluginTimeBreakBegin(This);
+}
+
+HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStatePluginTimeBreakAdvance, 0x111B030, Sonic::Player::CPlayerSpeedContext::CStateSpeedBase* This)
+{
+    // scale time
+    float* timeScale = (float*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x1A4 });
+    if (This->m_Time >= cShadow_chaosControlSlowTime)
+    {
+        *timeScale = cShadow_chaosControlSlowScale;
+    }
+    else
+    {
+        float const scaleProp = This->m_Time / cShadow_chaosControlSlowTime;
+        *timeScale = 1.0f - (1.0f - cShadow_chaosControlSlowScale) * scaleProp;
+    }
+
+    // drain gauge
+    NextGenShadow::AddChaosMaturity((timeBreakDeltaTime_Shadow - This->m_Time) * 100.0f / cShadow_chaosControlDuration);
+    timeBreakDeltaTime_Shadow = This->m_Time;
+
+    // no more gauge, quit plugin
+    if (NextGenShadow::m_chaosMaturity == 0.0f || NextGenShadow::m_overrideType == NextGenShadow::OverrideType::SH_ChaosBlastWait)
+    {
+        WRITE_JUMP(0x111B03D, (void*)0x111B05E);
+    }
+
+    originalNextGenShadow_CPlayerSpeedStatePluginTimeBreakAdvance(This);
+}
+
+HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStatePluginTimeBreakEnd, 0x111AE00, int This)
+{
+    isChaosControl = false;
+
+    *(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19D }) = false;
+    *(float*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x1A4 }) = 1.0f;
+
+    originalNextGenShadow_CPlayerSpeedStatePluginTimeBreakEnd(This);
+}
+
+HOOK(int*, __fastcall, NextGenShadow_CParticleManagerAdvance, 0xE8F000, void* This, void* Edx, float* dt)
+{
+    return originalNextGenShadow_CParticleManagerAdvance(This, Edx, dt);
+}
+
+HOOK(void, __fastcall, NextGenShadow_GlitterCHandleAdvance, 0x6BC8B0, uint32_t This, void* Edx, float* dt, void* database)
+{
+    bool const slowEnabled = *(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19D });
+    if (slowEnabled)
+    {
+        std::string const particleName = *(char const**)(This + 0xA0);
+        static std::set<std::string> c_noSlowParticles =
+        {
+            "ef_bo_sha",
+            "ef_ch_sh",
+            "ef_ch_sn",
+        };
+
+        for (std::string const& name : c_noSlowParticles)
+        {
+            if (particleName.find(name) != std::string::npos)
+            {
+                float const timeScale = *(float*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x1A4 });
+                float dtTemp[2];
+                dtTemp[0] = dt[0] / timeScale;
+                dtTemp[1] = dtTemp[0] * 60.0f;
+                originalNextGenShadow_GlitterCHandleAdvance(This, Edx, dtTemp, database);
+                return;
+            }
+        }
+    }
+
+    originalNextGenShadow_GlitterCHandleAdvance(This, Edx, dt, database);
 }
 
 //---------------------------------------------------
@@ -2525,6 +2633,19 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_CSonicStateTrickAttackAdvance);
     INSTALL_HOOK(NextGenShadow_CSonicStateTrickAttackEnd);
     EnemyShock::applyPatches();
+
+    //-------------------------------------------------------
+    // Chaos Control
+    //-------------------------------------------------------
+    // skip MsgChangeGameSpeed and sound change
+    WRITE_JUMP(0x111AF35, (void*)0x111AF71); 
+
+    INSTALL_HOOK(NextGenShadow_CPlayerSpeedStatePluginTimeBreakBegin);
+    INSTALL_HOOK(NextGenShadow_CPlayerSpeedStatePluginTimeBreakAdvance);
+    INSTALL_HOOK(NextGenShadow_CPlayerSpeedStatePluginTimeBreakEnd);
+
+    //INSTALL_HOOK(NextGenShadow_CParticleManagerAdvance);
+    INSTALL_HOOK(NextGenShadow_GlitterCHandleAdvance);
 
     //-------------------------------------------------------
     // X-Action State handling

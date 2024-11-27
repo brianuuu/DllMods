@@ -66,6 +66,7 @@ public:
 
 	static enum class OverrideType
 	{
+		SH_None,
 		SH_SpearWait,
 		SH_SpearShot,
 		SH_ChaosBoost,
