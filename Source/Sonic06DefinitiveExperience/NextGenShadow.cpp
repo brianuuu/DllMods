@@ -742,24 +742,45 @@ bool NextGenShadow::CheckChaosBoost()
         return false;
     }
 
-    // chaos control, can use while auto run
-    if (m_chaosBoostLevel == 3 && !isChaosControl)
-    {
-        Common::SonicContextAddPlugin("TimeBreak");
-    }
-
     auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
     if (context->StateFlag(eStateFlag_KeepRunning))
     {
         return false;
     }
 
-    // level up
+    if (m_chaosBoostLevel == 3 && !isChaosControl)
+    {
+        Common::SonicContextAddPlugin("TimeBreak");
+        return true;
+    }
+
     if (m_chaosBoostLevel < 3)
     {
         m_overrideType = OverrideType::SH_ChaosBoost;
         StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
 
+        return true;
+    }
+
+    return false;
+}
+
+bool NextGenShadow::CheckChaosControl()
+{
+    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+    if (!padState->IsTapped(Sonic::EKeyState::eKeyState_B))
+    {
+        return false;
+    }
+
+    if (*Common::GetPlayerBoost() == 0.0f || m_chaosMaturity < 100.0f)
+    {
+        return false;
+    }
+
+    if (m_chaosBoostLevel == 3 && !isChaosControl)
+    {
+        Common::SonicContextAddPlugin("TimeBreak");
         return true;
     }
 
@@ -1770,11 +1791,14 @@ HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStatePluginTimeBreakBegin, 0x11
     isChaosControl = true;
 
     static SharedPtrTypeless voiceHandle;
-    Common::SonicContextPlayVoice(voiceHandle, 3002033, 20);
+    Common::SonicContextPlayVoice(voiceHandle, rand() % 2 ? 3002033 : 3002037, 20);
 
     static SharedPtrTypeless pfxHandle;
     void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
     Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle, matrixNode, "ef_ch_sh_chaoscontrol", 1);
+
+    static SharedPtrTypeless soundHandle;
+    Common::SonicContextPlaySound(soundHandle, 80041043, 1);
 
     timeBreakDeltaTime_Shadow = 0.0f;
     *(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19D }) = true;
@@ -1858,6 +1882,12 @@ HOOK(void, __fastcall, NextGenShadow_GlitterCHandleAdvance, 0x6BC8B0, uint32_t T
     originalNextGenShadow_GlitterCHandleAdvance(This, Edx, dt, database);
 }
 
+HOOK(void, __fastcall, NextGenShadow_CSonicStateGrindBegin, 0xDF2890, void* This)
+{
+    NextGenShadow::CheckChaosControl();
+    originalNextGenShadow_CSonicStateGrindBegin(This);
+}
+
 //---------------------------------------------------
 // X Button Action
 //---------------------------------------------------
@@ -1902,6 +1932,11 @@ bool NextGenShadow::bActionHandlerImpl()
     if (!Common::GetPlayerVelocity(playerVelocity))
     {
         return false;
+    }
+
+    if (CheckChaosControl())
+    {
+        return true;
     }
 
     CSonicStateFlags* flags = Common::GetSonicStateFlags();
@@ -2646,6 +2681,7 @@ void NextGenShadow::applyPatches()
 
     //INSTALL_HOOK(NextGenShadow_CParticleManagerAdvance);
     INSTALL_HOOK(NextGenShadow_GlitterCHandleAdvance);
+    INSTALL_HOOK(NextGenShadow_CSonicStateGrindBegin);
 
     //-------------------------------------------------------
     // X-Action State handling

@@ -50,6 +50,7 @@ public:
 	static void SetChaosBoostModelVisible(bool visible, bool allInvisible = false);
 	static void SetChaosBoostLevel(uint8_t level, bool notifyHUD);
 	static bool CheckChaosBoost();
+	static bool CheckChaosControl();
 	static bool CheckChaosSnapTarget();
 	static void AddChaosMaturity(float amount);
 	static bool AirActionCheck();
