@@ -282,7 +282,7 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
     // Sky Gem
     //-----------------------------------------------------------------------------
     // Change factor to interpolate camera
-    if (!m_skyGemCameraUpdated)
+    if (!m_skyGemCameraUpdated && !m_wasPaused)
     {
         if (CustomCamera::m_skyGemCameraEnabled)
         {
@@ -338,11 +338,11 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
 
         // Interpolate position
         Hedgehog::Math::CVector targetPosition = updateCamera ? playerPosition + cameraForward * cCamera_skyGemToPlayerDist : m_skyGemCameraReleasedPosition;
-        camera.m_Position += (targetPosition - camera.m_Position) * m_skyGemCameraFactor;
+        camera.m_Position += (targetPosition - camera.m_Position) * (m_wasPaused ? 0.0f : m_skyGemCameraFactor);
         camera.m_Direction = cameraForward;
 
         // Interpolate rotation
-        Hedgehog::Math::CQuaternion rotationSlerp = Hedgehog::Math::CQuaternion(camera.m_View.rotation().inverse()).slerp(m_skyGemCameraFactor, cameraRotation);
+        Hedgehog::Math::CQuaternion rotationSlerp = Hedgehog::Math::CQuaternion(camera.m_View.rotation().inverse()).slerp((m_wasPaused ? 0.0f : m_skyGemCameraFactor), cameraRotation);
         camera.m_View = (Eigen::Translation3f(camera.m_Position) * rotationSlerp).inverse().matrix();
         camera.m_InputView = camera.m_View;
 
@@ -357,7 +357,7 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
     // Freeze Camera
     //-----------------------------------------------------------------------------
     // Interpolate freeze camera
-    if (!m_freezeCameraUpdated)
+    if (!m_freezeCameraUpdated && !m_wasPaused)
     {
         if (CustomCamera::m_freezeCameraEnabled)
         {
@@ -377,10 +377,10 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
     if (m_freezeCameraFactor > 0.0f)
     {
         // Interpolate position
-        camera.m_Position = camera.m_Position + (m_freezeCameraPosition - camera.m_Position) * m_freezeCameraFactor;
+        camera.m_Position = camera.m_Position + (m_freezeCameraPosition - camera.m_Position) * (m_wasPaused ? 0.0f : m_freezeCameraFactor);
 
         // Interpolate rotation
-        Hedgehog::Math::CQuaternion rotationSlerp = Hedgehog::Math::CQuaternion(camera.m_View.rotation().inverse()).slerp(m_freezeCameraFactor, m_freezeCameraRotation);
+        Hedgehog::Math::CQuaternion rotationSlerp = Hedgehog::Math::CQuaternion(camera.m_View.rotation().inverse()).slerp((m_wasPaused ? 0.0f : m_freezeCameraFactor), m_freezeCameraRotation);
         camera.m_View = (Eigen::Translation3f(camera.m_Position) * rotationSlerp).inverse().matrix();
         camera.m_InputView = camera.m_View;
     }
@@ -388,7 +388,7 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
     //-----------------------------------------------------------------------------
     // Chaos Blast
     //-----------------------------------------------------------------------------
-    if (!m_chaosBlastCameraUpdated)
+    if (!m_chaosBlastCameraUpdated && !m_wasPaused)
     {
         if (CustomCamera::m_chaosBlastCameraEnabled)
         {
@@ -427,11 +427,11 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
 
         // Interpolate position
         Hedgehog::Math::CVector targetPosition = playerPosition + cameraForward * currentDist;
-        camera.m_Position = m_chaosBlastCameraFactor > 1.0f ? targetPosition : camera.m_Position + (targetPosition - camera.m_Position) * m_chaosBlastCameraFactor;
+        camera.m_Position = m_chaosBlastCameraFactor > 1.0f ? targetPosition : camera.m_Position + (targetPosition - camera.m_Position) * (m_wasPaused ? 0.0f : m_chaosBlastCameraFactor);
         camera.m_Direction = cameraForward;
 
         // Interpolate rotation
-        Hedgehog::Math::CQuaternion rotationSlerp = m_chaosBlastCameraFactor > 1.0f ? cameraRotation : Hedgehog::Math::CQuaternion(camera.m_View.rotation().inverse()).slerp(m_chaosBlastCameraFactor, cameraRotation);
+        Hedgehog::Math::CQuaternion rotationSlerp = m_chaosBlastCameraFactor > 1.0f ? cameraRotation : Hedgehog::Math::CQuaternion(camera.m_View.rotation().inverse()).slerp((m_wasPaused ? 0.0f : m_chaosBlastCameraFactor), cameraRotation);
         camera.m_View = (Eigen::Translation3f(camera.m_Position) * rotationSlerp).inverse().matrix();
         camera.m_InputView = camera.m_View;
     }
