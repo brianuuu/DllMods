@@ -365,8 +365,14 @@ bool NextGenBlaze::bActionHandlerImpl()
 //---------------------------------------------------
 // CSonicStateSliding
 //---------------------------------------------------
-HOOK(int, __fastcall, NextGenBlaze_CSonicStateSlidingBegin, 0x11D7110, void* This)
+HOOK(int, __fastcall, NextGenBlaze_CSonicStateSlidingBegin, 0x11D7110, hh::fnd::CStateMachineBase::CStateBase* This)
 {
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+    
+    // clear lock-on
+    Common::SonicContextHudHomingAttackClear(context);
+    context->m_HomingAttackTargetActorID = 0;
+
     // Get current sliding speed
     Eigen::Vector3f playerVelocity;
     Common::GetPlayerVelocity(playerVelocity);

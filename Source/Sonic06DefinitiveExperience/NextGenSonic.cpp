@@ -2246,6 +2246,10 @@ HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickBegin, 0x12526D0, hh
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
     if (NextGenSonic::m_greenGemEnabled)
     {
+        // clear lock-on
+        Common::SonicContextHudHomingAttackClear(context);
+        context->m_HomingAttackTargetActorID = 0;
+
         greenGemShockWaveCreated = false;
         greenGemShockWaveTimer = 0.0f;
 
