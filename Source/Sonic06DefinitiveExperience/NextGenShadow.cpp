@@ -1428,6 +1428,9 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
     }
     case NextGenShadow::OverrideType::SH_ChaosBoost:
     {
+        Common::SonicContextHudHomingAttackClear(context);
+        context->m_HomingAttackTargetActorID = 0;
+
         Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosBoost);
         context->StateFlag(eStateFlag_OutOfControl)++;
         context->StateFlag(eStateFlag_NoDamage)++;
@@ -1442,6 +1445,9 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
     }
     case NextGenShadow::OverrideType::SH_ChaosBlastWait:
     {
+        Common::SonicContextHudHomingAttackClear(context);
+        context->m_HomingAttackTargetActorID = 0;
+
         Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosBlastWait);
         context->StateFlag(eStateFlag_OutOfControl)++;
         context->StateFlag(eStateFlag_NoDamage)++;
