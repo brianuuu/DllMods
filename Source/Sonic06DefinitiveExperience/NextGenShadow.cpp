@@ -1891,6 +1891,18 @@ HOOK(void, __fastcall, NextGenShadow_GlitterCHandleAdvance, 0x6BC8B0, uint32_t T
     originalNextGenShadow_GlitterCHandleAdvance(This, Edx, dt, database);
 }
 
+HOOK(void, __fastcall, NextGenShadow_CSonicStateDivingDiveAdvance, 0x124AEE0, int This)
+{
+    NextGenShadow::CheckChaosControl();
+    originalNextGenShadow_CSonicStateDivingDiveAdvance(This);
+}
+
+HOOK(void, __fastcall, NextGenShadow_CSonicStateDivingFloatAdvance, 0x11BCFB0, int This)
+{
+    NextGenShadow::CheckChaosControl();
+    originalNextGenShadow_CSonicStateDivingFloatAdvance(This);
+}
+
 HOOK(void, __fastcall, NextGenShadow_CSonicStateGrindBegin, 0xDF2890, void* This)
 {
     NextGenShadow::CheckChaosControl();
@@ -2709,6 +2721,9 @@ void NextGenShadow::applyPatches()
 
     //INSTALL_HOOK(NextGenShadow_CParticleManagerAdvance);
     INSTALL_HOOK(NextGenShadow_GlitterCHandleAdvance);
+
+    INSTALL_HOOK(NextGenShadow_CSonicStateDivingDiveAdvance);
+    INSTALL_HOOK(NextGenShadow_CSonicStateDivingFloatAdvance);
     INSTALL_HOOK(NextGenShadow_CSonicStateGrindBegin);
 
     INSTALL_HOOK(NextGenShadow_MsgPlayerGoal);
