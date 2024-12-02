@@ -49,6 +49,7 @@ std::vector<NextGenShadow::TargetData> NextGenShadow::m_targetData;
 uint8_t const cShadow_chaosSpearMaxCount = 5;
 float const cShadow_chaosSpearSpeed = 50.0f;
 float const cShadow_chaosSpearLife = 1.0f;
+float const cShadow_chaosSpearAddTime = 0.05f;
 float const cShadow_chaosSpearAccumulate = 0.5f;
 float const cShadow_chaosSpearStiffening = 0.3f;
 float const cShadow_chaosSpearDownAngle = 30.0f * DEG_TO_RAD;
@@ -1497,8 +1498,11 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
         WRITE_MEMORY(0xE74847, uint8_t, 0xD9, 0x5C, 0x24, 0x14, 0xD9);
 
         // handle multiple lock-on targets and HUD
-        if (This->m_Time >= cShadow_chaosSpearAccumulate)
+        float const accumulateStartTime = cShadow_chaosSpearAccumulate - cShadow_chaosSpearAddTime * (cShadow_chaosSpearMaxCount - 1);
+        if (This->m_Time >= accumulateStartTime)
         {
+            uint32_t const currentTargetCount = min(cShadow_chaosSpearMaxCount, 1 + uint32_t((This->m_Time - accumulateStartTime) / cShadow_chaosSpearAddTime));
+
             // main lock-on target may or may not in the list
             bool foundMainTarget = false;
             for (NextGenShadow::TargetData const& data : NextGenShadow::m_targetData)
@@ -1509,7 +1513,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
                     break;
                 }
             }
-            if (!foundMainTarget)
+            if (context->m_HomingAttackTargetActorID && !foundMainTarget)
             {
                 NextGenShadow::m_targetData.push_back(NextGenShadow::TargetData{ context->m_HomingAttackTargetActorID, 0.0f, 100 });
             }
@@ -1526,14 +1530,15 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             std::set<uint32_t> lockonActors;
             for (NextGenShadow::TargetData const& data : NextGenShadow::m_targetData)
             {
-                if (data.m_actorID != context->m_HomingAttackTargetActorID && lockonActors.size() < cShadow_chaosSpearMaxCount - 1)
+                if (data.m_actorID != context->m_HomingAttackTargetActorID && lockonActors.size() < currentTargetCount - 1)
                 {
                     lockonActors.insert(data.m_actorID);
                 }
             }
 
             // push dummy targets
-            while (NextGenShadow::m_targetData.size() < cShadow_chaosSpearMaxCount)
+            bool const pushDummies = NextGenShadow::m_targetData.empty();
+            while (pushDummies && NextGenShadow::m_targetData.size() < currentTargetCount)
             {
                 NextGenShadow::m_targetData.push_back(NextGenShadow::TargetData{ 0, 0.0f, 0 });
             }
@@ -1592,7 +1597,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_SpearShot;
             Common::SonicContextChangeAnimation(AnimationSetPatcher::SpearShot);
 
-            if (This->m_Time < cShadow_chaosSpearAccumulate)
+            if (This->m_Time < accumulateStartTime)
             {
                 // m_HomingAttackTargetActorID can be 0
                 NextGenShadow::m_targetData.clear();
