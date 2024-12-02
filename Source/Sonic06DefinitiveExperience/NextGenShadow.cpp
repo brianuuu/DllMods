@@ -1819,6 +1819,8 @@ HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStatePluginTimeBreakBegin, 0x11
 
 HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStatePluginTimeBreakAdvance, 0x111B030, Sonic::Player::CPlayerSpeedContext::CStateSpeedBase* This)
 {
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+
     // scale time
     float* timeScale = (float*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x1A4 });
     if (This->m_Time >= cShadow_chaosControlSlowTime)
@@ -1836,7 +1838,7 @@ HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStatePluginTimeBreakAdvance, 0x
     timeBreakDeltaTime_Shadow = This->m_Time;
 
     // no more gauge, quit plugin
-    if (!isChaosControl || NextGenShadow::m_chaosMaturity == 0.0f)
+    if (!isChaosControl || context->StateFlag(eStateFlag_Dead) || NextGenShadow::m_chaosMaturity == 0.0f)
     {
         WRITE_JUMP(0x111B03D, (void*)0x111B05E);
     }
