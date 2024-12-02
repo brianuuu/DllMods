@@ -277,6 +277,7 @@ HOOK(int, __fastcall, CustomCamera_MsgFinishPause, 0x010BC110, void* This, void*
 HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCamera* This, void* Edx, const hh::fnd::SUpdateInfo& in_rUpdateInfo)
 {
     originalCustomCamera_CCameraUpdateParallel(This, Edx, in_rUpdateInfo);
+    float const dt = Application::getDeltaTime();
 
     //-----------------------------------------------------------------------------
     // Sky Gem
@@ -286,12 +287,12 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
     {
         if (CustomCamera::m_skyGemCameraEnabled)
         {
-            m_skyGemCameraFactor = min(1.0f, m_skyGemCameraFactor + in_rUpdateInfo.DeltaTime * cCamera_skyGemFactorRate);
+            m_skyGemCameraFactor = min(1.0f, m_skyGemCameraFactor + dt * cCamera_skyGemFactorRate);
         }
         else
         {
             // [-0.5, 0] is buffer to not change camera if using Sky Gem too quickly
-            m_skyGemCameraFactor = max(-0.5f, m_skyGemCameraFactor - in_rUpdateInfo.DeltaTime * cCamera_skyGemFactorRate);
+            m_skyGemCameraFactor = max(-0.5f, m_skyGemCameraFactor - dt * cCamera_skyGemFactorRate);
             if (m_skyGemCameraFactor <= -0.5f)
             {
                 CustomCamera::m_skyGemCameraPitch = 0.0f;
@@ -370,7 +371,7 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
         }
         else
         {
-            m_freezeCameraFactor = max(0.0f, m_freezeCameraFactor - in_rUpdateInfo.DeltaTime * cCamera_freezeFactorRate);
+            m_freezeCameraFactor = max(0.0f, m_freezeCameraFactor - dt * cCamera_freezeFactorRate);
         }
     }
 
@@ -399,11 +400,11 @@ HOOK(void, __fastcall, CustomCamera_CCameraUpdateParallel, 0x10FB770, Sonic::CCa
         {
             if (m_chaosBlastCameraFactor > 1.0f)
             {
-                m_chaosBlastCameraFactor = max(0.0f, m_chaosBlastCameraFactor - in_rUpdateInfo.DeltaTime * cCamera_chaosBlastFactorRate);
+                m_chaosBlastCameraFactor = max(0.0f, m_chaosBlastCameraFactor - dt * cCamera_chaosBlastFactorRate);
             }
             else
             {
-                m_chaosBlastCameraFactor = max(0.0f, m_chaosBlastCameraFactor - in_rUpdateInfo.DeltaTime * cCamera_chaosBlastFactorRateReturn);
+                m_chaosBlastCameraFactor = max(0.0f, m_chaosBlastCameraFactor - dt * cCamera_chaosBlastFactorRateReturn);
             }
         }
     }
