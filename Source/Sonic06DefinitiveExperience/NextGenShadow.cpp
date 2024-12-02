@@ -1458,6 +1458,7 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
         Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle_TrickAttack, matrixNode, "ef_ch_sh_chaosblast_charge", 1);
         
         CustomCamera::m_chaosBlastCameraEnabled = true;
+        isChaosControl = false;
         break;
     }
     }
@@ -1835,7 +1836,7 @@ HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStatePluginTimeBreakAdvance, 0x
     timeBreakDeltaTime_Shadow = This->m_Time;
 
     // no more gauge, quit plugin
-    if (NextGenShadow::m_chaosMaturity == 0.0f || NextGenShadow::m_overrideType == NextGenShadow::OverrideType::SH_ChaosBlastWait)
+    if (!isChaosControl || NextGenShadow::m_chaosMaturity == 0.0f)
     {
         WRITE_JUMP(0x111B03D, (void*)0x111B05E);
     }
@@ -1892,6 +1893,18 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateGrindBegin, 0xDF2890, void* This
 {
     NextGenShadow::CheckChaosControl();
     originalNextGenShadow_CSonicStateGrindBegin(This);
+}
+
+HOOK(int, __fastcall, NextGenShadow_MsgPlayerGoal, 0xE6C2C0, Sonic::Player::CPlayer* player, void* Edx, void* message)
+{
+    isChaosControl = false;
+    return originalNextGenShadow_MsgPlayerGoal(player, Edx, message);
+}
+
+HOOK(void, __fastcall, NextGenShadow_CObjSphHelicopterMsgHitEventCollision, 0xFAB7B0, void* This, void* Edx, void* message)
+{
+    isChaosControl = false;
+    originalNextGenShadow_CObjSphHelicopterMsgHitEventCollision(This, Edx, message);
 }
 
 //---------------------------------------------------
@@ -2688,6 +2701,9 @@ void NextGenShadow::applyPatches()
     //INSTALL_HOOK(NextGenShadow_CParticleManagerAdvance);
     INSTALL_HOOK(NextGenShadow_GlitterCHandleAdvance);
     INSTALL_HOOK(NextGenShadow_CSonicStateGrindBegin);
+
+    INSTALL_HOOK(NextGenShadow_MsgPlayerGoal);
+    INSTALL_HOOK(NextGenShadow_CObjSphHelicopterMsgHitEventCollision);
 
     //-------------------------------------------------------
     // X-Action State handling
