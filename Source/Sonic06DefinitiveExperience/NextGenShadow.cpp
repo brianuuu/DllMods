@@ -1901,10 +1901,11 @@ HOOK(int, __fastcall, NextGenShadow_MsgPlayerGoal, 0xE6C2C0, Sonic::Player::CPla
     return originalNextGenShadow_MsgPlayerGoal(player, Edx, message);
 }
 
-HOOK(void, __fastcall, NextGenShadow_CObjSphHelicopterMsgHitEventCollision, 0xFAB7B0, void* This, void* Edx, void* message)
+HOOK(void, __fastcall, NextGenShadow_MsgStartHangOn, 0xE6C0D0, Sonic::Player::CPlayer* player, void* Edx, uint32_t* message)
 {
+    uint32_t type = message[4];
     isChaosControl = false;
-    originalNextGenShadow_CObjSphHelicopterMsgHitEventCollision(This, Edx, message);
+    originalNextGenShadow_MsgStartHangOn(player, Edx, message);
 }
 
 //---------------------------------------------------
@@ -2703,7 +2704,7 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_CSonicStateGrindBegin);
 
     INSTALL_HOOK(NextGenShadow_MsgPlayerGoal);
-    INSTALL_HOOK(NextGenShadow_CObjSphHelicopterMsgHitEventCollision);
+    INSTALL_HOOK(NextGenShadow_MsgStartHangOn);
 
     //-------------------------------------------------------
     // X-Action State handling
