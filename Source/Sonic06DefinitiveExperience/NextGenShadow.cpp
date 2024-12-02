@@ -1664,6 +1664,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             // Set OutOfControl
             FUNCTION_PTR(int, __stdcall, SetOutOfControl, 0xE5AC00, CSonicContext * context, float duration);
             SetOutOfControl(*pModernSonicContext, cShadow_chaosSpearStiffening);
+            context->m_GravityTimer = -100000000.0f;
             break;
         }
 
@@ -1676,9 +1677,6 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             StateManager::ChangeState(StateAction::LandJumpShort, *PLAYER_CONTEXT);
             return nullptr;
         }
-
-        Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
-        Common::SetPlayerPosition(NextGenShadow::m_holdPosition);
 
         if (This->m_Time >= cShadow_chaosSpearStiffening)
         {
@@ -1761,6 +1759,8 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::f
     case NextGenShadow::OverrideType::SH_SpearWait:
     case NextGenShadow::OverrideType::SH_SpearShot:
     {
+        context->m_GravityTimer = 1000.0f;
+
         soundHandle_TrickAttack.reset();
         Common::fCGlitterEnd(*PLAYER_CONTEXT, pfxHandle_TrickAttack, true);
         Common::SonicContextHudHomingAttackClear(context);
