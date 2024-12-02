@@ -1908,6 +1908,12 @@ HOOK(void, __fastcall, NextGenShadow_MsgStartHangOn, 0xE6C0D0, Sonic::Player::CP
     originalNextGenShadow_MsgStartHangOn(player, Edx, message);
 }
 
+HOOK(int, __fastcall, NextGenShadow_CObjStopPeople, 0xFDDFB0, void* This, void* Edx, uint32_t* message)
+{
+    isChaosControl = false;
+    return originalNextGenShadow_CObjStopPeople(This, Edx, message);
+}
+
 //---------------------------------------------------
 // X Button Action
 //---------------------------------------------------
@@ -2705,6 +2711,7 @@ void NextGenShadow::applyPatches()
 
     INSTALL_HOOK(NextGenShadow_MsgPlayerGoal);
     INSTALL_HOOK(NextGenShadow_MsgStartHangOn);
+    INSTALL_HOOK(NextGenShadow_CObjStopPeople);
 
     //-------------------------------------------------------
     // X-Action State handling
