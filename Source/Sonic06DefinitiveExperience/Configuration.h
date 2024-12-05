@@ -54,6 +54,7 @@ public:
     // Shadow
     struct Shadow
     {
+        static bool m_floatBoost;
         static bool m_rapidSpindash;
         static bool m_chaosSnapAll;
         static bool m_chaosBlastCamera;

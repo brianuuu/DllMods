@@ -19,6 +19,7 @@ vector<string> Configuration::Sonic::m_runStages = {};
 bool Configuration::Sonic::m_unlimitedGauge = false;
 bool Configuration::Sonic::m_gemsEnabled = false;
 
+bool Configuration::Shadow::m_floatBoost = false;
 bool Configuration::Shadow::m_rapidSpindash = true;
 bool Configuration::Shadow::m_chaosSnapAll = false;
 bool Configuration::Shadow::m_chaosBlastCamera = true;
@@ -86,6 +87,7 @@ bool Configuration::load(const std::string& rootPath)
     Sonic::m_run = (RunResultType)reader.GetInteger("Sonic", "nRun", 0);
 
     // --------------Shadow--------------
+    Shadow::m_floatBoost = reader.GetBoolean("Shadow", "bFloatBoost", Shadow::m_floatBoost);
     Shadow::m_rapidSpindash = reader.GetBoolean("Shadow", "bRapidSpindash", Shadow::m_rapidSpindash);
     Shadow::m_chaosSnapAll = reader.GetBoolean("Shadow", "bChaosSnapAll", Shadow::m_chaosSnapAll);
     Shadow::m_chaosBlastCamera = reader.GetBoolean("Shadow", "bChaosBlastCamera", Shadow::m_chaosBlastCamera);

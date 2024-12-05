@@ -423,6 +423,18 @@ void AnimationSetPatcher::applyPatches()
 
     if (Configuration::m_model == Configuration::ModelType::Shadow)
     {
+        // Float Boost
+        if (Configuration::Shadow::m_floatBoost)
+        {
+            static char const* sn_boost_float_loop = "sn_boost_float_loop";
+            WRITE_MEMORY(0x1272BE0, char*, sn_boost_float_loop);
+            WRITE_MEMORY(0x1272C4F, char*, sn_boost_float_loop);
+            WRITE_MEMORY(0x1272CBE, char*, sn_boost_float_loop);
+            WRITE_MEMORY(0x1272D28, char*, sn_boost_float_loop);
+            WRITE_MEMORY(0x1272D9C, char*, sn_boost_float_loop);
+        }
+
+        // Alt animation for Drifting
         m_newAnimationData.emplace_back(SpinFast, "sn_ball_loop", 1.5f, true, nullptr);
         m_newAnimationDataSuper.emplace_back(SpinFast, "ssn_ball_loop", 1.5f, true, nullptr);
 
