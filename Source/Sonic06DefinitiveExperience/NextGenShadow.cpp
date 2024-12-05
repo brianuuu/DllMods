@@ -1927,10 +1927,20 @@ HOOK(void, __fastcall, NextGenShadow_MsgStartHangOn, 0xE6C0D0, Sonic::Player::CP
     originalNextGenShadow_MsgStartHangOn(player, Edx, message);
 }
 
-HOOK(int, __fastcall, NextGenShadow_CObjStopPeople, 0xFDDFB0, void* This, void* Edx, uint32_t* message)
+HOOK(int, __fastcall, NextGenShadow_CObjStopPeopleMsgNotifyObjectEvent, 0xFDDFB0, void* This, void* Edx, uint32_t* message)
 {
     isChaosControl = false;
-    return originalNextGenShadow_CObjStopPeople(This, Edx, message);
+    return originalNextGenShadow_CObjStopPeopleMsgNotifyObjectEvent(This, Edx, message);
+}
+
+HOOK(void, __fastcall, NextGenShadow_CRivalShadowMsgDamage, 0xCB4620, void* This, void* Edx, hh::fnd::Message& message)
+{
+    auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+    if (context && message.m_SenderActorID == context->m_pPlayer->m_ActorID && context->StateFlag(eStateFlag_AutoBoost))
+    {
+        isChaosControl = false;
+    }
+    originalNextGenShadow_CRivalShadowMsgDamage(This, Edx, message);
 }
 
 //---------------------------------------------------
@@ -2731,9 +2741,11 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_CSonicStateDivingFloatAdvance);
     INSTALL_HOOK(NextGenShadow_CSonicStateGrindBegin);
 
+    // Situation that stops Chaos Control
     INSTALL_HOOK(NextGenShadow_MsgPlayerGoal);
     INSTALL_HOOK(NextGenShadow_MsgStartHangOn);
-    INSTALL_HOOK(NextGenShadow_CObjStopPeople);
+    INSTALL_HOOK(NextGenShadow_CObjStopPeopleMsgNotifyObjectEvent);
+    INSTALL_HOOK(NextGenShadow_CRivalShadowMsgDamage);
 
     //-------------------------------------------------------
     // X-Action State handling
