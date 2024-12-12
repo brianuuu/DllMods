@@ -54,10 +54,10 @@ public:
     // Shadow
     struct Shadow
     {
-        static bool m_floatBoost;
-        static bool m_rapidSpindash;
-        static bool m_chaosSnapAll;
         static bool m_chaosBlastCamera;
+        static bool m_chaosSnapAll;
+        static bool m_antiGravity;
+        static bool m_floatBoost;
     };
 
     static bool load(const std::string& rootPath);
