@@ -1651,8 +1651,9 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
 
                 // spawn chaos spear
                 Hedgehog::Math::CVector position = context->m_spMatrixNode->m_Transform.m_Position + Hedgehog::Math::CVector::UnitY() * 0.7f;
-                Hedgehog::Math::CVector direction = context->m_HorizontalRotation * Hedgehog::Math::CVector::UnitZ();
-                if (targetPosition.isZero())
+                Hedgehog::Math::CVector targetDir = targetPosition - position;
+                Hedgehog::Math::CVector playerDir = context->m_HorizontalRotation* Hedgehog::Math::CVector::UnitZ();
+                if (targetPosition.isZero() || targetDir.dot(playerDir) <= 0.0f)
                 {
                     // spread out targets
                     noTargetCount++;
@@ -1667,16 +1668,11 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
 
                     // pitch down if no target
                     Hedgehog::Math::CVector playerRight = context->m_HorizontalRotation * Hedgehog::Math::CVector::UnitX();
-                    direction = Eigen::AngleAxisf(yawAngle, hh::math::CVector::UnitY()) * Eigen::AngleAxisf(cShadow_chaosSpearDownAngle, playerRight) * context->m_HorizontalRotation * Hedgehog::Math::CVector::UnitZ();
-                }
-                else
-                {
-                    // has a target
-                    direction = targetPosition - position;
+                    targetDir = Eigen::AngleAxisf(yawAngle, hh::math::CVector::UnitY()) * Eigen::AngleAxisf(cShadow_chaosSpearDownAngle, playerRight) * context->m_HorizontalRotation * Hedgehog::Math::CVector::UnitZ();
                 }
 
                 float const horizontalSpeed = context->m_HorizontalVelocity.norm();
-                context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjChaosSpear>(data.m_actorID, position, direction, horizontalSpeed, NextGenShadow::m_chaosBoostLevel >= 2));
+                context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjChaosSpear>(data.m_actorID, position, targetDir, horizontalSpeed, NextGenShadow::m_chaosBoostLevel >= 2));
             }
 
             // clear lock-on cursors
