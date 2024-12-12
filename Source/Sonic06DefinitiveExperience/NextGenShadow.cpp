@@ -1369,7 +1369,7 @@ HOOK(bool, __fastcall, NextGenShadow_AirAction, 0xDFFE30, Sonic::Player::CPlayer
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 
     // Chaos Spear
-    if (Configuration::Shadow::m_chaosSpearMomentum && padState->IsTapped(Sonic::EKeyState::eKeyState_X))
+    if (Configuration::Shadow::m_chaosSpearMomentum && !context->StateFlag(eStateFlag_EnableGravityControl) && padState->IsTapped(Sonic::EKeyState::eKeyState_X))
     {
         if (NextGenPhysics::checkUseLightSpeedDash())
         {
