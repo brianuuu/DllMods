@@ -1962,6 +1962,18 @@ HOOK(int, __fastcall, NextGenShadow_CObjCannonMsgNotifyObjectEvent, 0x468EB0, vo
     return originalNextGenShadow_CObjCannonMsgNotifyObjectEvent(This, Edx, message);
 }
 
+HOOK(int, __fastcall, NextGenShadow_CObjSelectCanonMsgNotifyObjectEvent, 0x100F8A0, void* This, void* Edx, uint32_t* message)
+{
+    isChaosControl = false;
+    return originalNextGenShadow_CObjSelectCanonMsgNotifyObjectEvent(This, Edx, message);
+}
+
+HOOK(int, __fastcall, NextGenShadow_CObjJumpSelectorMsgNotifyObjectEvent, 0x101E3E0, void* This, void* Edx, uint32_t* message)
+{
+    isChaosControl = false;
+    return originalNextGenShadow_CObjJumpSelectorMsgNotifyObjectEvent(This, Edx, message);
+}
+
 HOOK(int, __fastcall, NextGenShadow_CObjStopPeopleMsgNotifyObjectEvent, 0xFDDFB0, void* This, void* Edx, uint32_t* message)
 {
     isChaosControl = false;
@@ -2777,6 +2789,8 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_MsgPlayerGoal);
     INSTALL_HOOK(NextGenShadow_MsgStartHangOn);
     INSTALL_HOOK(NextGenShadow_CObjCannonMsgNotifyObjectEvent);
+    INSTALL_HOOK(NextGenShadow_CObjSelectCanonMsgNotifyObjectEvent);
+    INSTALL_HOOK(NextGenShadow_CObjJumpSelectorMsgNotifyObjectEvent);
     INSTALL_HOOK(NextGenShadow_CObjStopPeopleMsgNotifyObjectEvent);
     INSTALL_HOOK(NextGenShadow_CRivalShadowMsgDamage);
 
