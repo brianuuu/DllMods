@@ -1409,6 +1409,8 @@ void __declspec(naked) NextGenShadow_GetAllHomingTargets()
     static uint32_t returnAddress = 0xE7484F;
     __asm
     {
+        fstp    [esp + 14h]
+        
         mov     esi, [esp + 18h]
         mov     ecx, [esp + 14h]
         mov     eax, [esp + 34h]
@@ -1420,7 +1422,6 @@ void __declspec(naked) NextGenShadow_GetAllHomingTargets()
         add     esp, 0xC
 
         // original function
-        fstp    [esp + 14h]
         fld     [esp + 14h]
         jmp     [returnAddress]
     }
