@@ -2774,6 +2774,7 @@ void NextGenShadow::applyPatches()
     //-------------------------------------------------------
     // skip MsgChangeGameSpeed and sound change
     WRITE_JUMP(0x111AF35, (void*)0x111AF71); 
+    WRITE_NOP(0x111AF7B, 3);
 
     INSTALL_HOOK(NextGenShadow_CPlayerSpeedStatePluginTimeBreakBegin);
     INSTALL_HOOK(NextGenShadow_CPlayerSpeedStatePluginTimeBreakAdvance);
