@@ -49,6 +49,7 @@ class CQTEButtonSequence : public Sonic::CGameObject
 
     QTEJumpBoard::Data m_data;
     float m_lifeTime;
+    bool m_isOutOfControl;
 
     enum ButtonType { A, B, X, Y, LB, RB, COUNT };
     struct Button
@@ -98,6 +99,7 @@ public:
     CQTEButtonSequence(QTEJumpBoard::Data const& data)
         : m_data(data)
         , m_lifeTime(0.0f)
+        , m_isOutOfControl(false)
         , m_txtID(3u)
         , m_sequenceID(0u)
         , m_buttonID(0u)
@@ -132,6 +134,16 @@ public:
         Chao::CSD::CProject::DestroyScene(m_rcQTE.Get(), m_txt3);
         Chao::CSD::CProject::DestroyScene(m_rcQTE.Get(), m_txt4);
         m_rcQTE = nullptr;
+
+        if (m_isOutOfControl)
+        {
+            auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+            if (context)
+            {
+                context->StateFlag(eStateFlag_OutOfControl)--;
+                m_isOutOfControl = false;
+            }
+        }
     }
 
     void AddCallback
@@ -326,6 +338,7 @@ public:
         // make sure Sonic doesn't receive input
         auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
         context->StateFlag(eStateFlag_OutOfControl)++;
+        m_isOutOfControl = true;
 
         // change animation
         Common::SonicContextChangeAnimation(AnimationSetPatcher::TrickJumpStart);
@@ -598,6 +611,7 @@ public:
         {
             auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
             context->StateFlag(eStateFlag_OutOfControl)--;
+            m_isOutOfControl = false;
             ResetTime();
             
             m_state = S_Outro2;

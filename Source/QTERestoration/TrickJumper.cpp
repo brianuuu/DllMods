@@ -21,6 +21,7 @@ private:
 	TrickJumper::Data m_data;
     float m_lifeTime;
     float m_uiAppearTime;
+    bool m_isOutOfControl;
 
     hh::math::CVector m_direction;
     hh::math::CVector m_impulsePos;
@@ -73,16 +74,17 @@ private:
     } m_state;
 
 public:
-	CTrickJumperUI
+    CTrickJumperUI
     (
-        TrickJumper::Data const& data, 
+        TrickJumper::Data const& data,
         hh::math::CVector const& direction,
         hh::math::CVector const& impulsePos,
         float const& uiAppearTime
     )
-		: m_data(data)
+        : m_data(data)
         , m_lifeTime(0.0f)
         , m_uiAppearTime(uiAppearTime)
+        , m_isOutOfControl(false)
         , m_direction(direction)
         , m_impulsePos(impulsePos)
         , m_txtID(3u)
@@ -117,6 +119,16 @@ public:
         Chao::CSD::CProject::DestroyScene(m_rcQTE.Get(), m_txt3);
         Chao::CSD::CProject::DestroyScene(m_rcQTE.Get(), m_txt4);
         m_rcQTE = nullptr;
+
+        if (m_isOutOfControl)
+        {
+            auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+            if (context)
+            {
+                context->StateFlag(eStateFlag_OutOfControl)--;
+                m_isOutOfControl = false;
+            }
+        }
 	}
 
 	void AddCallback
@@ -272,6 +284,7 @@ public:
         // make sure Sonic doesn't receive input
         auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
         context->StateFlag(eStateFlag_OutOfControl)++;
+        m_isOutOfControl = true;
 
         // change animation
         Common::SonicContextChangeAnimation(AnimationSetPatcher::TrickJumpStart);
@@ -564,6 +577,7 @@ public:
         {
             auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
             context->StateFlag(eStateFlag_OutOfControl)--;
+            m_isOutOfControl = false;
             ResetTime();
 
             m_state = S_Outro2;
