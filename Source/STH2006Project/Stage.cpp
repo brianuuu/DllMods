@@ -456,6 +456,31 @@ HOOK(void, __fastcall, Stage_CEnemyBiter_MsgHitEventCollision, 0xB83A20, Sonic::
 }
 
 //---------------------------------------------------
+// Fix EggRobo using wrong brk for RoboB
+//---------------------------------------------------
+HOOK(int*, __fastcall, Stage_CEnemyEggRobo_SpawnBrk, 0xBAAEC0, uint32_t This)
+{
+    int* result = originalStage_CEnemyEggRobo_SpawnBrk(This);
+
+    static Hedgehog::Base::CSharedString enm_eggroboA_brk = "enm_eggroboA_brk";
+    static Hedgehog::Base::CSharedString enm_eggroboB_brk = "enm_eggroboB_brk";
+    static Hedgehog::Base::CSharedString cmn_eggroboA_brk_ = "cmn_eggroboA_brk_";
+    static Hedgehog::Base::CSharedString cmn_eggroboB_brk_ = "cmn_eggroboB_brk_";
+    if (*(bool*)(This + 416))
+    {
+        WRITE_MEMORY(0x1E77828, char*, enm_eggroboB_brk.get());
+        WRITE_MEMORY(0x1E7782C, char*, cmn_eggroboB_brk_.get());
+    }
+    else
+    {
+        WRITE_MEMORY(0x1E77828, char*, enm_eggroboA_brk.get());
+        WRITE_MEMORY(0x1E7782C, char*, cmn_eggroboA_brk_.get());
+    }
+
+    return result;
+}
+
+//---------------------------------------------------
 // Bombbox Explosion
 //---------------------------------------------------
 float const cExplosion_radius = 5.0f;
@@ -714,6 +739,11 @@ void Stage::applyPatches()
     // Always allow MsgCheckPermissionAttack
     WRITE_MEMORY(0xBDE62E, uint8_t, 0xEB);
     WRITE_NOP(0xBDE681, 2);
+
+    //---------------------------------------------------
+    // Fix EggRobo using wrong brk for RoboB
+    //---------------------------------------------------
+    INSTALL_HOOK(Stage_CEnemyEggRobo_SpawnBrk);
 
     //---------------------------------------------------
     // Bombbox Explosion
