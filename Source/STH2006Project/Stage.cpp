@@ -456,7 +456,7 @@ HOOK(void, __fastcall, Stage_CEnemyBiter_MsgHitEventCollision, 0xB83A20, Sonic::
 }
 
 //---------------------------------------------------
-// Fix EggRobo using wrong brk for RoboB
+// Enemy Fixes
 //---------------------------------------------------
 HOOK(int*, __fastcall, Stage_CEnemyEggRobo_SpawnBrk, 0xBAAEC0, uint32_t This)
 {
@@ -478,6 +478,17 @@ HOOK(int*, __fastcall, Stage_CEnemyEggRobo_SpawnBrk, 0xBAAEC0, uint32_t This)
     }
 
     return result;
+}
+
+void __declspec(naked) Stage_CEnemyELauncher_HideMissile()
+{
+    static uint32_t returnAddress = 0xB81491;
+    __asm
+    {
+        mov     dword ptr [esp + 184h], 0xC61C4000 // -10000y
+        movss   [esp + 190h], xmm0 // original
+        jmp     [returnAddress]
+    }
 }
 
 //---------------------------------------------------
@@ -741,9 +752,13 @@ void Stage::applyPatches()
     WRITE_NOP(0xBDE681, 2);
 
     //---------------------------------------------------
-    // Fix EggRobo using wrong brk for RoboB
+    // Enemy Fixes
     //---------------------------------------------------
+    // Fix EggRoboB using wrong brk object
     INSTALL_HOOK(Stage_CEnemyEggRobo_SpawnBrk);
+
+    // Hide EggELauncher missile respawn
+    WRITE_JUMP(0xB81488, (void*)Stage_CEnemyELauncher_HideMissile)
 
     //---------------------------------------------------
     // Bombbox Explosion
