@@ -757,8 +757,12 @@ void Stage::applyPatches()
     // Fix EggRoboB using wrong brk object
     INSTALL_HOOK(Stage_CEnemyEggRobo_SpawnBrk);
 
-    // Hide EggELauncher missile respawn
-    WRITE_JUMP(0xB81488, (void*)Stage_CEnemyELauncher_HideMissile)
+    // Hide ELauncher missile respawn
+    WRITE_JUMP(0xB81488, (void*)Stage_CEnemyELauncher_HideMissile);
+
+    // Increase ELauncher collision height 0.8->2.62
+    WRITE_MEMORY(0xB820D7, uint32_t, 0x17048D8);
+    WRITE_MEMORY(0xB821DB, uint32_t, 0x17048D8);
 
     //---------------------------------------------------
     // Bombbox Explosion
