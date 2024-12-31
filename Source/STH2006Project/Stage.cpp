@@ -491,6 +491,32 @@ void __declspec(naked) Stage_CEnemyELauncher_HideMissile()
     }
 }
 
+void __declspec(naked) Stage_CEnemyEggRobo_TrackBeam()
+{
+    static uint32_t returnAddress = 0x601CF0;
+    __asm
+    {
+        // original
+        movss   [esp + 0xB4], xmm0
+
+        // TStateGetContext
+        mov     ecx, ebx
+        mov     eax, [ecx + 8]
+
+        // use missile track values
+        movss   xmm0, dword ptr [eax + 0x3E0] // homing velocity
+        movss   [esp + 0xA8], xmm0
+        movss   xmm0, dword ptr [eax + 0x3E4] // homing start time
+        movss   [esp + 0xAC], xmm0
+        movss   xmm0, ds:0x1A40984 // 1.5 homing time
+        movss   [esp + 0xB0], xmm0
+        movss   xmm0, dword ptr [eax + 0x3EC] // life time
+        movss   dword ptr [esp + 0xB8], xmm0
+
+        jmp     [returnAddress]
+    }
+}
+
 //---------------------------------------------------
 // Bombbox Explosion
 //---------------------------------------------------
@@ -763,6 +789,15 @@ void Stage::applyPatches()
     // Increase ELauncher collision height 0.8->2.62
     WRITE_MEMORY(0xB820D7, uint32_t, 0x17048D8);
     WRITE_MEMORY(0xB821DB, uint32_t, 0x17048D8);
+
+    // Change EggRoboA beam data 
+    WRITE_MEMORY(0x601C5C, uint32_t, 0x1A416CC); // 0.5 length
+    WRITE_MEMORY(0x601CBF, uint32_t, 0x1A3F16C); // 12 shot velocity
+    WRITE_MEMORY(0x601CD5, uint32_t, 0x156A23C); // 10 life time
+
+    // Set EggRoboA beam to use EggRoboB missile track values
+    WRITE_JUMP(0x601CE7, (void*)Stage_CEnemyEggRobo_TrackBeam);
+    WRITE_JUMP(0x601E54, (void*)0x601E7E); 
 
     //---------------------------------------------------
     // Bombbox Explosion
