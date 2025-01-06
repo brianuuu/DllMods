@@ -875,7 +875,7 @@ SharedPtrTypeless shieldSoundHandle_Elise;
 SharedPtrTypeless shieldPfxHandle_Elise;
 HOOK(int*, __fastcall, NextGenSonic_CSonicStatePluginBoostBegin, 0x1117A20, void* This)
 {
-    if (Common::IsPlayerSuper())
+    if (Common::IsPlayerSuper() || Common::GetSonicStateFlags()->AutoBoost)
     {
         return originalNextGenSonic_CSonicStatePluginBoostBegin(This);
     }
@@ -920,39 +920,21 @@ bool __fastcall NextGenSonic_CanActivateEliseShield()
            !Common::IsPlayerSuper() &&
            !Common::IsPlayerDead() &&
            *currentBoost > 0.0f &&
+           !Common::GetSonicStateFlags()->AutoBoost &&
            padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger);
 }
 
-void __declspec(naked) NextGenSonic_CSonicStatePluginBoostAdvance()
+HOOK(void, __fastcall, NextGenSonic_CSonicStatePluginBoostAdvance, 0x1117710, void* This)
 {
-    static uint32_t returnAddress = 0x1117731;
-    static uint32_t successAddress = 0x11178F1;
-    __asm
+    if (!NextGenSonic::m_isShield)
     {
-        push    eax
-        push    ecx
-        call    NextGenSonic_CanActivateEliseShield
-        xor     al, 1 // flip it so we can exit for false
-        mov     byte ptr[ebp + 1Ch], al
-        pop     ecx
-        pop     eax
-
-        // Use normal advance for Super Sonic
-        cmp     byte ptr[ecx + 6Fh], 0
-        jnz     jump
-        jmp     [successAddress]
-
-        // original function
-        jump:
-        mov     byte ptr[ebp + 1Ch], 0
-        mov     [esp + 0Fh], 0
-        jmp     [returnAddress]
+        originalNextGenSonic_CSonicStatePluginBoostAdvance(This);
     }
 }
 
 HOOK(void, __fastcall, NextGenSonic_CSonicStatePluginBoostEnd, 0x1117900, void* This)
 {
-    if (Common::IsPlayerSuper())
+    if (Common::IsPlayerSuper() || Common::GetSonicStateFlags()->AutoBoost)
     {
         originalNextGenSonic_CSonicStatePluginBoostEnd(This);
     }
@@ -2695,7 +2677,7 @@ void NextGenSonic::applyPatches()
 
         // Hijack boost plugin as shield
         INSTALL_HOOK(NextGenSonic_CSonicStatePluginBoostBegin);
-        WRITE_JUMP(0x1117728, NextGenSonic_CSonicStatePluginBoostAdvance);
+        INSTALL_HOOK(NextGenSonic_CSonicStatePluginBoostAdvance);
         INSTALL_HOOK(NextGenSonic_CSonicStatePluginBoostEnd);
 
         //WRITE_JUMP(0xE303F3, (void*)0xE30403); // boost forward push
