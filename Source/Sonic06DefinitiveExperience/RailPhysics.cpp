@@ -2,9 +2,10 @@
 #include "Configuration.h"
 #include "Application.h"
 
+uint32_t m_hasHomingTargetObj = false;
 uint32_t* RailPhysics::m_pHomingTargetObj = nullptr;
 uint32_t* RailPhysics::m_pHomingTargetCEventCollision = nullptr;
-uint32_t RailPhysics::m_isGettingHomingTarget = false;
+
 uint32_t m_forceRailCollisionQuery = false;
 std::set<uint32_t*> RailPhysics::m_pPathContainer;
 std::vector<PathData> RailPhysics::m_pathData;
@@ -45,6 +46,7 @@ HOOK(uint32_t*, __fastcall, RailPhysics_CHomingTargetDestructor, 0x500280, uint3
 {
     if (This == RailPhysics::m_pHomingTargetObj)
     {
+        m_hasHomingTargetObj = false;
         RailPhysics::m_pHomingTargetObj = nullptr;
         RailPhysics::m_pHomingTargetCEventCollision = nullptr;
         printf("[RailPhysics] Homing Target Destructed\n");
@@ -69,22 +71,58 @@ HOOK(uint32_t*, __fastcall, RailPhysics_CDatabaseDataDestructor, 0x699380, uint3
     return originalRailPhysics_CDatabaseDataDestructor(This);
 }
 
-HOOK(int, __fastcall, RailPhysics_CHomingTargetImplCollisionInit, 0xE914E0, uint32_t* This, void* Edx, int a2, int a3, int a4)
+void __declspec(naked) createHomingTargetObj()
 {
-    RailPhysics::m_pHomingTargetObj = This;
-    RailPhysics::m_isGettingHomingTarget = true;
+    static uint32_t returnAddress = 0x121EDB0;
+    static uint32_t skipAddress = 0x121EE56;
+    __asm
+    {
+        test    m_hasHomingTargetObj, 0
+        jne     jump
 
-    return originalRailPhysics_CHomingTargetImplCollisionInit(This, Edx, a2, a3, a4);
+        mov     m_hasHomingTargetObj, 1
+        mov     esi, [ebx+0xAC]
+        jmp     [returnAddress]
+
+        jump:
+        jmp     [skipAddress]
+    }
+}
+
+HOOK(void, __fastcall, RailPhysics_CObjGrindPath_AddCallback, 0x121ED40, uint32_t This, void* Edx, int a2, int a3, int a4)
+{
+    char const* pathName = *(char**)(This + 0x11C);
+    for (PathData& pathData : RailPhysics::m_pathData)
+    {
+        if (pathData.m_name == std::string(pathName))
+        {
+            pathData.m_enabled = true;
+            break;
+        }
+    }
+
+    originalRailPhysics_CObjGrindPath_AddCallback(This, Edx, a2, a3, a4);
+}
+
+HOOK(int, __fastcall, RailPhysics_CHomingTargetImpl_AddCallback, 0xE914E0, uint32_t* This, void* Edx, int a2, int a3, int a4)
+{
+    // should only be called once
+    RailPhysics::m_pHomingTargetObj = This;
+    return originalRailPhysics_CHomingTargetImpl_AddCallback(This, Edx, a2, a3, a4);
 }
 
 HOOK(uint32_t*, __cdecl, RailPhysics_CEventCollisionConstructor, 0x11836F0, int a1, int a2, int a3, int a4, int a5, char a6, int a7)
 {
     uint32_t* pObject = originalRailPhysics_CEventCollisionConstructor(a1, a2, a3, a4, a5, a6, a7);
 
-    if (RailPhysics::m_isGettingHomingTarget)
+    // find the one with matchiing event collision holder
+    if (RailPhysics::m_pHomingTargetObj)
     {
-        RailPhysics::m_pHomingTargetCEventCollision = (uint32_t*)*pObject;
-        RailPhysics::m_isGettingHomingTarget = false;
+        Sonic::CGameObject3D* pHomingTargetObj = (Sonic::CGameObject3D*)RailPhysics::m_pHomingTargetObj;
+        if (a2 == *(int*)(pHomingTargetObj->m_spEventCollisionHolder.get()))
+        {
+            RailPhysics::m_pHomingTargetCEventCollision = (uint32_t*)*pObject;
+        }
     }
 
     return pObject;
@@ -197,24 +235,6 @@ HOOK(int*, __fastcall, RailPhysics_CSonicStateGrindBegin, 0xDF26A0, void* This)
     }
 
     return originalRailPhysics_CSonicStateGrindBegin(This);
-}
-
-void __declspec(naked) createHomingTargetObj()
-{
-    static uint32_t returnAddress = 0x121EDB0;
-    static uint32_t skipAddress = 0x121EE56;
-    __asm
-    {
-        mov     esi, RailPhysics::m_pHomingTargetObj
-        test    esi, esi
-        jnz     jump
-
-        mov     esi, [ebx+0xAC]
-        jmp     [returnAddress]
-
-        jump:
-        jmp     [skipAddress]
-    }
 }
 
 void __declspec(naked) forceQueryHomingCollision()
@@ -334,7 +354,8 @@ void RailPhysics::applyPatches()
         WRITE_JUMP(0xE744C1, forceQueryHomingCollision);
 
         // Grab the target object & event collision pointer
-        INSTALL_HOOK(RailPhysics_CHomingTargetImplCollisionInit);
+        INSTALL_HOOK(RailPhysics_CObjGrindPath_AddCallback);
+        INSTALL_HOOK(RailPhysics_CHomingTargetImpl_AddCallback);
         INSTALL_HOOK(RailPhysics_CEventCollisionConstructor);
 
         // Update rail lock-on position
@@ -382,6 +403,10 @@ void RailPhysics::updateHomingTargetPos()
     for (uint32_t i = 0; i < m_pathData.size(); i++)
     {
         PathData const& pathData = m_pathData[i];
+        if (!pathData.m_enabled)
+        {
+            continue;
+        }
 
         // Check if bounding sphere (plus a little) enclose test point
         if ((testPos - pathData.m_centre).squaredNorm() <= pow(pathData.m_radius + 20.0f, 2))
@@ -595,6 +620,9 @@ void RailPhysics::getBoundingSphere(PathData& pathData)
     }
 
     pathData.m_radius = sqrtf(maxRadiusSquared);
+    
+    // Default not enabled, wait until CObjGrindPath
+    pathData.m_enabled = false;
 }
 
 Eigen::Vector3f RailPhysics::interpolateSegment(std::vector<KnotData> const& knotDataList, uint32_t index, float t)

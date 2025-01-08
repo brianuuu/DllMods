@@ -28,6 +28,8 @@ struct PathData
 	// Bounding sphere
 	Eigen::Vector3f m_centre;
 	float m_radius;
+
+	bool m_enabled;
 };
 
 class RailPhysics
@@ -37,7 +39,6 @@ public:
 
 	static uint32_t* m_pHomingTargetObj;
 	static uint32_t* m_pHomingTargetCEventCollision;
-	static uint32_t m_isGettingHomingTarget;
 
 	static float m_grindSpeed;
 	static float m_grindAccelTime;
