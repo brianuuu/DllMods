@@ -274,6 +274,10 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationDataSuper.emplace_back("GrindSideLeftJumpR", "sn_grind_move_l_r", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("GrindSideRightJumpL", "sn_grind_move_r_l", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("GrindSideLeftJumpL", "sn_grind_move_l_l", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GrindToWallROnRegular", "sn_grind_r_wall_r", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GrindToWallLOnRegular", "sn_grind_r_wall_l", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GrindToWallROnGoofy", "sn_grind_l_wall_r", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GrindToWallLOnGoofy", "sn_grind_l_wall_l", 1.0f, true, nullptr);
 
         // SkyDive
         m_newAnimationDataSuper.emplace_back("SkyDivingStart", "sn_dive_loop", 1.0f, true, nullptr);
@@ -295,6 +299,10 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationDataSuper.emplace_back("GrindSideLeftJumpR", "ssn_jump_loop", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("GrindSideRightJumpL", "ssn_jump_loop", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("GrindSideLeftJumpL", "ssn_jump_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GrindToWallROnRegular", "ssn_jump_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GrindToWallLOnRegular", "ssn_jump_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GrindToWallROnGoofy", "ssn_jump_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GrindToWallLOnGoofy", "ssn_jump_loop", 1.0f, true, nullptr);
 
         // SkyDive
         m_newAnimationDataSuper.emplace_back("SkyDivingStart", "ssn_move_f_loop", 1.0f, true, nullptr);
@@ -323,10 +331,6 @@ void AnimationSetPatcher::applyPatches()
     m_newAnimationDataSuper.emplace_back("GrindSquatR", "ssn_grind_loop", 1.0f, true, nullptr);
     m_newAnimationDataSuper.emplace_back("GrindSwitchAL", "ssn_grind_switch", 1.0f, true, nullptr);
     m_newAnimationDataSuper.emplace_back("GrindSwitchAR", "ssn_grind_switch", 1.0f, true, nullptr);
-    m_newAnimationDataSuper.emplace_back("GrindToWallROnRegular", "ssn_jump_loop", 1.0f, true, nullptr);
-    m_newAnimationDataSuper.emplace_back("GrindToWallLOnRegular", "ssn_jump_loop", 1.0f, true, nullptr);
-    m_newAnimationDataSuper.emplace_back("GrindToWallROnGoofy", "ssn_jump_loop", 1.0f, true, nullptr);
-    m_newAnimationDataSuper.emplace_back("GrindToWallLOnGoofy", "ssn_jump_loop", 1.0f, true, nullptr);
 
     // Fix Super Form animation
     WRITE_STRING(0x15D58F4, "ssn_trick_jump"); // TrickPrepare
