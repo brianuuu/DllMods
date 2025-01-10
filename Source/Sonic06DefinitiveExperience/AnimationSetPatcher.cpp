@@ -335,7 +335,15 @@ void AnimationSetPatcher::applyPatches()
     // Fix Super Form animation
     WRITE_STRING(0x15D58F4, "ssn_trick_jump"); // TrickPrepare
     WRITE_STRING(0x15D5FD0, "ssn_float_loop"); // Float
-    WRITE_STRING(0x15D5D04, "ssn_spin_fall"); // JumpCloudStart
+    WRITE_STRING(0x15D59C8, "ssn_pulley_up_e"); // PulleyJump
+    if (Configuration::m_model == Configuration::ModelType::Blaze)
+    {
+        WRITE_STRING(0x15D5D04, "sn_spin_fall"); // JumpCloudStart
+    }
+    else
+    {
+        WRITE_STRING(0x15D5D04, "ssn_spin_fall"); // JumpCloudStart
+    }
 
     m_newAnimationDataSuper.emplace_back("QuickStepL", "ssn_idle_quickstep_l", 1.0f, false, nullptr);
     m_newAnimationDataSuper.emplace_back("QuickStepR", "ssn_idle_quickstep_r", 1.0f, false, nullptr);
