@@ -347,6 +347,7 @@ void AnimationSetPatcher::applyPatches()
 
     m_newAnimationDataSuper.emplace_back("QuickStepL", "ssn_idle_quickstep_l", 1.0f, false, nullptr);
     m_newAnimationDataSuper.emplace_back("QuickStepR", "ssn_idle_quickstep_r", 1.0f, false, nullptr);
+    m_newAnimationDataSuper.emplace_back("HipSliding", "ssn_sliding_loop", 1.0f, true, nullptr);
 
     // SpinFall animation
     // sn_spin_fall
