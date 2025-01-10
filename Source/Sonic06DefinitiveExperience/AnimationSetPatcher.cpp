@@ -266,8 +266,9 @@ void AnimationSetPatcher::applyPatches()
     // ssn_float_loop
     // ssn_idle_quickstep_l
     // ssn_idle_quickstep_r
-    if (Configuration::m_model == Configuration::ModelType::Blaze)
+    if (Configuration::m_model == Configuration::ModelType::Blaze || Configuration::m_model == Configuration::ModelType::Shadow)
     {
+        // Grind Side Hops
         m_newAnimationDataSuper.emplace_back("GrindQuickJumpR", "sn_grind_jump_r", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("GrindQuickJumpL", "sn_grind_jump_l", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("GrindSideRightJumpR", "sn_grind_move_r_r", 1.0f, true, nullptr);
@@ -288,11 +289,15 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationDataSuper.emplace_back("SkyDivingDEnd", "sn_dive_fast_e", 1.0f, false, nullptr);
         m_newAnimationDataSuper.emplace_back("SkyDivingDamage", "sn_dive_damage_loop", 1.0f, true, nullptr);
 
-        // LightSpeedDash
-        m_newAnimationDataSuper.emplace_back("LightSpeedDash", "sn_ringdash_loop", 1.0f, true, nullptr);
+        if (Configuration::m_model == Configuration::ModelType::Blaze)
+        {
+            // LightSpeedDash
+            m_newAnimationDataSuper.emplace_back("LightSpeedDash", "sn_ringdash_loop", 1.0f, true, nullptr);
+        }
     }
     else
     {
+        // Grind Side Hops
         m_newAnimationDataSuper.emplace_back("GrindQuickJumpR", "ssn_jump_loop", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("GrindQuickJumpL", "ssn_jump_loop", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("GrindSideRightJumpR", "ssn_jump_loop", 1.0f, true, nullptr);
@@ -461,7 +466,7 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationData.emplace_back(BrakeFlip, "sn_brake_flip", 1.0f, false, nullptr);
 
         // TODO: Squat Kick and Brake Flip for Super Shadow
-        //m_newAnimationDataSuper.emplace_back("SquatKick", "ssn_squat_kick", 1.0f, false, nullptr);
+        m_newAnimationDataSuper.emplace_back("SquatKick", "sn_squat_kick", 1.0f, false, nullptr);
         //m_newAnimationDataSuper.emplace_back(BrakeFlip, "ssn_brake_flip", 1.0f, false, nullptr);
 
         // Chaos Attack
@@ -471,11 +476,20 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationData.emplace_back(ChaosAttack[3], "sh_chaos_attack03", 1.0f, false, ChaosAttackWait);
         m_newAnimationData.emplace_back(ChaosAttack[4], "sh_chaos_attack04", 1.0f, false, ChaosAttackWait);
         m_newAnimationData.emplace_back(ChaosAttackWait, "sh_chaos_wait_l", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back(ChaosAttack[0], "sh_chaos_attack00", 1.0f, false, ChaosAttackWait);
+        m_newAnimationDataSuper.emplace_back(ChaosAttack[1], "sh_chaos_attack01", 1.0f, false, ChaosAttackWait);
+        m_newAnimationDataSuper.emplace_back(ChaosAttack[2], "sh_chaos_attack02", 1.0f, false, ChaosAttackWait);
+        m_newAnimationDataSuper.emplace_back(ChaosAttack[3], "sh_chaos_attack03", 1.0f, false, ChaosAttackWait);
+        m_newAnimationDataSuper.emplace_back(ChaosAttack[4], "sh_chaos_attack04", 1.0f, false, ChaosAttackWait);
+        m_newAnimationDataSuper.emplace_back(ChaosAttackWait, "sh_chaos_wait_l", 1.0f, true, nullptr);
 
         // Triple Kick
+        // TODO: Super 03
         m_newAnimationData.emplace_back(SpinAttack[0], "sh_spin_attack01_Root", 1.0f, false, nullptr);
         m_newAnimationData.emplace_back(SpinAttack[1], "sh_spin_attack02_Root", 1.0f, false, nullptr);
         m_newAnimationData.emplace_back(SpinAttack[2], "sh_spin_attack03_Root", 1.0f, false, nullptr);
+        m_newAnimationDataSuper.emplace_back(SpinAttack[0], "sh_spin_attack01_Root", 1.0f, false, nullptr);
+        m_newAnimationDataSuper.emplace_back(SpinAttack[1], "sh_spin_attack02_Root", 1.0f, false, nullptr);
 
         // Chaos Spear/Chaos Boost
         m_newAnimationData.emplace_back(SpearWait, "sh_spear_wait_s_Root", 1.0f, false, SpearWaitLoop);
@@ -484,12 +498,22 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationData.emplace_back(SpearShotLoop, "sh_spear_shot_l_Root", 1.0f, true, nullptr);
         m_newAnimationData.emplace_back(ChaosBoost, "sh_spear_free_s_Root", 1.0f, false, ChaosBoostLoop);
         m_newAnimationData.emplace_back(ChaosBoostLoop, "sh_spear_free_l_Root", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back(SpearWait, "sh_spear_wait_s_Root", 1.0f, false, SpearWaitLoop);
+        m_newAnimationDataSuper.emplace_back(SpearWaitLoop, "sh_spear_wait_l_Root", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back(SpearShot, "sh_spear_shot_s_Root", 1.0f, false, SpearShotLoop);
+        m_newAnimationDataSuper.emplace_back(SpearShotLoop, "sh_spear_shot_l_Root", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back(ChaosBoost, "sh_spear_free_s_Root", 1.0f, false, ChaosBoostLoop);
+        m_newAnimationDataSuper.emplace_back(ChaosBoostLoop, "sh_spear_free_l_Root", 1.0f, true, nullptr);
 
         // Chaos Blast
         m_newAnimationData.emplace_back(ChaosBlastWait, "sh_chaosblast_s_Root", 1.0f, false, ChaosBlastWaitLoop);
         m_newAnimationData.emplace_back(ChaosBlastWaitLoop, "sh_chaosblast_wait_l_Root", 1.0f, true, nullptr);
         m_newAnimationData.emplace_back(ChaosBlast, "sh_chaosblast_attack_s_Root", 1.0f, false, ChaosBlastLoop);
         m_newAnimationData.emplace_back(ChaosBlastLoop, "sh_chaosblast_attack_l_Root", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back(ChaosBlastWait, "sh_chaosblast_s_Root", 1.0f, false, ChaosBlastWaitLoop);
+        m_newAnimationDataSuper.emplace_back(ChaosBlastWaitLoop, "sh_chaosblast_wait_l_Root", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back(ChaosBlast, "sh_chaosblast_attack_s_Root", 1.0f, false, ChaosBlastLoop);
+        m_newAnimationDataSuper.emplace_back(ChaosBlastLoop, "sh_chaosblast_attack_l_Root", 1.0f, true, nullptr);
     }
 
     if (!m_newAnimationData.empty())

@@ -120,53 +120,71 @@ bool NextGenShadow::ShouldPlayJetEffect()
     alignas(16) MsgGetAnimationInfo message {};
     Common::SonicContextGetAnimationInfo(message);
 
-    return !Common::IsPlayerSuper() && c_jetAnimations.count(message.m_name);
+    return c_jetAnimations.count(message.m_name);
 }
 
 SharedPtrTypeless jetRightFront;
 SharedPtrTypeless jetRightBack;
 SharedPtrTypeless jetLeftFront;
 SharedPtrTypeless jetLeftBack;
-void NextGenShadow::SetJetEffectVisible(bool visible)
+SharedPtrTypeless superJetRightFront;
+SharedPtrTypeless superJetRightBack;
+SharedPtrTypeless superJetLeftFront;
+SharedPtrTypeless superJetLeftBack;
+void NextGenShadow::SetJetEffectVisible(bool visible, hh::mr::CSingleElement* pModel, bool isSuper)
 {
-    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
     if (visible)
     {
         {
-            auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("RightFoot");
-            Common::fCGlitterCreate(*PLAYER_CONTEXT, jetRightBack, &attachBone, "ef_bo_sha_yh2_jet_back", 1);
+            auto attachBone = pModel->GetNode("RightFoot");
+            Common::fCGlitterCreate(*PLAYER_CONTEXT, isSuper ? superJetRightBack : jetRightBack, &attachBone, "ef_bo_sha_yh2_jet_back", 1);
         }
         {
-            auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("RightToeBase");
-            Common::fCGlitterCreate(*PLAYER_CONTEXT, jetRightFront, &attachBone, "ef_bo_sha_yh2_jet_front", 1);
+            auto attachBone = pModel->GetNode("RightToeBase");
+            Common::fCGlitterCreate(*PLAYER_CONTEXT, isSuper ? superJetRightFront : jetRightFront, &attachBone, "ef_bo_sha_yh2_jet_front", 1);
         }
         {
-            auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("LeftFoot");
-            Common::fCGlitterCreate(*PLAYER_CONTEXT, jetLeftBack, &attachBone, "ef_bo_sha_yh2_jet_back", 1);
+            auto attachBone = pModel->GetNode("LeftFoot");
+            Common::fCGlitterCreate(*PLAYER_CONTEXT, isSuper ? superJetLeftBack : jetLeftBack, &attachBone, "ef_bo_sha_yh2_jet_back", 1);
         }
         {
-            auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("LeftToeBase");
-            Common::fCGlitterCreate(*PLAYER_CONTEXT, jetLeftFront, &attachBone, "ef_bo_sha_yh2_jet_front", 1);
+            auto attachBone = pModel->GetNode("LeftToeBase");
+            Common::fCGlitterCreate(*PLAYER_CONTEXT, isSuper ? superJetLeftFront : jetLeftFront, &attachBone, "ef_bo_sha_yh2_jet_front", 1);
         }
     }
-    else if (jetRightFront)
+    else if (isSuper ? superJetRightFront : jetRightFront)
     {
-        Common::fCGlitterEnd(*PLAYER_CONTEXT, jetRightFront, false);
-        Common::fCGlitterEnd(*PLAYER_CONTEXT, jetRightBack, false);
-        Common::fCGlitterEnd(*PLAYER_CONTEXT, jetLeftFront, false);
-        Common::fCGlitterEnd(*PLAYER_CONTEXT, jetLeftBack, false);
+        if (isSuper)
+        {
+            Common::fCGlitterEnd(*PLAYER_CONTEXT, superJetRightFront, false);
+            Common::fCGlitterEnd(*PLAYER_CONTEXT, superJetRightBack, false);
+            Common::fCGlitterEnd(*PLAYER_CONTEXT, superJetLeftFront, false);
+            Common::fCGlitterEnd(*PLAYER_CONTEXT, superJetLeftBack, false);
 
-        jetRightFront = nullptr;
-        jetRightBack = nullptr;
-        jetLeftFront = nullptr;
-        jetLeftBack = nullptr;
+            superJetRightFront = nullptr;
+            superJetRightBack = nullptr;
+            superJetLeftFront = nullptr;
+            superJetLeftBack = nullptr;
+        }
+        else
+        {
+            Common::fCGlitterEnd(*PLAYER_CONTEXT, jetRightFront, false);
+            Common::fCGlitterEnd(*PLAYER_CONTEXT, jetRightBack, false);
+            Common::fCGlitterEnd(*PLAYER_CONTEXT, jetLeftFront, false);
+            Common::fCGlitterEnd(*PLAYER_CONTEXT, jetLeftBack, false);
+
+            jetRightFront = nullptr;
+            jetRightBack = nullptr;
+            jetLeftFront = nullptr;
+            jetLeftBack = nullptr;
+        }
     }
 }
 
 bool jetSoundIsLeft = false;
 HOOK(int, __fastcall, NextGenShadow_AssignFootstepFloorCues, 0xDFD420, Sonic::Player::CPlayerSpeedContext* context, void* Edx, int stepID)
 {
-    if ((stepID == 0 || stepID == 1) && NextGenShadow::ShouldPlayJetEffect()) // welk or run
+    if ((stepID == 0 || stepID == 1) && NextGenShadow::ShouldPlayJetEffect()) // walk or run
     {
         jetSoundIsLeft = !jetSoundIsLeft;
         return jetSoundIsLeft ? 80041041 : 80041042;
@@ -181,17 +199,20 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
 {
     if (*pModernSonicContext)
     {
+        auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+        hh::mr::CSingleElement* pModel = context->m_pPlayer->m_spCharacterModel.get();
+
         // jet effect
-        if (NextGenShadow::ShouldPlayJetEffect())
+        if (NextGenShadow::ShouldPlayJetEffect() && !Common::IsPlayerSuper())
         {
             if (!jetRightFront)
             {
-                NextGenShadow::SetJetEffectVisible(true);
+                NextGenShadow::SetJetEffectVisible(true, pModel, false);
             }
         }
         else if (jetRightFront)
         {
-            NextGenShadow::SetJetEffectVisible(false);
+            NextGenShadow::SetJetEffectVisible(false, pModel, false);
         }
 
         // chaos boost drain
@@ -209,6 +230,28 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
     }
 
     originalNextGenShadow_CSonicUpdate(This, Edx, dt);
+}
+
+HOOK(bool, __fastcall, NextGenShadow_CSonicSpRenderableSsnUpdate, 0xE71510, uint32_t This, void* Edx, Hedgehog::Universe::SUpdateInfo const& a2)
+{
+    if (*pModernSonicContext && *(uint32_t*)This == 0x16DA834)
+    {
+        // jet effect
+        hh::mr::CSingleElement* pModel = *(hh::mr::CSingleElement**)(This + 0xFC);
+        if (NextGenShadow::ShouldPlayJetEffect() && Common::IsPlayerSuper())
+        {
+            if (!superJetRightFront)
+            {
+                NextGenShadow::SetJetEffectVisible(true, pModel, true);
+            }
+        }
+        else if (superJetRightFront)
+        {
+            NextGenShadow::SetJetEffectVisible(false, pModel, true);
+        }
+    }
+
+    return originalNextGenShadow_CSonicSpRenderableSsnUpdate(This, Edx, a2);
 }
 
 //---------------------------------------------------
@@ -649,7 +692,8 @@ HOOK(int, __fastcall, NextGenShadow_MsgRestartStage, 0xE76810, Sonic::Player::CP
 
     // HUD reset is handled by 06 HUD
     NextGenShadow::SetChaosBoostLevel(0, false);
-    NextGenShadow::SetJetEffectVisible(false);
+    NextGenShadow::SetJetEffectVisible(false, nullptr, false);
+    NextGenShadow::SetJetEffectVisible(false, nullptr, true);
 
     // Re-enable auto run actions (squat kick)
     NextGenShadow::m_enableAutoRunAction = true;
@@ -2697,6 +2741,18 @@ HOOK(void, __fastcall, NextGenShadow_CRASH, 0x8CD0F0, void* This, void* Edx, uin
 }
 
 //---------------------------------------------------
+// Super Shadow
+//---------------------------------------------------
+HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStateTransformSpAdvance, 0xE425B0, float* This)
+{
+    // Play super transform longer
+    if (This[4] > 2.0f)
+    {
+        originalNextGenShadow_CPlayerSpeedStateTransformSpAdvance(This);
+    }
+}
+
+//---------------------------------------------------
 // Main Apply Patches
 //---------------------------------------------------
 void NextGenShadow::applyPatches()
@@ -2715,6 +2771,17 @@ void NextGenShadow::applyPatches()
     WRITE_MEMORY(0x1ABD070, char*, "RightToeBase"); // Toe_R
     WRITE_MEMORY(0x1203CA3, uint32_t, 0x1ABD05C); // electic damage use fire damage offsets
     WRITE_MEMORY(0x1203D7C, uint32_t, 0x1ABD074);
+
+    // Fix Super Shadow pfx bone location
+    static float const spineAuraOffset = -50.0f;
+    WRITE_MEMORY(0xDA2689, float*, &spineAuraOffset);
+    WRITE_MEMORY(0xDA26EA, char*, "TopHair1"); // Needle_U_C
+    WRITE_MEMORY(0xDA273B, char*, "LeftHand"); // Hand_L
+    WRITE_MEMORY(0xDA278C, char*, "RightHand"); // Hand_R
+    WRITE_MEMORY(0xDA27DD, char*, "LeftFoot"); // Foot_L
+    WRITE_MEMORY(0xDA285E, char*, "RightFoot"); // Foot_R
+    INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateTransformSpAdvance);
+    INSTALL_HOOK(NextGenShadow_CSonicSpRenderableSsnUpdate);
 
     // Always disable stomp voice and sfx
     WRITE_MEMORY(0x1254E04, int, -1);
