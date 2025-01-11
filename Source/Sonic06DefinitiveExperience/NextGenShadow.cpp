@@ -1962,6 +1962,7 @@ HOOK(void, __fastcall, NextGenShadow_GlitterCHandleAdvance, 0x6BC8B0, uint32_t T
             "ef_bo_sha",
             "ef_ch_sh",
             "ef_ch_sn",
+            "ef_ch_sps",
         };
 
         for (std::string const& name : c_noSlowParticles)
