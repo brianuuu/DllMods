@@ -216,7 +216,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
         }
 
         // chaos boost drain
-        if (NextGenShadow::m_chaosBoostLevel > 0)
+        if (NextGenShadow::m_chaosBoostLevel > 0 && !Common::IsPlayerSuper())
         {
             float* currentBoost = Common::GetPlayerBoost();
             float const previousBoost = *currentBoost;
@@ -280,6 +280,10 @@ void PlayChaosSnap()
     NextGenShadow::SetChaosBoostModelVisible(true, true);
     hasChaosSnapHiddenModel = true;
     hasChaosSnapTeleported = false;
+    if (context->m_SuperRenderableActorID)
+    {
+        context->m_pPlayer->SendMessageImm(context->m_SuperRenderableActorID, boost::make_shared<Sonic::Message::MsgSetVisible>(false));
+    }
 
     // Stop in air
     Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
@@ -444,6 +448,10 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateHomingAttackEnd, 0x1231F80, hh::
         NextGenShadow::SetChaosBoostModelVisible(NextGenShadow::m_chaosBoostLevel > 0);
         hasChaosSnapHiddenModel = false;
         hasChaosSnapTeleported = true;
+        if (context->m_SuperRenderableActorID)
+        {
+            context->m_pPlayer->SendMessageImm(context->m_SuperRenderableActorID, boost::make_shared<Sonic::Message::MsgSetVisible>(true));
+        }
         
         // Unfreeze camera
         CustomCamera::m_freezeCameraEnabled = false;
@@ -714,7 +722,7 @@ void NextGenShadow::SetChaosBoostModelVisible(bool visible, bool allInvisible)
     model->m_spModel->m_NodeGroupModels[1]->m_Visible = visible && !allInvisible;
 
     auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-    if (visible && !allInvisible)
+    if (visible && !allInvisible && !Common::IsPlayerSuper())
     {
         if (!chaosBoostSpine)
         {
