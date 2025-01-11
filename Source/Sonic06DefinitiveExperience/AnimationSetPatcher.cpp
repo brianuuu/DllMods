@@ -466,6 +466,10 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationDataSuper.emplace_back("SquatKick", "sn_squat_kick", 1.0f, false, nullptr);
         m_newAnimationDataSuper.emplace_back(BrakeFlip, "ssn_brake_flip", 1.0f, false, nullptr);
 
+        // Floating Boost
+        m_newAnimationData.emplace_back(FloatingBoost, "sn_boost_float_loop", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back(FloatingBoost, "sn_boost_float_loop", 1.0f, true, nullptr);
+
         // Chaos Attack
         m_newAnimationData.emplace_back(ChaosAttack[0], "sh_chaos_attack00", 1.0f, false, ChaosAttackWait);
         m_newAnimationData.emplace_back(ChaosAttack[1], "sh_chaos_attack01", 1.0f, false, ChaosAttackWait);

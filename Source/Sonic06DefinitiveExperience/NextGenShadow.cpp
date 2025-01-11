@@ -2777,7 +2777,21 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStatePluginSuperSonicEnd, 0x11D6720, u
 {
     // reset chaos boost
     NextGenShadow::SetChaosBoostLevel(0, true);
-    return originalNextGenShadow_CSonicStatePluginSuperSonicEnd(This);;
+    return originalNextGenShadow_CSonicStatePluginSuperSonicEnd(This);
+}
+
+HOOK(void, __fastcall, NextGenShadow_CStateWalkBegin, 0x111C070, uint32_t This)
+{
+    if (Common::IsPlayerSuper())
+    {
+        // replace Walk with same animation so Boost Aura doesn't move around
+        WRITE_MEMORY(0x111C19F, char*, AnimationSetPatcher::FloatingBoost);
+    }
+    else
+    {
+        WRITE_MEMORY(0x111C19F, uint32_t, 0x15F8438);
+    }
+    originalNextGenShadow_CStateWalkBegin(This);
 }
 
 //---------------------------------------------------
@@ -2814,6 +2828,7 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_CSonicSpRenderableSsnUpdate);
     INSTALL_HOOK(NextGenShadow_CSonicStatePluginSuperSonicBegin);
     INSTALL_HOOK(NextGenShadow_CSonicStatePluginSuperSonicEnd);
+    INSTALL_HOOK(NextGenShadow_CStateWalkBegin);
 
     // Always disable stomp voice and sfx
     WRITE_MEMORY(0x1254E04, int, -1);
@@ -2822,6 +2837,9 @@ void NextGenShadow::applyPatches()
     // Don't change to ball model during drift
     WRITE_NOP(0xDF30AB, 0xD);
     WRITE_MEMORY(0xDF2B24, char*, AnimationSetPatcher::SpinFast);
+
+    // Force no change JumpBall hitting dash panel
+    WRITE_JUMP(0xDED512, (void*)0xDED63B);
 
     // Handle model hide/unhide, jet effect
     INSTALL_HOOK(NextGenShadow_MsgRestartStage);
