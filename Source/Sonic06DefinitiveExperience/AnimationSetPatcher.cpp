@@ -338,6 +338,7 @@ void AnimationSetPatcher::applyPatches()
     WRITE_STRING(0x15D58F4, "ssn_trick_jump"); // TrickPrepare
     WRITE_STRING(0x15D5FD0, "ssn_float_loop"); // Float
     WRITE_STRING(0x15D59C8, "ssn_pulley_up_e"); // PulleyJump
+    WRITE_STRING(0x15D5B70, "ssn_pulley_up_e"); // PoleSpinJumpStart
     if (Configuration::m_model == Configuration::ModelType::Blaze)
     {
         WRITE_STRING(0x15D5D04, "sn_spin_fall"); // JumpCloudStart

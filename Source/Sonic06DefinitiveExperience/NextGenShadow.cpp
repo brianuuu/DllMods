@@ -114,7 +114,7 @@ bool NextGenShadow::ShouldPlayJetEffect()
         "Dash", "DashL", "DashR",
         "Jet", "JetL", "JetR", "JetWallL", "JetWallR",
         "Boost", "BoostL", "BoostR", "BoostWallL", "BoostWallR",
-        "AirBoost", "RunQuickStepL", "RunQuickStepR"
+        "AirBoost", "FloatingBoost", "RunQuickStepL", "RunQuickStepR"
     };
 
     alignas(16) MsgGetAnimationInfo message {};
