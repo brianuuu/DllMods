@@ -2760,6 +2760,22 @@ HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStateTransformSpAdvance, 0xE425
     }
 }
 
+HOOK(int, __fastcall, NextGenShadow_CSonicStatePluginSuperSonicBegin, 0x11D6840, uint32_t This)
+{
+    int result = originalNextGenShadow_CSonicStatePluginSuperSonicBegin(This);
+
+    // max out chaos boost
+    NextGenShadow::SetChaosBoostLevel(3, true);
+    return result;
+}
+
+HOOK(int, __fastcall, NextGenShadow_CSonicStatePluginSuperSonicEnd, 0x11D6720, uint32_t This)
+{
+    // reset chaos boost
+    NextGenShadow::SetChaosBoostLevel(0, true);
+    return originalNextGenShadow_CSonicStatePluginSuperSonicEnd(This);;
+}
+
 //---------------------------------------------------
 // Main Apply Patches
 //---------------------------------------------------
@@ -2788,8 +2804,12 @@ void NextGenShadow::applyPatches()
     WRITE_MEMORY(0xDA278C, char*, "RightHand"); // Hand_R
     WRITE_MEMORY(0xDA27DD, char*, "LeftFoot"); // Foot_L
     WRITE_MEMORY(0xDA285E, char*, "RightFoot"); // Foot_R
+
+    // Super Shadow
     INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateTransformSpAdvance);
     INSTALL_HOOK(NextGenShadow_CSonicSpRenderableSsnUpdate);
+    INSTALL_HOOK(NextGenShadow_CSonicStatePluginSuperSonicBegin);
+    INSTALL_HOOK(NextGenShadow_CSonicStatePluginSuperSonicEnd);
 
     // Always disable stomp voice and sfx
     WRITE_MEMORY(0x1254E04, int, -1);
