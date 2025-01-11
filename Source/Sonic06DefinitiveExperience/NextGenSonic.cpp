@@ -2461,6 +2461,18 @@ HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickEnd, 0x12527B0, hh::
 }
 
 //---------------------------------------------------
+// Super Soniic
+//---------------------------------------------------
+HOOK(void, __fastcall, NextGenSonic_CPlayerSpeedStateTransformSpAdvance, 0xE425B0, float* This)
+{
+    // Play super transform longer
+    if (This[4] > 2.1f)
+    {
+        originalNextGenSonic_CPlayerSpeedStateTransformSpAdvance(This);
+    }
+}
+
+//---------------------------------------------------
 // Main Apply Patches
 //---------------------------------------------------
 void NextGenSonic::applyPatches()
@@ -2502,6 +2514,9 @@ void NextGenSonic::applyPatches()
     WRITE_MEMORY(0xDA278C, char*, "RightHand"); // Hand_R
     WRITE_MEMORY(0xDA27DD, char*, "LeftFoot"); // Foot_L
     WRITE_MEMORY(0xDA285E, char*, "RightFoot"); // Foot_R
+
+    // Super Sonic
+    INSTALL_HOOK(NextGenSonic_CPlayerSpeedStateTransformSpAdvance);
 
     if (!Configuration::m_characterMoveset) return;
 
