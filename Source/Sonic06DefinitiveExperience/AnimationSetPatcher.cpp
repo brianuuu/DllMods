@@ -289,11 +289,8 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationDataSuper.emplace_back("SkyDivingDEnd", "sn_dive_fast_e", 1.0f, false, nullptr);
         m_newAnimationDataSuper.emplace_back("SkyDivingDamage", "sn_dive_damage_loop", 1.0f, true, nullptr);
 
-        if (Configuration::m_model == Configuration::ModelType::Blaze)
-        {
-            // LightSpeedDash
-            m_newAnimationDataSuper.emplace_back("LightSpeedDash", "sn_ringdash_loop", 1.0f, true, nullptr);
-        }
+        // LightSpeedDash
+        m_newAnimationDataSuper.emplace_back("LightSpeedDash", "sn_ringdash_loop", 1.0f, true, nullptr);
     }
     else
     {
@@ -465,9 +462,9 @@ void AnimationSetPatcher::applyPatches()
         // Brake flip (for 06 physics)
         m_newAnimationData.emplace_back(BrakeFlip, "sn_brake_flip", 1.0f, false, nullptr);
 
-        // TODO: Squat Kick and Brake Flip for Super Shadow
+        // Squat Kick and Brake Flip for Super Shadow
         m_newAnimationDataSuper.emplace_back("SquatKick", "sn_squat_kick", 1.0f, false, nullptr);
-        //m_newAnimationDataSuper.emplace_back(BrakeFlip, "ssn_brake_flip", 1.0f, false, nullptr);
+        m_newAnimationDataSuper.emplace_back(BrakeFlip, "ssn_brake_flip", 1.0f, false, nullptr);
 
         // Chaos Attack
         m_newAnimationData.emplace_back(ChaosAttack[0], "sh_chaos_attack00", 1.0f, false, ChaosAttackWait);
@@ -484,12 +481,12 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationDataSuper.emplace_back(ChaosAttackWait, "sh_chaos_wait_l", 1.0f, true, nullptr);
 
         // Triple Kick
-        // TODO: Super 03
         m_newAnimationData.emplace_back(SpinAttack[0], "sh_spin_attack01_Root", 1.0f, false, nullptr);
         m_newAnimationData.emplace_back(SpinAttack[1], "sh_spin_attack02_Root", 1.0f, false, nullptr);
         m_newAnimationData.emplace_back(SpinAttack[2], "sh_spin_attack03_Root", 1.0f, false, nullptr);
         m_newAnimationDataSuper.emplace_back(SpinAttack[0], "sh_spin_attack01_Root", 1.0f, false, nullptr);
         m_newAnimationDataSuper.emplace_back(SpinAttack[1], "sh_spin_attack02_Root", 1.0f, false, nullptr);
+        m_newAnimationDataSuper.emplace_back(SpinAttack[2], "ssh_spin_attack03_Root", 1.0f, false, nullptr);
 
         // Chaos Spear/Chaos Boost
         m_newAnimationData.emplace_back(SpearWait, "sh_spear_wait_s_Root", 1.0f, false, SpearWaitLoop);
