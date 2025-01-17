@@ -256,9 +256,12 @@ HOOK(void, __fastcall, NextGenSonic_CSonicStateSlidingAdvance, 0x11D69A0, hh::fn
     bool result = Common::IsPlayerIn2D() ? Common::GetPlayerTargetVelocity(playerVelocity) : Common::GetPlayerVelocity(playerVelocity);
     if (!result || playerVelocity.norm() <= minSpeed)
     {
-        slidingEndWasSliding_Sonic = NextGenSonic::m_isSliding;
-        StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
-        return;
+        if (StateManager::isCurrentAction(StateAction::Sliding))
+        {
+            slidingEndWasSliding_Sonic = NextGenSonic::m_isSliding;
+            StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
+            return;
+        }
     }
 }
 
