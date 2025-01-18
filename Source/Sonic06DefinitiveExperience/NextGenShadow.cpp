@@ -2009,6 +2009,12 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateDivingFloatAdvance, 0x11BCFB0, i
     originalNextGenShadow_CSonicStateDivingFloatAdvance(This);
 }
 
+HOOK(void, __fastcall, NextGenShadow_CSonicStateFloatingBoostAdvance, 0x123FCD0, int This)
+{
+    NextGenShadow::CheckChaosControl();
+    originalNextGenShadow_CSonicStateFloatingBoostAdvance(This);
+}
+
 HOOK(void, __fastcall, NextGenShadow_CSonicStateGrindBegin, 0xDF2890, void* This)
 {
     NextGenShadow::CheckChaosControl();
@@ -2998,6 +3004,7 @@ void NextGenShadow::applyPatches()
 
     INSTALL_HOOK(NextGenShadow_CSonicStateDivingDiveAdvance);
     INSTALL_HOOK(NextGenShadow_CSonicStateDivingFloatAdvance);
+    INSTALL_HOOK(NextGenShadow_CSonicStateFloatingBoostAdvance);
     INSTALL_HOOK(NextGenShadow_CSonicStateGrindBegin);
 
     // Situation that stops Chaos Control
