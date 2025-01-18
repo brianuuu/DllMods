@@ -2781,6 +2781,8 @@ HOOK(void, __fastcall, NextGenShadow_CRASH, 0x8CD0F0, void* This, void* Edx, uin
 //---------------------------------------------------
 HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStateTransformSpAdvance, 0xE425B0, float* This)
 {
+    isChaosControl = false;
+
     // Play super transform longer
     if (This[4] > 2.0f)
     {
