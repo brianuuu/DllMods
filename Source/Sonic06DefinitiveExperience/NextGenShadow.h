@@ -47,6 +47,7 @@ public:
 	static bool m_chaosSnapNoDamage;
 	static bool ShouldPlayJetEffect();
 	static void SetJetEffectVisible(bool visible, hh::mr::CSingleElement* pModel, bool isSuper);
+	static bool IsModelVisible();
 	static void SetChaosBoostModelVisible(bool visible, bool allInvisible = false);
 	static void SetChaosBoostLevel(uint8_t level, bool notifyHUD);
 	static bool CheckChaosBoost();

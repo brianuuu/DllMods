@@ -34,6 +34,7 @@ bool NextGenShadow::m_isBrakeFlip = false;
 Eigen::Vector3f NextGenShadow::m_brakeFlipDir(0, 0, 1);
 float NextGenShadow::m_squatKickSpeed = 0.0f;
 float const cShadow_squatKickPressMaxTime = 0.3f;
+float const cShadow_startTeleportTime = 1.0f;
 
 // Triple kick
 int NextGenShadow::m_tripleKickCount = -1;
@@ -120,7 +121,7 @@ bool NextGenShadow::ShouldPlayJetEffect()
     alignas(16) MsgGetAnimationInfo message {};
     Common::SonicContextGetAnimationInfo(message);
 
-    return c_jetAnimations.count(message.m_name);
+    return IsModelVisible() && c_jetAnimations.count(message.m_name);
 }
 
 SharedPtrTypeless jetRightFront;
@@ -181,9 +182,21 @@ void NextGenShadow::SetJetEffectVisible(bool visible, hh::mr::CSingleElement* pM
     }
 }
 
+bool NextGenShadow::IsModelVisible()
+{
+    auto const& model = Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_spCharacterModel;
+    return model->m_spModel->m_NodeGroupModels[0]->m_Visible
+        |= model->m_spModel->m_NodeGroupModels[1]->m_Visible;
+}
+
 bool jetSoundIsLeft = false;
 HOOK(int, __fastcall, NextGenShadow_AssignFootstepFloorCues, 0xDFD420, Sonic::Player::CPlayerSpeedContext* context, void* Edx, int stepID)
 {
+    if (!NextGenShadow::IsModelVisible())
+    {
+        return 0;
+    }
+
     if ((stepID == 0 || stepID == 1) && NextGenShadow::ShouldPlayJetEffect()) // walk or run
     {
         jetSoundIsLeft = !jetSoundIsLeft;
@@ -722,6 +735,8 @@ void NextGenShadow::SetChaosBoostModelVisible(bool visible, bool allInvisible)
     model->m_spModel->m_NodeGroupModels[1]->m_Visible = visible && !allInvisible;
 
     auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+    context->StateFlag(eStateFlag_DisableGroundSmoke) = allInvisible;
+
     if (visible && !allInvisible && !Common::IsPlayerSuper())
     {
         if (!chaosBoostSpine)
@@ -2798,6 +2813,76 @@ HOOK(void, __fastcall, NextGenShadow_CStateWalkBegin, 0x111C070, uint32_t This)
 }
 
 //---------------------------------------------------
+// Start animations
+//---------------------------------------------------
+bool m_startModelHide = false;
+void PlayStartTeleport()
+{
+    if (m_startModelHide)
+    {
+        // warp start pfx
+        SharedPtrTypeless warpHandle;
+        void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x10);
+        Common::fCGlitterCreate(*PLAYER_CONTEXT, warpHandle, matrixNode, "ef_ch_sha_warp_e", 1);
+
+        SharedPtrTypeless soundHandle;
+        Common::SonicContextPlaySound(soundHandle, 80041038, 1);
+
+        m_startModelHide = false;
+        NextGenShadow::SetChaosBoostModelVisible(false);
+    }
+}
+
+void StartTeleportAdvance(hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    if (This->m_Time >= cShadow_startTeleportTime)
+    {
+        PlayStartTeleport();
+    }
+    else
+    {
+        m_startModelHide = true;
+        NextGenShadow::SetChaosBoostModelVisible(false, true);
+    }
+}
+
+HOOK(void, __fastcall, NextGenShadow_CSonicStateStartDashAdvance, 0xDEEC00, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    StartTeleportAdvance(This);
+    originalNextGenShadow_CSonicStateStartDashAdvance(This);
+}
+
+HOOK(void, __fastcall, NextGenShadow_CSonicStateStartDashEnd, 0xDEEBD0, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    PlayStartTeleport();
+    originalNextGenShadow_CSonicStateStartDashEnd(This);
+}
+
+HOOK(void, __fastcall, NextGenShadow_CSonicStateStartEventAdvance, 0xDEE070, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    StartTeleportAdvance(This);
+    originalNextGenShadow_CSonicStateStartEventAdvance(This);
+}
+
+HOOK(bool, __fastcall, NextGenShadow_CSonicStateStartEventEnd, 0xDEDC30, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    PlayStartTeleport();
+    return originalNextGenShadow_CSonicStateStartEventEnd(This);
+}
+
+HOOK(void, __fastcall, NextGenShadow_CSonicStateStartCrouchingAdvance, 0xDEF180, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    StartTeleportAdvance(This);
+    originalNextGenShadow_CSonicStateStartCrouchingAdvance(This);
+}
+
+HOOK(bool, __fastcall, NextGenShadow_CSonicStateStartCrouchingEnd, 0xDEF0A0, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    PlayStartTeleport();
+    return originalNextGenShadow_CSonicStateStartCrouchingEnd(This);
+}
+
+//---------------------------------------------------
 // Main Apply Patches
 //---------------------------------------------------
 void NextGenShadow::applyPatches()
@@ -2863,6 +2948,14 @@ void NextGenShadow::applyPatches()
     // Allow pushing down CObjCscLavaRide without stomp
     WRITE_NOP(0xF1D7F4, 6);
     WRITE_MEMORY(0xF1D7FE, uint16_t, 0x1C0);
+
+    // Start teleport animations
+    INSTALL_HOOK(NextGenShadow_CSonicStateStartDashAdvance);
+    INSTALL_HOOK(NextGenShadow_CSonicStateStartDashEnd);
+    INSTALL_HOOK(NextGenShadow_CSonicStateStartEventAdvance);
+    INSTALL_HOOK(NextGenShadow_CSonicStateStartEventEnd);
+    INSTALL_HOOK(NextGenShadow_CSonicStateStartCrouchingAdvance);
+    INSTALL_HOOK(NextGenShadow_CSonicStateStartCrouchingEnd);
 
     //-------------------------------------------------------
     // Chaos Attack/Chaos Snap
