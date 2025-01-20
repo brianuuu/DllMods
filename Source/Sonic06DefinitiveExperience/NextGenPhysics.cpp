@@ -311,23 +311,6 @@ HOOK(bool, __fastcall, NextGenPhysics_CEnemyBaseProcessMessage, 0xBE0790, hh::fn
 }
 
 //---------------------------------------------------
-// Super transform ignore gravity
-//---------------------------------------------------
-HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStateTransformSpBegin, 0xE42430, hh::fnd::CStateMachineBase::CStateBase* This)
-{
-    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-    context->m_GravityTimer = -100000000.0f; 
-    originalNextGenShadow_CPlayerSpeedStateTransformSpBegin(This);
-}
-
-HOOK(int*, __fastcall, NextGenShadow_CPlayerSpeedStateTransformSpEnd, 0xE42250, hh::fnd::CStateMachineBase::CStateBase* This)
-{
-    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-    context->m_GravityTimer = 1000.0f;
-    return originalNextGenShadow_CPlayerSpeedStateTransformSpEnd(This);
-}
-
-//---------------------------------------------------
 // PlaTram Buttom Fix
 //---------------------------------------------------
 void __declspec(naked) CObjPlaTramCarBoostButtonChange()
@@ -495,10 +478,6 @@ void NextGenPhysics::applyPatches()
 
     // Handle MsgGetEnemyType
     INSTALL_HOOK(NextGenPhysics_CEnemyBaseProcessMessage);
-
-    // Super transform ignore gravity
-    INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateTransformSpBegin);
-    INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateTransformSpEnd);
 
     // Disable trick system
     if (Configuration::m_noTrick)
