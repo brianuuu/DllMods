@@ -65,5 +65,7 @@ public:
 	static void getActionButtonStates(bool& bDown, bool& bPressed, bool& bReleased);
 	static bool checkUseLightSpeedDash();
 	static void keepConstantHorizontalVelocity(float hSpeed);
+
+	static void setHomingCollisionDistance(float dist = -1.0f);
 };
 

@@ -134,6 +134,60 @@ void NextGenPhysics::keepConstantHorizontalVelocity(float hSpeed)
     Common::SetPlayerVelocity(velocity);
 }
 
+FUNCTION_PTR(void, __thiscall, UpdateHomingCollision2D, 0xE642F0, Sonic::Player::CPlayerSpeedContext* This);
+FUNCTION_PTR(void, __thiscall, UpdateHomingCollision3D, 0xE64410, Sonic::Player::CPlayerSpeedContext* This);
+float HomingLockonCollisionFar2DPrev = 0.0f;
+float HomingLockonCollisionFarN2DPrev = 0.0f;
+float HomingLockonCollisionFar3DPrev = 0.0f;
+float HomingLockonCollisionFarN3DPrev = 0.0f;
+float* HomingLockonCollisionFar2D = nullptr;
+float* HomingLockonCollisionFarN2D = nullptr;
+float* HomingLockonCollisionFar3D = nullptr;
+float* HomingLockonCollisionFarN3D = nullptr;
+void NextGenPhysics::setHomingCollisionDistance(float dist)
+{
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+
+    if (dist <= 0.0f)
+    {
+        // Revert homing attack param
+        if (HomingLockonCollisionFar2D && HomingLockonCollisionFarN2D && HomingLockonCollisionFar3D && HomingLockonCollisionFarN3D)
+        {
+            *HomingLockonCollisionFar2D = HomingLockonCollisionFar2DPrev;
+            *HomingLockonCollisionFarN2D = HomingLockonCollisionFarN2DPrev;
+            *HomingLockonCollisionFar3D = HomingLockonCollisionFar3DPrev;
+            *HomingLockonCollisionFarN3D = HomingLockonCollisionFarN3DPrev;
+
+            UpdateHomingCollision2D(context);
+            UpdateHomingCollision3D(context);
+        }
+
+        // Disable pointers
+        HomingLockonCollisionFar2D = nullptr;
+        HomingLockonCollisionFarN2D = nullptr;
+        HomingLockonCollisionFar3D = nullptr;
+        HomingLockonCollisionFarN3D = nullptr;
+    }
+    else if(Common::fGetPlayerParameterPtr(EPlayerParameter::HomingLockonCollisionFar, *(void**)0x1E61C5C, HomingLockonCollisionFar2D)
+         && Common::fGetPlayerParameterPtr(EPlayerParameter::HomingLockonCollisionFarN, *(void**)0x1E61C5C, HomingLockonCollisionFarN2D)
+         && Common::fGetPlayerParameterPtr(EPlayerParameter::HomingLockonCollisionFar, *(void**)0x1E61C54, HomingLockonCollisionFar3D)
+         && Common::fGetPlayerParameterPtr(EPlayerParameter::HomingLockonCollisionFarN, *(void**)0x1E61C54, HomingLockonCollisionFarN3D))
+    {
+        HomingLockonCollisionFar2DPrev = *HomingLockonCollisionFar2D;
+        HomingLockonCollisionFarN2DPrev = *HomingLockonCollisionFarN2D;
+        HomingLockonCollisionFar3DPrev = *HomingLockonCollisionFar3D;
+        HomingLockonCollisionFarN3DPrev = *HomingLockonCollisionFarN3D;
+
+        *HomingLockonCollisionFar2D = dist;
+        *HomingLockonCollisionFarN2D = dist;
+        *HomingLockonCollisionFar3D = dist;
+        *HomingLockonCollisionFarN3D = dist;
+
+        UpdateHomingCollision2D(context);
+        UpdateHomingCollision3D(context);
+    }
+}
+
 //---------------------------------------------------
 // CSonicSetMaxSpeed
 //---------------------------------------------------

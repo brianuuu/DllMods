@@ -92,6 +92,10 @@ public:
     static const char* volatile const SpearWaitLoop;
     static const char* volatile const SpearShot;
     static const char* volatile const SpearShotLoop;
+    static const char* volatile const SpearSuperWait;
+    static const char* volatile const SpearSuperWaitLoop;
+    static const char* volatile const SpearSuperShot;
+    static const char* volatile const SpearSuperShotLoop;
     static const char* volatile const ChaosBoost;
     static const char* volatile const ChaosBoostLoop;
     static const char* volatile const ChaosBlastWait;

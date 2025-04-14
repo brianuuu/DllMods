@@ -2002,16 +2002,6 @@ HOOK(int, __stdcall, NextGenSonicGems_HomingUpdate, 0xE5FF10, Sonic::Player::CPl
     return originalNextGenSonicGems_HomingUpdate(context);
 }
 
-FUNCTION_PTR(void, __thiscall, UpdateHomingCollision2D, 0xE642F0, Sonic::Player::CPlayerSpeedContext* This);
-FUNCTION_PTR(void, __thiscall, UpdateHomingCollision3D, 0xE64410, Sonic::Player::CPlayerSpeedContext* This);
-float HomingLockonCollisionFovy2DPrev = 0.0f;
-float HomingLockonCollisionFovyN2DPrev = 0.0f;
-float HomingLockonCollisionFovy3DPrev = 0.0f;
-float HomingLockonCollisionFovyN3DPrev = 0.0f;
-float* HomingLockonCollisionFovy2D = nullptr;
-float* HomingLockonCollisionFovyN2D = nullptr;
-float* HomingLockonCollisionFovy3D = nullptr;
-float* HomingLockonCollisionFovyN3D = nullptr;
 bool whiteGemHomingAttack = false;
 HOOK(int, __fastcall, NextGenSonicGems_CSonicStateHomingAttackBegin, 0x1232040, hh::fnd::CStateMachineBase::CStateBase* This)
 {
@@ -2020,24 +2010,8 @@ HOOK(int, __fastcall, NextGenSonicGems_CSonicStateHomingAttackBegin, 0x1232040, 
     // Play white gem charge
     if (NextGenSonic::m_whiteGemEnabled)
     {
-        if (Common::fGetPlayerParameterPtr(EPlayerParameter::HomingLockonCollisionFar, *(void**)0x1E61C5C, HomingLockonCollisionFovy2D)
-        && Common::fGetPlayerParameterPtr(EPlayerParameter::HomingLockonCollisionFarN, *(void**)0x1E61C5C, HomingLockonCollisionFovyN2D)
-        && Common::fGetPlayerParameterPtr(EPlayerParameter::HomingLockonCollisionFar, *(void**)0x1E61C54, HomingLockonCollisionFovy3D)
-        && Common::fGetPlayerParameterPtr(EPlayerParameter::HomingLockonCollisionFarN, *(void**)0x1E61C54, HomingLockonCollisionFovyN3D))
-        {
-            HomingLockonCollisionFovy2DPrev = *HomingLockonCollisionFovy2D;
-            HomingLockonCollisionFovyN2DPrev = *HomingLockonCollisionFovyN2D;
-            HomingLockonCollisionFovy3DPrev= *HomingLockonCollisionFovy3D;
-            HomingLockonCollisionFovyN3DPrev = *HomingLockonCollisionFovyN3D;
-
-            *HomingLockonCollisionFovy2D = cSonic_whiteGemHomingRange;
-            *HomingLockonCollisionFovyN2D = cSonic_whiteGemHomingRange;
-            *HomingLockonCollisionFovy3D = cSonic_whiteGemHomingRange;
-            *HomingLockonCollisionFovyN3D = cSonic_whiteGemHomingRange;
-
-            UpdateHomingCollision2D(context);
-            UpdateHomingCollision3D(context);
-        }
+        // change homing distance
+        NextGenPhysics::setHomingCollisionDistance(cSonic_whiteGemHomingRange);
 
         static SharedPtrTypeless soundHandle;
         Common::SonicContextPlaySound(soundHandle, 80041025, 1);
@@ -2073,11 +2047,8 @@ HOOK(int, __fastcall, NextGenSonicGems_CSonicStateHomingAttackBegin, 0x1232040, 
         // Revert using original Homing Attack After animation table
         WRITE_MEMORY(0x111838F, uint32_t, 0x1E75E18);
 
-        // Disable pointers
-        HomingLockonCollisionFovy2D = nullptr;
-        HomingLockonCollisionFovyN2D = nullptr;
-        HomingLockonCollisionFovy3D = nullptr;
-        HomingLockonCollisionFovyN3D = nullptr;
+        // Revert homing attack param
+        NextGenPhysics::setHomingCollisionDistance();
     }
 
     int result = originalNextGenSonicGems_CSonicStateHomingAttackBegin(This);
@@ -2184,16 +2155,7 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackEnd, 0x1231F80, h
     WRITE_MEMORY(0x1231E36, uint8_t, 0x74, 0x17);
 
     // Revert homing attack param
-    if (HomingLockonCollisionFovy2D && HomingLockonCollisionFovyN2D && HomingLockonCollisionFovy3D && HomingLockonCollisionFovyN3D)
-    {
-        *HomingLockonCollisionFovy2D = HomingLockonCollisionFovy2DPrev;
-        *HomingLockonCollisionFovyN2D = HomingLockonCollisionFovyN2DPrev;
-        *HomingLockonCollisionFovy3D = HomingLockonCollisionFovy3DPrev;
-        *HomingLockonCollisionFovyN3D = HomingLockonCollisionFovyN3DPrev;
-
-        UpdateHomingCollision2D(context);
-        UpdateHomingCollision3D(context);
-    }
+    NextGenPhysics::setHomingCollisionDistance();
 
     originalNextGenSonicGems_CSonicStateHomingAttackEnd(This);
 }

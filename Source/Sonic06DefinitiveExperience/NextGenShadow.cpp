@@ -48,14 +48,19 @@ float const cShadow_tripleKickShockWaveRadius = 4.0f;
 // Chaos Spear
 std::vector<NextGenShadow::TargetData> NextGenShadow::m_targetData;
 uint8_t const cShadow_chaosSpearMaxCount = 5;
+uint8_t const cShadow_chaosSpearSuperMaxCount = 8;
 float const cShadow_chaosSpearSpeed = 50.0f;
 float const cShadow_chaosSpearLife = 1.0f;
 float const cShadow_chaosSpearAddTime = 0.05f;
 float const cShadow_chaosSpearAccumulate = 0.5f;
 float const cShadow_chaosSpearStiffening = 0.3f;
+float const cShadow_chaosSpearSuperStiffening = 0.25f;
+float const cShadow_chaosSpearUpAngle = 80.0f * DEG_TO_RAD;
 float const cShadow_chaosSpearDownAngle = 30.0f * DEG_TO_RAD;
 float const cShadow_chaosSpearTurnRate = 180.0f * DEG_TO_RAD;
+float const cShadow_chaosSpearSuperTurnRate = 720.0f * DEG_TO_RAD;
 float const cShadow_chaosSpearShockDuration = 8.0f;
+float const cShadow_chaosSpearSuperLockDist = 30.0f;
 
 // Chaos Snap
 bool NextGenShadow::m_chaosSnapNoDamage = false;
@@ -913,6 +918,7 @@ private:
     Hedgehog::Math::CVector m_Velocity;
     float m_LifeTime;
     bool m_IsDamage;
+    bool m_IsSuper;
 
     SharedPtrTypeless spearHandle;
     SharedPtrTypeless spearTailHandle;
@@ -933,6 +939,7 @@ public:
         , m_Velocity(_StartDir.normalized() * (cShadow_chaosSpearSpeed + _SpeedAdd))
         , m_LifeTime(0.0f)
         , m_IsDamage(_IsDamage)
+        , m_IsSuper(false)
     {
 
     }
@@ -957,7 +964,14 @@ public:
         UpdateTransform();
 
         // play pfx
-        if (m_IsDamage)
+        if (Common::IsPlayerSuper())
+        {
+            m_IsSuper = true;
+            m_IsDamage = true;
+            Common::fCGlitterCreate(*PLAYER_CONTEXT, spearHandle, &m_spMatrixNodeTransform, "ef_bo_ssh_yh2_spear", 1);
+            Common::fCGlitterCreate(*PLAYER_CONTEXT, spearTailHandle, &m_spMatrixNodeTransform, "ef_bo_ssh_yh2_spear_tail", 1);
+        }
+        else if (m_IsDamage)
         {
             Common::fCGlitterCreate(*PLAYER_CONTEXT, spearHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_lance", 1);
             Common::fCGlitterCreate(*PLAYER_CONTEXT, spearTailHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_lance_tail", 1);
@@ -1063,7 +1077,7 @@ public:
             Common::ClampFloat(dot, -1.0f, 1.0f);
 
             float const angle = acos(dot);
-            float const maxAngle = updateInfo.DeltaTime * cShadow_chaosSpearTurnRate;
+            float const maxAngle = updateInfo.DeltaTime * (m_IsSuper ? cShadow_chaosSpearSuperTurnRate : cShadow_chaosSpearTurnRate);
             if (angle > maxAngle)
             {
                 hh::math::CVector cross = oldDirection.cross(newDirection).normalized();
@@ -1427,7 +1441,7 @@ bool NextGenShadow::AirActionCheck()
 
 void NextGenShadow::AddTargetData(uint32_t actorID, float dist, uint32_t priority)
 {
-    if (m_targetData.size() < cShadow_chaosSpearMaxCount)
+    if (m_targetData.size() < (Common::IsPlayerSuper() ? cShadow_chaosSpearSuperMaxCount : cShadow_chaosSpearMaxCount))
     {
         m_targetData.push_back(TargetData{ actorID, dist, priority });
     }
@@ -1510,7 +1524,7 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
     case NextGenShadow::OverrideType::SH_SpearWait:
     {
         NextGenShadow::m_holdPosition = context->m_spMatrixNode->m_Transform.m_Position;
-        Common::SonicContextChangeAnimation(AnimationSetPatcher::SpearWait);
+        Common::SonicContextChangeAnimation(Common::IsPlayerSuper() ? AnimationSetPatcher::SpearSuperWait : AnimationSetPatcher::SpearWait);
 
         // sound, voice, pfx
         Common::SonicContextPlaySound(soundHandle_TrickAttack, 80041031, 1);
@@ -1518,6 +1532,12 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
 
         auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("RightHandMiddle1");
         Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle_TrickAttack, &attachBone, NextGenShadow::m_chaosBoostLevel >= 2 ? "ef_bo_sha_yh2_lance_attack" : "ef_bo_sha_yh2_spear_charge", 1);
+        
+        if (Common::IsPlayerSuper())
+        {
+            // change homing distance
+            NextGenPhysics::setHomingCollisionDistance(cShadow_chaosSpearSuperLockDist);
+        }
         break;
     }
     case NextGenShadow::OverrideType::SH_ChaosBoost:
@@ -1594,10 +1614,11 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
         WRITE_MEMORY(0xE74847, uint8_t, 0xD9, 0x5C, 0x24, 0x14, 0xD9);
 
         // handle multiple lock-on targets and HUD
-        float const accumulateStartTime = cShadow_chaosSpearAccumulate - cShadow_chaosSpearAddTime * (cShadow_chaosSpearMaxCount - 1);
+        uint8_t const spearMaxCount = Common::IsPlayerSuper() ? cShadow_chaosSpearSuperMaxCount : cShadow_chaosSpearMaxCount;
+        float const accumulateStartTime = cShadow_chaosSpearAccumulate - cShadow_chaosSpearAddTime * (spearMaxCount - 1);
         if (This->m_Time >= accumulateStartTime)
         {
-            uint32_t const currentTargetCount = min(cShadow_chaosSpearMaxCount, 1 + uint32_t((This->m_Time - accumulateStartTime) / cShadow_chaosSpearAddTime));
+            uint32_t currentTargetCount = min(spearMaxCount, 1 + uint32_t((This->m_Time - accumulateStartTime) / cShadow_chaosSpearAddTime));
 
             // main lock-on target may or may not in the list
             bool foundMainTarget = false;
@@ -1612,6 +1633,12 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             if (context->m_HomingAttackTargetActorID && !foundMainTarget)
             {
                 NextGenShadow::m_targetData.push_back(NextGenShadow::TargetData{ context->m_HomingAttackTargetActorID, 0.0f, 100 });
+            }
+
+            // super will only fire one spear straight if no target found
+            if (Common::IsPlayerSuper() && NextGenShadow::m_targetData.empty())
+            {
+                currentTargetCount = 1u;
             }
 
             // sort by priority then distance
@@ -1691,7 +1718,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
         if (!padState->IsDown(Sonic::EKeyState::eKeyState_X))
         {
             NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_SpearShot;
-            Common::SonicContextChangeAnimation(AnimationSetPatcher::SpearShot);
+            Common::SonicContextChangeAnimation(Common::IsPlayerSuper() ? AnimationSetPatcher::SpearSuperShot : AnimationSetPatcher::SpearShot);
 
             if (This->m_Time < accumulateStartTime)
             {
@@ -1701,7 +1728,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             }
 
             int noTargetCount = 0;
-            for (uint8_t i = 0; i < NextGenShadow::m_targetData.size() && i < cShadow_chaosSpearMaxCount; i++)
+            for (uint8_t i = 0; i < NextGenShadow::m_targetData.size() && i < spearMaxCount; i++)
             {
                 NextGenShadow::TargetData const& data = NextGenShadow::m_targetData[i];
 
@@ -1723,8 +1750,35 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
                 // spawn chaos spear
                 Hedgehog::Math::CVector position = context->m_spMatrixNode->m_Transform.m_Position + Hedgehog::Math::CVector::UnitY() * 0.7f;
                 Hedgehog::Math::CVector targetDir = targetPosition - position;
-                Hedgehog::Math::CVector playerDir = context->m_HorizontalRotation* Hedgehog::Math::CVector::UnitZ();
-                if (targetPosition.isZero() || targetDir.dot(playerDir) <= 0.0f)
+                Hedgehog::Math::CVector playerDir = context->m_HorizontalRotation * Hedgehog::Math::CVector::UnitZ();
+                if (Common::IsPlayerSuper())
+                {
+                    if (NextGenShadow::m_targetData.size() <= 1u)
+                    {
+                        // single or no target, fire straight
+                        targetDir = playerDir;
+                    }
+                    else
+                    {
+                        float angle = 0.0f;
+                        switch (i)
+                        {
+                        case 0: angle = 0.0f * DEG_TO_RAD; break;
+                        case 1: angle = 90.0f * DEG_TO_RAD; break;
+                        case 2: angle = -90.0f * DEG_TO_RAD; break;
+                        case 3: angle = 180.0f * DEG_TO_RAD; break;
+                        case 4: angle = 45.0f * DEG_TO_RAD; break;
+                        case 5: angle = -45.0f * DEG_TO_RAD; break;
+                        case 6: angle = 135.0f * DEG_TO_RAD; break;
+                        case 7: angle = -135.0f * DEG_TO_RAD; break;
+                        }
+
+                        // pitch up, then rotate
+                        Hedgehog::Math::CVector playerRight = context->m_HorizontalRotation * Hedgehog::Math::CVector::UnitX();
+                        targetDir = Eigen::AngleAxisf(angle, playerDir) * Eigen::AngleAxisf(cShadow_chaosSpearUpAngle, -playerRight) * context->m_HorizontalRotation * Hedgehog::Math::CVector::UnitZ();
+                    }
+                }
+                else if (targetPosition.isZero() || targetDir.dot(playerDir) <= 0.0f)
                 {
                     // spread out targets
                     noTargetCount++;
@@ -1757,14 +1811,14 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             // only play one sound, not per spear
             soundHandle_TrickAttack.reset();
             Common::fCGlitterEnd(*PLAYER_CONTEXT, pfxHandle_TrickAttack, true);
-            Common::SonicContextPlaySound(soundHandle, 80041032, 1);
+            Common::SonicContextPlaySound(soundHandle, Common::IsPlayerSuper() && NextGenShadow::m_targetData.size() > 1 ? 80041044 : 80041032, 1);
             This->m_Time = 0.0f;
 
             // Set OutOfControl
             if (!Configuration::Shadow::m_chaosSpearMomentum)
             {
                 FUNCTION_PTR(int, __stdcall, SetOutOfControl, 0xE5AC00, CSonicContext * context, float duration);
-                SetOutOfControl(*pModernSonicContext, cShadow_chaosSpearStiffening);
+                SetOutOfControl(*pModernSonicContext, (Common::IsPlayerSuper() ? cShadow_chaosSpearSuperStiffening : cShadow_chaosSpearStiffening));
                 context->m_GravityTimer = -100000000.0f;
             }
             break;
@@ -1780,9 +1834,9 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             return nullptr;
         }
 
-        if (This->m_Time >= cShadow_chaosSpearStiffening)
+        if (This->m_Time >= (Common::IsPlayerSuper() ? cShadow_chaosSpearSuperStiffening : cShadow_chaosSpearStiffening))
         {
-            if (!Configuration::Shadow::m_chaosSpearMomentum)
+            if (!Configuration::Shadow::m_chaosSpearMomentum && !Common::IsPlayerSuper())
             {
                 Common::SonicContextPlaySound(soundHandle, 2002027, 1);
                 Common::SonicContextPlaySound(voiceHandle, 3002000, 0);
@@ -1878,6 +1932,8 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::f
         }
         m_spLockonCursors.clear();
 
+        // reset homing distance
+        NextGenPhysics::setHomingCollisionDistance();
         break;
     }
     case NextGenShadow::OverrideType::SH_ChaosBoost:
