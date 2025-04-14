@@ -59,6 +59,9 @@
     <ClCompile Include="EnemyShock.cpp">
       <Filter>Stage</Filter>
     </ClCompile>
+    <ClCompile Include="NextGenObjects.cpp">
+      <Filter>Stage</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pch.h" />
@@ -114,6 +117,9 @@
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="EnemyShock.h">
+      <Filter>Stage</Filter>
+    </ClInclude>
+    <ClInclude Include="NextGenObjects.h">
       <Filter>Stage</Filter>
     </ClInclude>
   </ItemGroup>

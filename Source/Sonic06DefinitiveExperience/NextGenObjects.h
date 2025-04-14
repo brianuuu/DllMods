@@ -1,16 +1,14 @@
 /*----------------------------------------------------------*/
 //	Author: brianuuuSonic https://github.com/brianuuu
-//	Year: 2021
-//	Description: Allow 1up and 10rings to be locked
+//	Year: 2023
+//	Description: Fix up 06 objects
 /*----------------------------------------------------------*/
 
 #pragma once
 
-class Itembox
+class NextGenObjects
 {
 public:
 	static void applyPatches();
-	static void playItemboxSfx();
-	static void __fastcall playItemboxPfx(void* This);
 };
 

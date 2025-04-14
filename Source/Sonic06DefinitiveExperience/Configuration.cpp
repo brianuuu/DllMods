@@ -106,6 +106,7 @@ bool Configuration::load(const std::string& rootPath)
         bb.addAR("SonicActionCommonHud", 1);
 
         // common
+        bb.addAR("+ActionCommon", 1);
         bb.addAR("cmn200", 2);
         bb.addAR("ssz202", 1);
 

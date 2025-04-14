@@ -190,6 +190,7 @@
     <ClCompile Include="Mod.cpp" />
     <ClCompile Include="Navigation.cpp" />
     <ClCompile Include="NextGenBlaze.cpp" />
+    <ClCompile Include="NextGenObjects.cpp" />
     <ClCompile Include="NextGenPhysics.cpp" />
     <ClCompile Include="NextGenShadow.cpp" />
     <ClCompile Include="NextGenSonic.cpp" />
@@ -222,6 +223,7 @@
     <ClInclude Include="Itembox.h" />
     <ClInclude Include="Navigation.h" />
     <ClInclude Include="NextGenBlaze.h" />
+    <ClInclude Include="NextGenObjects.h" />
     <ClInclude Include="NextGenPhysics.h" />
     <ClInclude Include="NextGenShadow.h" />
     <ClInclude Include="NextGenSonic.h" />

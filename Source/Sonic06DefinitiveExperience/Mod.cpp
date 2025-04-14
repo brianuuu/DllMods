@@ -13,6 +13,7 @@
 #include "ArchiveTreePatcher.h"
 #include "Itembox.h"
 #include "NextGenPhysics.h"
+#include "NextGenObjects.h"
 #include "ChaosEnergy.h"
 #include "CustomCamera.h"
 
@@ -82,6 +83,9 @@ extern "C" __declspec(dllexport) void Init(ModInfo_t * modInfo)
 
     // Replicate 06 physics
     NextGenPhysics::applyPatches();
+
+    // Fix up 06 objects
+    NextGenObjects::applyPatches();
 
     // Changes how Chaos Enemgy awards boost
     ChaosEnergy::applyPatches();
