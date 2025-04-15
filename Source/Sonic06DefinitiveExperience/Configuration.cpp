@@ -100,13 +100,16 @@ bool Configuration::load(const std::string& rootPath)
     {
         bbWriter bb(rootPath + "core/bb.ini");
 
-        // TODO: non-Sonic characters will edit these
-        bb.addAR("SonicActionCommon", 2);
-        bb.addAR("+SonicActionCommonHud", 1);
-
         // common
         bb.addAR("+ActionCommon", 1);
-        bb.addAR("cmn200", 2);
+        bb.addAR("+SonicActionCommon", 1);
+        bb.addAR("+SonicActionCommonHud", 1);
+
+        // stage
+        bb.addReplace("+cmn100.ar.00", "+cmn200.ar.00");
+        bb.addReplace("+cmn100.arl", "+cmn200.arl");
+        bb.addAR("+cmn200", 1);
+        bb.addAR("+cpz101", 1);
         bb.addAR("+ssz202", 1);
     }
 
@@ -127,8 +130,8 @@ bool Configuration::load(const std::string& rootPath)
             bb3.addAR("#Sonic", 1);
         }
 
-        // TODO: non-Sonic characters will edit these
-        bb3.addAR("SonicActionCommon", 2);
+        // common
+        bb3.addAR("+SonicActionCommon", 1);
         bb3.addAR("+SonicActionCommonHud", 1);
 
         // stage animations

@@ -525,6 +525,9 @@ void NextGenPhysics::applyPatches()
     // Fix Super Form's JumpBoard animation, and fix trick animation
     INSTALL_HOOK(NextGenPhysics_MsgApplyImpulse);
 
+    // Disable ef_ch_sps_yh1_spinattack on Super Form 
+    WRITE_STRING(0x15F99DC, "");
+
     // Maintain down speed when homing attack finished (for 06 physics)
     // Apply Motion Blur during Homing Attack
     INSTALL_HOOK(NextGenPhysics_CSonicStateHomingAttackBegin);

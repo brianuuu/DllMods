@@ -123,7 +123,12 @@ void Itembox::applyPatches()
 	WRITE_JUMP(0xFFFA5E, (void*)0xFFFB15);
 
 	// Disable Item always facing screen
-	WRITE_NOP(0xFFF4E3, 3);
+	WRITE_NOP(0xFFF4E3, 3); // 1up
+	WRITE_NOP(0x11F2BD0, 6); // 10ring
+
+	// Fix SuperRing spin direction/rate
+	static double const c_superring_spinRate = -0.8 * PI;
+	WRITE_MEMORY(0x11F2A6A, double*, &c_superring_spinRate);
 
 	// Handle homing lock-on for Item
 	WRITE_MEMORY(0xFFFA3C, uint32_t, 0x1E0AF34);
