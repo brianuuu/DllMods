@@ -107,7 +107,7 @@ bool Configuration::load(const std::string& rootPath)
         // common
         bb.addAR("+ActionCommon", 1);
         bb.addAR("cmn200", 2);
-        bb.addAR("ssz202", 1);
+        bb.addAR("+ssz202", 1);
     }
 
     // Write bb3.ini
