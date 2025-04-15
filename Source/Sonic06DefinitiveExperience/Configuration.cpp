@@ -102,34 +102,17 @@ bool Configuration::load(const std::string& rootPath)
 
         // TODO: non-Sonic characters will edit these
         bb.addAR("SonicActionCommon", 2);
-        bb.addAR("#SonicActionCommonHud", 1);
-        bb.addAR("SonicActionCommonHud", 1);
+        bb.addAR("+SonicActionCommonHud", 1);
 
         // common
         bb.addAR("+ActionCommon", 1);
         bb.addAR("cmn200", 2);
         bb.addAR("ssz202", 1);
-
-        // languages
-        bb.addName("Languages\\English");
-        bb.addName("Languages\\Japanese");
-        bb.addReplace("Languages\\French", "Languages\\English");
-        bb.addReplace("Languages\\German", "Languages\\English");
-        bb.addReplace("Languages\\Italian", "Languages\\English");
-        bb.addReplace("Languages\\Spanish", "Languages\\English");
     }
 
     // Write bb3.ini
     {
         bbWriter bb3(rootPath + "core/bb3.ini");
-
-        // language
-        bb3.addName("Languages\\English");
-        bb3.addName("Languages\\Japanese");
-        bb3.addReplace("Languages\\French", "Languages\\English");
-        bb3.addReplace("Languages\\German", "Languages\\English");
-        bb3.addReplace("Languages\\Italian", "Languages\\English");
-        bb3.addReplace("Languages\\Spanish", "Languages\\English");
 
         // Physics
         if (m_physics)
@@ -146,8 +129,7 @@ bool Configuration::load(const std::string& rootPath)
 
         // TODO: non-Sonic characters will edit these
         bb3.addAR("SonicActionCommon", 2);
-        bb3.addAR("#SonicActionCommonHud", 1);
-        bb3.addAR("SonicActionCommonHud", 1);
+        bb3.addAR("+SonicActionCommonHud", 1);
 
         // stage animations
         str = "SonicBatabata";
