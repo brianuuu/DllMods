@@ -1802,6 +1802,12 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
                     case 5: yawAngle = -20.0f * DEG_TO_RAD; break;
                     }
 
+                    // make shots symmetric
+                    if (NextGenShadow::m_targetData.size() % 2 == 0)
+                    {
+                        yawAngle -= 5.0f *DEG_TO_RAD;
+                    }
+
                     // pitch down if no target
                     Hedgehog::Math::CVector playerRight = context->m_HorizontalRotation * Hedgehog::Math::CVector::UnitX();
                     targetDir = Eigen::AngleAxisf(yawAngle, hh::math::CVector::UnitY()) * Eigen::AngleAxisf(cShadow_chaosSpearDownAngle, playerRight) * context->m_HorizontalRotation * Hedgehog::Math::CVector::UnitZ();
