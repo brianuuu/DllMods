@@ -1668,6 +1668,16 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
                 NextGenShadow::m_targetData.push_back(NextGenShadow::TargetData{ 0, 0.0f, 0 });
             }
 
+            // super can fire at the same enemy
+            int const repeatTargetCount = NextGenShadow::m_targetData.size();
+            if (repeatTargetCount > 0 && Common::IsPlayerSuper())
+            {
+                while (NextGenShadow::m_targetData.size() < currentTargetCount)
+                {
+                    NextGenShadow::m_targetData.push_back(NextGenShadow::m_targetData.at(NextGenShadow::m_targetData.size() % repeatTargetCount));
+                }
+            }
+
             if (!Configuration::m_noCursor)
             {
                 // update existing cursors
@@ -1762,17 +1772,16 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
                     }
                     else
                     {
-                        float angle = 0.0f;
-                        switch (i)
+                        float angle = (360.0f * (i + 1)) * DEG_TO_RAD / (float)NextGenShadow::m_targetData.size();
+                        if (NextGenShadow::m_targetData.size() == 2)
                         {
-                        case 0: angle = 0.0f * DEG_TO_RAD; break;
-                        case 1: angle = 90.0f * DEG_TO_RAD; break;
-                        case 2: angle = -90.0f * DEG_TO_RAD; break;
-                        case 3: angle = 180.0f * DEG_TO_RAD; break;
-                        case 4: angle = 45.0f * DEG_TO_RAD; break;
-                        case 5: angle = -45.0f * DEG_TO_RAD; break;
-                        case 6: angle = 135.0f * DEG_TO_RAD; break;
-                        case 7: angle = -135.0f * DEG_TO_RAD; break;
+                            // if only 2 shoot sideways
+                            angle -= 90 * DEG_TO_RAD;
+                        }
+                        else
+                        {
+                            // shot more from top for odd numbers
+                            angle -= 180 * DEG_TO_RAD;
                         }
 
                         // pitch up, then rotate
