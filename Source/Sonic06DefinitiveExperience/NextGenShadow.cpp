@@ -735,6 +735,8 @@ SharedPtrTypeless chaosBoostLeftFoot;
 SharedPtrTypeless chaosBoostRightFoot;
 void NextGenShadow::SetChaosBoostModelVisible(bool visible, bool allInvisible)
 {
+    if (!*pModernSonicContext) return;
+
     auto const& model = Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_spCharacterModel;
     model->m_spModel->m_NodeGroupModels[0]->m_Visible = !visible && !allInvisible;
     model->m_spModel->m_NodeGroupModels[1]->m_Visible = visible && !allInvisible;
