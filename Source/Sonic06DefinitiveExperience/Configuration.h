@@ -56,7 +56,6 @@ public:
     {
         static bool m_chaosBlastCamera;
         static bool m_chaosSpearMomentum;
-        static bool m_chaosSnapAll;
         static bool m_antiGravity;
         static bool m_floatBoost;
     };

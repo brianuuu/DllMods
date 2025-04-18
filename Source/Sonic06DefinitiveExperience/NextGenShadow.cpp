@@ -63,6 +63,7 @@ float const cShadow_chaosSpearShockDuration = 8.0f;
 float const cShadow_chaosSpearSuperLockDist = 30.0f;
 
 // Chaos Snap
+bool NextGenShadow::m_chaosSnapActivated = false;
 bool NextGenShadow::m_chaosSnapNoDamage = false;
 float const cShadow_chaosSnapWaitTime = 0.1f;
 float const cShadow_chaosSnapStartHold = 0.25f;
@@ -285,6 +286,7 @@ bool hasChaosSnapTeleported = false;
 void PlayChaosSnap()
 {
     auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+    NextGenShadow::m_chaosSnapActivated = true;
 
     // warp start pfx
     SharedPtrTypeless warpHandle;
@@ -478,6 +480,7 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateHomingAttackEnd, 0x1231F80, hh::
     // if Chaos Snap didn't hit any target, reset count
     if (!StateManager::isCurrentAction(StateAction::HomingAttackAfter))
     {
+        NextGenShadow::m_chaosSnapActivated = false;
         NextGenShadow::m_chaosAttackCount = -1;
         hasChaosSnapTeleported = false;
     }
@@ -589,6 +592,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
             {
                 // timeout, resume original homing attack after
                 This->m_Time = 0.0f;
+                NextGenShadow::m_chaosSnapActivated = false;
                 NextGenShadow::m_chaosAttackCount = -1;
 
                 // apply up velocity
@@ -704,6 +708,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterEnd, 0x11182F0)
     // Chaos Snap retains previous count
     if (NextGenShadow::m_chaosBoostLevel == 0 || !StateManager::isCurrentAction(StateAction::HomingAttack))
     {
+        NextGenShadow::m_chaosSnapActivated = false;
         NextGenShadow::m_chaosAttackCount = -1;
     }
     NextGenShadow::m_chaosAttackBuffered = false;
@@ -877,7 +882,7 @@ bool NextGenShadow::CheckChaosSnapTarget()
         return false;
     }
 
-    if (Configuration::Shadow::m_chaosSnapAll)
+    if (NextGenShadow::m_chaosSnapActivated)
     {
         return true;
     }

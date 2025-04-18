@@ -21,7 +21,6 @@ bool Configuration::Sonic::m_gemsEnabled = false;
 
 bool Configuration::Shadow::m_chaosBlastCamera = true;
 bool Configuration::Shadow::m_chaosSpearMomentum = false;
-bool Configuration::Shadow::m_chaosSnapAll = false;
 bool Configuration::Shadow::m_antiGravity = false;
 bool Configuration::Shadow::m_floatBoost = false;
 
@@ -90,7 +89,6 @@ bool Configuration::load(const std::string& rootPath)
     // --------------Shadow--------------
     Shadow::m_chaosBlastCamera = reader.GetBoolean("Shadow", "bChaosBlastCamera", Shadow::m_chaosBlastCamera);
     Shadow::m_chaosSpearMomentum = reader.GetBoolean("Shadow", "bChaosSpearMomentum", Shadow::m_chaosSpearMomentum);
-    Shadow::m_chaosSnapAll = reader.GetBoolean("Shadow", "bChaosSnapAll", Shadow::m_chaosSnapAll);
     Shadow::m_antiGravity = reader.GetBoolean("Shadow", "bAntiGravity", Shadow::m_antiGravity);
     Shadow::m_floatBoost = reader.GetBoolean("Shadow", "bFloatBoost", Shadow::m_floatBoost);
 

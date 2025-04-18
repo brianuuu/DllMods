@@ -35,6 +35,8 @@ public:
 	static Eigen::Vector3f m_holdPosition;
 	static int m_chaosAttackCount;
 	static bool m_chaosAttackBuffered;
+	static bool m_chaosSnapActivated;
+	static bool m_chaosSnapNoDamage;
 
 	// X Action
 	static float m_xHeldTimer;
@@ -44,7 +46,6 @@ public:
 	// Chaos Boost
 	static uint8_t m_chaosBoostLevel;
 	static float m_chaosMaturity;
-	static bool m_chaosSnapNoDamage;
 	static bool ShouldPlayJetEffect();
 	static void SetJetEffectVisible(bool visible, hh::mr::CSingleElement* pModel, bool isSuper);
 	static bool IsModelVisible();
