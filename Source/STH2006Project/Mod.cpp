@@ -1,19 +1,19 @@
-#include "Configuration.h"
 #include "Application.h"
-#include "EnemyTrigger.h"
-#include "Navigation.h"
-#include "Omochao.h"
-#include "ChaosEnergy.h"
 #include "ArchiveTreePatcher.h"
-#include "Itembox.h"
-#include "Stage.h"
-#include "SoleannaNPC.h"
-#include "ScoreManager.h"
-#include "UIContext.h"
-#include "SynchronizedObject.h"
-#include "ParamManager.h"
+#include "ChaosEnergy.h"
+#include "Configuration.h"
+#include "EnemyTrigger.h"
 #include "MissionManager.h"
+#include "Navigation.h"
+#include "NextGenObjects.h"
+#include "Omochao.h"
+#include "ParamManager.h"
+#include "ScoreManager.h"
+#include "SoleannaNPC.h"
+#include "Stage.h"
+#include "SynchronizedObject.h"
 #include "TitleUI.h"
+#include "UIContext.h"
 #include "Window.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo_t * modInfo)
@@ -36,6 +36,7 @@ extern "C" __declspec(dllexport) void Init(ModInfo_t * modInfo)
 
     // General application patches
     Application::applyPatches();
+    ArchiveTreePatcher::applyPatches();
 
     // Enable enemy event and triggers
     EnemyTrigger::applyPatches();
@@ -52,9 +53,8 @@ extern "C" __declspec(dllexport) void Init(ModInfo_t * modInfo)
     // Internal score system (must install before ArchiveTreePatcher)
     ScoreManager::applyPatches();
 
-    // Allow 1up and 10ring to be locked-on
-    ArchiveTreePatcher::applyPatches();
-    Itembox::applyPatches();
+    // Handles all 06 objects
+    NextGenObjects::applyPatches();
 
     // Stage specific patches
     Stage::applyPatches();

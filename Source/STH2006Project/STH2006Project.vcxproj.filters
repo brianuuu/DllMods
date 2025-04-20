@@ -77,9 +77,6 @@
     <ClCompile Include="ChaosEnergy.cpp">
       <Filter>Stage</Filter>
     </ClCompile>
-    <ClCompile Include="Itembox.cpp">
-      <Filter>Stage</Filter>
-    </ClCompile>
     <ClCompile Include="Navigation.cpp">
       <Filter>Stage</Filter>
     </ClCompile>
@@ -109,6 +106,12 @@
     </ClCompile>
     <ClCompile Include="SonicMan.cpp">
       <Filter>Mission</Filter>
+    </ClCompile>
+    <ClCompile Include="NextGenObjects.cpp">
+      <Filter>Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Itembox.cpp">
+      <Filter>Objects</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -158,9 +161,6 @@
     <ClInclude Include="ChaosEnergy.h">
       <Filter>Stage</Filter>
     </ClInclude>
-    <ClInclude Include="Itembox.h">
-      <Filter>Stage</Filter>
-    </ClInclude>
     <ClInclude Include="Navigation.h">
       <Filter>Stage</Filter>
     </ClInclude>
@@ -191,6 +191,12 @@
     <ClInclude Include="SonicMan.h">
       <Filter>Mission</Filter>
     </ClInclude>
+    <ClInclude Include="NextGenObjects.h">
+      <Filter>Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Itembox.h">
+      <Filter>Objects</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">
@@ -207,6 +213,9 @@
     </Filter>
     <Filter Include="Stage">
       <UniqueIdentifier>{27796f1c-d015-45b6-ba57-2c08882d6e01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Objects">
+      <UniqueIdentifier>{de2132cc-34fc-4f4a-8545-f54c031e0e85}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

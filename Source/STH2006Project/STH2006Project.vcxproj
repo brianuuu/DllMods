@@ -258,6 +258,7 @@
     <ClCompile Include="EnemyTrigger.cpp" />
     <ClCompile Include="LoadingUI.cpp" />
     <ClCompile Include="MissionManager.cpp" />
+    <ClCompile Include="NextGenObjects.cpp" />
     <ClCompile Include="ParamManager.cpp" />
     <ClCompile Include="Pele.cpp" />
     <ClCompile Include="ResultUI.cpp" />
@@ -298,6 +299,7 @@
     <ClInclude Include="EnemyTrigger.h" />
     <ClInclude Include="LoadingUI.h" />
     <ClInclude Include="MissionManager.h" />
+    <ClInclude Include="NextGenObjects.h" />
     <ClInclude Include="ParamManager.h" />
     <ClInclude Include="Pele.h" />
     <ClInclude Include="Resources.h" />

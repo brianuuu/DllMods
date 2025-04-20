@@ -184,6 +184,9 @@ HOOK(void, __fastcall, Itembox_CObjSuperRingMsgHitEventCollision, 0x11F2F10, Son
 
 void Itembox::applyPatches()
 {
+	//---------------------------------------
+	// Common
+	//---------------------------------------
 	// Play itembox sfx for 1up and 10ring
 	WRITE_MEMORY(0x011F2FE0, uint32_t, 4002032);
 	WRITE_JUMP(0xFFF99F, objItemPlaySfx);
@@ -193,69 +196,81 @@ void Itembox::applyPatches()
 	WRITE_MEMORY(0x11F3353, float*, &c_itemboxRadius);
 	WRITE_MEMORY(0xFFF9E8, float*, &c_itemboxRadius);
 
-	// Disable ef_ch_sns_yh1_ringget on 10ring
-	WRITE_STRING(0x166E4CC, "");
-
-	// Disable ef_ch_sng_yh1_1up after getting 1up
-	WRITE_STRING(0x15E90DC, "");
-
-	// Disable ef_ob_com_yh1_1up effect on 1up
-	WRITE_JUMP(0xFFFA5E, (void*)0xFFFB15);
-
-	// Disable Item always facing screen
-	WRITE_NOP(0xFFF4E3, 3);
-
-	// Handle homing lock-on for Item
-	WRITE_MEMORY(0xFFFA3C, uint32_t, 0x1E0AF34);
-	INSTALL_HOOK(Itembox_CObjItemProcessMessage);
-	INSTALL_HOOK(Itembox_CObjItemMsgHitEventCollision);
-
-	// Handle homing lock-on for SuperRing
-	WRITE_MEMORY(0x11F336D, uint32_t, 0x1E0AF34);
-	INSTALL_HOOK(Itembox_CObjSuperRingProcessMessage);
-	INSTALL_HOOK(Itembox_CObjSuperRingMsgHitEventCollision);
-
-	// Prevent bouncing off Itembox right as you land
-	INSTALL_HOOK(Itembox_CStateLandJumpShortMsgDamageSuccess);
-
-	//---------------------------------------
-	// Inject new types to Item
-	//---------------------------------------
-	// Changes item model and effect
-	static char const* itemNames[] = 
-	{ 
-		"cmn_obj_oneup_HD", 
-		"cmn_obj_muteki_HD", // invincibility
-		"cmn_obj_shield_HD",
-		"cmn_obj_baria_HD",  // fire shield
-		"cmn_obj_speed_HD",
-		"cmn_obj_gaugeup_HD",
-		"cmn_obj_5ring_HD",
-		"cmn_obj_10ring_HD",
-		"cmn_obj_20ring_HD"
-	};
-	WRITE_MEMORY(0xFFF566, char**, itemNames);
-	INSTALL_HOOK(Itembox_GetItem);
-	INSTALL_HOOK(Itembox_MsgGetItemType);
-	INSTALL_HOOK(Itembox_MsgTakeObject);
-
 	// Make CPlayerSpeedStatePluginRingCountUp get all rings immediately
 	WRITE_NOP(0xE4155E, 2);
 	WRITE_NOP(0xE415C8, 2);
 	WRITE_MEMORY(0xE4157A, int, -1);
 
-	// Force all item to use cmn_obj_oneup_HD skl and anm
-	WRITE_NOP(0xFFF414, 6);
-	WRITE_NOP(0xFFF593, 6);
-	WRITE_MEMORY(0xFFF5D6, uint8_t, 0xB8, 0x3C, 0x46, 0x66, 0x01, 0x90, 0x90);
-	WRITE_MEMORY(0xFFF62A, uint8_t, 0xB8, 0x3C, 0x46, 0x66, 0x01, 0x90, 0x90);
+	//---------------------------------------
+	// SuperRing
+	//---------------------------------------
+	// Disable ef_ch_sns_yh1_ringget on 10ring
+	WRITE_STRING(0x166E4CC, "");
+	
+	// Handle homing lock-on for SuperRing
+	WRITE_MEMORY(0x11F336D, uint32_t, 0x1E0AF34);
+	INSTALL_HOOK(Itembox_CObjSuperRingProcessMessage);
+	INSTALL_HOOK(Itembox_CObjSuperRingMsgHitEventCollision);
 
-	// Prevent Disable Lives code conflict
-	WRITE_MEMORY(0xFFF5D7, char*, itemNames[0]);
-	WRITE_MEMORY(0xFFF62B, char*, itemNames[0]);
+	// Stop auto face camera
+	WRITE_NOP(0x11F2BD0, 6); 
+
+	// Force replace model
+	WRITE_STRING(0x166E498, "cmn_superring");
+	WRITE_STRING(0x166E4B0, "cmn_itembox");
+
+	// Match itembox spin rate
+	static double const c_superring_spinRate = -0.8 * PI;
+	WRITE_MEMORY(0x11F2A6A, double*, &c_superring_spinRate);
 
 	// Draw GUI
 	INSTALL_HOOK(Itembox_GetSuperRing);
+
+	//---------------------------------------
+	// Item
+	//---------------------------------------
+	// Disable ef_ch_sng_yh1_1up after getting 1up
+	WRITE_STRING(0x15E90DC, "");
+
+	// Disable ef_ob_com_yh1_1up effect on 1up
+	WRITE_JUMP(0xFFFA5E, (void*)0xFFFB15);
+	
+	// Disable Item always facing screen
+	WRITE_NOP(0xFFF4E3, 3);
+	
+	// Handle homing lock-on for Item
+	WRITE_MEMORY(0xFFFA3C, uint32_t, 0x1E0AF34);
+	INSTALL_HOOK(Itembox_CObjItemProcessMessage);
+	INSTALL_HOOK(Itembox_CObjItemMsgHitEventCollision);
+
+	// Prevent bouncing off Itembox right as you land
+	INSTALL_HOOK(Itembox_CStateLandJumpShortMsgDamageSuccess);
+
+	// Inject new types to Item
+	static char const* itemNames[] = 
+	{ 
+		"cmn_itembox_oneup", 
+		"cmn_itembox_muteki", // invincibility
+		"cmn_itembox_shield",
+		"cmn_itembox_baria",  // fire shield
+		"cmn_itembox_speed",
+		"cmn_itembox_gaugeup",
+		"cmn_itembox_ring5",
+		"cmn_itembox_ring10",
+		"cmn_itembox_ring20"
+	};
+	WRITE_MEMORY(0xFFF566, char**, itemNames);
+	WRITE_MEMORY(0xFFF5D9, char**, itemNames);
+	WRITE_MEMORY(0xFFF62D, char**, itemNames);
+	INSTALL_HOOK(Itembox_GetItem);
+	INSTALL_HOOK(Itembox_MsgGetItemType);
+	INSTALL_HOOK(Itembox_MsgTakeObject);
+
+	// Force all item to use cmn_itembox_oneup skl and anm
+	WRITE_NOP(0xFFF414, 6);
+	WRITE_NOP(0xFFF593, 6);
+	WRITE_MEMORY(0xFFF5D0, uint8_t, 0x31, 0xD2, 0x90, 0x90, 0x90, 0x90);
+	WRITE_MEMORY(0xFFF624, uint8_t, 0x31, 0xD2, 0x90, 0x90, 0x90, 0x90);
 }
 
 void Itembox::playItemboxSfx()
