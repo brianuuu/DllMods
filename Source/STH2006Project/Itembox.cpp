@@ -206,6 +206,9 @@ void Itembox::applyPatches()
 	//---------------------------------------
 	// Disable ef_ch_sns_yh1_ringget on 10ring
 	WRITE_STRING(0x166E4CC, "");
+
+	// Play itembox pfx
+	WRITE_STRING(0x166E4E8, "ef_itembox");
 	
 	// Handle homing lock-on for SuperRing
 	WRITE_MEMORY(0x11F336D, uint32_t, 0x1E0AF34);
@@ -284,7 +287,7 @@ void Itembox::playItemboxSfx()
 
 void __fastcall Itembox::playItemboxPfx(void* This)
 {
-	Common::ObjectCGlitterPlayerOneShot(This, "ef_ch_sns_yh1_1upget_s");
+	Common::ObjectCGlitterPlayerOneShot(This, "ef_itembox");
 }
 
 void Itembox::addItemToGui(ItemboxType type)
