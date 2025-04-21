@@ -15,10 +15,7 @@ private:
 	bool m_shouldSpin;
 
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
-
 	boost::shared_ptr<Sonic::CRigidBody> m_spRigidBody;
-	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeRigidBody;
-	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
 
 public:
 	void InitializeEditParam(Sonic::CEditParam& in_rEditParam) override;

@@ -36,16 +36,12 @@ bool Guillotine::SetAddColliders
 )
 {
 	// Rigid body
-	m_spNodeRigidBody = boost::make_shared<Sonic::CMatrixNodeTransform>();
-	m_spNodeRigidBody->SetParent(m_spMatrixNodeTransform.get());
 	hk2010_2_0::hkpCapsuleShape* pRigidBodyShape = new hk2010_2_0::hkpCapsuleShape(hh::math::CVector(-2.84f, 0.0f, 0.0f), hh::math::CVector(2.84f, 0.0f, 0.0f), 0.21f);
-	AddRigidBody(m_spRigidBody, pRigidBodyShape, *(int*)0x1E0AFF0, m_spNodeRigidBody);
+	AddRigidBody(m_spRigidBody, pRigidBodyShape, *(int*)0x1E0AFF0, m_spMatrixNodeTransform);
 
 	// Damage
-	m_spNodeEventCollision = boost::make_shared<Sonic::CMatrixNodeTransform>();
-	m_spNodeEventCollision->SetParent(m_spMatrixNodeTransform.get());
 	hk2010_2_0::hkpCapsuleShape* pDamageShape = new hk2010_2_0::hkpCapsuleShape(hh::math::CVector(-2.4f, 0.0f, 0.0f), hh::math::CVector(2.4f, 0.0f, 0.0f), 0.6f);
-	AddEventCollision("Damage", pDamageShape, *(int*)0x1E0AFD8, true, m_spNodeEventCollision);
+	AddEventCollision("Damage", pDamageShape, *(int*)0x1E0AFD8, true, m_spMatrixNodeTransform);
 
 	return true;
 }
@@ -73,8 +69,8 @@ bool Guillotine::ProcessMessage
 {
 	if (std::strstr(message.GetType(), "MsgHitEventCollision") != nullptr)
 	{
-		FUNCTION_PTR(void, __thiscall, fnDamagePlayerFromObject, 0xEC8040, void* This, Hedgehog::Universe::Message& message);
-		fnDamagePlayerFromObject(this, message);
+		FUNCTION_PTR(void, __thiscall, fpDamagePlayerFromObject, 0xEC8040, void* This, Hedgehog::Universe::Message& message);
+		fpDamagePlayerFromObject(this, message);
 		return true;
 	}
 
