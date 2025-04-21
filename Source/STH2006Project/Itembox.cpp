@@ -182,6 +182,33 @@ HOOK(void, __fastcall, Itembox_CObjSuperRingMsgHitEventCollision, 0x11F2F10, Son
 	originalItembox_CObjSuperRingMsgHitEventCollision(This, Edx, message);
 }
 
+float const c_invincibleTime = 16.8f;
+HOOK(void, __fastcall, Itembox_CPlayerSpeedStatePluginUnbeatenAdvance, 0x11DD640, Sonic::Player::CPlayerSpeedContext::CStateSpeedBase* This)
+{
+	if (This->m_Time > c_invincibleTime)
+	{
+		This->m_Field1C = 1;
+	}
+}
+
+HOOK(void, __fastcall, Itembox_CPlayerSpeedStatePluginHighSpeedBegin, 0x111B660, Sonic::Player::CPlayerSpeedContext::CStateSpeedBase* This)
+{
+	originalItembox_CPlayerSpeedStatePluginHighSpeedBegin(This);
+
+	// Play Invincible2 music
+	Common::PlayBGM((char*)0x15F3130, 0.0f);
+	*(Hedgehog::Base::CSharedString*)((uint32_t)This + 0x60) = (char*)0x15F3130;
+}
+
+HOOK(void, __fastcall, Itembox_CPlayerSpeedStatePluginHighSpeedAdvance, 0x111B600, Sonic::Player::CPlayerSpeedContext::CStateSpeedBase* This)
+{
+	auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+	if (This->m_Time > c_invincibleTime || context->StateFlag(eStateFlag_Dead))
+	{
+		This->m_Field1C = 1;
+	}
+}
+
 void Itembox::applyPatches()
 {
 	//---------------------------------------
@@ -248,6 +275,14 @@ void Itembox::applyPatches()
 
 	// Prevent bouncing off Itembox right as you land
 	INSTALL_HOOK(Itembox_CStateLandJumpShortMsgDamageSuccess);
+
+	// Fix invincibility time
+	INSTALL_HOOK(Itembox_CPlayerSpeedStatePluginUnbeatenAdvance);
+
+	// Fix speed shoes music and time
+	WRITE_JUMP(0x111B7E7, (void*)0x111B873);
+	INSTALL_HOOK(Itembox_CPlayerSpeedStatePluginHighSpeedBegin);
+	INSTALL_HOOK(Itembox_CPlayerSpeedStatePluginHighSpeedAdvance);
 
 	// Inject new types to Item
 	static char const* itemNames[] = 
