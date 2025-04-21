@@ -116,6 +116,9 @@
     <ClCompile Include="Guillotine.cpp">
       <Filter>Objects</Filter>
     </ClCompile>
+    <ClCompile Include="Cage.cpp">
+      <Filter>Objects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -201,6 +204,9 @@
       <Filter>Objects</Filter>
     </ClInclude>
     <ClInclude Include="Guillotine.h">
+      <Filter>Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Cage.h">
       <Filter>Objects</Filter>
     </ClInclude>
   </ItemGroup>

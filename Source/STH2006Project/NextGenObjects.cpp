@@ -1,5 +1,6 @@
 #include "NextGenObjects.h"
 
+#include "Cage.h"
 #include "Guillotine.h"
 #include "Itembox.h"
 
@@ -86,5 +87,6 @@ void NextGenObjects::applyPatches()
     Itembox::applyPatches();
 
     // New Set Objects
+    Cage::registerObject();
     Guillotine::registerObject();
 }
