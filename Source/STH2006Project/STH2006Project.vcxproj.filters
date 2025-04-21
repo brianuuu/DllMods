@@ -113,6 +113,9 @@
     <ClCompile Include="Itembox.cpp">
       <Filter>Objects</Filter>
     </ClCompile>
+    <ClCompile Include="Guillotine.cpp">
+      <Filter>Objects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -195,6 +198,9 @@
       <Filter>Objects</Filter>
     </ClInclude>
     <ClInclude Include="Itembox.h">
+      <Filter>Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Guillotine.h">
       <Filter>Objects</Filter>
     </ClInclude>
   </ItemGroup>

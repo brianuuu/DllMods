@@ -256,6 +256,7 @@
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="EnemyTrigger.cpp" />
+    <ClCompile Include="Guillotine.cpp" />
     <ClCompile Include="LoadingUI.cpp" />
     <ClCompile Include="MissionManager.cpp" />
     <ClCompile Include="NextGenObjects.cpp" />
@@ -297,6 +298,7 @@
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="DllMain.h" />
     <ClInclude Include="EnemyTrigger.h" />
+    <ClInclude Include="Guillotine.h" />
     <ClInclude Include="LoadingUI.h" />
     <ClInclude Include="MissionManager.h" />
     <ClInclude Include="NextGenObjects.h" />
