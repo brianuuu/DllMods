@@ -1218,6 +1218,7 @@ public:
         {
             Eigen::Vector4f screenPosition;
             Common::fGetScreenPosition(m_pos, screenPosition);
+            m_sceneLockonCursor->SetHideFlag(screenPosition.z() < 0.0f);
             m_sceneLockonCursor->SetPosition(screenPosition.x(), screenPosition.y());
         }
     }
