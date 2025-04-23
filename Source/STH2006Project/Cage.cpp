@@ -32,7 +32,6 @@ bool Cage::SetAddRenderables
 	// top
 	m_spNodeModel = boost::make_shared<Sonic::CMatrixNodeTransform>();
 	m_spNodeModel->SetParent(m_spMatrixNodeTransform.get());
-
 	boost::shared_ptr<hh::mr::CModelData> spModelData = wrapper.GetModelData("cmn_cage", 0);
 	m_spModel = boost::make_shared<hh::mr::CSingleElement>(spModelData);
 	m_spModel->BindMatrixNode(m_spNodeModel);
@@ -109,7 +108,7 @@ bool Cage::SetAddColliders
 	m_spNodeEventCollision->NotifyChanged();
 	m_spNodeEventCollision->SetParent(m_spMatrixNodeTransform.get());
 	hk2010_2_0::hkpBoxShape* shapeEventTrigger = new hk2010_2_0::hkpBoxShape(2.3f, 2.3f, 2.3f);
-	AddEventCollision("Trapped", shapeEventTrigger, *reinterpret_cast<int*>(0x01E0AFD8), true, m_spNodeEventCollision);
+	AddEventCollision("Trapped", shapeEventTrigger, *(int*)0x1E0AFD8, true, m_spNodeEventCollision);
 	
 	return true;
 }
