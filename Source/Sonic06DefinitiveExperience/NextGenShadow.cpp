@@ -1019,8 +1019,16 @@ public:
 
             if (std::strstr(message.GetType(), "MsgHitEventCollision") != nullptr)
             {
+                auto* senderMessageActor = m_pMessageManager->GetMessageActor(message.m_SenderActorID);
+                uint32_t senderActor = (uint32_t)senderMessageActor - 0x28;
+                bool cannotDamage = false;
+                if (*(uint32_t*)senderActor == 0x16F70BC) // CEnemySpinner
+                {
+                    cannotDamage = *(bool*)(senderActor + 0x239);
+                }
+
                 Common::fCGlitterCreate(*PLAYER_CONTEXT, spearVanishHandle, &m_spMatrixNodeTransform, m_IsDamage ? "ef_bo_sha_yh2_lance_vanish" : "ef_bo_sha_yh2_spear_vanish", 1);
-                if (m_IsDamage)
+                if (m_IsDamage && !cannotDamage)
                 {
                     SendMessage
                     (
@@ -1029,7 +1037,7 @@ public:
                             *(uint32_t*)0x1E0BE30, // DamageID_SonicLight
                             m_Position,
                             hh::math::CVector::Identity()
-                            )
+                        )
                     );
                 }
 
