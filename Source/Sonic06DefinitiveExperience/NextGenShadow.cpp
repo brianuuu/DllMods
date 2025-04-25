@@ -1679,21 +1679,30 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
                 }
             }
 
-            // push dummy targets
-            bool const pushDummies = NextGenShadow::m_targetData.empty();
-            while (pushDummies && NextGenShadow::m_targetData.size() < currentTargetCount)
+            // clean unused targets
+            if (currentTargetCount < NextGenShadow::m_targetData.size())
             {
-                NextGenShadow::m_targetData.push_back(NextGenShadow::TargetData{ 0, 0.0f, 0 });
+                NextGenShadow::m_targetData.resize(currentTargetCount);
             }
 
-            // super can fire at the same enemy
-            int const repeatTargetCount = NextGenShadow::m_targetData.size();
-            if (repeatTargetCount > 0 && Common::IsPlayerSuper())
+            if (Common::IsPlayerSuper())
             {
+                // super can fire at the same target
+                int const repeatTargetSize = NextGenShadow::m_targetData.size();
+                int i = 0;
                 while (NextGenShadow::m_targetData.size() < currentTargetCount)
                 {
-                    NextGenShadow::m_targetData.push_back(NextGenShadow::m_targetData.at(NextGenShadow::m_targetData.size() % repeatTargetCount));
+                    NextGenShadow::m_targetData.push_back(NextGenShadow::m_targetData.at(i++));
+                    if (i >= repeatTargetSize)
+                    {
+                        i = 0;
+                    }
                 }
+            }
+            else if (NextGenShadow::m_targetData.empty())
+            {
+                // push dummy targets
+                NextGenShadow::m_targetData.resize(currentTargetCount);
             }
 
             if (!Configuration::m_noCursor)
