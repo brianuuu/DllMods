@@ -921,6 +921,7 @@ class CObjChaosSpear : public Sonic::CGameObject3D
 private:
     uint32_t m_TargetID;
 
+    float m_Speed;
     Hedgehog::Math::CVector m_Position;
     Hedgehog::Math::CVector m_Velocity;
     float m_LifeTime;
@@ -942,8 +943,9 @@ public:
         bool _IsDamage
     )
         : m_TargetID(_TargetID)
+        , m_Speed(cShadow_chaosSpearSpeed + _SpeedAdd)
         , m_Position(_Position)
-        , m_Velocity(_StartDir.normalized() * (cShadow_chaosSpearSpeed + _SpeedAdd))
+        , m_Velocity(_StartDir.normalized() * m_Speed)
         , m_LifeTime(0.0f)
         , m_IsDamage(_IsDamage)
         , m_IsSuper(false)
@@ -1019,37 +1021,7 @@ public:
 
             if (std::strstr(message.GetType(), "MsgHitEventCollision") != nullptr)
             {
-                auto* senderMessageActor = m_pMessageManager->GetMessageActor(message.m_SenderActorID);
-                uint32_t senderActor = (uint32_t)senderMessageActor - 0x28;
-                bool cannotDamage = false;
-                if (*(uint32_t*)senderActor == 0x16F70BC) // CEnemySpinner
-                {
-                    cannotDamage = *(bool*)(senderActor + 0x239);
-                }
-
-                Common::fCGlitterCreate(*PLAYER_CONTEXT, spearVanishHandle, &m_spMatrixNodeTransform, m_IsDamage ? "ef_bo_sha_yh2_lance_vanish" : "ef_bo_sha_yh2_spear_vanish", 1);
-                if (m_IsDamage && !cannotDamage)
-                {
-                    SendMessage
-                    (
-                        message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
-                        (
-                            *(uint32_t*)0x1E0BE30, // DamageID_SonicLight
-                            m_Position,
-                            hh::math::CVector::Identity()
-                        )
-                    );
-                }
-
-                SendMessage
-                (
-                    message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgNotifyShockWave>
-                    (
-                        cShadow_chaosSpearShockDuration
-                    )
-                );
-
-                Kill();
+                HitTarget(message.m_SenderActorID);
                 return true;
             }
         }
@@ -1072,6 +1044,13 @@ public:
             {
                 SendMessageImm(m_TargetID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
                 newDirection = (targetPosition - m_Position).normalized();
+
+                // getting close enough to target
+                if ((targetPosition - m_Position).norm() <= m_Speed * updateInfo.DeltaTime)
+                {
+                    HitTarget(m_TargetID);
+                    return;
+                }
             }
         }
 
@@ -1090,7 +1069,7 @@ public:
                 newDirection = rot * oldDirection;
             }
 
-            m_Velocity = newDirection * cShadow_chaosSpearSpeed;
+            m_Velocity = newDirection * m_Speed;
         }
 
         m_Position += m_Velocity * updateInfo.DeltaTime;
@@ -1114,6 +1093,41 @@ public:
 
         m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(rotPitch * rotYaw, m_Position);
         m_spMatrixNodeTransform->NotifyChanged();
+    }
+
+    void HitTarget(uint32_t actorID)
+    {
+        auto* senderMessageActor = m_pMessageManager->GetMessageActor(actorID);
+        uint32_t senderActor = (uint32_t)senderMessageActor - 0x28;
+        bool cannotDamage = false;
+        if (*(uint32_t*)senderActor == 0x16F70BC) // CEnemySpinner
+        {
+            cannotDamage = *(bool*)(senderActor + 0x239);
+        }
+
+        Common::fCGlitterCreate(*PLAYER_CONTEXT, spearVanishHandle, &m_spMatrixNodeTransform, m_IsDamage ? "ef_bo_sha_yh2_lance_vanish" : "ef_bo_sha_yh2_spear_vanish", 1);
+        if (m_IsDamage && !cannotDamage)
+        {
+            SendMessage
+            (
+                actorID, boost::make_shared<Sonic::Message::MsgDamage>
+                (
+                    *(uint32_t*)0x1E0BE30, // DamageID_SonicLight
+                    m_Position,
+                    hh::math::CVector::Identity()
+                )
+            );
+        }
+
+        SendMessage
+        (
+            actorID, boost::make_shared<Sonic::Message::MsgNotifyShockWave>
+            (
+                cShadow_chaosSpearShockDuration
+            )
+        );
+
+        Kill();
     }
 
     void Kill()
