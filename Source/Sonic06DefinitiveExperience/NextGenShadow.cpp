@@ -1685,7 +1685,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
                 NextGenShadow::m_targetData.resize(currentTargetCount);
             }
 
-            if (Common::IsPlayerSuper())
+            if (Common::IsPlayerSuper() && !NextGenShadow::m_targetData.empty())
             {
                 // super can fire at the same target
                 int const repeatTargetSize = NextGenShadow::m_targetData.size();
