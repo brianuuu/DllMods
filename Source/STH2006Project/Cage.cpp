@@ -131,10 +131,13 @@ void Cage::SetUpdateParallel
 	}
 }
 
-void Cage::CGameObject2C(void* This)
+void Cage::CGameObject2C
+(
+	void* pData
+)
 {
-	FUNCTION_PTR(int, __stdcall, fpSetUpTrigger4, 0xEA2940, void* This);
-	fpSetUpTrigger4(This);
+	FUNCTION_PTR(int, __stdcall, fpSetUpTrigger4, 0xEA2940, void* pData);
+	fpSetUpTrigger4(pData);
 }
 
 bool Cage::ProcessMessage
