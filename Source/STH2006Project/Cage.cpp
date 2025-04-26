@@ -27,7 +27,7 @@ bool Cage::SetAddRenderables
 	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData("cmn_cage_base", 0);
 	m_spModelBase = boost::make_shared<hh::mr::CSingleElement>(spModelBaseData);
 	m_spModelBase->BindMatrixNode(m_spMatrixNodeTransform);
-	Sonic::CGameObject::AddRenderable("Object", m_spModelBase, true);
+	Sonic::CGameObject::AddRenderable("Object", m_spModelBase, m_pMember->m_CastShadow);
 
 	// top
 	m_spNodeModel = boost::make_shared<Sonic::CMatrixNodeTransform>();
@@ -35,7 +35,7 @@ bool Cage::SetAddRenderables
 	boost::shared_ptr<hh::mr::CModelData> spModelData = wrapper.GetModelData("cmn_cage", 0);
 	m_spModel = boost::make_shared<hh::mr::CSingleElement>(spModelData);
 	m_spModel->BindMatrixNode(m_spNodeModel);
-	Sonic::CGameObject::AddRenderable("Object", m_spModel, true);
+	Sonic::CGameObject::AddRenderable("Object", m_spModel, m_pMember->m_CastShadow);
 
 	// uv-anim
 	m_spEffectMotionAll = boost::make_shared<hh::mot::CSingleElementEffectMotionAll>();

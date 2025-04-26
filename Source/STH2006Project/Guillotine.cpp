@@ -11,8 +11,8 @@ void Guillotine::InitializeEditParam
 	Sonic::CEditParam& in_rEditParam
 )
 {
-	m_shouldSpin = false;
-	in_rEditParam.CreateParamBool(&m_shouldSpin, "ShouldSpin");
+	m_Data.m_ShouldSpin = false;
+	in_rEditParam.CreateParamBool(&m_Data.m_ShouldSpin, "ShouldSpin");
 }
 
 bool Guillotine::SetAddRenderables
@@ -25,7 +25,7 @@ bool Guillotine::SetAddRenderables
 	boost::shared_ptr<hh::mr::CModelData> spModelData = wrapper.GetModelData("cmn_guillotine", 0);
 	m_spModel = boost::make_shared<hh::mr::CSingleElement>(spModelData);
 	m_spModel->BindMatrixNode(m_spMatrixNodeTransform);
-	Sonic::CGameObject::AddRenderable("Object", m_spModel, true);
+	Sonic::CGameObject::AddRenderable("Object", m_spModel, m_pMember->m_CastShadow);
 
 	return true;
 }
@@ -52,7 +52,7 @@ void Guillotine::SetUpdateParallel
 )
 {
 	float constexpr c_spinRate = 2.0f * PI * 2.0f;
-	if (m_shouldSpin)
+	if (m_Data.m_ShouldSpin)
 	{
 		hh::math::CVector const rightAxis = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitX();
 		hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(c_spinRate * in_rUpdateInfo.DeltaTime, rightAxis) * m_spMatrixNodeTransform->m_Transform.m_Rotation;

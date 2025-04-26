@@ -12,8 +12,12 @@ public:
 	static void registerObject();
 
 private:
-	bool m_shouldSpin;
+	struct Data
+	{
+		bool m_ShouldSpin;
+	} m_Data;
 
+private:
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
 	boost::shared_ptr<Sonic::CRigidBody> m_spRigidBody;
 
