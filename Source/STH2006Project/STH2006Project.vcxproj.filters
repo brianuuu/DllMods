@@ -119,6 +119,9 @@
     <ClCompile Include="Cage.cpp">
       <Filter>Objects</Filter>
     </ClCompile>
+    <ClCompile Include="BallSwitch.cpp">
+      <Filter>Objects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -207,6 +210,9 @@
       <Filter>Objects</Filter>
     </ClInclude>
     <ClInclude Include="Cage.h">
+      <Filter>Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="BallSwitch.h">
       <Filter>Objects</Filter>
     </ClInclude>
   </ItemGroup>

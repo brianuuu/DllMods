@@ -252,6 +252,7 @@
     </ClCompile>
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="ArchiveTreePatcher.cpp" />
+    <ClCompile Include="BallSwitch.cpp" />
     <ClCompile Include="Cage.cpp" />
     <ClCompile Include="ChaosEnergy.cpp" />
     <ClCompile Include="Configuration.cpp" />
@@ -295,6 +296,7 @@
   <ItemGroup>
     <ClInclude Include="Application.h" />
     <ClInclude Include="ArchiveTreePatcher.h" />
+    <ClInclude Include="BallSwitch.h" />
     <ClInclude Include="Cage.h" />
     <ClInclude Include="ChaosEnergy.h" />
     <ClInclude Include="Configuration.h" />
