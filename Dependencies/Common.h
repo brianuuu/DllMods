@@ -1173,6 +1173,24 @@ inline void fEventTrigger(void* This, int Event)
 	fpEventTrigger(This, Event);
 }
 
+inline void fSendMessageToSetObject
+(
+	Hedgehog::Universe::CMessageActor* messageActor,
+	uint32_t setObjectID,
+	boost::shared_ptr<Hedgehog::Universe::Message> message
+)
+{
+	FUNCTION_PTR(bool, __thiscall, fpSendMessageToSetObject, 0xEB3A60,
+		Hedgehog::Universe::CMessageActor* messageActor,
+		Sonic::CSetObjectManager* setObjectManager,
+		uint32_t setObjectID,
+		boost::shared_ptr<Hedgehog::Universe::Message> message
+	);
+
+	Sonic::CGameDocument* gameDocument = Sonic::CGameDocument::GetInstance().get().get();
+	fpSendMessageToSetObject(messageActor, gameDocument->m_pGameActParameter->m_pSetObjectManager, setObjectID, message);
+}
+
 static void fDestroyGameObject
 (
 	void* pGameObject
