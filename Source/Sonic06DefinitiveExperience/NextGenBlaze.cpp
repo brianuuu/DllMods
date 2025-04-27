@@ -190,7 +190,6 @@ HOOK(void, __fastcall, NextGenBlaze_CSonicStateWallJumpReadyBegin, 0x123DA70, vo
     return originalNextGenBlaze_CSonicStateWallJumpReadyBegin(This);
 }
 
-float hasLeftGround = 0.0f;
 HOOK(int, __fastcall, NextGenBlaze_CSonicStateHomingAttackBegin, 0x1232040, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
@@ -262,6 +261,7 @@ HOOK(void, __fastcall, NextGenBlaze_CSonicStateHomingAttackAdvance, 0x1231C60, h
         if (NextGenBlaze::m_homingVSpeed <= 0.0f)
         {
             WRITE_MEMORY(0x1231E36, uint8_t, 0x74, 0x17);
+            forceInAir = false;
         }
 
         // Update velocity
