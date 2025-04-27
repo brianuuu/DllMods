@@ -167,7 +167,7 @@ void BallSwitch::SetUpdateParallel
 			float const currentDistToPlayer = horizontalDir.norm();
 			if (currentDistToPlayer < c_minDistFromPlayer)
 			{
-				newPosition = newPosition + horizontalDir.normalized() * (c_minDistFromPlayer - currentDistToPlayer);
+				newPosition += horizontalDir.normalized() * (c_minDistFromPlayer - currentDistToPlayer);
 			}
 		}
 
@@ -251,7 +251,8 @@ bool BallSwitch::ProcessMessage
 		SwitchOn();
 
 		// replicate Shadow's giant hitbox in 06
-		if (S06DE_API::GetModelType() == S06DE_API::ModelType::Shadow)
+		auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+		if (context->m_Velocity.y() >= 0.0f || S06DE_API::GetModelType() == S06DE_API::ModelType::Shadow)
 		{
 			SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamageSuccess>
 				(
