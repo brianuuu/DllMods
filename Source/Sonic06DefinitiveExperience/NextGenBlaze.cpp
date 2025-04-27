@@ -233,26 +233,26 @@ HOOK(int, __fastcall, NextGenBlaze_CSonicStateHomingAttackBegin, 0x1232040, uint
     return originalNextGenBlaze_CSonicStateHomingAttackBegin(This);
 }
 
-HOOK(void, __fastcall, NextGenBlaze_CSonicStateHomingAttackAdvance, 0x1231C60, uint32_t** This)
+HOOK(void, __fastcall, NextGenBlaze_CSonicStateHomingAttackAdvance, 0x1231C60, hh::fnd::CStateMachineBase::CStateBase* This)
 {
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
     bool forceInAir = true;
 
     // Do not auto update rotation in the air
     WRITE_MEMORY(0xE32423, uint8_t, 0xEB);
 
-    uint32_t* owner = This[2];
+    Eigen::Vector3f velocity;
+    Common::GetPlayerVelocity(velocity);
     if (NextGenBlaze::m_dummyHoming)
     {
         // No homing attack target, keep constant forward velocity
-        Eigen::Vector3f velocity;
-        Common::GetPlayerVelocity(velocity);
         Eigen::Vector3f hVel = velocity;
         hVel.y() = 0.0f;
 
         // Transition out if hVel is too low
         if (hVel.squaredNorm() < 100.0f)
         {
-            StateManager::ChangeState(StateAction::Fall, owner);
+            StateManager::ChangeState(StateAction::Fall, context);
             return;
         }
 
@@ -272,6 +272,14 @@ HOOK(void, __fastcall, NextGenBlaze_CSonicStateHomingAttackAdvance, 0x1231C60, u
         velocity = hVel.normalized() * cBlaze_dummyHomingSpeed;
         velocity.y() = NextGenBlaze::m_homingVSpeed;
         Common::SetPlayerVelocity(velocity);
+    }
+    else
+    {
+        if (!context->m_Grounded)
+        {
+            WRITE_MEMORY(0x1231E36, uint8_t, 0x74, 0x17);
+            forceInAir = false;
+        }
     }
 
     // Force not on ground
