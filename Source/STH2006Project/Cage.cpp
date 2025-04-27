@@ -161,6 +161,14 @@ bool Cage::ProcessMessage
 		return true;
 	}
 
+	if (std::strstr(message.GetType(), "MsgDeactivate") != nullptr)
+	{
+		if (m_isOpen)
+		{
+			return false;
+		}
+	}
+
 	return Sonic::CObjectBase::ProcessMessage(message, flag);
 }
 

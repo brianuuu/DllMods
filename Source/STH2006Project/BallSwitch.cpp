@@ -272,6 +272,14 @@ bool BallSwitch::ProcessMessage
 		return true;
 	}
 
+	if (std::strstr(message.GetType(), "MsgDeactivate") != nullptr)
+	{
+		if (m_isOn)
+		{
+			return false;
+		}
+	}
+
 	return Sonic::CObjectBase::ProcessMessage(message, flag);
 }
 
