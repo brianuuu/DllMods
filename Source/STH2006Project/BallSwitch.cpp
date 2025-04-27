@@ -282,8 +282,10 @@ bool BallSwitch::ProcessMessage
 	{
 		if (m_isOn)
 		{
-			return false;
+			auto& msg = static_cast<Sonic::Message::MsgDeactivate&>(message);
+			msg.m_Flag = false;
 		}
+		return true;
 	}
 
 	return Sonic::CObjectBase::ProcessMessage(message, flag);
