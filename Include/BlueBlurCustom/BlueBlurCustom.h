@@ -9,6 +9,7 @@
 #include <Sonic/Message/MsgEndQuickStepSign.h>
 #include <Sonic/Message/MsgFinishExternalControl.h>
 #include <Sonic/Message/MsgGetEnemyType.h>
+#include <Sonic/Message/MsgGetPlayerType.h>
 #include <Sonic/Message/MsgHitEventCollision.h>
 #include <Sonic/Message/MsgIsExternalControl.h>
 #include <Sonic/Message/MsgLeaveEventCollision.h>
