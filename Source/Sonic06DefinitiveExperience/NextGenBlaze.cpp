@@ -239,18 +239,12 @@ HOOK(void, __fastcall, NextGenBlaze_CSonicStateHomingAttackAdvance, 0x1231C60, h
 
     Eigen::Vector3f velocity;
     Common::GetPlayerVelocity(velocity);
+    Eigen::Vector3f hVel = velocity;
+    hVel.y() = 0.0f;
+
     if (!context->m_HomingAttackTargetActorID)
     {
         // No homing attack target, keep constant forward velocity
-        Eigen::Vector3f hVel = velocity;
-        hVel.y() = 0.0f;
-
-        // Transition out if hVel is too low
-        if (hVel.squaredNorm() < 100.0f)
-        {
-            StateManager::ChangeState(StateAction::Fall, context);
-            return;
-        }
 
         // Change vVel base on pseudo gravity
         NextGenBlaze::m_homingVSpeed = max(NextGenBlaze::m_homingVSpeed, velocity.y());
@@ -283,6 +277,13 @@ HOOK(void, __fastcall, NextGenBlaze_CSonicStateHomingAttackAdvance, 0x1231C60, h
     {
         *(bool*)((uint32_t)*PLAYER_CONTEXT + 0x440) = false;
         *(bool*)((uint32_t)*PLAYER_CONTEXT + 0x360) = false;
+    }
+
+    // Transition out if hVel is too low
+    if (hVel.squaredNorm() < 100.0f)
+    {
+        StateManager::ChangeState(StateAction::Fall, context);
+        return;
     }
 
     originalNextGenBlaze_CSonicStateHomingAttackAdvance(This);
