@@ -37,7 +37,6 @@ float const cBlaze_doubleJumpPower = 18.0f;
 
 float NextGenBlaze::m_xHeldTimer = 0.0f;
 float NextGenBlaze::m_homingVSpeed = 0.0f;
-bool NextGenBlaze::m_dummyHoming = false;
 float const cBlaze_fireTornadoMinTime = 0.3f;
 float const cBlaze_dummyHomingSpeed = 20.0f;
 float const cBlaze_dummyHomingVSpeedMax = 9.0f;
@@ -191,15 +190,16 @@ HOOK(void, __fastcall, NextGenBlaze_CSonicStateWallJumpReadyBegin, 0x123DA70, vo
     return originalNextGenBlaze_CSonicStateWallJumpReadyBegin(This);
 }
 
-HOOK(int, __fastcall, NextGenBlaze_CSonicStateHomingAttackBegin, 0x1232040, uint32_t** This)
+float hasLeftGround = 0.0f;
+HOOK(int, __fastcall, NextGenBlaze_CSonicStateHomingAttackBegin, 0x1232040, hh::fnd::CStateMachineBase::CStateBase* This)
 {
-    uint32_t* owner = This[2];
-    if (!owner[0x3A6])
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+    if (!context->m_HomingAttackTargetActorID)
     {
         Eigen::Vector3f velocity;
         Common::GetPlayerVelocity(velocity);
         NextGenBlaze::m_homingVSpeed = min(velocity.y(), cBlaze_dummyHomingVSpeedMax);
-        if (Common::IsPlayerGrounded())
+        if (context->m_Grounded)
         {
             NextGenBlaze::m_homingVSpeed = cBlaze_dummyHomingVSpeedMax;
         }
@@ -220,14 +220,11 @@ HOOK(int, __fastcall, NextGenBlaze_CSonicStateHomingAttackBegin, 0x1232040, uint
         velocity = hDir * cBlaze_dummyHomingSpeed;
         velocity.y() = NextGenBlaze::m_homingVSpeed;
         Common::SetPlayerVelocity(velocity);
-
-        NextGenBlaze::m_dummyHoming = true;
     }
     else
     {
         // Don't stop by ground on homing attack
         WRITE_MEMORY(0x1231E36, uint8_t, 0xEB, 0x5E);
-        NextGenBlaze::m_dummyHoming = false;
     }
 
     return originalNextGenBlaze_CSonicStateHomingAttackBegin(This);
@@ -243,7 +240,7 @@ HOOK(void, __fastcall, NextGenBlaze_CSonicStateHomingAttackAdvance, 0x1231C60, h
 
     Eigen::Vector3f velocity;
     Common::GetPlayerVelocity(velocity);
-    if (NextGenBlaze::m_dummyHoming)
+    if (!context->m_HomingAttackTargetActorID)
     {
         // No homing attack target, keep constant forward velocity
         Eigen::Vector3f hVel = velocity;
@@ -265,7 +262,6 @@ HOOK(void, __fastcall, NextGenBlaze_CSonicStateHomingAttackAdvance, 0x1231C60, h
         if (NextGenBlaze::m_homingVSpeed <= 0.0f)
         {
             WRITE_MEMORY(0x1231E36, uint8_t, 0x74, 0x17);
-            forceInAir = false;
         }
 
         // Update velocity

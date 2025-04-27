@@ -20,7 +20,6 @@ public:
 	// X Action
 	static float m_xHeldTimer;
 	static float m_homingVSpeed;
-	static bool m_dummyHoming;
 	static bool bActionHandlerImpl();
 
 	// Spinning Claw
