@@ -366,11 +366,9 @@ void BallSwitch::SendEventOn()
 	m_eventTimer = 0.0f;
 	Common::fEventTrigger(this, 1);
 
-	uint32_t* objectID = m_Data.m_TargetListON->m_ListStart;
-	while (objectID != m_Data.m_TargetListON->m_ListEnd)
+	for (uint32_t objectID : m_Data.m_TargetListON->m_List)
 	{
-		Common::fSendMessageToSetObject(this, *objectID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(m_Data.m_EventON));
-		objectID++;
+		Common::fSendMessageToSetObject(this, objectID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(m_Data.m_EventON));
 	}
 }
 
@@ -379,10 +377,8 @@ void BallSwitch::SendEventOff()
 	m_eventTimer = 0.0f;
 	Common::fEventTrigger(this, 2);
 
-	uint32_t* objectID = m_Data.m_TargetListOFF->m_ListStart;
-	while (objectID != m_Data.m_TargetListOFF->m_ListEnd)
+	for (uint32_t objectID : m_Data.m_TargetListOFF->m_List)
 	{
-		Common::fSendMessageToSetObject(this, *objectID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(m_Data.m_EventOFF));
-		objectID++;
+		Common::fSendMessageToSetObject(this, objectID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(m_Data.m_EventOFF));
 	}
 }
