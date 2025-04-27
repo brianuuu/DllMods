@@ -146,6 +146,11 @@ bool Cage::ProcessMessage
 	bool flag
 )
 {
+	if (!flag)
+	{
+		return Sonic::CObjectBase::ProcessMessage(message, flag);
+	}
+
 	if (message.Is<Sonic::Message::MsgNotifyObjectEvent>())
 	{
 		auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);

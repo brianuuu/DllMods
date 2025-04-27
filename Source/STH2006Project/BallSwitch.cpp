@@ -212,6 +212,11 @@ bool BallSwitch::ProcessMessage
 	bool flag
 )
 {
+	if (!flag)
+	{
+		return Sonic::CObjectBase::ProcessMessage(message, flag);
+	}
+
 	if (message.Is<Sonic::Message::MsgGetHomingAttackPriority>())
 	{
 		auto& msg = static_cast<Sonic::Message::MsgGetHomingAttackPriority&>(message);

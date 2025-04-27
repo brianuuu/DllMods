@@ -67,6 +67,11 @@ bool Guillotine::ProcessMessage
 	bool flag
 )
 {
+	if (!flag)
+	{
+		return Sonic::CObjectBase::ProcessMessage(message, flag);
+	}
+
 	if (std::strstr(message.GetType(), "MsgHitEventCollision") != nullptr)
 	{
 		FUNCTION_PTR(void, __thiscall, fpDamagePlayerFromObject, 0xEC8040, void* This, Hedgehog::Universe::Message& message);
