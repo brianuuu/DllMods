@@ -590,7 +590,7 @@ public:
                 return true;
             }
 
-            if (std::strstr(message.GetType(), "MsgHitEventCollision") != nullptr)
+            if (message.Is<Sonic::Message::MsgHitEventCollision>())
             {
                 uint32_t enemyType = 0u;
                 SendMessageImm(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgGetEnemyType>(&enemyType));

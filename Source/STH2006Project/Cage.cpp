@@ -160,13 +160,14 @@ bool Cage::ProcessMessage
 		}
 		return true;
 	}
-	else if (std::strstr(message.GetType(), "MsgHitEventCollision") != nullptr)
+
+	if (message.Is<Sonic::Message::MsgHitEventCollision>())
 	{
 		OpenCage();
 		return true;
 	}
 
-	if (std::strstr(message.GetType(), "MsgDeactivate") != nullptr)
+	if (message.Is<Sonic::Message::MsgDeactivate>())
 	{
 		if (m_isOpen)
 		{

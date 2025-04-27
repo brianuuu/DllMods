@@ -250,7 +250,7 @@ bool BallSwitch::ProcessMessage
 		return true;
 	}
 
-	if (std::strstr(message.GetType(), "MsgHitEventCollision") != nullptr)
+	if (message.Is<Sonic::Message::MsgHitEventCollision>())
 	{
 		m_isHit = true;
 		SwitchOn();
@@ -268,7 +268,7 @@ bool BallSwitch::ProcessMessage
 		return true;
 	}
 
-	if (std::strstr(message.GetType(), "MsgLeaveEventCollision") != nullptr)
+	if (message.Is<Sonic::Message::MsgLeaveEventCollision>())
 	{
 		m_isHit = false;
 		if ((Type)m_Data.m_Type == Type::SwitchOnWhileStanding)
@@ -278,7 +278,7 @@ bool BallSwitch::ProcessMessage
 		return true;
 	}
 
-	if (std::strstr(message.GetType(), "MsgDeactivate") != nullptr)
+	if (message.Is<Sonic::Message::MsgDeactivate>())
 	{
 		if (m_isOn)
 		{
