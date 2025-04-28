@@ -132,7 +132,7 @@ void BallSwitch::SetUpdateParallel
 	}
 
 	// count down off timer
-	if (m_offTimer > 0.0f)
+	if (m_offTimer > 0.0f && !m_isHit)
 	{
 		m_offTimer -= in_rUpdateInfo.DeltaTime;
 		if (m_offTimer <= 0.0f)
