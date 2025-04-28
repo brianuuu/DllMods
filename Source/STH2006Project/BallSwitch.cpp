@@ -261,7 +261,7 @@ bool BallSwitch::ProcessMessage
 		{
 			SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamageSuccess>
 				(
-					m_spMatrixNodeTransform->m_Transform.m_Position + m_spMatrixNodeTransform->m_Transform.m_Rotation * c_ballSwitchAnchor, true, true
+					m_spMatrixNodeTransform->m_Transform.m_Position + m_spMatrixNodeTransform->m_Transform.m_Rotation * c_ballSwitchAnchor, true, true, true
 				)
 			);
 		}
