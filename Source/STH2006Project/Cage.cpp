@@ -182,6 +182,9 @@ void Cage::OpenCage()
 {
 	if (m_isOpen) return;
 
+	SharedPtrTypeless openSfx;
+	Common::ObjectPlaySound(this, 200600004, openSfx);
+
 	Common::fEventTrigger(this, 4);
 	m_isOpen = true;
 

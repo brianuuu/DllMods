@@ -103,6 +103,7 @@ void JumpChain::SetUpdateParallel
 
 				SharedPtrTypeless soundHandle;
 				Common::SonicContextPlaySound(soundHandle, 2002027, 1);
+				Common::SonicContextPlayVoice(soundHandle, 3002000, 0);
 				SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl("JumpBall"));
 			}
 		}

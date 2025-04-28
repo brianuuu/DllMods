@@ -215,7 +215,7 @@ void Itembox::applyPatches()
 	// Common
 	//---------------------------------------
 	// Play itembox sfx for 1up and 10ring
-	WRITE_MEMORY(0x011F2FE0, uint32_t, 4002032);
+	WRITE_MEMORY(0x11F2FE0, uint32_t, 200600022);
 	WRITE_JUMP(0xFFF99F, objItemPlaySfx);
 
 	// Set itembox radius
@@ -317,7 +317,7 @@ void Itembox::applyPatches()
 void Itembox::playItemboxSfx()
 {
 	static SharedPtrTypeless soundHandle;
-	Common::SonicContextPlaySound(soundHandle, 4002032, 0);
+	Common::SonicContextPlaySound(soundHandle, 200600022, 0);
 }
 
 void __fastcall Itembox::playItemboxPfx(void* This)

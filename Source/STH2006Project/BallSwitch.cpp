@@ -293,7 +293,7 @@ void BallSwitch::SwitchOn()
 {
 	// play on sfx, pfx
 	Common::ObjectCGlitterPlayerOneShot(this, "ef_switch");
-	Common::ObjectPlaySound(this, 56710906, m_onOffSfx);
+	Common::ObjectPlaySound(this, 200600006, m_onOffSfx);
 
 	// set off count down timer
 	if ((Type)m_Data.m_Type == Type::SwitchOffByTimer && m_offTimer > -1.0f)
@@ -302,7 +302,7 @@ void BallSwitch::SwitchOn()
 		if (m_Data.m_OffBeep && m_offTimer > 0.0f)
 		{
 			m_beepingSfx.reset();
-			Common::ObjectPlaySound(this, 56710908, m_beepingSfx);
+			Common::ObjectPlaySound(this, 200600008, m_beepingSfx);
 		}
 	}
 
@@ -348,7 +348,7 @@ void BallSwitch::SwitchOff()
 
 	// play off sfx
 	m_beepingSfx.reset();
-	Common::ObjectPlaySound(this, 56710907, m_onOffSfx);
+	Common::ObjectPlaySound(this, 200600007, m_onOffSfx);
 
 	// revert material
 	FUNCTION_PTR(bool*, __thiscall, CSingleElementResetMaterial, 0x701830, Hedgehog::Mirage::CSingleElement* singleElement, hh::mr::CMaterialData* mat);
