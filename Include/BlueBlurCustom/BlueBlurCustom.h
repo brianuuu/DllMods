@@ -7,6 +7,7 @@
 #include <Sonic/Message/MsgDamageSuccess.h>
 #include <Sonic/Message/MsgDeactivate.h>
 #include <Sonic/Message/MsgEndQuickStepSign.h>
+#include <Sonic/Message/MsgExitedExternalControl.h>
 #include <Sonic/Message/MsgFinishExternalControl.h>
 #include <Sonic/Message/MsgGetEnemyType.h>
 #include <Sonic/Message/MsgGetPlayerType.h>
