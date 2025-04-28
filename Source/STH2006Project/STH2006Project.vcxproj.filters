@@ -122,6 +122,9 @@
     <ClCompile Include="BallSwitch.cpp">
       <Filter>Objects</Filter>
     </ClCompile>
+    <ClCompile Include="JumpChain.cpp">
+      <Filter>Objects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -213,6 +216,9 @@
       <Filter>Objects</Filter>
     </ClInclude>
     <ClInclude Include="BallSwitch.h">
+      <Filter>Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="JumpChain.h">
       <Filter>Objects</Filter>
     </ClInclude>
   </ItemGroup>

@@ -4,6 +4,7 @@
 #include "Cage.h"
 #include "Guillotine.h"
 #include "Itembox.h"
+#include "JumpChain.h"
 
 void NextGenObjects::applyPatches()
 {
@@ -91,4 +92,5 @@ void NextGenObjects::applyPatches()
     BallSwitch::registerObject();
     Cage::registerObject();
     Guillotine::registerObject();
+    JumpChain::registerObject();
 }
