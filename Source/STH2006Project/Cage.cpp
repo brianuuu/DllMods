@@ -171,10 +171,8 @@ bool Cage::ProcessMessage
 	{
 		if (m_isOpen)
 		{
-			auto& msg = static_cast<Sonic::Message::MsgDeactivate&>(message);
-			msg.m_Flag = false;
+			return false;
 		}
-		return true;
 	}
 
 	return Sonic::CObjectBase::ProcessMessage(message, flag);
