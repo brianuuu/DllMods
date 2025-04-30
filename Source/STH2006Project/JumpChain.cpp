@@ -33,6 +33,9 @@ void JumpChain::InitializeEditParam
 	m_Data.m_SquatEndSpeed = 0.0f;
 	in_rEditParam.CreateParamFloat(&m_Data.m_SquatEndSpeed, "SquatEndSpeed");
 
+	m_Data.m_FailOutOfControl = 0.0f;
+	in_rEditParam.CreateParamFloat(&m_Data.m_FailOutOfControl, "FailOutOfControl");
+
 	m_Data.m_AutoStart = false;
 	in_rEditParam.CreateParamBool(&m_Data.m_AutoStart, "AutoStart");
 
@@ -91,6 +94,12 @@ void JumpChain::SetUpdateParallel
 			SendMessageImm(m_playerID, boost::make_shared<Sonic::Message::MsgFinishExternalControl>(Sonic::Message::MsgFinishExternalControl::EChangeState::FALL));
 			Common::SetPlayerPosition(m_spSonicControlNode->m_Transform.m_Position + upAxis * 0.5f);
 			m_state = (int)State::Idle;
+
+			// out of control
+			if (m_Data.m_FailOutOfControl > 0.0f)
+			{
+				Common::SetPlayerOutOfControl(m_Data.m_FailOutOfControl);
+			}
 			return;
 		}
 

@@ -110,20 +110,20 @@
     <ClCompile Include="NextGenObjects.cpp">
       <Filter>Objects</Filter>
     </ClCompile>
-    <ClCompile Include="Itembox.cpp">
-      <Filter>Objects</Filter>
-    </ClCompile>
-    <ClCompile Include="Guillotine.cpp">
-      <Filter>Objects</Filter>
+    <ClCompile Include="BallSwitch.cpp">
+      <Filter>Objects\cmn</Filter>
     </ClCompile>
     <ClCompile Include="Cage.cpp">
-      <Filter>Objects</Filter>
+      <Filter>Objects\cmn</Filter>
     </ClCompile>
-    <ClCompile Include="BallSwitch.cpp">
-      <Filter>Objects</Filter>
+    <ClCompile Include="Guillotine.cpp">
+      <Filter>Objects\cmn</Filter>
+    </ClCompile>
+    <ClCompile Include="Itembox.cpp">
+      <Filter>Objects\cmn</Filter>
     </ClCompile>
     <ClCompile Include="JumpChain.cpp">
-      <Filter>Objects</Filter>
+      <Filter>Objects\cmn</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -206,20 +206,20 @@
     <ClInclude Include="NextGenObjects.h">
       <Filter>Objects</Filter>
     </ClInclude>
-    <ClInclude Include="Itembox.h">
-      <Filter>Objects</Filter>
-    </ClInclude>
-    <ClInclude Include="Guillotine.h">
-      <Filter>Objects</Filter>
+    <ClInclude Include="BallSwitch.h">
+      <Filter>Objects\cmn</Filter>
     </ClInclude>
     <ClInclude Include="Cage.h">
-      <Filter>Objects</Filter>
+      <Filter>Objects\cmn</Filter>
     </ClInclude>
-    <ClInclude Include="BallSwitch.h">
-      <Filter>Objects</Filter>
+    <ClInclude Include="Guillotine.h">
+      <Filter>Objects\cmn</Filter>
+    </ClInclude>
+    <ClInclude Include="Itembox.h">
+      <Filter>Objects\cmn</Filter>
     </ClInclude>
     <ClInclude Include="JumpChain.h">
-      <Filter>Objects</Filter>
+      <Filter>Objects\cmn</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -240,6 +240,9 @@
     </Filter>
     <Filter Include="Objects">
       <UniqueIdentifier>{de2132cc-34fc-4f4a-8545-f54c031e0e85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Objects\cmn">
+      <UniqueIdentifier>{646decdf-bd7b-487b-847d-af636b89d465}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

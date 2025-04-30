@@ -1740,6 +1740,14 @@ inline void SetPlayerModelScale(float scale)
 	animationPose[31] = scale;
 }
 
+inline void SetPlayerOutOfControl(float duration)
+{
+	if (!*PLAYER_CONTEXT) return;
+
+	FUNCTION_PTR(int, __stdcall, SetOutOfControl, 0xE5AC00, void* context, float duration);
+	SetOutOfControl(Sonic::Player::CPlayerSpeedContext::GetInstance(), duration);
+}
+
 inline void SonicContextChangeAnimation(const Hedgehog::Base::CSharedString& name)
 {
 	void* pSonicContext = *PLAYER_CONTEXT;

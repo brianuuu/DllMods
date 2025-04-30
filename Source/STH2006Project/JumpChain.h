@@ -27,6 +27,7 @@ private:
 		Sonic::CParamTargetList* m_TargetList;
 		float m_LaunchSpeed;
 		float m_SquatEndSpeed; // >0: mach speed
+		float m_FailOutOfControl;
 		bool m_AutoStart;
 	} m_Data;
 
