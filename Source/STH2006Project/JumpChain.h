@@ -27,6 +27,7 @@ private:
 		Sonic::CParamTargetList* m_TargetList;
 		float m_LaunchSpeed;
 		float m_SquatEndSpeed; // >0: mach speed
+		bool m_AutoStart;
 	} m_Data;
 
 private:
@@ -47,5 +48,6 @@ public:
 private:
 	void StartCling();
 	void ClingToTarget();
+	bool CanAutoJump();
 };
 

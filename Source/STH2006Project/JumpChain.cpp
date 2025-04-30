@@ -33,6 +33,9 @@ void JumpChain::InitializeEditParam
 	m_Data.m_SquatEndSpeed = 0.0f;
 	in_rEditParam.CreateParamFloat(&m_Data.m_SquatEndSpeed, "SquatEndSpeed");
 
+	m_Data.m_AutoStart = false;
+	in_rEditParam.CreateParamBool(&m_Data.m_AutoStart, "AutoStart");
+
 	m_state = (int)State::Idle;
 	m_timer = 0.0f;
 	m_playerID = 0u;
@@ -91,19 +94,23 @@ void JumpChain::SetUpdateParallel
 			return;
 		}
 
-		if (m_timer > c_noInputTime)
+		if (m_timer > c_noInputTime || CanAutoJump())
 		{
 			Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-			if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
+			if (padState->IsTapped(Sonic::EKeyState::eKeyState_A) || CanAutoJump())
 			{
+				if (!CanAutoJump())
+				{
+					SharedPtrTypeless soundHandle;
+					Common::SonicContextPlaySound(soundHandle, 2002027, 1);
+					Common::SonicContextPlayVoice(soundHandle, 3002000, 0);
+				}
+
 				// launch to next target
 				m_state = (int)State::Launch;
 				m_timer = 0.0f;
 				m_targetIndex++;
 
-				SharedPtrTypeless soundHandle;
-				Common::SonicContextPlaySound(soundHandle, 2002027, 1);
-				Common::SonicContextPlayVoice(soundHandle, 3002000, 0);
 				SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl("JumpBall"));
 			}
 		}
@@ -232,4 +239,9 @@ void JumpChain::ClingToTarget()
 		m_spSonicControlNode->m_Transform.SetRotationAndPosition(targetRotation, targetPosition);
 	}
 	m_spSonicControlNode->NotifyChanged();
+}
+
+bool JumpChain::CanAutoJump()
+{
+	return m_Data.m_AutoStart && m_targetIndex == -1;
 }
