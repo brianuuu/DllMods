@@ -54,7 +54,7 @@ bool JumpChain::SetAddColliders
 	m_spNodeEventCollision = boost::make_shared<Sonic::CMatrixNodeTransform>();
 	m_spNodeEventCollision->SetParent(m_spMatrixNodeTransform.get());
 	hk2010_2_0::hkpSphereShape* shapeEventTrigger = new hk2010_2_0::hkpSphereShape(0.5f);
-	AddEventCollision("Collision", shapeEventTrigger, *(int*)0x1E0AF34, true, m_spNodeEventCollision);
+	AddEventCollision("Collision", shapeEventTrigger, *(int*)0x1E0AFD8, true, m_spNodeEventCollision);
 
 	// control node
 	m_spSonicControlNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
