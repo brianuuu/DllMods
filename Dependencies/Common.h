@@ -1960,6 +1960,21 @@ static void* ObjectPlaySound
 	}
 }
 
+static void* ObjectSetCullingRange
+(
+	void* pObject,
+	float range
+)
+{
+	static void* const pObjectSetCullingRange = (void*)0xD5CED0;
+	__asm
+	{
+		mov		eax, pObject
+		push	range
+		call	[pObjectSetCullingRange]
+	}
+}
+
 static void EnemyChangeState
 (
 	void* pCEnemyBase,
