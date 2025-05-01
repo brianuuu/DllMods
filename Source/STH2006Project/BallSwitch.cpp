@@ -85,7 +85,7 @@ bool BallSwitch::SetAddRenderables
 
 	// ball
 	m_spNodeModelBall = boost::make_shared<Sonic::CMatrixNodeTransform>();
-	m_spNodeModelBall->m_Transform.SetPosition(hh::math::CVector(0.0f, 0.6f, 0.0f));
+	m_spNodeModelBall->m_Transform.SetPosition(c_ballSwitchAnchor);
 	m_spNodeModelBall->NotifyChanged();
 	m_spNodeModelBall->SetParent(m_spMatrixNodeTransform.get());
 	boost::shared_ptr<hh::mr::CModelData> spModelData = wrapper.GetModelData("cmn_switch_ball", 0);
