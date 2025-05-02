@@ -6,8 +6,10 @@
 #include <Sonic/Message/MsgDamage.h>
 #include <Sonic/Message/MsgDamageSuccess.h>
 #include <Sonic/Message/MsgDeactivate.h>
+#include <Sonic/Message/MsgEndHangOn.h>
 #include <Sonic/Message/MsgEndQuickStepSign.h>
 #include <Sonic/Message/MsgExitedExternalControl.h>
+#include <Sonic/Message/MsgExitedHangOn.h>
 #include <Sonic/Message/MsgFinishExternalControl.h>
 #include <Sonic/Message/MsgGetEnemyType.h>
 #include <Sonic/Message/MsgGetPlayerType.h>
@@ -18,5 +20,6 @@
 #include <Sonic/Message/MsgNotifyShockWave.h>
 #include <Sonic/Message/MsgShakeCamera.h>
 #include <Sonic/Message/MsgStartExternalControl.h>
+#include <Sonic/Message/MsgStartHangOn.h>
 
 #include <Sonic/CGlitterPlayer.h>
