@@ -291,6 +291,7 @@
     <ClCompile Include="Stage.cpp" />
     <ClCompile Include="SynchronizedObject.cpp" />
     <ClCompile Include="tinyxml2.cpp" />
+    <ClCompile Include="UpDownReel.cpp" />
     <ClCompile Include="WhosCaptain.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
@@ -327,6 +328,7 @@
     <ClInclude Include="Stage.h" />
     <ClInclude Include="SynchronizedObject.h" />
     <ClInclude Include="tinyxml2.h" />
+    <ClInclude Include="UpDownReel.h" />
     <ClInclude Include="WhosCaptain.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
