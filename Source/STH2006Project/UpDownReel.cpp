@@ -49,7 +49,7 @@ bool UpDownReel::SetAddRenderables
 	m_spModelBeam->BindMatrixNode(m_spNodeModelBeam);
 	Sonic::CGameObject::AddRenderable("Object", m_spModelBeam, m_pMember->m_CastShadow);
 
-	// hold
+	// handle
 	m_spNodeModelHandle = boost::make_shared<Sonic::CMatrixNodeTransform>();
 	m_spNodeModelHandle->m_Transform.SetPosition(hh::math::CVector(0.0f, -m_Data.m_HeightStart, 0.0f));
 	m_spNodeModelHandle->NotifyChanged();
@@ -118,7 +118,6 @@ void UpDownReel::SetUpdateParallel
 		{
 			// rebound with damping
 			m_speed = -m_speed * c_damping;
-			printf("REBOUND\n");
 
 			m_sfx.reset();
 			Common::ObjectPlaySound(this, 200600029, m_sfx);
