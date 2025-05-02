@@ -21,7 +21,6 @@ namespace Sonic::Message
 		: m_OutOfControl(in_OutOfControl) 
 		, m_ResumeAction(in_ResumeAction)
 		{
-			*(int*)0x1E5E374 = 5;
 		}
     };
 

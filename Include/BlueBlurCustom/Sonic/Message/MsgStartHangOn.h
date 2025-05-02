@@ -45,7 +45,6 @@ namespace Sonic::Message
 		, m_Offset2(Hedgehog::Math::CVector::Identity()) 
 		, m_OffsetProp(0.0f) 
 		{
-			*(int*)0x1E5E374 = 5;
 		}
 
         MsgStartHangOn // sub_116DF80
@@ -63,7 +62,6 @@ namespace Sonic::Message
 		, m_Offset2(in_Offset2) 
 		, m_OffsetProp(in_OffsetProp) 
 		{
-			*(int*)0x1E5E374 = 5;
 		}
     };
 
