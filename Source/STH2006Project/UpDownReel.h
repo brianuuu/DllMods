@@ -10,6 +10,7 @@ class UpDownReel : public Sonic::CObjectBase, public Sonic::CSetObjectListener
 public:
 	BB_SET_OBJECT_MAKE("UpDownReel");
 	static void registerObject();
+	static void applyPatches();
 
 private:
 	struct Data
@@ -20,7 +21,7 @@ private:
 	} m_Data;
 
 private:
-	SharedPtrTypeless m_sfx;
+	SharedPtrTypeless m_loopSfx;
 	float m_currentHeight;
 	float m_speed;
 	uint32_t m_playerID;

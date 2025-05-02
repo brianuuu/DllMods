@@ -4,6 +4,33 @@ BB_SET_OBJECT_MAKE_HOOK(UpDownReel)
 void UpDownReel::registerObject()
 {
 	BB_INSTALL_SET_OBJECT_MAKE_HOOK(UpDownReel);
+	applyPatches();
+}
+
+HOOK(int, __fastcall, UpDownReel_CPlayerSpeedStateHangOnCPulleyJumpBegin, 0xE45CD0, Sonic::Player::CPlayerSpeedContext::CStateSpeedBase* This)
+{
+	// jump voice
+	SharedPtrTypeless soundHandle;
+	Common::SonicContextPlayVoice(soundHandle, 3002000, 0);
+
+	return originalUpDownReel_CPlayerSpeedStateHangOnCPulleyJumpBegin(This);
+}
+
+
+HOOK(void, __fastcall, UpDownReel_CPlayerSpeedStateHangOnCPulleyJumpAdvance, 0xE468B0, Sonic::Player::CPlayerSpeedContext::CStateSpeedBase* This)
+{
+	originalUpDownReel_CPlayerSpeedStateHangOnCPulleyJumpAdvance(This);
+
+	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	context->m_Velocity = context->m_UpVector* context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_JumpPower);
+	context->m_VelocityChanged = true;
+	context->m_HorizontalOrVerticalVelocityChanged = false;
+}
+
+void UpDownReel::applyPatches()
+{
+	INSTALL_HOOK(UpDownReel_CPlayerSpeedStateHangOnCPulleyJumpBegin);
+	INSTALL_HOOK(UpDownReel_CPlayerSpeedStateHangOnCPulleyJumpAdvance);
 }
 
 void UpDownReel::InitializeEditParam
@@ -114,18 +141,18 @@ void UpDownReel::SetUpdateParallel
 	currentHeight += m_speed * in_rUpdateInfo.DeltaTime;
 	if ((positive && currentHeight > targetHeight) || (!positive && currentHeight < targetHeight))
 	{
+		m_loopSfx.reset();
 		if (m_playerID && abs(m_speed) > c_acceleration * in_rUpdateInfo.DeltaTime)
 		{
 			// rebound with damping
 			m_speed = -m_speed * c_damping;
 
-			m_sfx.reset();
-			Common::ObjectPlaySound(this, 200600029, m_sfx);
+			SharedPtrTypeless bounceSfx;
+			Common::ObjectPlaySound(this, 200600029, bounceSfx);
 		}
 		else
 		{
 			// stops
-			m_sfx.reset();
 			m_speed = 0.0f;
 		}
 
@@ -160,7 +187,7 @@ bool UpDownReel::ProcessMessage
 			)
 		);
 
-		Common::ObjectPlaySound(this, 200600028, m_sfx);
+		Common::ObjectPlaySound(this, 200600028, m_loopSfx);
 		m_playerID = message.m_SenderActorID;
 		m_speed = GetTargetSpaeed();
 		return true;
@@ -168,7 +195,7 @@ bool UpDownReel::ProcessMessage
 
 	if (message.Is<Sonic::Message::MsgExitedHangOn>())
 	{
-		m_sfx.reset();
+		m_loopSfx.reset();
 		m_playerID = 0u;
 		m_speed = GetTargetSpaeed();
 		return true;
