@@ -927,6 +927,7 @@ private:
     float m_LifeTime;
     bool m_IsDamage;
     bool m_IsSuper;
+    bool m_IsEnemy;
 
     SharedPtrTypeless spearHandle;
     SharedPtrTypeless spearTailHandle;
@@ -949,6 +950,7 @@ public:
         , m_LifeTime(0.0f)
         , m_IsDamage(_IsDamage)
         , m_IsSuper(false)
+        , m_IsEnemy(false)
     {
 
     }
@@ -989,6 +991,13 @@ public:
         {
             Common::fCGlitterCreate(*PLAYER_CONTEXT, spearHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_spear", 1);
             Common::fCGlitterCreate(*PLAYER_CONTEXT, spearTailHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_spear_tail", 1);
+        }
+
+        uint32_t enemyType = 0u;
+        SendMessageImm(m_TargetID, boost::make_shared<Sonic::Message::MsgGetEnemyType>(&enemyType));
+        if (enemyType)
+        {
+            m_IsEnemy = true;
         }
     
         // set up collision with enemy
@@ -1045,8 +1054,8 @@ public:
                 SendMessageImm(m_TargetID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
                 newDirection = (targetPosition - m_Position).normalized();
 
-                // getting close enough to target
-                if ((targetPosition - m_Position).norm() <= m_Speed * updateInfo.DeltaTime)
+                // getting close enough to target, hit anyway if it's not enemy
+                if (!m_IsEnemy && (targetPosition - m_Position).norm() <= m_Speed * updateInfo.DeltaTime)
                 {
                     HitTarget(m_TargetID);
                     return;
@@ -1106,8 +1115,10 @@ public:
         }
 
         Common::fCGlitterCreate(*PLAYER_CONTEXT, spearVanishHandle, &m_spMatrixNodeTransform, m_IsDamage ? "ef_bo_sha_yh2_lance_vanish" : "ef_bo_sha_yh2_spear_vanish", 1);
+        bool hasEnemyDamage = false;
         if (m_IsDamage && !cannotDamage)
         {
+            hasEnemyDamage = m_IsEnemy;
             SendMessage
             (
                 actorID, boost::make_shared<Sonic::Message::MsgDamage>
@@ -1118,14 +1129,18 @@ public:
                 )
             );
         }
-
-        SendMessage
-        (
-            actorID, boost::make_shared<Sonic::Message::MsgNotifyShockWave>
+        
+        // if we had damaged any enemy it shouldn't shock anymore
+        if (!hasEnemyDamage)
+        {
+            SendMessage
             (
-                cShadow_chaosSpearShockDuration
-            )
-        );
+                actorID, boost::make_shared<Sonic::Message::MsgNotifyShockWave>
+                (
+                    cShadow_chaosSpearShockDuration
+                )
+            );
+        }
 
         Kill();
     }
