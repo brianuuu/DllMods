@@ -343,6 +343,8 @@ void AnimationSetPatcher::applyPatches()
     WRITE_STRING(0x15D5FD0, "ssn_float_loop"); // Float
     WRITE_STRING(0x15D59C8, "ssn_pulley_up_e"); // PulleyJump
     WRITE_STRING(0x15D5B70, "ssn_pulley_up_e"); // PoleSpinJumpStart
+    WRITE_NOP(0xE468EE, 6); // disable PulleyJump waiting 10 frames
+    WRITE_NOP(0xE469CB, 7); // allow SpinAttack animation after UpReel jump
     if (Configuration::m_model == Configuration::ModelType::Blaze)
     {
         WRITE_STRING(0x15D5D04, "sn_spin_fall"); // JumpCloudStart
