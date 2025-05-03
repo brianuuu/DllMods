@@ -40,7 +40,6 @@ bool Cage::SetAddRenderables
 	// uv-anim
 	m_spEffectMotionAll = boost::make_shared<hh::mot::CSingleElementEffectMotionAll>();
 	m_spModel->BindEffect(m_spEffectMotionAll);
-	boost::shared_ptr<Hedgehog::Motion::CTexcoordAnimationData> texCoordAnimData;
 
 	FUNCTION_PTR(void, __thiscall, fpGetTexCoordAnimData, 0x7597E0,
 		hh::mot::CMotionDatabaseWrapper const& wrapper,
@@ -56,6 +55,7 @@ bool Cage::SetAddRenderables
 	);
 
 	hh::mot::CMotionDatabaseWrapper motWrapper(in_spDatabase.get());
+	boost::shared_ptr<Hedgehog::Motion::CTexcoordAnimationData> texCoordAnimData;
 	fpGetTexCoordAnimData(motWrapper, texCoordAnimData, "cmn_cage_wall-0000", 0);
 	fpCreateUVAnim(m_spEffectMotionAll.get(), spModelData, texCoordAnimData);
 	fpGetTexCoordAnimData(motWrapper, texCoordAnimData, "cmn_cage_wall-0001", 0);
