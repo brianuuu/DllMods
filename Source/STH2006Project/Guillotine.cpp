@@ -72,7 +72,7 @@ bool Guillotine::ProcessMessage
 		return Sonic::CObjectBase::ProcessMessage(message, flag);
 	}
 
-	if (message.Is<Sonic::Message::MsgLeaveEventCollision>())
+	if (message.Is<Sonic::Message::MsgHitEventCollision>())
 	{
 		FUNCTION_PTR(void, __thiscall, fpDamagePlayerFromObject, 0xEC8040, void* This, Hedgehog::Universe::Message& message);
 		fpDamagePlayerFromObject(this, message);
