@@ -187,6 +187,7 @@ bool UpDownReel::ProcessMessage
 			)
 		);
 
+		m_loopSfx.reset();
 		Common::ObjectPlaySound(this, 200600028, m_loopSfx);
 		m_playerID = message.m_SenderActorID;
 		m_speed = GetTargetSpaeed();
