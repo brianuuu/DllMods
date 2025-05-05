@@ -41,6 +41,7 @@ void UpDownReel::InitializeEditParam
 	in_rEditParam.CreateParamFloat(&m_Data.m_HeightStart, "HeightStart");
 	in_rEditParam.CreateParamFloat(&m_Data.m_HeightEnd, "HeightEnd");
 	in_rEditParam.CreateParamFloat(&m_Data.m_Time, "Time");
+	in_rEditParam.CreateParamBool(&m_Data.m_DefaultOn, "DefaultOn");
 }
 
 bool UpDownReel::SetAddRenderables
@@ -107,6 +108,26 @@ bool UpDownReel::SetAddColliders
 	return true;
 }
 
+void UpDownReel::AddCallback
+(
+	const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder,
+	Sonic::CGameDocument* in_pGameDocument,
+	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
+)
+{
+	Sonic::CObjectBase::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
+
+	if ((!m_statusLoaded && !m_Data.m_DefaultOn) || !m_isOn)
+	{
+		m_isOn = false;
+		if (m_Data.m_HeightStart > 1.5f)
+		{
+			m_spNodeModelHandle->m_Transform.SetPosition(hh::math::CVector(0.0f, -1.5f, 0.0f));
+			m_spNodeModelHandle->NotifyChanged();
+		}
+	}
+}
+
 void UpDownReel::SetUpdateParallel
 (
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
@@ -128,7 +149,7 @@ void UpDownReel::SetUpdateParallel
 		}
 	}
 
-	float const targetHeight = m_playerID ? m_Data.m_HeightEnd : m_Data.m_HeightStart;
+	float const targetHeight = m_isOn ? (m_playerID ? m_Data.m_HeightEnd : m_Data.m_HeightStart) : 1.5f;
 	float currentHeight = -m_spNodeModelHandle->m_Transform.m_Position.y();
 	currentHeight += m_speed * in_rUpdateInfo.DeltaTime;
 	if ((positive && currentHeight > targetHeight) || (!positive && currentHeight < targetHeight))
@@ -160,6 +181,15 @@ void UpDownReel::SetUpdateParallel
 	m_spNodeModelHandle->NotifyChanged();
 }
 
+void UpDownReel::AddParameterBank
+(
+	Hedgehog::Base::CRefPtr<Sonic::CParameterBank>& in_rParameterBank
+)
+{
+	in_rParameterBank->AccessParameterBankBool("IsOn", &m_isOn);
+	m_statusLoaded = true;
+}
+
 bool UpDownReel::ProcessMessage
 (
 	Hedgehog::Universe::Message& message, 
@@ -171,18 +201,38 @@ bool UpDownReel::ProcessMessage
 		return Sonic::CObjectBase::ProcessMessage(message, flag);
 	}
 
+	if (message.Is<Sonic::Message::MsgNotifyObjectEvent>())
+	{
+		auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
+		if (!m_isOn && msg.m_Event == 6)
+		{
+			m_isOn = true;
+			if (m_playerID)
+			{
+				// start moving if player is already hanging on
+				m_loopSfx.reset();
+				Common::ObjectPlaySound(this, 200600028, m_loopSfx);
+			}
+			m_speed = GetTargetSpaeed();
+		}
+		return true;
+	}
+
 	if (message.Is<Sonic::Message::MsgHitEventCollision>())
 	{
+		m_playerID = message.m_SenderActorID;
 		SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgStartHangOn>
 			(
 				Sonic::Message::MsgStartHangOn::Type::UpReel, m_spNodeModelPlayer
 			)
 		);
 
-		m_loopSfx.reset();
-		Common::ObjectPlaySound(this, 200600028, m_loopSfx);
-		m_playerID = message.m_SenderActorID;
-		m_speed = GetTargetSpaeed();
+		if (m_isOn)
+		{
+			m_loopSfx.reset();
+			Common::ObjectPlaySound(this, 200600028, m_loopSfx);
+			m_speed = GetTargetSpaeed();
+		}
 		return true;
 	}
 
@@ -199,7 +249,11 @@ bool UpDownReel::ProcessMessage
 
 float UpDownReel::GetTargetSpaeed()
 {
-	if (m_playerID)
+	if (!m_isOn)
+	{
+		return 0.0f;
+	}
+	else if (m_playerID)
 	{
 		return (m_Data.m_HeightEnd - m_Data.m_HeightStart) / m_Data.m_Time;
 	}

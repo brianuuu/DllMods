@@ -18,6 +18,7 @@ private:
 		float m_HeightStart = 0.0f;
 		float m_HeightEnd = 0.0f;
 		float m_Time = 0.0f;
+		bool m_DefaultOn = true;
 	} m_Data;
 
 private:
@@ -25,6 +26,9 @@ private:
 	float m_currentHeight = 0.0f;
 	float m_speed = 0.0f;
 	uint32_t m_playerID = 0u;
+
+	bool m_isOn = true;
+	bool m_statusLoaded = false;
 
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModelBase;
 
@@ -41,6 +45,8 @@ public:
 	void InitializeEditParam(Sonic::CEditParam& in_rEditParam) override;
 	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	bool SetAddColliders(const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
+	void AddCallback(const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
+	void AddParameterBank(Hedgehog::Base::CRefPtr<Sonic::CParameterBank>& in_pParameterBank) override;
 	void SetUpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo) override;
 	bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;
 
