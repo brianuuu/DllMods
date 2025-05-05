@@ -1975,6 +1975,36 @@ static void* ObjectSetCullingRange
 	}
 }
 
+static void* ObjectEnableEventCollision
+(
+	Sonic::CEventCollisionHolder* pHolder
+)
+{
+	if (!pHolder) return nullptr;
+
+	static void* const pObjectEnableEventCollision = (void*)0x1182E70;
+	__asm
+	{
+		mov		eax, pHolder
+		call	[pObjectEnableEventCollision]
+	}
+}
+
+static void* ObjectDisableEventCollision
+(
+	Sonic::CEventCollisionHolder* pHolder
+)
+{
+	if (!pHolder) return nullptr;
+
+	static void* const pObjectDisableEventCollision = (void*)0x1182F20;
+	__asm
+	{
+		mov		eax, pHolder
+		call	[pObjectDisableEventCollision]
+	}
+}
+
 static void EnemyChangeState
 (
 	void* pCEnemyBase,
