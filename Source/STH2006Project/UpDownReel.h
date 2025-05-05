@@ -51,6 +51,6 @@ public:
 	bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;
 
 private:
-	float GetTargetSpaeed();
+	float GetTargetSpaeed() const;
 };
 

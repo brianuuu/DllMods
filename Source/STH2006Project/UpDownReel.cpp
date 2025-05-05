@@ -247,7 +247,7 @@ bool UpDownReel::ProcessMessage
 	return Sonic::CObjectBase::ProcessMessage(message, flag);
 }
 
-float UpDownReel::GetTargetSpaeed()
+float UpDownReel::GetTargetSpaeed() const
 {
 	if (!m_isOn)
 	{

@@ -238,7 +238,7 @@ void JumpChain::ClingToTarget()
 	m_spSonicControlNode->NotifyChanged();
 }
 
-bool JumpChain::CanAutoJump()
+bool JumpChain::CanAutoJump() const
 {
 	return m_Data.m_AutoStart && m_targetIndex == -1;
 }

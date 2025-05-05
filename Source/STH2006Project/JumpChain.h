@@ -50,6 +50,6 @@ public:
 private:
 	void StartCling();
 	void ClingToTarget();
-	bool CanAutoJump();
+	bool CanAutoJump() const;
 };
 
