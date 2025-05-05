@@ -1,7 +1,7 @@
 /*----------------------------------------------------------*/
 ///	Author: brianuuuSonic https://github.com/brianuuu
 ///	Year: 2025
-///	Description: Recreating UpDownReel from 06
+///	Description: Recreating updownreel from 06
 /*----------------------------------------------------------*/
 
 #pragma once
@@ -15,16 +15,16 @@ public:
 private:
 	struct Data
 	{
-		float m_HeightStart;
-		float m_HeightEnd;
-		float m_Time;
+		float m_HeightStart = 0.0f;
+		float m_HeightEnd = 0.0f;
+		float m_Time = 0.0f;
 	} m_Data;
 
 private:
 	SharedPtrTypeless m_loopSfx;
-	float m_currentHeight;
-	float m_speed;
-	uint32_t m_playerID;
+	float m_currentHeight = 0.0f;
+	float m_speed = 0.0f;
+	uint32_t m_playerID = 0u;
 
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModelBase;
 

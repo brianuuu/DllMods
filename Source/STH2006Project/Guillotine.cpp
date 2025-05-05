@@ -11,7 +11,6 @@ void Guillotine::InitializeEditParam
 	Sonic::CEditParam& in_rEditParam
 )
 {
-	m_Data.m_ShouldSpin = false;
 	in_rEditParam.CreateParamBool(&m_Data.m_ShouldSpin, "ShouldSpin");
 }
 

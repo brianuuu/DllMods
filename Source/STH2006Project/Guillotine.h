@@ -1,7 +1,7 @@
 /*----------------------------------------------------------*/
 ///	Author: brianuuuSonic https://github.com/brianuuu
 ///	Year: 2025
-///	Description: Guillotine object from 06
+///	Description: common_guillotine object from 06
 /*----------------------------------------------------------*/
 
 #pragma once
@@ -14,7 +14,7 @@ public:
 private:
 	struct Data
 	{
-		bool m_ShouldSpin;
+		bool m_ShouldSpin = false;
 	} m_Data;
 
 private:

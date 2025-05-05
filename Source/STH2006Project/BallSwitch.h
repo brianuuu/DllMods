@@ -1,7 +1,7 @@
 /*----------------------------------------------------------*/
 ///	Author: brianuuuSonic https://github.com/brianuuu
 ///	Year: 2025
-///	Description: Switch object from 06
+///	Description: common_switch object from 06
 /*----------------------------------------------------------*/
 
 #pragma once
@@ -21,29 +21,31 @@ public:
 	};
 
 private:
+	BB_INSERT_PADDING(0xC); // 0x10C, set 0x10F in sub_1002580
+
 	struct Data 
 	{
-		Sonic::CParamTargetList* m_TargetListOFF;
-		Sonic::CParamTargetList* m_TargetListON;
-		int m_EventOFF;
-		int m_EventON;
-		float m_TimerOFF;
-		float m_TimerON;
-		bool m_OffBeep;
-		float m_OffTimer;
+		Sonic::CParamTargetList* m_TargetListOFF = nullptr;
+		Sonic::CParamTargetList* m_TargetListON = nullptr;
+		int m_EventOFF = 0;
+		int m_EventON = 0;
+		float m_TimerOFF = 0.0f;
+		float m_TimerON = 0.0f;
+		bool m_OffBeep = true;
+		float m_OffTimer = 0.0f;
 		int m_Type;
 	} m_Data;
 
 private:
 	SharedPtrTypeless m_onOffSfx;
 	SharedPtrTypeless m_beepingSfx;
-	float m_eventTimer;
-	float m_offTimer;
-	bool m_isOn;
-	bool m_isHit;
+	float m_eventTimer = 0.0f;
+	float m_offTimer = 0.0f;
+	bool m_isOn = false;
+	bool m_isHit = false;
 
-	hh::math::CVector m_velocity;
-	float m_angle;
+	hh::math::CVector m_velocity = hh::math::CVector::Zero();
+	float m_angle = 0.0f;
 
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModelBase;
 	boost::shared_ptr<Sonic::CRigidBody> m_spRigidBody;

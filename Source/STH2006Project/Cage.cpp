@@ -6,15 +6,6 @@ void Cage::registerObject()
 	BB_INSTALL_SET_OBJECT_MAKE_HOOK(Cage);
 }
 
-void Cage::InitializeEditParam
-(
-	Sonic::CEditParam& in_rEditParam
-)
-{
-	m_isOpen = false;
-	m_moveDownAmount = 0.0f;
-}
-
 bool Cage::SetAddRenderables
 (
 	Sonic::CGameDocument* in_pGameDocument, 

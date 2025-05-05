@@ -42,31 +42,13 @@ void BallSwitch::InitializeEditParam
 	}
 	in_rEditParam.CreateParamBase(m_Data.m_TargetListON, targetListON);
 
-	m_Data.m_EventOFF = false;
-	m_Data.m_EventON = false;
 	in_rEditParam.CreateParamInt(&m_Data.m_EventOFF, "EventOFF");
 	in_rEditParam.CreateParamInt(&m_Data.m_EventON, "EventON");
-
-	m_Data.m_TimerOFF = 0.0f;
-	m_Data.m_TimerON = 0.0f;
 	in_rEditParam.CreateParamFloat(&m_Data.m_TimerOFF, "TimerOFF");
 	in_rEditParam.CreateParamFloat(&m_Data.m_TimerON, "TimerON");
-
-	m_Data.m_OffBeep = true;
 	in_rEditParam.CreateParamBool(&m_Data.m_OffBeep, "OffBeep");
-
-	m_Data.m_OffTimer = 0.0f;
 	in_rEditParam.CreateParamFloat(&m_Data.m_OffTimer, "OffTimer");
-
-	m_Data.m_Type = 0;
 	in_rEditParam.CreateParamInt(&m_Data.m_Type, "Type");
-
-	m_eventTimer = 0.0f;
-	m_offTimer = 0.0f;
-	m_isOn = false;
-	m_isHit = false;
-	m_velocity = hh::math::CVector::Zero();
-	m_angle = 0.0f;
 }
 
 bool BallSwitch::SetAddRenderables

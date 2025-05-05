@@ -25,18 +25,18 @@ public:
 private:
 	struct Data
 	{
-		Sonic::CParamTargetList* m_TargetList;
-		float m_LaunchSpeed;
-		float m_SquatEndSpeed; // >0: mach speed
-		float m_FailOutOfControl;
-		bool m_AutoStart;
+		Sonic::CParamTargetList* m_TargetList = nullptr;
+		float m_LaunchSpeed = 0.0f;
+		float m_SquatEndSpeed = 0.0f; // >0: mach speed
+		float m_FailOutOfControl = 0.0f;
+		bool m_AutoStart = false;
 	} m_Data;
 
 private:
-	int m_state;
-	float m_timer;
-	uint32_t m_playerID;
-	int m_targetIndex;
+	int m_state = (int)State::Idle;
+	float m_timer = 0.0f;
+	uint32_t m_playerID = 0u;
+	int m_targetIndex = -1;
 
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spSonicControlNode;

@@ -27,22 +27,10 @@ void JumpChain::InitializeEditParam
 	}
 	in_rEditParam.CreateParamBase(m_Data.m_TargetList, targetList);
 
-	m_Data.m_LaunchSpeed = 0.0f;
 	in_rEditParam.CreateParamFloat(&m_Data.m_LaunchSpeed, "LaunchSpeed");
-
-	m_Data.m_SquatEndSpeed = 0.0f;
 	in_rEditParam.CreateParamFloat(&m_Data.m_SquatEndSpeed, "SquatEndSpeed");
-
-	m_Data.m_FailOutOfControl = 0.0f;
 	in_rEditParam.CreateParamFloat(&m_Data.m_FailOutOfControl, "FailOutOfControl");
-
-	m_Data.m_AutoStart = false;
 	in_rEditParam.CreateParamBool(&m_Data.m_AutoStart, "AutoStart");
-
-	m_state = (int)State::Idle;
-	m_timer = 0.0f;
-	m_playerID = 0u;
-	m_targetIndex = -1;
 }
 
 bool JumpChain::SetAddColliders

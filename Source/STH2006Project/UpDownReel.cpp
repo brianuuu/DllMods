@@ -38,17 +38,9 @@ void UpDownReel::InitializeEditParam
 	Sonic::CEditParam& in_rEditParam
 )
 {
-	m_Data.m_HeightStart = 0.0f;
-	m_Data.m_HeightEnd = 0.0f;
 	in_rEditParam.CreateParamFloat(&m_Data.m_HeightStart, "HeightStart");
 	in_rEditParam.CreateParamFloat(&m_Data.m_HeightEnd, "HeightEnd");
-
-	m_Data.m_Time = 0.0f;
 	in_rEditParam.CreateParamFloat(&m_Data.m_Time, "Time");
-
-	m_currentHeight = 0.0f;
-	m_speed = 0.0f;
-	m_playerID = 0u;
 }
 
 bool UpDownReel::SetAddRenderables
