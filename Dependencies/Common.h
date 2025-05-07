@@ -2108,6 +2108,26 @@ inline void CreatePlayerSupportShockWave(hh::math::CVector const& pos, float hei
 	Sonic::CGameDocument::GetInstance()->AddGameObject(spObject);
 }
 
+inline float GetSoundCueDuration(uint32_t cueID)
+{
+	FUNCTION_PTR(SharedPtrTypeless*, __thiscall, fpGetCSoundCueSheetStream, 0x762500, void* pCSoundCri, SharedPtrTypeless * pCSoundCueSheetStream, uint32_t cueID);
+	FUNCTION_PTR(bool, __thiscall, fpGetSoundCueData, 0x763800, void* pCSoundCueSheetStream, uint32_t cueID, uint32_t * flag, uint32_t * sampleRate, uint32_t * numSamples);
+
+	uint32_t* pCSoundCri = (uint32_t*)Common::GetMultiLevelAddress(0x1E79044, { 0x14, 0x0, 0x0 });
+	SharedPtrTypeless pCSoundCueSheetStream;
+	fpGetCSoundCueSheetStream(pCSoundCri, &pCSoundCueSheetStream, cueID);
+
+	uint32_t flag = 0u;
+	uint32_t sampleRate = 0u;
+	uint32_t numSamples = 0u;
+	if (fpGetSoundCueData(pCSoundCueSheetStream.get(), cueID, &flag, &sampleRate, &numSamples) && sampleRate > 0u)
+	{
+		return (float)numSamples / (float)sampleRate;
+	}
+
+	return 0.0f;
+}
+
 inline LanguageType GetVoiceLanguageType()
 {
 	return *(LanguageType*)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x10 });
