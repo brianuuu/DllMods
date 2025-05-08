@@ -2108,6 +2108,14 @@ inline void CreatePlayerSupportShockWave(hh::math::CVector const& pos, float hei
 	Sonic::CGameDocument::GetInstance()->AddGameObject(spObject);
 }
 
+inline uint32_t GetSoundCueFromSynth(Hedgehog::Base::CSharedString const& name)
+{
+	FUNCTION_PTR(uint32_t, __thiscall, fpGetSoundCueFromSynth, 0x7624D0, void* pCSoundCri, Hedgehog::Base::CSharedString const& name);
+	
+	uint32_t* pCSoundCri = (uint32_t*)Common::GetMultiLevelAddress(0x1E79044, { 0x14, 0x0, 0x0 });
+	return fpGetSoundCueFromSynth(pCSoundCri, name);
+}
+
 inline float GetSoundCueDuration(uint32_t cueID)
 {
 	FUNCTION_PTR(SharedPtrTypeless*, __thiscall, fpGetCSoundCueSheetStream, 0x762500, void* pCSoundCri, SharedPtrTypeless * pCSoundCueSheetStream, uint32_t cueID);
