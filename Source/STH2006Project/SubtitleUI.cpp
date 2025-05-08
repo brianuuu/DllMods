@@ -4,6 +4,7 @@
 #include "Configuration.h"
 #include "MissionManager.h"
 
+SharedPtrTypeless SubtitleUI::m_subtitleSfx;
 CaptionData SubtitleUI::m_captionData;
 std::set<SubtitleUI::DialogCallbackFunc> SubtitleUI::m_acceptCallbacks;
 std::set<SubtitleUI::DialogCallbackFunc> SubtitleUI::m_finishCallbacks;
@@ -11,6 +12,123 @@ std::set<SubtitleUI::DialogCallbackFunc> SubtitleUI::m_finishCallbacks;
 void SubtitleUI::applyPatches()
 {
     
+}
+
+float SubtitleUI::addSubtitle(mst::TextEntry const& entry, std::vector<float> const& durationOverrides)
+{
+    m_captionData.clear();
+    int tagIndex = 0;
+    float totalDuration = 0.0f;
+    for (int i = 0; i < entry.m_subtitles.size(); i++)
+    {
+        std::wstring const& wsubtitle = entry.m_subtitles.at(i);
+        std::string subtitle = Common::wideCharToMultiByte(wsubtitle.c_str());
+        subtitle = std::regex_replace(subtitle, std::regex(" "), "  ");
+
+        Subtitle newSubtitle;
+
+        // Get duration from sound cue or override
+        if (i < durationOverrides.size() && durationOverrides[i] > 0.0f)
+        {
+            newSubtitle.m_duration = durationOverrides[i];
+        }
+        
+        // Front tag = voice
+        if (subtitle.front() == '$')
+        {
+            subtitle.erase(0, 1);
+            if (tagIndex < entry.m_tags.size())
+            {
+                // get cueID from synth
+                std::string synthName = entry.m_tags.at(tagIndex++);
+                synthName = synthName.substr(synthName.find('(') + 1);
+                synthName.pop_back();
+                newSubtitle.m_cueID = Common::GetSoundCueFromSynth(synthName.c_str());
+
+                // Get duration from sound cue if not overritten
+                if (newSubtitle.m_duration == 0.0f && newSubtitle.m_cueID)
+                {
+                    float const duration = Common::GetSoundCueDuration(newSubtitle.m_cueID);
+                    if (duration > 0.0f)
+                    {
+                        newSubtitle.m_duration = duration;
+                    }
+
+                    if (i == 0)
+                    {
+                        m_subtitleSfx.reset();
+                        Common::PlaySoundStatic(m_subtitleSfx, newSubtitle.m_cueID);
+                    }
+                }
+            }
+        }
+
+        // Last subtitle last a little longer
+        if (i == entry.m_subtitles.size() - 1)
+        {
+            newSubtitle.m_duration += 1.0f;
+        }
+
+        totalDuration += newSubtitle.m_duration;
+
+        // helper function to find button tags of a string
+        auto fnSplitButtonTags = [&newSubtitle, &tagIndex, &entry](std::string& subtitle)
+        {
+            size_t pos = 0;
+            while ((pos = subtitle.find('$')) != std::string::npos)
+            {
+                if (tagIndex < entry.m_tags.size())
+                {
+                    std::string buttonName = entry.m_tags.at(tagIndex++);
+                    buttonName = buttonName.substr(buttonName.find('(') + 1);
+                    buttonName.pop_back();
+                    newSubtitle.m_buttons[newSubtitle.m_subtitles.size()] = getButtonTypeFromTag(buttonName);
+                }
+
+                std::string const buttonSplit = subtitle.substr(0, pos); // NOT include $
+                subtitle.erase(0, pos + 1);
+                newSubtitle.m_subtitles.push_back(buttonSplit);
+            }
+        };
+
+        // Split full caption into rows
+        size_t pos = 0;
+        while ((pos = subtitle.find('\n')) != std::string::npos)
+        {
+            std::string split = subtitle.substr(0, pos + 1); // include \n
+            fnSplitButtonTags(split);
+            newSubtitle.m_subtitles.push_back(split);
+            subtitle.erase(0, pos + 1);
+        }
+
+        // Last string
+        fnSplitButtonTags(subtitle);
+        newSubtitle.m_subtitles.push_back(subtitle);
+        m_captionData.m_subtitles.push_back(newSubtitle);
+    }
+
+    m_captionData.m_bypassLoading = Common::IsAtLoadingScreen();
+
+    // Prevent dialog overlapping
+    S06HUD_API::CloseCaptionWindow();
+
+    return totalDuration;
+}
+
+SubtitleButtonType SubtitleUI::getButtonTypeFromTag(std::string const& tag)
+{
+    if (tag == "button_a") return SBT_A;
+    if (tag == "button_b") return SBT_B;
+    if (tag == "button_x") return SBT_X;
+    if (tag == "button_y") return SBT_Y;
+    if (tag == "button_lb") return SBT_LB;
+    if (tag == "button_rb") return SBT_RB;
+    if (tag == "button_lt") return SBT_LT;
+    if (tag == "button_rt") return SBT_RT;
+    if (tag == "button_start") return SBT_Start;
+    if (tag == "button_back") return SBT_Back;
+
+    return SBT_A;
 }
 
 void __cdecl SubtitleUI::addCaption(std::vector<std::string> const& captions, std::string const& speaker, int acceptDialogSize, int rejectDialogSize)
@@ -24,7 +142,6 @@ void __cdecl SubtitleUI::addCaption(std::vector<std::string> const& captions, st
         Caption newCaption;
         std::string delimiter = "\\n";
         size_t pos = 0;
-        std::string token;
         while ((pos = caption.find(delimiter)) != std::string::npos)
         {
             newCaption.m_captions.push_back(caption.substr(0, pos));
@@ -50,6 +167,20 @@ bool CaptionData::init()
     success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Textbox.dds").c_str(), &m_textbox);
     success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\YesNoBox.dds").c_str(), &m_acceptbox);
     success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Arrow.dds").c_str(), &m_arrow);
+
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_A.dds").c_str(), &m_buttonA);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_B.dds").c_str(), &m_buttonB);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_X.dds").c_str(), &m_buttonX);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_Y.dds").c_str(), &m_buttonY);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_LB.dds").c_str(), &m_buttonLB);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_LT.dds").c_str(), &m_buttonLT);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_RB.dds").c_str(), &m_buttonRB);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_RT.dds").c_str(), &m_buttonRT);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_Start.dds").c_str(), &m_buttonStart);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_Back.dds").c_str(), &m_buttonBack);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_LStick.dds").c_str(), &m_buttonLStick);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_RStick.dds").c_str(), &m_buttonRStick);
+    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_DPad.dds").c_str(), &m_buttonDPad);
 
     if (!success)
     {
@@ -77,14 +208,79 @@ void SubtitleUI::draw()
         return;
     }
 
-    if (!m_captionData.m_captions.empty())
+    if (!m_captionData.m_subtitles.empty())
     {
+        Subtitle& subtitle = m_captionData.m_subtitles.front();
+        float sizeX = *BACKBUFFER_WIDTH * 890.0f / 1280.0f;
+        float sizeY = *BACKBUFFER_HEIGHT * 170.0f / 720.0f;
+        float posX = 0.143f;
+        float posY = 0.6958f;
+        float alpha = 1.0f;
+
+        static bool visible = true;
+        ImGui::Begin("Textbox", &visible, UIContext::m_hudFlags);
+        {
+            // Fade in and out
+            float frame1 = m_captionData.m_timer * 60.0f;
+            float frame2 = (subtitle.m_duration - m_captionData.m_timer) * 60.0f;
+            if (frame1 < 5.0f)
+            {
+                posY += 0.03476f * (5.0f - frame1);
+                alpha = 0.2f * frame1;
+            }
+            else if (frame2 < 5.0f)
+            {
+                posY += 0.03476f * (5.0f - frame2);
+                alpha = 0.2f * frame2;
+            }
+
+            ImGui::SetWindowFocus();
+            ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
+            ImGui::Image(m_captionData.m_textbox, ImVec2(sizeX, sizeY), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, alpha * 0.9f));
+            ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * posX, *BACKBUFFER_HEIGHT * posY));
+        }
+        ImGui::End();
+
+        ImGui::Begin("Caption", &visible, UIContext::m_hudFlags);
+        {
+            ImGui::SetWindowFocus();
+            ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
+            drawSubtitle(subtitle, alpha);
+            ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.2023f, *BACKBUFFER_HEIGHT * (posY + 0.047f)));
+        }
+        ImGui::End();
+
+        m_captionData.m_timer += Application::getHudDeltaTime();
+        if (m_captionData.m_timer > subtitle.m_duration)
+        {
+            m_captionData.m_subtitles.pop_front();
+            m_captionData.m_timer = 0.0f;
+
+            // Finished
+            if (m_captionData.m_subtitles.empty())
+            {
+                m_captionData.clear();
+            }
+            else if (m_captionData.m_subtitles.front().m_cueID)
+            {
+                // play next sound
+                m_subtitleSfx.reset();
+                Common::PlaySoundStatic(m_subtitleSfx, m_captionData.m_subtitles.front().m_cueID);
+            }
+        }
+    }
+    else if (!m_captionData.m_captions.empty())
+    {
+        // caption system for HUB world
         Caption& caption = m_captionData.m_captions.front();
         float sizeX = *BACKBUFFER_WIDTH * 890.0f / 1280.0f;
         float sizeY = *BACKBUFFER_HEIGHT * 170.0f / 720.0f;
         float posX = 0.143f;
         float posY = 0.6958f;
         float alpha = 1.0f;
+
+        float const dt = Application::getHudDeltaTime();
+        float const df = dt * 60.0f;
 
         static bool visible = true;
         ImGui::Begin("Textbox", &visible, UIContext::m_hudFlags);
@@ -194,13 +390,13 @@ void SubtitleUI::draw()
             }
             ImGui::End();
 
-            m_captionData.m_yesNoColorTime += Application::getHudDeltaTime();
+            m_captionData.m_yesNoColorTime += dt;
             if (m_captionData.m_yesNoColorTime >= 1.0f)
             {
                 m_captionData.m_yesNoColorTime -= 1.0f;
             }
 
-            m_captionData.m_yesNoArrowFrame += Application::getHudDeltaTime() * 60.0f;
+            m_captionData.m_yesNoArrowFrame += df;
             if (m_captionData.m_yesNoArrowFrame >= 13.0f)
             {
                 m_captionData.m_yesNoArrowFrame -= 13.0f;
@@ -210,19 +406,19 @@ void SubtitleUI::draw()
         if (m_captionData.m_isFadeIn && m_captionData.m_frame < 5.0f)
         {
             // Fade in
-            m_captionData.m_frame += Application::getHudDeltaTime() * 60.0f;
+            m_captionData.m_frame += df;
             Common::ClampFloat(m_captionData.m_frame, 0.0f, 5.0f);
         }
         else if (!m_captionData.m_isFadeIn && m_captionData.m_frame > 0.0f)
         {
             // Fade out
-            m_captionData.m_frame -= Application::getHudDeltaTime() * 60.0f;
+            m_captionData.m_frame -= df;
             Common::ClampFloat(m_captionData.m_frame, 0.0f, 5.0f);
         }
 
         // Goto next dialog when pressing A
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-        if (m_captionData.m_frame >= 5.0f && Application::getHudDeltaTime() > 0.0f &&
+        if (m_captionData.m_frame >= 5.0f && dt > 0.0f && 
             (
                 padState->IsTapped(Sonic::EKeyState::eKeyState_A) ||
                 padState->IsTapped(Sonic::EKeyState::eKeyState_Y) ||
@@ -283,7 +479,7 @@ void SubtitleUI::draw()
         }
 
         // Yes/No dialog switching
-        if (m_captionData.m_acceptDialogShown && Application::getHudDeltaTime() > 0.0f)
+        if (m_captionData.m_acceptDialogShown && dt > 0.0f)
         {
             bool playSound = false;
             if (MissionManager::m_missionAccept && (padState->LeftStickVertical < -0.5f || padState->IsTapped(Sonic::EKeyState::eKeyState_DpadDown)))
@@ -336,6 +532,80 @@ void SubtitleUI::drawCaptions(Caption const& caption, float alpha)
         ImGui::SetCursorPosX(offset);
         ImGui::SetCursorPosY(ImGui::GetCursorPosY() + *BACKBUFFER_HEIGHT * 0.01f);
     }
+}
+
+float SubtitleUI::drawSubtitle(Subtitle const& subtitle, float alpha)
+{
+    float maxWidth = 0.0f;
+    float currentWidth = 0.0f;
+
+    float const offset = 10.0f;
+    ImGui::SetCursorPos(ImVec2(offset, offset));
+
+    for (uint32_t i = 0; i < subtitle.m_subtitles.size(); i++)
+    {
+        std::string const& str = subtitle.m_subtitles[i];
+        float const color = 1.0f;
+
+        ImGui::TextColored(ImVec4(color, color, color, alpha * 0.9f), str.c_str());
+        currentWidth += ImGui::CalcTextSize(str.c_str()).x;
+
+        if (subtitle.m_buttons.count(i))
+        {
+            float buttonSizeX = 28.0f;
+            switch (subtitle.m_buttons.at(i))
+            {
+            case SBT_LB:
+            case SBT_RB:
+            case SBT_LT:
+            case SBT_RT:
+                buttonSizeX = 56.0f;
+                break;
+            }
+
+            IUnknown** texture = nullptr;
+            switch (subtitle.m_buttons.at(i))
+            {
+            case SBT_A:     texture = &m_captionData.m_buttonA;      break;
+            case SBT_B:     texture = &m_captionData.m_buttonB;      break;
+            case SBT_X:     texture = &m_captionData.m_buttonX;      break;
+            case SBT_Y:     texture = &m_captionData.m_buttonY;      break;
+            case SBT_LB:    texture = &m_captionData.m_buttonLB;     break;
+            case SBT_RB:    texture = &m_captionData.m_buttonRB;     break;
+            case SBT_LT:    texture = &m_captionData.m_buttonLT;     break;
+            case SBT_RT:    texture = &m_captionData.m_buttonRT;     break;
+            case SBT_Start: texture = &m_captionData.m_buttonStart;  break;
+            case SBT_Back:  texture = &m_captionData.m_buttonBack;   break;
+            case SBT_LStick:  texture = &m_captionData.m_buttonLStick;   break;
+            case SBT_RStick:  texture = &m_captionData.m_buttonRStick;   break;
+            case SBT_DPad:  texture = &m_captionData.m_buttonDPad;   break;
+            }
+
+            ImGui::SameLine();
+            if (texture)
+            {
+                ImGui::Image(*texture, ImVec2(*BACKBUFFER_WIDTH * buttonSizeX / 1280.0f, *BACKBUFFER_HEIGHT * 28.0f / 720.0f), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, alpha));
+                currentWidth += buttonSizeX;
+            }
+        }
+
+        if (!str.empty() && str.back() == '\n')
+        {
+            // y-spacing is slightly larger for gameplay dialog
+            ImGui::SetCursorPosX(offset);
+            ImGui::SetCursorPosY(ImGui::GetCursorPosY() + *BACKBUFFER_HEIGHT * 0.01f);
+
+            maxWidth = max(maxWidth, currentWidth);
+            currentWidth = 0.0f;
+        }
+        else
+        {
+            ImGui::SameLine();
+        }
+    }
+
+    maxWidth = max(maxWidth, currentWidth);
+    return maxWidth;
 }
 
 void SubtitleUI::addDialogAcceptCallback(DialogCallbackFunc pFn)
