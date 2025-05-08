@@ -21,7 +21,7 @@ public:
 	};
 
 private:
-	BB_INSERT_PADDING(0xC); // 0x10C, set 0x10F in sub_1002580
+	BB_INSERT_PADDING(0xC); // 0x104, set 0x10F in sub_1002580
 
 	struct Data 
 	{
@@ -60,7 +60,7 @@ public:
 	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	bool SetAddColliders(const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	void SetUpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo) override;
-	void CGameObject2C(void* This) override;
+	void GetObjectTriggerType(Hedgehog::vector<uint32_t>& in_rTriggerTypeList) override;
 	bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;
 
 private:

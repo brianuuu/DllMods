@@ -104,6 +104,15 @@ bool Cage::SetAddColliders
 	return true;
 }
 
+void Cage::GetObjectTriggerType
+(
+	Hedgehog::vector<uint32_t>& in_rTriggerTypeList
+)
+{
+	FUNCTION_PTR(int, __stdcall, fpSetUpTrigger4, 0xEA2940, Hedgehog::vector<uint32_t>&in_rTriggerTypeList);
+	fpSetUpTrigger4(in_rTriggerTypeList);
+}
+
 void Cage::SetUpdateParallel
 (
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
@@ -120,15 +129,6 @@ void Cage::SetUpdateParallel
 		m_spNodeModel->m_Transform.SetPosition(hh::math::CVector(0.0f, -m_moveDownAmount, 0.0f));
 		m_spNodeModel->NotifyChanged();
 	}
-}
-
-void Cage::CGameObject2C
-(
-	void* pData
-)
-{
-	FUNCTION_PTR(int, __stdcall, fpSetUpTrigger4, 0xEA2940, void* pData);
-	fpSetUpTrigger4(pData);
 }
 
 bool Cage::ProcessMessage

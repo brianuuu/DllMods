@@ -179,13 +179,13 @@ void BallSwitch::SetUpdateParallel
 	m_spNodeModelBall->NotifyChanged();
 }
 
-void BallSwitch::CGameObject2C
+void BallSwitch::GetObjectTriggerType
 (
-	void* pData
+	Hedgehog::vector<uint32_t>& in_rTriggerTypeList
 )
 {
-	FUNCTION_PTR(int, __thiscall, fpSetUpTrigger1And2, 0x1002580, void* This, void* pData);
-	fpSetUpTrigger1And2(this, pData);
+	FUNCTION_PTR(int, __thiscall, fpSetUpTrigger1And2, 0x1002580, void* This, Hedgehog::vector<uint32_t>& in_rTriggerTypeList);
+	fpSetUpTrigger1And2(this, in_rTriggerTypeList);
 }
 
 bool BallSwitch::ProcessMessage
