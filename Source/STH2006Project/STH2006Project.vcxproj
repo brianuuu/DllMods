@@ -262,6 +262,8 @@
     <ClCompile Include="JumpChain.cpp" />
     <ClCompile Include="LoadingUI.cpp" />
     <ClCompile Include="MissionManager.cpp" />
+    <ClCompile Include="mst.cpp" />
+    <ClCompile Include="MstManager.cpp" />
     <ClCompile Include="NextGenObjects.cpp" />
     <ClCompile Include="ParamManager.cpp" />
     <ClCompile Include="Pele.cpp" />
@@ -308,6 +310,8 @@
     <ClInclude Include="JumpChain.h" />
     <ClInclude Include="LoadingUI.h" />
     <ClInclude Include="MissionManager.h" />
+    <ClInclude Include="mst.h" />
+    <ClInclude Include="MstManager.h" />
     <ClInclude Include="NextGenObjects.h" />
     <ClInclude Include="ParamManager.h" />
     <ClInclude Include="Pele.h" />
