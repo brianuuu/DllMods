@@ -165,15 +165,15 @@ void BallSwitch::SetUpdateParallel
 	// rotate ball model (apply pitch then yaw)
 	float currentForwardDistToAnchor = horizontalDir.dot(hh::math::CVector::UnitZ());
 	currentForwardDistToAnchor = currentForwardDistToAnchor < 0.0f ? max(-maxAnchorDist, currentForwardDistToAnchor) : min(maxAnchorDist, currentForwardDistToAnchor);
-	float constexpr c_spinRate = PI; // half revolution per sec
+	float constexpr c_spinRate = PI_F; // half revolution per sec
 	m_angle += c_spinRate * in_rUpdateInfo.DeltaTime;
-	if (m_angle > 2.0f * PI)
+	if (m_angle > 2.0f * PI_F)
 	{
-		m_angle -= 2.0f * PI;
+		m_angle -= 2.0f * PI_F;
 	}
 	hh::math::CVector const upAxis = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitY(); 
 	hh::math::CVector const rightAxis = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitX();
-	hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(m_angle, upAxis) * Eigen::AngleAxisf(0.5f * PI * currentForwardDistToAnchor / maxAnchorDist, -rightAxis);
+	hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(m_angle, upAxis) * Eigen::AngleAxisf(0.5f * PI_F * currentForwardDistToAnchor / maxAnchorDist, -rightAxis);
 
 	m_spNodeModelBall->m_Transform.SetRotationAndPosition(newRotation, newPosition);
 	m_spNodeModelBall->NotifyChanged();

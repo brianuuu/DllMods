@@ -72,10 +72,10 @@ bool Cage::SetAddColliders
 		hh::math::CVector pos;
 		switch (i)
 		{
-		case 0: pos = hh::math::CVector(-1.55, 1.66f, 0.0f); break;
-		case 1: pos = hh::math::CVector(0.0f, 1.66f, -1.55); break;
-		case 2: pos = hh::math::CVector(1.55, 1.66f, 0.0f); break;
-		case 3: pos = hh::math::CVector(0.0f, 1.66f, 1.55); break;
+		case 0: pos = hh::math::CVector(-1.55f, 1.66f, 0.0f); break;
+		case 1: pos = hh::math::CVector(0.0f, 1.66f, -1.55f); break;
+		case 2: pos = hh::math::CVector(1.55f, 1.66f, 0.0f); break;
+		case 3: pos = hh::math::CVector(0.0f, 1.66f, 1.55f); break;
 		}
 
 		m_spNodeWalls[i] = boost::make_shared<Sonic::CMatrixNodeTransform>();
