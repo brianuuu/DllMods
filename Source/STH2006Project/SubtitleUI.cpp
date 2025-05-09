@@ -33,14 +33,14 @@ float SubtitleUI::addSubtitle(mst::TextEntry const& entry, std::vector<float> co
             newSubtitle.m_duration = durationOverrides[i];
         }
         
-        // Front tag = voice
-        if (subtitle.front() == '$')
+        // Front tag can be voice
+        if (tagIndex < entry.m_tags.size() && subtitle.front() == '$')
         {
-            subtitle.erase(0, 1);
-            if (tagIndex < entry.m_tags.size())
+            // is this a sound or a picture?
+            std::string synthName = entry.m_tags.at(tagIndex);
+            if (synthName.find("sound") != std::string::npos)
             {
                 // get cueID from synth
-                std::string synthName = entry.m_tags.at(tagIndex++);
                 synthName = synthName.substr(synthName.find('(') + 1);
                 synthName.pop_back();
                 newSubtitle.m_cueID = Common::GetSoundCueFromSynth(synthName.c_str());
@@ -60,6 +60,9 @@ float SubtitleUI::addSubtitle(mst::TextEntry const& entry, std::vector<float> co
                         Common::PlaySoundStatic(m_subtitleSfx, newSubtitle.m_cueID);
                     }
                 }
+
+                tagIndex++;
+                subtitle.erase(0, 1);
             }
         }
 
@@ -83,6 +86,10 @@ float SubtitleUI::addSubtitle(mst::TextEntry const& entry, std::vector<float> co
                     buttonName = buttonName.substr(buttonName.find('(') + 1);
                     buttonName.pop_back();
                     newSubtitle.m_buttons[newSubtitle.m_subtitles.size()] = getButtonTypeFromTag(buttonName);
+                }
+                else
+                {
+                    return;
                 }
 
                 std::string const buttonSplit = subtitle.substr(0, pos); // NOT include $
