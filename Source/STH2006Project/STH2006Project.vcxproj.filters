@@ -131,6 +131,9 @@
     <ClCompile Include="Laser.cpp">
       <Filter>Objects\cmn</Filter>
     </ClCompile>
+    <ClCompile Include="Hint.cpp">
+      <Filter>Objects\cmn</Filter>
+    </ClCompile>
     <ClCompile Include="MstManager.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
@@ -237,6 +240,9 @@
       <Filter>Objects\cmn</Filter>
     </ClInclude>
     <ClInclude Include="Laser.h">
+      <Filter>Objects\cmn</Filter>
+    </ClInclude>
+    <ClInclude Include="Hint.h">
       <Filter>Objects\cmn</Filter>
     </ClInclude>
     <ClInclude Include="MstManager.h">

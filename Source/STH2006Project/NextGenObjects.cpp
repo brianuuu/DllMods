@@ -4,6 +4,7 @@
 #include "Cage.h"
 #include "Guillotine.h"
 #include "Itembox.h"
+#include "Hint.h"
 #include "JumpChain.h"
 #include "Laser.h"
 #include "UpDownReel.h"
@@ -94,6 +95,7 @@ void NextGenObjects::applyPatches()
     BallSwitch::registerObject();
     Cage::registerObject();
     Guillotine::registerObject();
+    Hint::registerObject();
     JumpChain::registerObject();
     Laser::registerObject();
     UpDownReel::registerObject();

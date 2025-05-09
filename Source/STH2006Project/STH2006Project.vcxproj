@@ -259,6 +259,7 @@
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="EnemyTrigger.cpp" />
     <ClCompile Include="Guillotine.cpp" />
+    <ClCompile Include="Hint.cpp" />
     <ClCompile Include="JumpChain.cpp" />
     <ClCompile Include="Laser.cpp" />
     <ClCompile Include="LoadingUI.cpp" />
@@ -308,6 +309,7 @@
     <ClInclude Include="DllMain.h" />
     <ClInclude Include="EnemyTrigger.h" />
     <ClInclude Include="Guillotine.h" />
+    <ClInclude Include="Hint.h" />
     <ClInclude Include="JumpChain.h" />
     <ClInclude Include="Laser.h" />
     <ClInclude Include="LoadingUI.h" />
