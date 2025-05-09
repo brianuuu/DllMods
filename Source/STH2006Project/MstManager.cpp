@@ -35,7 +35,7 @@ bool MstManager::RequestMst
 
 	std::unique_lock lock(m_collectionMutex);
 
-	std::string const fullPath = Application::getModDirString() + "Assets\\Languages\\English\\" + name + ".mst";
+	std::string const fullPath = Application::getModDirString() + "Assets\\Message\\" + GetLanguagePrefix() + "\\" + name + ".mst";
 	std::string errorMsg;
 	m_mstCollection[name].Load(fullPath, errorMsg);
 
@@ -56,4 +56,18 @@ mst::TextEntry MstManager::GetSubtitle
 	std::shared_lock lock(m_collectionMutex);
 	mst const& mstData = m_mstCollection.at(name);
 	return mstData.GetEntry(id);
+}
+
+std::string MstManager::GetLanguagePrefix()
+{
+	switch (Common::GetUILanguageType())
+	{
+	case LT_English: return "English";
+	case LT_Japanese: return "Japanese";
+	//case LT_French: return "French";
+	//case LT_German: return "German";
+	//case LT_Spanish: return "Spanish";
+	//case LT_Italian: return "Italian";
+	}
+	return "English";
 }
