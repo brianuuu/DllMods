@@ -133,8 +133,7 @@ void Hint::GetObjectTriggerType
 	Hedgehog::vector<uint32_t>& in_rTriggerTypeList
 )
 {
-	FUNCTION_PTR(int, __stdcall, fpSetUpTrigger4, 0xEA2940, Hedgehog::vector<uint32_t>&in_rTriggerTypeList);
-	fpSetUpTrigger4(in_rTriggerTypeList);
+	in_rTriggerTypeList.push_back(4);
 }
 
 void Hint::SetUpdateParallel

@@ -184,8 +184,8 @@ void BallSwitch::GetObjectTriggerType
 	Hedgehog::vector<uint32_t>& in_rTriggerTypeList
 )
 {
-	FUNCTION_PTR(int, __thiscall, fpSetUpTrigger1And2, 0x1002580, void* This, Hedgehog::vector<uint32_t>& in_rTriggerTypeList);
-	fpSetUpTrigger1And2(this, in_rTriggerTypeList);
+	in_rTriggerTypeList.push_back(1);
+	in_rTriggerTypeList.push_back(2);
 }
 
 bool BallSwitch::ProcessMessage
