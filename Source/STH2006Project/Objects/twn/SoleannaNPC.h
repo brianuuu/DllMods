@@ -5,7 +5,7 @@
 /*----------------------------------------------------------*/
 
 #pragma once
-#include "PathManager.h"
+#include "Managers/PathManager.h"
 
 class SoleannaNPC
 {

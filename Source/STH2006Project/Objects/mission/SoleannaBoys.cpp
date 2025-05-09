@@ -1,5 +1,6 @@
 #include "SoleannaBoys.h"
-#include "Application.h"
+
+#include "System/Application.h"
 
 PathDataCollection SoleannaBoys::m_paths;
 std::deque<Sonic::CGameObject*> SoleannaBoys::m_omochaos;

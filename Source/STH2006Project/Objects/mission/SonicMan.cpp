@@ -1,7 +1,8 @@
 #include "SonicMan.h"
-#include "PathManager.h"
-#include "MissionManager.h"
-#include "Application.h"
+
+#include "Managers/MissionManager.h"
+#include "Managers/PathManager.h"
+#include "System/Application.h"
 
 class CObjSonicMan : public Sonic::CGameObject
 {

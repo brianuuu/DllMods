@@ -1,7 +1,8 @@
 #include "ResultUI.h"
-#include "UIContext.h"
-#include "Application.h"
+
 #include "Configuration.h"
+#include "System/Application.h"
+#include "UI/UIContext.h"
 
 bool ResultUI::m_init = false;
 IUnknown* ResultUI::m_resultRankTextures[5] = { nullptr, nullptr, nullptr, nullptr, nullptr };

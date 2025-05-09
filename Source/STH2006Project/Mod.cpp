@@ -1,20 +1,21 @@
-#include "Application.h"
-#include "ArchiveTreePatcher.h"
-#include "ChaosEnergy.h"
 #include "Configuration.h"
-#include "EnemyTrigger.h"
-#include "MissionManager.h"
-#include "Navigation.h"
-#include "NextGenObjects.h"
-#include "Omochao.h"
-#include "ParamManager.h"
-#include "ScoreManager.h"
-#include "SoleannaNPC.h"
-#include "Stage.h"
-#include "SynchronizedObject.h"
-#include "TitleUI.h"
-#include "UIContext.h"
-#include "Window.h"
+
+#include "Managers/MissionManager.h"
+#include "Managers/ParamManager.h"
+#include "Managers/ScoreManager.h"
+#include "Managers/StageManager.h"
+#include "Objects/gens/Navigation.h"
+#include "Objects/gens/Omochao.h"
+#include "Objects/NextGenObjects.h"
+#include "Objects/twn/SoleannaNPC.h"
+#include "System/Application.h"
+#include "System/ChaosEnergy.h"
+#include "System/EnemyTrigger.h"
+#include "UI/TitleUI.h"
+#include "UI/UIContext.h"
+#include "Utils/ArchiveTreePatcher.h"
+#include "Utils/SynchronizedObject.h"
+#include "Utils/Window.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo_t * modInfo)
 {
@@ -57,7 +58,7 @@ extern "C" __declspec(dllexport) void Init(ModInfo_t * modInfo)
     NextGenObjects::applyPatches();
 
     // Stage specific patches
-    Stage::applyPatches();
+    StageManager::applyPatches();
 
     // Animate Soleanna NPCs
     SoleannaNPC::applyPatches();

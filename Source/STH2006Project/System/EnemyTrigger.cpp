@@ -1,5 +1,6 @@
 #include "EnemyTrigger.h"
-#include "ScoreManager.h"
+
+#include "Managers/ScoreManager.h"
 
 void __declspec(naked) SendEnemyEventTrigger()
 {

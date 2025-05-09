@@ -1,13 +1,13 @@
 #include "NextGenObjects.h"
 
-#include "BallSwitch.h"
-#include "Cage.h"
-#include "Guillotine.h"
-#include "Itembox.h"
-#include "Hint.h"
-#include "JumpChain.h"
-#include "Laser.h"
-#include "UpDownReel.h"
+#include "cmn/BallSwitch.h"
+#include "cmn/Cage.h"
+#include "cmn/Guillotine.h"
+#include "cmn/Hint.h"
+#include "cmn/Itembox.h"
+#include "cmn/JumpChain.h"
+#include "cmn/Laser.h"
+#include "cmn/UpDownReel.h"
 
 void NextGenObjects::applyPatches()
 {

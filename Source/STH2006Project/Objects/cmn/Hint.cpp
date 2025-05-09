@@ -1,7 +1,7 @@
 #include "Hint.h"
 
-#include "MstManager.h"
-#include "SubtitleUI.h"
+#include "Managers/MstManager.h"
+#include "UI/SubtitleUI.h"
 
 BB_SET_OBJECT_MAKE_HOOK(Hint)
 void Hint::registerObject()

@@ -4,7 +4,7 @@
 //	Description: Draws 06 style result UI using ImGUI
 /*----------------------------------------------------------*/
 #pragma once
-#include "ScoreManager.h"
+#include "Managers/ScoreManager.h"
 
 class ResultUI
 {

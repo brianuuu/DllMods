@@ -1,6 +1,7 @@
 #include "WhosCaptain.h"
-#include "SubtitleUI.h"
-#include "MissionManager.h"
+
+#include "Managers/MissionManager.h"
+#include "UI/SubtitleUI.h"
 
 void* WhosCaptain::m_pCaptain = nullptr;
 WhosCaptain::CaptainState WhosCaptain::m_state = WhosCaptain::CaptainState::CS_Idle;

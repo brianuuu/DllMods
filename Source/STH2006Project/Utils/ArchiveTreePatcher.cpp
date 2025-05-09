@@ -1,6 +1,7 @@
 #include "ArchiveTreePatcher.h"
+
 #include "Configuration.h"
-#include "ScoreManager.h"
+#include "Managers/ScoreManager.h"
 
 std::vector<ArchiveDependency> ArchiveTreePatcher::m_archiveDependencies = {};
 

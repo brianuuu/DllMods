@@ -1,5 +1,6 @@
 #include "SoleannaNPC.h"
-#include "Application.h"
+
+#include "System/Application.h"
 
 PathDataCollection SoleannaNPC::m_pathsMapA;
 PathDataCollection SoleannaNPC::m_pathsMapB;

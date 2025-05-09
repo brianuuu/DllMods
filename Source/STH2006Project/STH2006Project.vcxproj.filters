@@ -35,244 +35,86 @@
     <ClCompile Include="..\..\Dependencies\DDSTextureLoader\DDSTextureLoader11.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="MissionManager.cpp">
-      <Filter>Mission</Filter>
-    </ClCompile>
-    <ClCompile Include="Pele.cpp">
-      <Filter>Mission</Filter>
-    </ClCompile>
-    <ClCompile Include="SoleannaBoys.cpp">
-      <Filter>Mission</Filter>
-    </ClCompile>
-    <ClCompile Include="LoadingUI.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="ResultUI.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="SubtitleUI.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="TitleUI.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="UIContext.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="Application.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="ArchiveTreePatcher.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="EnemyTrigger.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="ParamManager.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="PathManager.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="ChaosEnergy.cpp">
-      <Filter>Stage</Filter>
-    </ClCompile>
-    <ClCompile Include="Navigation.cpp">
-      <Filter>Stage</Filter>
-    </ClCompile>
-    <ClCompile Include="Omochao.cpp">
-      <Filter>Stage</Filter>
-    </ClCompile>
-    <ClCompile Include="ScoreManager.cpp">
-      <Filter>Stage</Filter>
-    </ClCompile>
-    <ClCompile Include="Stage.cpp">
-      <Filter>Stage</Filter>
-    </ClCompile>
-    <ClCompile Include="SynchronizedObject.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="tinyxml2.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="Window.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="SoleannaNPC.cpp">
-      <Filter>Stage</Filter>
-    </ClCompile>
-    <ClCompile Include="WhosCaptain.cpp">
-      <Filter>Mission</Filter>
-    </ClCompile>
-    <ClCompile Include="SonicMan.cpp">
-      <Filter>Mission</Filter>
-    </ClCompile>
-    <ClCompile Include="NextGenObjects.cpp">
-      <Filter>Objects</Filter>
-    </ClCompile>
-    <ClCompile Include="BallSwitch.cpp">
-      <Filter>Objects\cmn</Filter>
-    </ClCompile>
-    <ClCompile Include="Cage.cpp">
-      <Filter>Objects\cmn</Filter>
-    </ClCompile>
-    <ClCompile Include="Guillotine.cpp">
-      <Filter>Objects\cmn</Filter>
-    </ClCompile>
-    <ClCompile Include="Itembox.cpp">
-      <Filter>Objects\cmn</Filter>
-    </ClCompile>
-    <ClCompile Include="JumpChain.cpp">
-      <Filter>Objects\cmn</Filter>
-    </ClCompile>
-    <ClCompile Include="UpDownReel.cpp">
-      <Filter>Objects\cmn</Filter>
-    </ClCompile>
-    <ClCompile Include="Laser.cpp">
-      <Filter>Objects\cmn</Filter>
-    </ClCompile>
-    <ClCompile Include="Hint.cpp">
-      <Filter>Objects\cmn</Filter>
-    </ClCompile>
-    <ClCompile Include="MstManager.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="mst.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
+    <ClCompile Include="Managers\MissionManager.cpp" />
+    <ClCompile Include="Managers\MstManager.cpp" />
+    <ClCompile Include="Managers\ParamManager.cpp" />
+    <ClCompile Include="Managers\PathManager.cpp" />
+    <ClCompile Include="Managers\ScoreManager.cpp" />
+    <ClCompile Include="Managers\StageManager.cpp" />
+    <ClCompile Include="Objects\cmn\BallSwitch.cpp" />
+    <ClCompile Include="Objects\cmn\Cage.cpp" />
+    <ClCompile Include="Objects\cmn\Guillotine.cpp" />
+    <ClCompile Include="Objects\cmn\Hint.cpp" />
+    <ClCompile Include="Objects\cmn\Itembox.cpp" />
+    <ClCompile Include="Objects\cmn\JumpChain.cpp" />
+    <ClCompile Include="Objects\cmn\Laser.cpp" />
+    <ClCompile Include="Objects\cmn\UpDownReel.cpp" />
+    <ClCompile Include="Objects\gens\Navigation.cpp" />
+    <ClCompile Include="Objects\gens\Omochao.cpp" />
+    <ClCompile Include="Objects\mission\Pele.cpp" />
+    <ClCompile Include="Objects\mission\SoleannaBoys.cpp" />
+    <ClCompile Include="Objects\mission\SonicMan.cpp" />
+    <ClCompile Include="Objects\mission\WhosCaptain.cpp" />
+    <ClCompile Include="Objects\twn\SoleannaNPC.cpp" />
+    <ClCompile Include="Objects\NextGenObjects.cpp" />
+    <ClCompile Include="System\Application.cpp" />
+    <ClCompile Include="System\ChaosEnergy.cpp" />
+    <ClCompile Include="System\EnemyTrigger.cpp" />
+    <ClCompile Include="UI\LoadingUI.cpp" />
+    <ClCompile Include="UI\ResultUI.cpp" />
+    <ClCompile Include="UI\SubtitleUI.cpp" />
+    <ClCompile Include="UI\TitleUI.cpp" />
+    <ClCompile Include="UI\UIContext.cpp" />
+    <ClCompile Include="Utils\ArchiveTreePatcher.cpp" />
+    <ClCompile Include="Utils\mst.cpp" />
+    <ClCompile Include="Utils\SynchronizedObject.cpp" />
+    <ClCompile Include="Utils\tinyxml2.cpp" />
+    <ClCompile Include="Utils\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="Pch.h" />
     <ClInclude Include="DllMain.h" />
     <ClInclude Include="Resources.h" />
-    <ClInclude Include="MissionManager.h">
-      <Filter>Mission</Filter>
-    </ClInclude>
-    <ClInclude Include="Pele.h">
-      <Filter>Mission</Filter>
-    </ClInclude>
-    <ClInclude Include="SoleannaBoys.h">
-      <Filter>Mission</Filter>
-    </ClInclude>
-    <ClInclude Include="LoadingUI.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="ResultUI.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="SubtitleUI.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="TitleUI.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="UIContext.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="Application.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="ArchiveTreePatcher.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="EnemyTrigger.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="ParamManager.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="PathManager.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="ChaosEnergy.h">
-      <Filter>Stage</Filter>
-    </ClInclude>
-    <ClInclude Include="Navigation.h">
-      <Filter>Stage</Filter>
-    </ClInclude>
-    <ClInclude Include="Omochao.h">
-      <Filter>Stage</Filter>
-    </ClInclude>
-    <ClInclude Include="ScoreManager.h">
-      <Filter>Stage</Filter>
-    </ClInclude>
-    <ClInclude Include="Stage.h">
-      <Filter>Stage</Filter>
-    </ClInclude>
-    <ClInclude Include="SynchronizedObject.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="tinyxml2.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Window.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="SoleannaNPC.h">
-      <Filter>Stage</Filter>
-    </ClInclude>
-    <ClInclude Include="WhosCaptain.h">
-      <Filter>Mission</Filter>
-    </ClInclude>
-    <ClInclude Include="SonicMan.h">
-      <Filter>Mission</Filter>
-    </ClInclude>
-    <ClInclude Include="NextGenObjects.h">
-      <Filter>Objects</Filter>
-    </ClInclude>
-    <ClInclude Include="BallSwitch.h">
-      <Filter>Objects\cmn</Filter>
-    </ClInclude>
-    <ClInclude Include="Cage.h">
-      <Filter>Objects\cmn</Filter>
-    </ClInclude>
-    <ClInclude Include="Guillotine.h">
-      <Filter>Objects\cmn</Filter>
-    </ClInclude>
-    <ClInclude Include="Itembox.h">
-      <Filter>Objects\cmn</Filter>
-    </ClInclude>
-    <ClInclude Include="JumpChain.h">
-      <Filter>Objects\cmn</Filter>
-    </ClInclude>
-    <ClInclude Include="UpDownReel.h">
-      <Filter>Objects\cmn</Filter>
-    </ClInclude>
-    <ClInclude Include="Laser.h">
-      <Filter>Objects\cmn</Filter>
-    </ClInclude>
-    <ClInclude Include="Hint.h">
-      <Filter>Objects\cmn</Filter>
-    </ClInclude>
-    <ClInclude Include="MstManager.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="mst.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
+    <ClInclude Include="Managers\MissionManager.h" />
+    <ClInclude Include="Managers\MstManager.h" />
+    <ClInclude Include="Managers\ParamManager.h" />
+    <ClInclude Include="Managers\PathManager.h" />
+    <ClInclude Include="Managers\ScoreManager.h" />
+    <ClInclude Include="Managers\StageManager.h" />
+    <ClInclude Include="Objects\cmn\BallSwitch.h" />
+    <ClInclude Include="Objects\cmn\Cage.h" />
+    <ClInclude Include="Objects\cmn\Guillotine.h" />
+    <ClInclude Include="Objects\cmn\Hint.h" />
+    <ClInclude Include="Objects\cmn\Itembox.h" />
+    <ClInclude Include="Objects\cmn\JumpChain.h" />
+    <ClInclude Include="Objects\cmn\Laser.h" />
+    <ClInclude Include="Objects\cmn\UpDownReel.h" />
+    <ClInclude Include="Objects\gens\Navigation.h" />
+    <ClInclude Include="Objects\gens\Omochao.h" />
+    <ClInclude Include="Objects\mission\Pele.h" />
+    <ClInclude Include="Objects\mission\SoleannaBoys.h" />
+    <ClInclude Include="Objects\mission\SonicMan.h" />
+    <ClInclude Include="Objects\mission\WhosCaptain.h" />
+    <ClInclude Include="Objects\twn\SoleannaNPC.h" />
+    <ClInclude Include="Objects\NextGenObjects.h" />
+    <ClInclude Include="System\Application.h" />
+    <ClInclude Include="System\ChaosEnergy.h" />
+    <ClInclude Include="System\EnemyTrigger.h" />
+    <ClInclude Include="UI\LoadingUI.h" />
+    <ClInclude Include="UI\ResultUI.h" />
+    <ClInclude Include="UI\SubtitleUI.h" />
+    <ClInclude Include="UI\TitleUI.h" />
+    <ClInclude Include="UI\UIContext.h" />
+    <ClInclude Include="Utils\ArchiveTreePatcher.h" />
+    <ClInclude Include="Utils\mst.h" />
+    <ClInclude Include="Utils\SynchronizedObject.h" />
+    <ClInclude Include="Utils\tinyxml2.h" />
+    <ClInclude Include="Utils\Window.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">
       <UniqueIdentifier>{bac37829-acdd-4f2d-b945-8b16d201d56b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Mission">
-      <UniqueIdentifier>{ce9b4ebb-e8df-4ade-ba77-47a2bf7cd08b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="UI">
-      <UniqueIdentifier>{d0d1034f-b331-44e7-9625-c9210e573071}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Utils">
-      <UniqueIdentifier>{f5612fee-5d99-43c2-b5f8-6dc01394c85e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Stage">
-      <UniqueIdentifier>{27796f1c-d015-45b6-ba57-2c08882d6e01}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Objects">
-      <UniqueIdentifier>{de2132cc-34fc-4f4a-8545-f54c031e0e85}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Objects\cmn">
-      <UniqueIdentifier>{646decdf-bd7b-487b-847d-af636b89d465}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -1,22 +1,23 @@
-#include "Stage.h"
-#include "Application.h"
-#include "Configuration.h"
-#include "UIContext.h"
-#include "ParamManager.h"
-#include "LoadingUI.h"
-#include "MissionManager.h"
-#include "ScoreManager.h"
+#include "StageManager.h"
 
-HOOK(void, __fastcall, Stage_CGameplayFlowStage_CStateTitle, 0xCF8F40, void* This)
+#include "Configuration.h"
+#include "Managers/MissionManager.h"
+#include "Managers/ParamManager.h"
+#include "Managers/ScoreManager.h"
+#include "System/Application.h"
+#include "UI/LoadingUI.h"
+#include "UI/UIContext.h"
+
+HOOK(void, __fastcall, StageManager_CGameplayFlowStage_CStateTitle, 0xCF8F40, void* This)
 {
     UIContext::clearDraw();
-    originalStage_CGameplayFlowStage_CStateTitle(This);
+    originalStageManager_CGameplayFlowStage_CStateTitle(This);
 }
 
 //---------------------------------------------------
 // Kingdom Valley sfx
 //---------------------------------------------------
-HOOK(int32_t*, __fastcall, Stage_MsgHitGrindPath, 0xE25680, void* This, void* Edx, uint32_t a2)
+HOOK(int32_t*, __fastcall, StageManager_MsgHitGrindPath, 0xE25680, void* This, void* Edx, uint32_t a2)
 {
     // If at Kingdom Valley, change sfx to wind
     // There are normal rails too, when x > 210
@@ -39,10 +40,10 @@ HOOK(int32_t*, __fastcall, Stage_MsgHitGrindPath, 0xE25680, void* This, void* Ed
         WRITE_MEMORY(0xE4FCD6, uint32_t, 2002037);
     }
 
-    return originalStage_MsgHitGrindPath(This, Edx, a2);
+    return originalStageManager_MsgHitGrindPath(This, Edx, a2);
 }
 
-HOOK(int, __fastcall, Stage_CObjSpringSFX, 0x1038DA0, void* This)
+HOOK(int, __fastcall, StageManager_CObjSpringSFX, 0x1038DA0, void* This)
 {
     // If at Kingdom Valley, change sfx to rope
     if (Common::CheckCurrentStage("euc200"))
@@ -56,29 +57,29 @@ HOOK(int, __fastcall, Stage_CObjSpringSFX, 0x1038DA0, void* This)
         WRITE_MEMORY(0x1A6B7EC, uint32_t, 4001015);
     }
 
-    return originalStage_CObjSpringSFX(This);
+    return originalStageManager_CObjSpringSFX(This);
 }
 
 //---------------------------------------------------
 // Wall Jump
 //---------------------------------------------------
-bool Stage::m_wallJumpStart = false;
-float Stage::m_wallJumpTime = 0.0f;
+bool StageManager::m_wallJumpStart = false;
+float StageManager::m_wallJumpTime = 0.0f;
 float const c_wallJumpSpinTime = 0.6f;
-HOOK(bool, __fastcall, Stage_CSonicStateFallAdvance, 0x1118C50, void* This)
+HOOK(bool, __fastcall, StageManager_CSonicStateFallAdvance, 0x1118C50, void* This)
 {
-    bool result = originalStage_CSonicStateFallAdvance(This);
+    bool result = originalStageManager_CSonicStateFallAdvance(This);
 
-    if (Stage::m_wallJumpStart)
+    if (StageManager::m_wallJumpStart)
     {
         Common::SonicContextChangeAnimation("SpinAttack");
-        Stage::m_wallJumpStart = false;
-        Stage::m_wallJumpTime = c_wallJumpSpinTime;
+        StageManager::m_wallJumpStart = false;
+        StageManager::m_wallJumpTime = c_wallJumpSpinTime;
     }
-    else if (Stage::m_wallJumpTime > 0.0f)
+    else if (StageManager::m_wallJumpTime > 0.0f)
     {
-        Stage::m_wallJumpTime -= Application::getDeltaTime();
-        if (Stage::m_wallJumpTime <= 0.0f)
+        StageManager::m_wallJumpTime -= Application::getDeltaTime();
+        if (StageManager::m_wallJumpTime <= 0.0f)
         {
             Common::SonicContextChangeAnimation("FallFast");
         }
@@ -87,11 +88,11 @@ HOOK(bool, __fastcall, Stage_CSonicStateFallAdvance, 0x1118C50, void* This)
     return result;
 }
 
-HOOK(int, __fastcall, Stage_CSonicStateFallEnd, 0x1118F20, void* This)
+HOOK(int, __fastcall, StageManager_CSonicStateFallEnd, 0x1118F20, void* This)
 {
-    Stage::m_wallJumpStart = false;
-    Stage::m_wallJumpTime = 0.0f;
-    return originalStage_CSonicStateFallEnd(This);
+    StageManager::m_wallJumpStart = false;
+    StageManager::m_wallJumpTime = 0.0f;
+    return originalStageManager_CSonicStateFallEnd(This);
 }
 
 void __declspec(naked) getIsWallJump()
@@ -102,7 +103,7 @@ void __declspec(naked) getIsWallJump()
         push    esi
         push    ebx
         lea     ecx, [esi + 30h]
-        call    Stage::getIsWallJumpImpl
+        call    StageManager::getIsWallJumpImpl
         pop     ebx
         pop     esi
 
@@ -111,7 +112,7 @@ void __declspec(naked) getIsWallJump()
     }
 }
 
-void __fastcall Stage::getIsWallJumpImpl(float* outOfControl)
+void __fastcall StageManager::getIsWallJumpImpl(float* outOfControl)
 {
     if (*outOfControl < 0.0f)
     {
@@ -127,9 +128,9 @@ void __fastcall Stage::getIsWallJumpImpl(float* outOfControl)
 //---------------------------------------------------
 // Water Running
 //---------------------------------------------------
-bool Stage::m_waterRunning = false; 
+bool StageManager::m_waterRunning = false; 
 static SharedPtrTypeless waterSoundHandle;
-HOOK(char, __stdcall, Stage_CSonicStateGrounded, 0xDFF660, int* a1, bool a2)
+HOOK(char, __stdcall, StageManager_CSonicStateGrounded, 0xDFF660, int* a1, bool a2)
 {
     if (Common::CheckCurrentStage("ghz200"))
     {
@@ -140,13 +141,13 @@ HOOK(char, __stdcall, Stage_CSonicStateGrounded, 0xDFF660, int* a1, bool a2)
         if (flags->KeepRunning && flags->OnWater)
         {
             // Initial start, play sfx
-            if (!Stage::m_waterRunning)
+            if (!StageManager::m_waterRunning)
             {
                 Common::SonicContextPlaySound(waterSoundHandle, 2002059, 1);
             }
 
             // Change animation
-            Stage::m_waterRunning = true;
+            StageManager::m_waterRunning = true;
             if (!message.IsAnimation("Sliding"))
             {
                 Common::SonicContextChangeAnimation("Sliding");
@@ -155,7 +156,7 @@ HOOK(char, __stdcall, Stage_CSonicStateGrounded, 0xDFF660, int* a1, bool a2)
         else
         {
             // Auto-run finished
-            Stage::m_waterRunning = false;
+            StageManager::m_waterRunning = false;
             waterSoundHandle.reset();
             if (message.IsAnimation("Sliding"))
             {
@@ -164,7 +165,7 @@ HOOK(char, __stdcall, Stage_CSonicStateGrounded, 0xDFF660, int* a1, bool a2)
         }
     }
 
-    return originalStage_CSonicStateGrounded(a1, a2);
+    return originalStageManager_CSonicStateGrounded(a1, a2);
 }
 
 void __declspec(naked) playWaterPfx()
@@ -190,14 +191,14 @@ void __declspec(naked) playWaterPfx()
     }
 }
 
-HOOK(void, __fastcall, Stage_SonicChangeAnimation, 0xE74CC0, Sonic::Player::CPlayerSpeedContext* context, int a2, Hedgehog::Base::CSharedString const& name)
+HOOK(void, __fastcall, StageManager_SonicChangeAnimation, 0xE74CC0, Sonic::Player::CPlayerSpeedContext* context, int a2, Hedgehog::Base::CSharedString const& name)
 {
-    if (context == *pModernSonicContext && !context->m_Field168 && Stage::m_waterRunning)
+    if (context == *pModernSonicContext && !context->m_Field168 && StageManager::m_waterRunning)
     {
         // if still water running, do not use walk animation (boost)
         if (strcmp(name.c_str(), "Walk") == 0)
         {
-            originalStage_SonicChangeAnimation(context, a2, "Sliding");
+            originalStageManager_SonicChangeAnimation(context, a2, "Sliding");
             return;
         }
 
@@ -206,12 +207,12 @@ HOOK(void, __fastcall, Stage_SonicChangeAnimation, 0xE74CC0, Sonic::Player::CPla
 
         if (message.IsAnimation("Sliding"))
         {
-            Stage::m_waterRunning = false;
+            StageManager::m_waterRunning = false;
             waterSoundHandle.reset();
         }
     }
 
-    originalStage_SonicChangeAnimation(context, a2, name);
+    originalStageManager_SonicChangeAnimation(context, a2, name);
 }
 
 //---------------------------------------------------
@@ -225,7 +226,7 @@ ParamValue* m_LightSpeedDashMinVelocity = nullptr;
 ParamValue* m_LightSpeedDashMinVelocity3D = nullptr;
 ParamValue* m_LightSpeedDashMaxVelocity = nullptr;
 ParamValue* m_LightSpeedDashMaxVelocity3D = nullptr;
-HOOK(void, __fastcall, Stage_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObject* This, void* Edx, Sonic::Message::MsgNotifyObjectEvent& message)
+HOOK(void, __fastcall, StageManager_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObject* This, void* Edx, Sonic::Message::MsgNotifyObjectEvent& message)
 {
     switch (message.m_Event)
     {
@@ -285,26 +286,26 @@ HOOK(void, __fastcall, Stage_MsgNotifyObjectEvent, 0xEA4F50, Sonic::CGameObject*
     }
     }
 
-    originalStage_MsgNotifyObjectEvent(This, Edx, message);
+    originalStageManager_MsgNotifyObjectEvent(This, Edx, message);
 }
 
 //---------------------------------------------------
 // Result music
 //---------------------------------------------------
 const char* SNG19_JNG_STH = "SNG19_JNG_STH";
-HOOK(int, __fastcall, Stage_SNG19_JNG_1, 0xCFF440, void* This, void* Edx, int a2)
+HOOK(int, __fastcall, StageManager_SNG19_JNG_1, 0xCFF440, void* This, void* Edx, int a2)
 {
     WRITE_MEMORY(0xCFF44E, char*, SNG19_JNG_STH);
-    return originalStage_SNG19_JNG_1(This, Edx, a2);
+    return originalStageManager_SNG19_JNG_1(This, Edx, a2);
 }
 
-HOOK(void, __fastcall, Stage_SNG19_JNG_2, 0xD00F70, void* This, void* Edx, int a2)
+HOOK(void, __fastcall, StageManager_SNG19_JNG_2, 0xD00F70, void* This, void* Edx, int a2)
 {
     WRITE_MEMORY(0xD01A06, char*, SNG19_JNG_STH);
-    originalStage_SNG19_JNG_2(This, Edx, a2);
+    originalStageManager_SNG19_JNG_2(This, Edx, a2);
 }
 
-HOOK(void, __fastcall, Stage_CStateGoalFadeIn, 0xCFD2D0, void* This)
+HOOK(void, __fastcall, StageManager_CStateGoalFadeIn, 0xCFD2D0, void* This)
 {
     static const char* Result_Town = "Result_Town";
     static const char* Result = (char*)0x15B38F0;
@@ -325,26 +326,26 @@ HOOK(void, __fastcall, Stage_CStateGoalFadeIn, 0xCFD2D0, void* This)
     // Always use Result1
     WRITE_MEMORY(0xCFD4E5, uint8_t, 0xEB);
 
-    originalStage_CStateGoalFadeIn(This);
+    originalStageManager_CStateGoalFadeIn(This);
 }
 
 //---------------------------------------------------
 // Perfect Chaos
 //---------------------------------------------------
-void Stage_CBossPerfectChaosFinalHitSfxImpl()
+void StageManager_CBossPerfectChaosFinalHitSfxImpl()
 {
     static SharedPtrTypeless soundHandle;
     Common::PlaySoundStatic(soundHandle, 5552007);
 }
 
-void __declspec(naked) Stage_CBossPerfectChaosFinalHitSfx()
+void __declspec(naked) StageManager_CBossPerfectChaosFinalHitSfx()
 {
     static uint32_t returnAddress = 0xC0FFC5;
     static uint32_t sub_C0F580 = 0xC0F580;
     __asm
     {
         push	eax
-        call	Stage_CBossPerfectChaosFinalHitSfxImpl
+        call	StageManager_CBossPerfectChaosFinalHitSfxImpl
         pop     eax
 
         // original function
@@ -353,12 +354,12 @@ void __declspec(naked) Stage_CBossPerfectChaosFinalHitSfx()
     }
 }
 
-HOOK(void, __fastcall, Stage_CBossPerfectChaosCStateDefeated, 0x5D20A0, int This)
+HOOK(void, __fastcall, StageManager_CBossPerfectChaosCStateDefeated, 0x5D20A0, int This)
 {
     bool wasMovieStarted = *(bool*)(This + 40);
     bool wasMovieEnded = *(bool*)(This + 41);
 
-    originalStage_CBossPerfectChaosCStateDefeated(This);
+    originalStageManager_CBossPerfectChaosCStateDefeated(This);
 
     if (!wasMovieStarted && *(bool*)(This + 40))
     {
@@ -376,19 +377,19 @@ HOOK(void, __fastcall, Stage_CBossPerfectChaosCStateDefeated, 0x5D20A0, int This
 //---------------------------------------------------
 // HUD Music
 //---------------------------------------------------
-HOOK(void, __fastcall, Stage_CTutorialImpl, 0xD24440, int This, void* Edx, int a2)
+HOOK(void, __fastcall, StageManager_CTutorialImpl, 0xD24440, int This, void* Edx, int a2)
 {
     if (*(uint32_t*)(This + 176) == 3)
     {
         Common::PlayStageMusic("City_Escape_Generic2", 1.5f);
     }
-    originalStage_CTutorialImpl(This, Edx, a2);
+    originalStageManager_CTutorialImpl(This, Edx, a2);
 }
 
 //---------------------------------------------------
 // Enemy hitting ObjectPhysics
 //---------------------------------------------------
-HOOK(void, __fastcall, Stage_CObjectPhysics_MsgDamage, 0xEA50B0, uint32_t* This, void* Edx, Sonic::Message::MsgDamage& message)
+HOOK(void, __fastcall, StageManager_CObjectPhysics_MsgDamage, 0xEA50B0, uint32_t* This, void* Edx, Sonic::Message::MsgDamage& message)
 {
     if (message.m_DamageType == *(uint32_t*)0x1E0BE34) // DamageID_NoAttack
     {
@@ -396,71 +397,71 @@ HOOK(void, __fastcall, Stage_CObjectPhysics_MsgDamage, 0xEA50B0, uint32_t* This,
         message.m_DamageType = *(uint32_t*)0x1E0BE2C; // DamageID_Normal
     }
 
-    originalStage_CObjectPhysics_MsgDamage(This, Edx, message);
+    originalStageManager_CObjectPhysics_MsgDamage(This, Edx, message);
 }
 
-HOOK(void, __fastcall, Stage_CEnemyGunHunter_MsgHitEventCollision, 0xBA7580, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
+HOOK(void, __fastcall, StageManager_CEnemyGunHunter_MsgHitEventCollision, 0xBA7580, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
 {
     if (message.m_SenderActorID == Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_ActorID)
     {
-        originalStage_CEnemyGunHunter_MsgHitEventCollision(This, Edx, message);
+        originalStageManager_CEnemyGunHunter_MsgHitEventCollision(This, Edx, message);
     }
 }
 
-HOOK(void, __fastcall, Stage_CEnemyELauncher_MsgHitEventCollision, 0xB7FD80, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
+HOOK(void, __fastcall, StageManager_CEnemyELauncher_MsgHitEventCollision, 0xB7FD80, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
 {
     if (message.m_SenderActorID == Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_ActorID)
     {
-        originalStage_CEnemyELauncher_MsgHitEventCollision(This, Edx, message);
+        originalStageManager_CEnemyELauncher_MsgHitEventCollision(This, Edx, message);
     }
 }
 
-HOOK(void, __fastcall, Stage_CEnemyMotora_MsgHitEventCollision, 0xBC4DF0, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
+HOOK(void, __fastcall, StageManager_CEnemyMotora_MsgHitEventCollision, 0xBC4DF0, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
 {
     if (message.m_SenderActorID == Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_ActorID)
     {
-        originalStage_CEnemyMotora_MsgHitEventCollision(This, Edx, message);
+        originalStageManager_CEnemyMotora_MsgHitEventCollision(This, Edx, message);
     }
 }
 
-HOOK(void, __fastcall, Stage_CEnemyGanigani_MsgHitEventCollision, 0xBC88D0, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
+HOOK(void, __fastcall, StageManager_CEnemyGanigani_MsgHitEventCollision, 0xBC88D0, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
 {
     if (message.m_SenderActorID == Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_ActorID)
     {
-        originalStage_CEnemyGanigani_MsgHitEventCollision(This, Edx, message);
+        originalStageManager_CEnemyGanigani_MsgHitEventCollision(This, Edx, message);
     }
 }
 
-HOOK(void, __fastcall, Stage_CEnemyLander_MsgHitEventCollision, 0xBCC9E0, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
+HOOK(void, __fastcall, StageManager_CEnemyLander_MsgHitEventCollision, 0xBCC9E0, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
 {
     if (message.m_SenderActorID == Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_ActorID)
     {
-        originalStage_CEnemyLander_MsgHitEventCollision(This, Edx, message);
+        originalStageManager_CEnemyLander_MsgHitEventCollision(This, Edx, message);
     }
 }
 
-HOOK(void, __fastcall, Stage_CEnemyTaker_MsgHitEventCollision, 0xB9F770, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
+HOOK(void, __fastcall, StageManager_CEnemyTaker_MsgHitEventCollision, 0xB9F770, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
 {
     if (message.m_SenderActorID == Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_ActorID)
     {
-        originalStage_CEnemyTaker_MsgHitEventCollision(This, Edx, message);
+        originalStageManager_CEnemyTaker_MsgHitEventCollision(This, Edx, message);
     }
 }
 
-HOOK(void, __fastcall, Stage_CEnemyBiter_MsgHitEventCollision, 0xB83A20, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
+HOOK(void, __fastcall, StageManager_CEnemyBiter_MsgHitEventCollision, 0xB83A20, Sonic::CObjectBase* This, void* Edx, hh::fnd::MessageTypeSet& message)
 {
     if (message.m_SenderActorID == Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_ActorID)
     {
-        originalStage_CEnemyBiter_MsgHitEventCollision(This, Edx, message);
+        originalStageManager_CEnemyBiter_MsgHitEventCollision(This, Edx, message);
     }
 }
 
 //---------------------------------------------------
 // Enemy Fixes
 //---------------------------------------------------
-HOOK(int*, __fastcall, Stage_CEnemyEggRobo_SpawnBrk, 0xBAAEC0, uint32_t This)
+HOOK(int*, __fastcall, StageManager_CEnemyEggRobo_SpawnBrk, 0xBAAEC0, uint32_t This)
 {
-    int* result = originalStage_CEnemyEggRobo_SpawnBrk(This);
+    int* result = originalStageManager_CEnemyEggRobo_SpawnBrk(This);
 
     static Hedgehog::Base::CSharedString enm_eggroboA_brk = "enm_eggroboA_brk";
     static Hedgehog::Base::CSharedString enm_eggroboB_brk = "enm_eggroboB_brk";
@@ -480,7 +481,7 @@ HOOK(int*, __fastcall, Stage_CEnemyEggRobo_SpawnBrk, 0xBAAEC0, uint32_t This)
     return result;
 }
 
-void __declspec(naked) Stage_CEnemyELauncher_HideMissile()
+void __declspec(naked) StageManager_CEnemyELauncher_HideMissile()
 {
     static uint32_t returnAddress = 0xB81491;
     __asm
@@ -491,7 +492,7 @@ void __declspec(naked) Stage_CEnemyELauncher_HideMissile()
     }
 }
 
-void __declspec(naked) Stage_CEnemyEggRobo_TrackBeam()
+void __declspec(naked) StageManager_CEnemyEggRobo_TrackBeam()
 {
     static uint32_t returnAddress = 0x601CF0;
     __asm
@@ -657,7 +658,7 @@ public:
     }
 };
 
-HOOK(void, __stdcall, Stage_PhysicsReward, 0xEA49B0, uint32_t This, int a2, void* a3, bool a4)
+HOOK(void, __stdcall, StageManager_PhysicsReward, 0xEA49B0, uint32_t This, int a2, void* a3, bool a4)
 {
     // Check if it's a breakable object
     if (!*(bool*)(This + 0x120))
@@ -677,10 +678,10 @@ HOOK(void, __stdcall, Stage_PhysicsReward, 0xEA49B0, uint32_t This, int a2, void
         }
     }
 
-    originalStage_PhysicsReward(This, a2, a3, a4);
+    originalStageManager_PhysicsReward(This, a2, a3, a4);
 }
 
-void Stage::applyPatches()
+void StageManager::applyPatches()
 {
     //---------------------------------------------------
     // General
@@ -695,31 +696,31 @@ void Stage::applyPatches()
     WRITE_MEMORY(0x5295BB, uint8_t, 0xEB);
 
     // Clear UI at title screen
-    INSTALL_HOOK(Stage_CGameplayFlowStage_CStateTitle);
+    INSTALL_HOOK(StageManager_CGameplayFlowStage_CStateTitle);
     
     //---------------------------------------------------
     // Kingdom Valley sfx
     //---------------------------------------------------
     // Play robe sfx in Kingdom Valley
-    INSTALL_HOOK(Stage_CObjSpringSFX);
+    INSTALL_HOOK(StageManager_CObjSpringSFX);
 
     // Play wind rail sfx for Kingdom Valley
-    INSTALL_HOOK(Stage_MsgHitGrindPath);
+    INSTALL_HOOK(StageManager_MsgHitGrindPath);
 
     //---------------------------------------------------
     // Wall Jump
     //---------------------------------------------------
     // Do SpinAttack animation for walljumps (required negative out of control time)
     WRITE_JUMP(0xE6D5AA, getIsWallJump);
-    INSTALL_HOOK(Stage_CSonicStateFallAdvance);
-    INSTALL_HOOK(Stage_CSonicStateFallEnd);
+    INSTALL_HOOK(StageManager_CSonicStateFallAdvance);
+    INSTALL_HOOK(StageManager_CSonicStateFallEnd);
 
     //---------------------------------------------------
     // Water Running
     //---------------------------------------------------
     // Do slide animation on water running in Wave Ocean
-    INSTALL_HOOK(Stage_CSonicStateGrounded);
-    INSTALL_HOOK(Stage_SonicChangeAnimation);
+    INSTALL_HOOK(StageManager_CSonicStateGrounded);
+    INSTALL_HOOK(StageManager_SonicChangeAnimation);
     WRITE_JUMP(0x11DD1AC, playWaterPfx);
 
     //---------------------------------------------------
@@ -733,29 +734,29 @@ void Stage::applyPatches()
     ParamManager::addParam(&m_LightSpeedDashMinVelocity3D, "LightSpeedDashMinVelocity3D");
     ParamManager::addParam(&m_LightSpeedDashMaxVelocity, "LightSpeedDashMaxVelocity");
     ParamManager::addParam(&m_LightSpeedDashMaxVelocity3D, "LightSpeedDashMaxVelocity3D");
-    INSTALL_HOOK(Stage_MsgNotifyObjectEvent);
+    INSTALL_HOOK(StageManager_MsgNotifyObjectEvent);
 
     //---------------------------------------------------
     // Result music
     //---------------------------------------------------
     // Use custom SNG19_JNG, adjust round clear length
-    INSTALL_HOOK(Stage_SNG19_JNG_1);
-    INSTALL_HOOK(Stage_SNG19_JNG_2);
-    INSTALL_HOOK(Stage_CStateGoalFadeIn);
+    INSTALL_HOOK(StageManager_SNG19_JNG_1);
+    INSTALL_HOOK(StageManager_SNG19_JNG_2);
+    INSTALL_HOOK(StageManager_CStateGoalFadeIn);
 
     //---------------------------------------------------
     // Perfect Chaos
     //---------------------------------------------------
     // Iblis final hit sfx & event movie
-    WRITE_JUMP(0xC0FFC0, Stage_CBossPerfectChaosFinalHitSfx);
+    WRITE_JUMP(0xC0FFC0, StageManager_CBossPerfectChaosFinalHitSfx);
     WRITE_STRING(0x1587DD8, "ev704");
-    INSTALL_HOOK(Stage_CBossPerfectChaosCStateDefeated);
+    INSTALL_HOOK(StageManager_CBossPerfectChaosCStateDefeated);
 
     //---------------------------------------------------
     // HUD Music
     //---------------------------------------------------
     // Tutorial stop music
-    INSTALL_HOOK(Stage_CTutorialImpl);
+    INSTALL_HOOK(StageManager_CTutorialImpl);
 
     // Shop don't change music
     WRITE_JUMP(0xD34984, (void*)0xD349E2);
@@ -764,14 +765,14 @@ void Stage::applyPatches()
     //---------------------------------------------------
     // Enemy hitting ObjectPhysics
     //---------------------------------------------------
-    INSTALL_HOOK(Stage_CObjectPhysics_MsgDamage);
-    INSTALL_HOOK(Stage_CEnemyGunHunter_MsgHitEventCollision);
-    INSTALL_HOOK(Stage_CEnemyELauncher_MsgHitEventCollision);
-    INSTALL_HOOK(Stage_CEnemyMotora_MsgHitEventCollision);
-    INSTALL_HOOK(Stage_CEnemyGanigani_MsgHitEventCollision);
-    INSTALL_HOOK(Stage_CEnemyLander_MsgHitEventCollision);
-    INSTALL_HOOK(Stage_CEnemyTaker_MsgHitEventCollision);
-    INSTALL_HOOK(Stage_CEnemyBiter_MsgHitEventCollision);
+    INSTALL_HOOK(StageManager_CObjectPhysics_MsgDamage);
+    INSTALL_HOOK(StageManager_CEnemyGunHunter_MsgHitEventCollision);
+    INSTALL_HOOK(StageManager_CEnemyELauncher_MsgHitEventCollision);
+    INSTALL_HOOK(StageManager_CEnemyMotora_MsgHitEventCollision);
+    INSTALL_HOOK(StageManager_CEnemyGanigani_MsgHitEventCollision);
+    INSTALL_HOOK(StageManager_CEnemyLander_MsgHitEventCollision);
+    INSTALL_HOOK(StageManager_CEnemyTaker_MsgHitEventCollision);
+    INSTALL_HOOK(StageManager_CEnemyBiter_MsgHitEventCollision);
 
     // Always allow MsgCheckPermissionAttack
     WRITE_MEMORY(0xBDE62E, uint8_t, 0xEB);
@@ -781,10 +782,10 @@ void Stage::applyPatches()
     // Enemy Fixes
     //---------------------------------------------------
     // Fix EggRoboB using wrong brk object
-    INSTALL_HOOK(Stage_CEnemyEggRobo_SpawnBrk);
+    INSTALL_HOOK(StageManager_CEnemyEggRobo_SpawnBrk);
 
     // Hide ELauncher missile respawn
-    WRITE_JUMP(0xB81488, (void*)Stage_CEnemyELauncher_HideMissile);
+    WRITE_JUMP(0xB81488, (void*)StageManager_CEnemyELauncher_HideMissile);
 
     // Increase ELauncher collision height 0.8->2.62
     WRITE_MEMORY(0xB820D7, uint32_t, 0x17048D8);
@@ -796,11 +797,11 @@ void Stage::applyPatches()
     WRITE_MEMORY(0x601CD5, uint32_t, 0x156A23C); // 10 life time
 
     // Set EggRoboA beam to use EggRoboB missile track values
-    WRITE_JUMP(0x601CE7, (void*)Stage_CEnemyEggRobo_TrackBeam);
+    WRITE_JUMP(0x601CE7, (void*)StageManager_CEnemyEggRobo_TrackBeam);
     WRITE_JUMP(0x601E54, (void*)0x601E7E); 
 
     //---------------------------------------------------
     // Bombbox Explosion
     //---------------------------------------------------
-    INSTALL_HOOK(Stage_PhysicsReward);
+    INSTALL_HOOK(StageManager_PhysicsReward);
 }

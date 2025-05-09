@@ -6,7 +6,7 @@
 
 #pragma once
 
-class Stage
+class StageManager
 {
 public:
 	static void applyPatches();

@@ -1,7 +1,8 @@
 ﻿#include "LoadingUI.h"
-#include "UIContext.h"
-#include "Application.h"
-#include "MissionManager.h"
+
+#include "Managers/MissionManager.h"
+#include "System/Application.h"
+#include "UI/UIContext.h"
 
 bool LoadingUI::m_init = false;
 bool LoadingUI::m_drawEnabled = false;

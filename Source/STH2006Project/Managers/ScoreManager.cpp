@@ -1,8 +1,9 @@
 #include "ScoreManager.h"
+
 #include "Configuration.h"
-#include "ChaosEnergy.h"
-#include "Application.h"
-#include "UIContext.h"
+#include "System/ChaosEnergy.h"
+#include "System/Application.h"
+#include "UI/UIContext.h"
 
 bool ScoreManager::m_internalSystem = true;
 std::unordered_set<uint32_t*> ScoreManager::m_savedObjects;

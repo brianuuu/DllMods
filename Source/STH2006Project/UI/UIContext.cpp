@@ -1,11 +1,11 @@
 ﻿#include "UIContext.h"
-#include "Application.h"
-#include "Itembox.h"
-#include "ScoreManager.h"
-#include "Omochao.h"
-#include "SubtitleUI.h"
-#include "LoadingUI.h"
-#include "TitleUI.h"
+
+#include "Managers/ScoreManager.h"
+#include "Objects/cmn/Itembox.h"
+#include "System/Application.h"
+#include "UI/LoadingUI.h"
+#include "UI/SubtitleUI.h"
+#include "UI/TitleUI.h"
 
 HWND UIContext::window;
 IUnknown* UIContext::device;

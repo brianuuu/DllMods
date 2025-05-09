@@ -5,7 +5,7 @@
 /*----------------------------------------------------------*/
 
 #pragma once
-#include "MstManager.h"
+#include "Managers/MstManager.h"
 
 class Hint : public Sonic::CObjectBase, public Sonic::CSetObjectListener
 	, public Sonic::IAnimationContext, public Sonic::CAnimationStateMachine

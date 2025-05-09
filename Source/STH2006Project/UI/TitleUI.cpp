@@ -1,8 +1,9 @@
 ﻿#include "TitleUI.h"
-#include "UIContext.h"
-#include "Application.h"
-#include "LoadingUI.h"
+
 #include "Configuration.h"
+#include "System/Application.h"
+#include "UI/LoadingUI.h"
+#include "UI/UIContext.h"
 
 FUNCTION_PTR(void, __thiscall, TitleUI_TinyChangeState, 0x773250, void* This, SharedPtrTypeless& spState, const Hedgehog::Base::CSharedString name);
 

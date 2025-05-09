@@ -1,6 +1,7 @@
 #include "Pele.h"
-#include "PathManager.h"
-#include "Application.h"
+
+#include "Managers/PathManager.h"
+#include "System/Application.h"
 
 class CObjPele : public Sonic::CGameObject
 {

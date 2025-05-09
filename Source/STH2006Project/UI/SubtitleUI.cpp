@@ -1,8 +1,9 @@
 ﻿#include "SubtitleUI.h"
-#include "Application.h"
-#include "UIContext.h"
+
 #include "Configuration.h"
-#include "MissionManager.h"
+#include "Managers/MissionManager.h"
+#include "System/Application.h"
+#include "UI/UIContext.h"
 
 SharedPtrTypeless SubtitleUI::m_subtitleSfx;
 CaptionData SubtitleUI::m_captionData;
@@ -19,7 +20,7 @@ float SubtitleUI::addSubtitle(mst::TextEntry const& entry, std::vector<float> co
     m_captionData.clear();
     int tagIndex = 0;
     float totalDuration = 0.0f;
-    for (int i = 0; i < entry.m_subtitles.size(); i++)
+    for (size_t i = 0; i < entry.m_subtitles.size(); i++)
     {
         std::wstring const& wsubtitle = entry.m_subtitles.at(i);
         std::string subtitle = Common::wideCharToMultiByte(wsubtitle.c_str());

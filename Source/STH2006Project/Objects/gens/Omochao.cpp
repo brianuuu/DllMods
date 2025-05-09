@@ -1,5 +1,6 @@
 ﻿#include "Omochao.h"
-#include "Application.h"
+
+#include "System/Application.h"
 
 enum HintType
 {

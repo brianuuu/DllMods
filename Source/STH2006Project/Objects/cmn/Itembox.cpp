@@ -1,7 +1,8 @@
 #include "Itembox.h"
-#include "UIContext.h"
-#include "Application.h"
+
 #include "Configuration.h"
+#include "System/Application.h"
+#include "UI/UIContext.h"
 
 std::deque<ItemboxGUI> Itembox::m_guiData;
 IUnknown* Itembox::m_item_5ring = nullptr;

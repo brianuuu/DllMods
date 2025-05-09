@@ -1,12 +1,12 @@
 #include "MissionManager.h"
-#include "ScoreManager.h"
-#include "Application.h"
-#include "SubtitleUI.h"
 
-#include "Pele.h"
-#include "SoleannaBoys.h"
-#include "WhosCaptain.h"
-#include "SonicMan.h"
+#include "System/Application.h"
+#include "UI/SubtitleUI.h"
+
+#include "Objects/mission/Pele.h"
+#include "Objects/mission/SoleannaBoys.h"
+#include "Objects/mission/WhosCaptain.h"
+#include "Objects/mission/SonicMan.h"
 
 #define NPC_DATA_FILE "Assets\\Textbox\\npcData.ini"
 
