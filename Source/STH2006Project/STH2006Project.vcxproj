@@ -260,6 +260,7 @@
     <ClCompile Include="EnemyTrigger.cpp" />
     <ClCompile Include="Guillotine.cpp" />
     <ClCompile Include="JumpChain.cpp" />
+    <ClCompile Include="Laser.cpp" />
     <ClCompile Include="LoadingUI.cpp" />
     <ClCompile Include="MissionManager.cpp" />
     <ClCompile Include="mst.cpp" />
@@ -308,6 +309,7 @@
     <ClInclude Include="EnemyTrigger.h" />
     <ClInclude Include="Guillotine.h" />
     <ClInclude Include="JumpChain.h" />
+    <ClInclude Include="Laser.h" />
     <ClInclude Include="LoadingUI.h" />
     <ClInclude Include="MissionManager.h" />
     <ClInclude Include="mst.h" />

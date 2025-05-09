@@ -5,6 +5,7 @@
 #include "Guillotine.h"
 #include "Itembox.h"
 #include "JumpChain.h"
+#include "Laser.h"
 #include "UpDownReel.h"
 
 void NextGenObjects::applyPatches()
@@ -94,5 +95,6 @@ void NextGenObjects::applyPatches()
     Cage::registerObject();
     Guillotine::registerObject();
     JumpChain::registerObject();
+    Laser::registerObject();
     UpDownReel::registerObject();
 }
