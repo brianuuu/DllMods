@@ -8,7 +8,7 @@
 #include "Objects/mission/WhosCaptain.h"
 #include "Objects/mission/SonicMan.h"
 
-#define NPC_DATA_FILE "Assets\\Textbox\\npcData.ini"
+#define NPC_DATA_FILE "Assets\\Database\\npcData.ini"
 
 //---------------------------------------------------
 // Mission Complete Result HUD
@@ -180,7 +180,7 @@ HOOK(void, __fastcall, Mission_CGameplayFlowStageSetStageInfo, 0xCFF6A0, void* T
 	originalMission_CGameplayFlowStageSetStageInfo(This);
 
 	// Override terrain
-	const INIReader reader(Application::getModDirString() + "Assets\\Title\\trialData.ini");
+	const INIReader reader(Application::getModDirString() + "Assets\\Database\\trialData.ini");
 	uint32_t stageID = Common::GetCurrentStageID();
 	std::string const stageStr = std::to_string(stageID);
 	std::string stageTerrain = reader.Get(stageStr, "terrainID", "");

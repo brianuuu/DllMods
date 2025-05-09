@@ -1,5 +1,6 @@
 ﻿#include "UIContext.h"
 
+#include "Managers/MstManager.h"
 #include "Managers/ScoreManager.h"
 #include "Objects/cmn/Itembox.h"
 #include "System/Application.h"
@@ -37,6 +38,8 @@ Backend UIContext::getBackend()
 
 void UIContext::initialize(HWND window, IUnknown* device)
 {
+    cacheSubtitleCharacters();
+
     INSTALL_HOOK(MsgFadeOutFxp);
     INSTALL_HOOK(MsgFadeOutMtfx);
 
@@ -108,8 +111,8 @@ void UIContext::initialize(HWND window, IUnknown* device)
     ImVector<ImWchar> rangesTextbox;
     ImFontGlyphRangesBuilder builderTextbox;
     builderTextbox.AddText("0123456789'\"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ: ?");
-    initFontDatabase(L"Assets\\Textbox\\npcData.ini", builderTextbox);
-    initFontDatabase(L"Assets\\Title\\titleData.ini", builderTextbox);
+    initFontDatabase(L"Assets\\Database\\npcData.ini", builderTextbox);
+    initFontDatabase(L"Assets\\Database\\titleData.ini", builderTextbox);
     for (auto const& iter : TitleUI::m_yesNoText)
     {
         builderTextbox.AddText(iter.second.c_str());

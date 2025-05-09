@@ -75,7 +75,7 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 	else
 	{
 		// Get loading UI data from ini
-		const INIReader reader(Application::getModDirString() + "Assets\\Title\\titleData.ini");
+		const INIReader reader(Application::getModDirString() + "Assets\\Database\\titleData.ini");
 		if (reader.ParseError() != 0)
 		{
 			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\cmn.dds").c_str(), &LoadingUI::m_stageTexture);

@@ -903,7 +903,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 				Common::PlaySoundStatic(soundHandle, 1000005);
 
 				bool isJapanese = Common::GetUILanguageType() == LT_Japanese;
-				const INIReader reader(Application::getModDirString() + "Assets\\Title\\titleData.ini");
+				const INIReader reader(Application::getModDirString() + "Assets\\Database\\titleData.ini");
 				std::string warningStr = reader.Get(std::to_string(data.m_stage), Common::GetUILanguageType() == LT_Japanese ? "WarningMessageJP" : "WarningMessage", "");
 				if (warningStr.empty())
 				{
@@ -1631,7 +1631,7 @@ void TitleUI::applyPatches()
 
 void TitleUI::populateTrialData()
 {
-	const INIReader reader(Application::getModDirString() + "Assets\\Title\\trialData.ini");
+	const INIReader reader(Application::getModDirString() + "Assets\\Database\\trialData.ini");
 	m_allowStoryMode = reader.GetBoolean("Settings", "allowStoryMode", true);
 	m_displayNonCompletedStage = reader.GetBoolean("Settings", "displayNonCompletedStage", false);
 	m_allowPlayNonCompletedStage = reader.GetBoolean("Settings", "allowPlayNonCompletedStage", false);
