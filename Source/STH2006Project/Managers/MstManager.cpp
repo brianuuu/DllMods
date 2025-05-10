@@ -37,9 +37,16 @@ bool MstManager::RequestMst
 
 	std::string const fullPath = Application::getModDirString() + "Assets\\Message\\" + GetLanguagePrefix() + "\\" + name + ".mst";
 	std::string errorMsg;
-	m_mstCollection[name].Load(fullPath, errorMsg);
+	return m_mstCollection[name].Load(fullPath, errorMsg);
+}
 
-	return true;
+bool MstManager::RequestMstRawPath
+(
+	std::string const& name
+)
+{
+	std::string errorMsg;
+	return m_mstCollection[name].Load(name, errorMsg);
 }
 
 mst::TextEntry MstManager::GetSubtitle
@@ -70,4 +77,13 @@ std::string MstManager::GetLanguagePrefix()
 	//case LT_Italian: return "Italian";
 	}
 	return "English";
+}
+
+mst const& MstManager::GetMst
+(
+	std::string const& name
+)
+{
+	std::shared_lock lock(m_collectionMutex);
+	return m_mstCollection.at(name);
 }

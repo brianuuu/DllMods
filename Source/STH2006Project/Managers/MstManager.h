@@ -12,8 +12,11 @@ class MstManager
 public:
 	static bool IsRequested(std::string const& name);
 	static bool RequestMst(std::string const& name);
+	static bool RequestMstRawPath(std::string const& name);
+
 	static mst::TextEntry GetSubtitle(std::string const& name, std::string const& id);
 	static std::string GetLanguagePrefix();
+	static mst const& GetMst(std::string const& name);
 
 private:
 	static std::mutex m_requestMutex;

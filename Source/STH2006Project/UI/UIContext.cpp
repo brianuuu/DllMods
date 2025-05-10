@@ -38,7 +38,7 @@ Backend UIContext::getBackend()
 
 void UIContext::initialize(HWND window, IUnknown* device)
 {
-    cacheSubtitleCharacters();
+    //cacheSubtitleCharacters();
 
     INSTALL_HOOK(MsgFadeOutFxp);
     INSTALL_HOOK(MsgFadeOutMtfx);
@@ -102,7 +102,7 @@ void UIContext::initialize(HWND window, IUnknown* device)
     builder.BuildRanges(&ranges);
 
     const float fontSize = 43.0f;
-    if ((font = io.Fonts->AddFontFromFileTTF((Application::getModDirString() + "Fonts\\FOT-NewRodin-Pro-EB.otf").c_str(), fontSize, nullptr, ranges.Data)) == nullptr)
+    if ((font = io.Fonts->AddFontFromFileTTF((Application::getModDirString() + "Assets\\Fonts\\FOT-NewRodin-Pro-EB.otf").c_str(), fontSize, nullptr, ranges.Data)) == nullptr)
     {
         MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-NewRodin-Pro-EB.otf\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
         font = io.Fonts->AddFontDefault();
@@ -113,6 +113,7 @@ void UIContext::initialize(HWND window, IUnknown* device)
     builderTextbox.AddText("0123456789'\"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ: ?");
     initFontDatabase(L"Assets\\Database\\npcData.ini", builderTextbox);
     initFontDatabase(L"Assets\\Database\\titleData.ini", builderTextbox);
+    initFontDatabase(L"Assets\\Database\\fontDatabase.txt", builderTextbox);
     for (auto const& iter : TitleUI::m_yesNoText)
     {
         builderTextbox.AddText(iter.second.c_str());
@@ -124,7 +125,7 @@ void UIContext::initialize(HWND window, IUnknown* device)
     builderTextbox.BuildRanges(&rangesTextbox);
 
     const float fontSubtitleSize = 39.0f;
-    if ((fontSubtitle = io.Fonts->AddFontFromFileTTF((Application::getModDirString() + "Fonts\\FOT-RodinCattleyaPro-DB.otf").c_str(), fontSubtitleSize, nullptr, rangesTextbox.Data)) == nullptr)
+    if ((fontSubtitle = io.Fonts->AddFontFromFileTTF((Application::getModDirString() + "Assets\\Fonts\\FOT-RodinCattleyaPro-DB.otf").c_str(), fontSubtitleSize, nullptr, rangesTextbox.Data)) == nullptr)
     {
         MessageBox(nullptr, TEXT("[UIContext] Failed to load FOT-RodinCattleyaPro-DB.otf\n"), TEXT("STH2006 Project"), MB_ICONWARNING);
         fontSubtitle = io.Fonts->AddFontDefault();
@@ -152,6 +153,49 @@ bool UIContext::initFontDatabase(std::wstring const& file, ImFontGlyphRangesBuil
 
     MessageBox(nullptr, TEXT("Failed to load font database, text may not display correctly."), TEXT("STH2006 Project"), MB_ICONERROR);
     return false;
+}
+
+void UIContext::cacheSubtitleCharacters()
+{
+    std::ofstream cache(Application::getModDirString() + "Assets\\Database\\fontDatabase.txt");
+    std::set<wchar_t> allChars;
+
+    // get all mst files
+    for (const auto& dirEntry : std::filesystem::recursive_directory_iterator(Application::getModDirString() + "Assets\\Message"))
+    {
+        std::string const name = dirEntry.path().string();
+        if (name.find(".mst") != std::string::npos)
+        {
+            MstManager::RequestMstRawPath(name);
+            mst const& mst = MstManager::GetMst(name);
+
+            std::vector<mst::TextEntry> textEntries;
+            mst.GetAllEntries(textEntries);
+
+            for (mst::TextEntry const& entry : textEntries)
+            {
+                for (std::wstring const& str : entry.m_subtitles)
+                {
+                    for (wchar_t const& c : str)
+                    {
+                        allChars.insert(c);
+                    }
+                }
+            }
+        }
+    }
+
+    allChars.erase(L'\n');
+
+    std::wstring fullStr;
+    fullStr.reserve(allChars.size());
+    for (wchar_t const& c : allChars)
+    {
+        fullStr.push_back(c);
+    }
+
+    cache << Common::wideCharToMultiByte(fullStr.c_str());
+    cache.close();
 }
 
 void UIContext::update()

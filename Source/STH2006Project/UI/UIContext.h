@@ -24,6 +24,7 @@ public:
 
     static void initialize(HWND window, IUnknown* device);
     static bool initFontDatabase(std::wstring const& file, ImFontGlyphRangesBuilder& builder);
+    static void cacheSubtitleCharacters();
 
     static void update();
     static void clearDraw();
