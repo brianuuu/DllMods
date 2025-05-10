@@ -166,8 +166,9 @@ void UIContext::cacheSubtitleCharacters()
         std::string const name = dirEntry.path().string();
         if (name.find(".mst") != std::string::npos)
         {
-            MstManager::RequestMstRawPath(name);
-            mst const& mst = MstManager::GetMst(name);
+            mst mst;
+            std::string errorMsg;
+            mst.Load(name, errorMsg);
 
             std::vector<mst::TextEntry> textEntries;
             mst.GetAllEntries(textEntries);

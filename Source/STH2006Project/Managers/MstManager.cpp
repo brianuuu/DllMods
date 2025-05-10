@@ -40,15 +40,6 @@ bool MstManager::RequestMst
 	return m_mstCollection[name].Load(fullPath, errorMsg);
 }
 
-bool MstManager::RequestMstRawPath
-(
-	std::string const& name
-)
-{
-	std::string errorMsg;
-	return m_mstCollection[name].Load(name, errorMsg);
-}
-
 mst::TextEntry MstManager::GetSubtitle
 (
 	std::string const& name, 
