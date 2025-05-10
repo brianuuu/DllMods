@@ -162,7 +162,7 @@ void Hint::SetUpdateParallel
 			else
 			{
 				// invisible ones kill itself
-				Common::fDestroyGameObject(this);
+				Kill();
 				return;
 			}
 		}

@@ -61,7 +61,7 @@ bool Laser::SetAddRenderables
 
 	// culling
 	float const collisionHeight = (m_Data.m_Number - 1) * m_Data.m_Interval + 1.0f;
-	Common::ObjectSetCullingRange(this, max(m_Data.m_Width * 0.5f, collisionHeight) + 10.0f);
+	SetCullingRange(max(m_Data.m_Width * 0.5f, collisionHeight) + 10.0f);
 
 	return true;
 }

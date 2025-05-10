@@ -80,7 +80,7 @@ bool UpDownReel::SetAddRenderables
 	Sonic::CGameObject::AddRenderable("Object", m_spModelHandle, m_pMember->m_CastShadow);
 
 	// culling
-	Common::ObjectSetCullingRange(this, m_Data.m_HeightStart + 10.0f);
+	SetCullingRange(m_Data.m_HeightStart + 10.0f);
 
 	m_currentHeight = m_Data.m_HeightStart;
 	return true;

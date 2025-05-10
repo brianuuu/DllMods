@@ -821,7 +821,7 @@ bool NextGenShadow::CheckChaosBoost()
 
     if (*Common::GetPlayerBoost() == 0.0f || m_chaosMaturity < 100.0f)
     {
-        return false;
+        //return false;
     }
 
     auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
