@@ -94,6 +94,10 @@ bool Hint::SetAddRenderables
 	SetAnimationBlend("Play", "Wait", 0.5f);
 	ChangeState("Wait");
 
+	// play loop pfx
+	auto const attachNode = m_spModel->GetNode("Hintring");
+	m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, attachNode, "ef_hint", 1.0f);
+
 	return true;
 }
 
@@ -231,5 +235,9 @@ void Hint::PlayHint()
 
 		SharedPtrTypeless sfx;
 		Common::ObjectPlaySound(this, 200600002, sfx);
+
+		// play pfx
+		auto const attachNode = m_spModel->GetNode("Hintring");
+		m_pGlitterPlayer->PlayOneshot(attachNode, "ef_hint_play", 1.0f, 1);
 	}
 }
