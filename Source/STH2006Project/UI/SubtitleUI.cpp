@@ -125,16 +125,25 @@ float SubtitleUI::addSubtitle(mst::TextEntry const& entry, std::vector<float> co
 
 SubtitleButtonType SubtitleUI::getButtonTypeFromTag(std::string const& tag)
 {
-    if (tag == "button_a") return SBT_A;
-    if (tag == "button_b") return SBT_B;
-    if (tag == "button_x") return SBT_X;
-    if (tag == "button_y") return SBT_Y;
-    if (tag == "button_lb") return SBT_LB;
-    if (tag == "button_rb") return SBT_RB;
-    if (tag == "button_lt") return SBT_LT;
-    if (tag == "button_rt") return SBT_RT;
-    if (tag == "button_start") return SBT_Start;
-    if (tag == "button_back") return SBT_Back;
+    static std::map<std::string, SubtitleButtonType> s_buttomMap =
+    {
+        {"button_a", SBT_A},
+        {"button_b", SBT_B},
+        {"button_x", SBT_X},
+        {"button_y", SBT_Y},
+        {"button_lb", SBT_LB},
+        {"button_rb", SBT_RB},
+        {"button_lt", SBT_LT},
+        {"button_rt", SBT_RT},
+        {"button_start", SBT_Start},
+        {"button_back", SBT_Back},
+    };
+
+    auto iter = s_buttomMap.find(tag);
+    if (iter != s_buttomMap.end())
+    {
+        return iter->second;
+    }
 
     return SBT_A;
 }
