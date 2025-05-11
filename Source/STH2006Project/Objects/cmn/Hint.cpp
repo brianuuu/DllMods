@@ -11,6 +11,11 @@ void Hint::registerObject()
 
 Hint::~Hint()
 {
+	if (m_Data.m_HintFile)
+	{
+		m_Data.m_HintFile->Release();
+	}
+
 	if (m_Data.m_HintName)
 	{
 		m_Data.m_HintName->Release();
@@ -28,6 +33,16 @@ void Hint::InitializeEditParam
 )
 {
 	uint32_t dummy = 0u;
+	char const* hintFile = "HintFile";
+	m_Data.m_HintFile = Sonic::CParamTypeList::Create(&dummy, hintFile);
+	m_Data.m_HintFile->m_pMember->m_DefaultValue = 1;
+	m_Data.m_HintFile->m_pMember->m_pFuncData->m_ValueMax = 1;
+	if (m_Data.m_HintFile)
+	{
+		m_Data.m_HintFile->AddRef();
+	}
+	in_rEditParam.CreateParamBase(m_Data.m_HintFile, hintFile);
+
 	char const* hintName = "HintName";
 	m_Data.m_HintName = Sonic::CParamTypeList::Create(&dummy, hintName);
 	m_Data.m_HintName->m_pMember->m_DefaultValue = 1;
@@ -128,8 +143,15 @@ void Hint::AddCallback
 	Sonic::CObjectBase::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
 
 	// cache .mst file and get subtitle entry
-	MstManager::RequestMst("msg_hint");
-	m_entry = MstManager::GetSubtitle("msg_hint", m_Data.m_HintName->m_pMember->m_DefaultValueName.c_str());
+	auto const& file = m_Data.m_HintFile->m_pMember->m_DefaultValueName;
+	if (!file.empty() && MstManager::RequestMst(file.c_str()))
+	{
+		m_entry = MstManager::GetSubtitle(file.c_str(), m_Data.m_HintName->m_pMember->m_DefaultValueName.c_str());
+	}
+	else
+	{
+		Kill();
+	}
 }
 
 void Hint::GetObjectTriggerType

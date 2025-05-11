@@ -28,6 +28,7 @@ private:
 	{
 		int m_Type = 0;
 		hh::math::CVector m_CollisionSize;
+		Sonic::CParamTypeList* m_HintFile = nullptr;
 		Sonic::CParamTypeList* m_HintName = nullptr;
 		Sonic::CParamTypeList* m_HintTimes = nullptr;
 		bool m_UseVoiceTime = true;
