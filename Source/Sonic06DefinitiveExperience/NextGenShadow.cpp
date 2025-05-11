@@ -1170,27 +1170,18 @@ class CObjChaosLockonCursor : public Sonic::CGameObject
     Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneLockonCursor;
 
     Eigen::Vector4f m_pos;
-    bool m_isOutro;
+    bool m_isOutro = false;
 
     std::mutex m_mutex;
 
 public:
     CObjChaosLockonCursor(Eigen::Vector4f inPos)
         : m_pos(inPos)
-        , m_isOutro(false)
     {
     }
 
     ~CObjChaosLockonCursor()
     {
-        if (m_spLockonCursor)
-        {
-            m_spLockonCursor->SendMessage(m_spLockonCursor->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
-            m_spLockonCursor = nullptr;
-        }
-
-        Chao::CSD::CProject::DestroyScene(m_projectLockonCursor.Get(), m_sceneLockonCursor);
-        m_projectLockonCursor = nullptr;
     }
 
     void AddCallback
@@ -1218,6 +1209,18 @@ public:
                 Sonic::CGameDocument::GetInstance()->AddGameObject(m_spLockonCursor, "main", this);
             }
         }
+    }
+
+    void KillCallback() override
+    {
+        if (m_spLockonCursor)
+        {
+            m_spLockonCursor->SendMessage(m_spLockonCursor->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+            m_spLockonCursor = nullptr;
+        }
+
+        Chao::CSD::CProject::DestroyScene(m_projectLockonCursor.Get(), m_sceneLockonCursor);
+        m_projectLockonCursor = nullptr;
     }
 
     bool ProcessMessage
@@ -1304,18 +1307,13 @@ public:
         m_sceneLockonCursor->m_MotionRepeatType = loop ? Chao::CSD::eMotionRepeatType_Loop : Chao::CSD::eMotionRepeatType_PlayOnce;
         m_sceneLockonCursor->Update();
     }
-
-    void Kill()
-    {
-        SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
-    }
 };
 
 class CObjChaosBlast : public Sonic::CGameObject3D
 {
 private:
-    float m_Radius;
-    float m_LifeTime;
+    float m_Radius = 0.0f;
+    float m_LifeTime = 0.0f;
     Hedgehog::Math::CVector m_Position;
     boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
 
@@ -1327,7 +1325,6 @@ public:
     )
         : m_Radius(_Radius)
         , m_Position(_Position)
-        , m_LifeTime(0.0f)
     {
 
     }
@@ -1431,11 +1428,6 @@ public:
         {
             Kill();
         }
-    }
-
-    void Kill()
-    {
-        SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
     }
 };
 
