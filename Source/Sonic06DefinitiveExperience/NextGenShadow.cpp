@@ -921,18 +921,19 @@ class CObjChaosSpear : public Sonic::CGameObject3D
 private:
     uint32_t m_TargetID;
 
-    float m_Speed;
+    float m_Speed = 0.0f;
     Hedgehog::Math::CVector m_Position;
     Hedgehog::Math::CVector m_Velocity;
-    float m_LifeTime;
-    bool m_IsDamage;
-    bool m_IsSuper;
-    bool m_IsEnemy;
+    float m_LifeTime = 0.0f;
+    bool m_IsDamage = false;
+    bool m_IsSuper = false;
+    bool m_IsEnemy = false;
 
-    SharedPtrTypeless spearHandle;
-    SharedPtrTypeless spearTailHandle;
-    SharedPtrTypeless spearVanishHandle;
     boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
+
+    Sonic::CGlitterPlayer* m_pGlitterPlayer = nullptr;
+    uint32_t m_pfxSpearID = 0u;
+    uint32_t m_pfxTailID = 0u;
 
 public:
     CObjChaosSpear
@@ -947,16 +948,16 @@ public:
         , m_Speed(cShadow_chaosSpearSpeed + _SpeedAdd)
         , m_Position(_Position)
         , m_Velocity(_StartDir.normalized() * m_Speed)
-        , m_LifeTime(0.0f)
-        , m_IsDamage(_IsDamage)
-        , m_IsSuper(false)
-        , m_IsEnemy(false)
     {
 
     }
 
     ~CObjChaosSpear()
     {
+        if (m_pGlitterPlayer)
+        {
+            delete m_pGlitterPlayer;
+        }
     }
 
     void AddCallback
@@ -967,6 +968,7 @@ public:
     ) override
     {
         Sonic::CGameObject3D::AddCallback(worldHolder, pGameDocument, spDatabase);
+        m_pGlitterPlayer = Sonic::CGlitterPlayer::Make(pGameDocument);
 
         Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
         pGameDocument->AddUpdateUnit("0", this);
@@ -979,18 +981,18 @@ public:
         {
             m_IsSuper = true;
             m_IsDamage = true;
-            Common::fCGlitterCreate(*PLAYER_CONTEXT, spearHandle, &m_spMatrixNodeTransform, "ef_bo_ssh_yh2_spear", 1);
-            Common::fCGlitterCreate(*PLAYER_CONTEXT, spearTailHandle, &m_spMatrixNodeTransform, "ef_bo_ssh_yh2_spear_tail", 1);
+            m_pfxSpearID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_ssh_yh2_spear", 1.0f);
+            m_pfxTailID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_ssh_yh2_spear_tail", 1.0f);
         }
         else if (m_IsDamage)
         {
-            Common::fCGlitterCreate(*PLAYER_CONTEXT, spearHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_lance", 1);
-            Common::fCGlitterCreate(*PLAYER_CONTEXT, spearTailHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_lance_tail", 1);
+            m_pfxSpearID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_sha_yh2_lance", 1.0f);
+            m_pfxTailID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_sha_yh2_lance_tail", 1.0f);
         }
         else
         {
-            Common::fCGlitterCreate(*PLAYER_CONTEXT, spearHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_spear", 1);
-            Common::fCGlitterCreate(*PLAYER_CONTEXT, spearTailHandle, &m_spMatrixNodeTransform, "ef_bo_sha_yh2_spear_tail", 1);
+            m_pfxSpearID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_sha_yh2_spear", 1.0f);
+            m_pfxTailID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_sha_yh2_spear_tail", 1.0f);
         }
 
         uint32_t enemyType = 0u;
@@ -1011,6 +1013,21 @@ public:
 
         hk2010_2_0::hkpCapsuleShape* eventTriggerTerrain = new hk2010_2_0::hkpCapsuleShape(hh::math::CVector(0.f, 0.f, -0.3f), hh::math::CVector(0.f, 0.f, -1.f), 0.05f);
         AddEventCollision("Terrain", eventTriggerTerrain, *reinterpret_cast<int*>(0x1E0AFAC), true, m_spNodeEventCollision); // BasicAndTerrainCheck
+    }
+
+    void KillCallback() override
+    {
+        if (m_pfxSpearID)
+        {
+            m_pGlitterPlayer->StopByID(m_pfxSpearID, true);
+            m_pfxSpearID = 0u;
+        }
+
+        if (m_pfxTailID)
+        {
+            m_pGlitterPlayer->StopByID(m_pfxTailID, false);
+            m_pfxTailID = 0u;
+        }
     }
 
     bool ProcessMessage
@@ -1114,7 +1131,7 @@ public:
             cannotDamage = *(bool*)(senderActor + 0x239);
         }
 
-        Common::fCGlitterCreate(*PLAYER_CONTEXT, spearVanishHandle, &m_spMatrixNodeTransform, m_IsDamage ? "ef_bo_sha_yh2_lance_vanish" : "ef_bo_sha_yh2_spear_vanish", 1);
+        m_pGlitterPlayer->PlayOneshot(m_spMatrixNodeTransform, m_IsDamage ? "ef_bo_sha_yh2_lance_vanish" : "ef_bo_sha_yh2_spear_vanish", 1.0f, 1);
         bool hasEnemyDamage = false;
         if (m_IsDamage && !cannotDamage)
         {
@@ -1143,14 +1160,6 @@ public:
         }
 
         Kill();
-    }
-
-    void Kill()
-    {
-        Common::fCGlitterEnd(*PLAYER_CONTEXT, spearHandle, true);
-        Common::fCGlitterEnd(*PLAYER_CONTEXT, spearTailHandle, false);
-
-        SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
     }
 };
 
