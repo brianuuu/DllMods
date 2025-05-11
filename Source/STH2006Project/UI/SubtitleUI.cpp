@@ -46,15 +46,19 @@ float SubtitleUI::addSubtitle(mst::TextEntry const& entry, std::vector<float> co
                 synthName.pop_back();
                 newSubtitle.m_cueID = Common::GetSoundCueFromSynth(synthName.c_str());
 
-                // Get duration from sound cue if not overritten
-                if (newSubtitle.m_duration == 0.0f && newSubtitle.m_cueID)
+                if (newSubtitle.m_cueID)
                 {
-                    float const duration = Common::GetSoundCueDuration(newSubtitle.m_cueID);
-                    if (duration > 0.0f)
+                    // Get duration from sound cue if not overritten
+                    if (newSubtitle.m_duration == 0.0f)
                     {
-                        newSubtitle.m_duration = duration;
+                        float const duration = Common::GetSoundCueDuration(newSubtitle.m_cueID);
+                        if (duration > 0.0f)
+                        {
+                            newSubtitle.m_duration = duration;
+                        }
                     }
 
+                    // play first cue
                     if (i == 0)
                     {
                         m_subtitleSfx.reset();

@@ -23,7 +23,7 @@ struct Subtitle
 {
 	std::vector<std::string> m_subtitles;
 	std::map<uint32_t, SubtitleButtonType> m_buttons;
-	float m_duration = 1.0f;
+	float m_duration = 0.0f;
 	uint32_t m_cueID = 0;
 };
 
