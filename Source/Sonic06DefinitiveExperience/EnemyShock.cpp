@@ -6,10 +6,12 @@ std::map<uint32_t, EnemyShock::ShockData> EnemyShock::m_shockData;
 class CObjShock : public Sonic::CGameObject3D
 {
 private:
-    uint32_t m_TargetID;
+    uint32_t m_TargetID = 0u;
     Hedgehog::Math::CVector m_Position;
     bool m_IsCrisisCityEnemy;
-    SharedPtrTypeless effectHandle;
+
+    Sonic::CGlitterPlayer* m_pGlitterPlayer = nullptr;
+    uint32_t m_pfxID = 0u;
 
 public:
     CObjShock
@@ -27,6 +29,10 @@ public:
 
     ~CObjShock()
     {
+        if (m_pGlitterPlayer)
+        {
+            delete m_pGlitterPlayer;
+        }
     }
 
     void AddCallback
@@ -37,6 +43,7 @@ public:
     ) override
     {
         Sonic::CGameObject3D::AddCallback(worldHolder, pGameDocument, spDatabase);
+        m_pGlitterPlayer = Sonic::CGlitterPlayer::Make(pGameDocument);
 
         Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
         pGameDocument->AddUpdateUnit("0", this);
@@ -46,7 +53,16 @@ public:
         m_spMatrixNodeTransform->NotifyChanged();
 
         // play pfx
-        Common::fCGlitterCreate(*PLAYER_CONTEXT, effectHandle, &m_spMatrixNodeTransform, m_IsCrisisCityEnemy ? "ef_ch_sns_yh1_damage_shock2" : "ef_ch_sns_yh1_damage_shock", 1);
+        m_pfxID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, m_IsCrisisCityEnemy ? "ef_ch_sns_yh1_damage_shock2" : "ef_ch_sns_yh1_damage_shock", 1.0f);
+    }
+
+    void KillCallback() override
+    {
+        if (m_pfxID)
+        {
+            m_pGlitterPlayer->StopByID(m_pfxID, true);
+            m_pfxID = 0u;
+        }
     }
 
     bool ProcessMessage
@@ -87,12 +103,6 @@ public:
                 m_spMatrixNodeTransform->NotifyChanged();
             }
         }
-    }
-
-    void Kill()
-    {
-        Common::fCGlitterEnd(*PLAYER_CONTEXT, effectHandle, true);
-        SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
     }
 };
 

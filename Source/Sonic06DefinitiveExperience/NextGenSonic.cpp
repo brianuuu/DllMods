@@ -1100,17 +1100,17 @@ char const* homingAttackAnim[] =
     "HomingAttackAfter6"
 }; 
 
-SharedPtrTypeless skyGemWaitPfxHandle;
 class CObjSkyGem : public Sonic::CGameObject3D
 {
-    INSERT_PADDING(0x4);
-    void* m_GlitterPlayer;
     boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
     Hedgehog::Math::CVector m_Position;
     Hedgehog::Math::CVector m_Velocity;
-    float m_Gravity;
-    float m_LifeTime;
-    float m_DistTravelled;
+    float m_Gravity = 1.0f;
+    float m_LifeTime = 0.0f;
+    float m_DistTravelled = 0.0f;
+
+    Sonic::CGlitterPlayer* m_pGlitterPlayer = nullptr;
+    uint32_t m_pfxWaitID = 0u;
     
 public:
     CObjSkyGem
@@ -1123,17 +1123,13 @@ public:
         : m_Position(_Position)
         , m_Velocity(_Direction.normalized() * _Speed)
         , m_Gravity(_Gravity)
-        , m_LifeTime(0.0f)
-        , m_DistTravelled(0.0f)
     {}
 
     ~CObjSkyGem()
     {
-        if (m_GlitterPlayer)
+        if (m_pGlitterPlayer)
         {
-            typedef void* __fastcall CGlitterPlayerDestructor(void* This, void* Edx, bool freeMem);
-            CGlitterPlayerDestructor* destructorFunc = *(CGlitterPlayerDestructor**)(*(uint32_t*)m_GlitterPlayer);
-            destructorFunc(m_GlitterPlayer, nullptr, true);
+            delete m_pGlitterPlayer;
         }
     }
 
@@ -1144,32 +1140,22 @@ public:
         const boost::shared_ptr<Hedgehog::Database::CDatabase>& spDatabase
     ) override
     {
-        // Base on sub_1058B00
-        FUNCTION_PTR(void, __thiscall, FuncNeededToMakeGlitterWork, 0xD5CB80,
-            void* This,
-            const Hedgehog::Base::THolder<Sonic::CWorld>&worldHolder,
-            Sonic::CGameDocument * pGameDocument,
-            const boost::shared_ptr<Hedgehog::Database::CDatabase>&spDatabase);
-        FUNCTION_PTR(void*, __cdecl, CGlitterPlayerInit, 0x1255B40, Sonic::CGameDocument* pGameDocument);
-        FuncNeededToMakeGlitterWork(this, worldHolder, pGameDocument, spDatabase);
-        m_GlitterPlayer = CGlitterPlayerInit(pGameDocument);
+        Sonic::CGameObject3D::AddCallback(worldHolder, pGameDocument, spDatabase);
+        m_pGlitterPlayer = Sonic::CGlitterPlayer::Make(pGameDocument);
 
-        // Prevent fpCGameObject3DMatrixNodeChangedCallback crashing
-        *(uint32_t*)((uint32_t)this + 0x1C) = 0;
+        auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 
         // Thrown pfx
-        static SharedPtrTypeless pfxHandle;
-        void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
-        Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle, matrixNode, "ef_ch_sng_skythown", 1);
+        m_pGlitterPlayer->PlayOneshot(context->m_spField30, "ef_ch_sng_skythown", 1.0f, 1);
 
         // Wait pfx
-        Common::fCGlitterCreate(*PLAYER_CONTEXT, skyGemWaitPfxHandle, matrixNode, "ef_ch_sng_skywait", 1);
+        m_pfxWaitID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, context->m_spField30, "ef_ch_sng_skywait", 1.0f);
 
         // Trail pfx
-        Common::ObjectCGlitterPlayerOneShot(this, "ef_ch_sng_skytrail");
+        m_pGlitterPlayer->PlayOneshot(m_spMatrixNodeTransform, "ef_ch_sng_skytrail", 1.0f, 1);
 
         // launch sfx
-        static SharedPtrTypeless soundHandle;
+        SharedPtrTypeless soundHandle;
         Common::SonicContextPlaySound(soundHandle, 80041031, 1);
 
         Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
@@ -1179,6 +1165,17 @@ public:
         AddRenderable("Object", m_spModel, false);
 
         UpdateTransform();
+    }
+
+    void KillCallback() override
+    {
+        if (m_pfxWaitID)
+        {
+            m_pGlitterPlayer->StopByID(m_pfxWaitID, true);
+            m_pfxWaitID = 0u;
+        }
+
+        m_spSkyGemSingleton = nullptr;
     }
 
     bool ProcessMessage
@@ -1242,7 +1239,7 @@ public:
                         )
                     )
                     {
-                        printf("[Sky Gem] Launch velocity {%.2f, %.2f, %.2f}, Speed = %.f, OutOfControl = %.2fs, Dist = %.2f\n", DEBUG_VECTOR3(impulse), launchSpeed, outOfControl, m_DistTravelled);
+                        //printf("[Sky Gem] Launch velocity {%.2f, %.2f, %.2f}, Speed = %.f, OutOfControl = %.2fs, Dist = %.2f\n", DEBUG_VECTOR3(impulse), launchSpeed, outOfControl, m_DistTravelled);
                         alignas(16) MsgApplyImpulse message {};
                         message.m_position = context->m_spMatrixNode->m_Transform.m_Position;
                         message.m_impulse = impulse;
@@ -1264,7 +1261,7 @@ public:
                     }
                     else
                     {
-                        printf("[Sky Gem] No solution for launch speed %.f\n", launchSpeed);
+                        //printf("[Sky Gem] No solution for launch speed %.f\n", launchSpeed);
                         launchSpeed += 10.0f;
                     }
                 }
@@ -1277,18 +1274,10 @@ public:
             m_LifeTime += updateInfo.DeltaTime;
             if (m_LifeTime >= 5.0f)
             {
-                printf("[Sky Gem] Timeout\n");
+                //printf("[Sky Gem] Timeout\n");
                 Kill();
             }
         }
-    }
-
-    void Kill()
-    {
-        printf("[Sky Gem] Killed\n");
-        SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
-        m_spSkyGemSingleton = nullptr;
-        Common::fCGlitterEnd(*PLAYER_CONTEXT, skyGemWaitPfxHandle, true);
     }
 
     void UpdateTransform()
@@ -1325,14 +1314,6 @@ public:
 
     ~CObjSkyGemLockonCursor()
     {
-        if (m_spLockonCursor)
-        {
-            m_spLockonCursor->SendMessage(m_spLockonCursor->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
-            m_spLockonCursor = nullptr;
-        }
-
-        Chao::CSD::CProject::DestroyScene(m_projectLockonCursor.Get(), m_sceneLockonCursor);
-        m_projectLockonCursor = nullptr;
     }
 
     void AddCallback
@@ -1359,6 +1340,20 @@ public:
                 Sonic::CGameDocument::GetInstance()->AddGameObject(m_spLockonCursor, "main", this);
             }
         }
+    }
+
+    void KillCallback() override
+    {
+        if (m_spLockonCursor)
+        {
+            m_spLockonCursor->SendMessage(m_spLockonCursor->m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+            m_spLockonCursor = nullptr;
+        }
+
+        Chao::CSD::CProject::DestroyScene(m_projectLockonCursor.Get(), m_sceneLockonCursor);
+        m_projectLockonCursor = nullptr;
+
+        m_spSkyGemLockonCursor = nullptr;
     }
 
     bool ProcessMessage
@@ -1446,13 +1441,6 @@ public:
         m_sceneLockonCursor->m_MotionSpeed = 1.0f;
         m_sceneLockonCursor->m_MotionRepeatType = loop ? Chao::CSD::eMotionRepeatType_Loop : Chao::CSD::eMotionRepeatType_PlayOnce;
         m_sceneLockonCursor->Update();
-    }
-
-    void Kill()
-    {
-        printf("[LockonCursor] Killed\n");
-        SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
-        m_spSkyGemLockonCursor = nullptr;
     }
 };
 
