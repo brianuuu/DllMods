@@ -216,7 +216,7 @@ void JumpChain::StartCling()
 	}
 
 	// change animation
-	SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl("Squat"));
+	SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl("Squat", true));
 }
 
 void JumpChain::ClingToTarget()
