@@ -13,6 +13,7 @@ class Hint : public Sonic::CObjectBase, public Sonic::CSetObjectListener
 public:
 	BB_SET_OBJECT_MAKE("Hint");
 	static void registerObject();
+	static void applyPatches();
 
 	virtual ~Hint() override;
 

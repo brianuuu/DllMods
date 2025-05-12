@@ -7,6 +7,17 @@ BB_SET_OBJECT_MAKE_HOOK(Hint)
 void Hint::registerObject()
 {
 	BB_INSTALL_SET_OBJECT_MAKE_HOOK(Hint);
+	applyPatches();
+}
+
+void Hint::applyPatches()
+{
+	// replace Omochao hint with custom
+	static char const* STH2006_HINT = "STH2006_HINT";
+	WRITE_MEMORY(0x11076F5, char*, STH2006_HINT);
+	WRITE_MEMORY(0x11077C5, char*, STH2006_HINT);
+	WRITE_JUMP(0x1107710, (void*)0x110771C);
+	WRITE_JUMP(0x11077E0, (void*)0x11077EC);
 }
 
 Hint::~Hint()
