@@ -311,8 +311,14 @@ void Itembox::applyPatches()
 	WRITE_MEMORY(0xFFF5D0, uint8_t, 0x31, 0xD2, 0x90, 0x90, 0x90, 0x90);
 	WRITE_MEMORY(0xFFF624, uint8_t, 0x31, 0xD2, 0x90, 0x90, 0x90, 0x90);
 
-	// Barrier use actual pfx and not Aqua shield's
+	// Barrier use actual pfx/sfx and not Aqua shield's
 	WRITE_MEMORY(0x119E7CD, uint32_t, 0x1E63F5C);
+	WRITE_MEMORY(0x119E76B, uint32_t, 200600031);
+	WRITE_MEMORY(0x119E760, uint8_t, 0);
+
+	// Fire Barrier pfx/sfx
+	WRITE_MEMORY(0x119E57B, uint32_t, 200600031);
+	WRITE_MEMORY(0x119E570, uint8_t, 0);
 }
 
 void Itembox::playItemboxSfx()
