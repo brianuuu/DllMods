@@ -183,7 +183,7 @@ void UpDownReel::SetUpdateParallel
 
 void UpDownReel::AddParameterBank
 (
-	Hedgehog::Base::CRefPtr<Sonic::CParameterBank>& in_rParameterBank
+	const Hedgehog::Base::CRefPtr<Sonic::CParameterBank>& in_rParameterBank
 )
 {
 	in_rParameterBank->AccessParameterBankBool("IsOn", &m_isOn);

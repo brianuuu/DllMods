@@ -106,7 +106,7 @@ bool Cage::SetAddColliders
 
 void Cage::GetObjectTriggerType
 (
-	Hedgehog::vector<uint32_t>& in_rTriggerTypeList
+	hh::vector<uint32_t>& in_rTriggerTypeList
 )
 {
 	in_rTriggerTypeList.push_back(4);
