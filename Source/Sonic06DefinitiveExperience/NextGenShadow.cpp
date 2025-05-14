@@ -948,6 +948,7 @@ public:
         , m_Speed(cShadow_chaosSpearSpeed + _SpeedAdd)
         , m_Position(_Position)
         , m_Velocity(_StartDir.normalized() * m_Speed)
+        , m_IsDamage(_IsDamage)
     {
 
     }
@@ -1479,6 +1480,13 @@ void NextGenShadow::AddTargetData(uint32_t actorID, float dist, uint32_t priorit
 {
     if (m_targetData.size() < (Common::IsPlayerSuper() ? cShadow_chaosSpearSuperMaxCount : cShadow_chaosSpearMaxCount))
     {
+        for (TargetData const& data : m_targetData)
+        {
+            if (data.m_actorID == actorID)
+            {
+                return;
+            }
+        }
         m_targetData.push_back(TargetData{ actorID, dist, priority });
     }
 }
