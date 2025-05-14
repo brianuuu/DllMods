@@ -656,7 +656,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
                     (
                         context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgDamage>
                         (
-                            *(uint32_t*)0x1E61B90, // DamageTypeSonicSquatKick
+                            0,
                             targetPosition,
                             applyVelocity
                         )
@@ -1141,7 +1141,7 @@ public:
             (
                 actorID, boost::make_shared<Sonic::Message::MsgDamage>
                 (
-                    *(uint32_t*)0x1E0BE30, // DamageID_SonicLight
+                    0,
                     m_Position,
                     hh::math::CVector::Identity()
                 )
@@ -1405,7 +1405,7 @@ public:
                 {
                     SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
                         (
-                            *(uint32_t*)0x1E0BE34, // DamageID_NoAttack
+                            0,
                             m_Position, 
                             (targetPosition - m_Position) * (enemyType > 0 ? cShadow_chaosBlastVelocityEnemy : cShadow_chaosBlastVelocityObjPhy)
                         ), (targetPosition - m_Position).norm() * 0.2f / m_Radius); // delay base on distance
