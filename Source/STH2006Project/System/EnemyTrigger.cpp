@@ -2,7 +2,7 @@
 
 #include "Managers/ScoreManager.h"
 
-void __declspec(naked) SendEnemyEventTrigger()
+void __declspec(naked) EnemyTrigger_SendEnemyEventTrigger()
 {
     static uint32_t fpCHolderBaseDtor = 0x65FC40;
     static uint32_t fpEventTrigger = 0xD5ED00;
@@ -17,7 +17,7 @@ void __declspec(naked) SendEnemyEventTrigger()
     }
 }
 
-void HandleEnemyMsgNotifyObjectEvent(hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message)
+void EnemyTrigger_HandleEnemyMsgNotifyObjectEvent(hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message)
 {
     auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
     if (msg.m_Event == 12)
@@ -32,13 +32,13 @@ void HandleEnemyMsgNotifyObjectEvent(hh::fnd::CMessageActor* This, void* Edx, hh
 }
 
 #define HOOK_ENEMY_PROCESS_MESSAGE(enemyName, address) \
-    HOOK(bool, __fastcall, enemyName##_ProcessMessage, address, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag) \
+    HOOK(bool, __fastcall, EnemyTrigger_##enemyName##_ProcessMessage, address, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag) \
     { \
         if (flag && message.Is<Sonic::Message::MsgNotifyObjectEvent>()) \
         { \
-            HandleEnemyMsgNotifyObjectEvent(This, Edx, message); \
+            EnemyTrigger_HandleEnemyMsgNotifyObjectEvent(This, Edx, message); \
         } \
-        return original##enemyName##_ProcessMessage(This, Edx, message, flag); \
+        return originalEnemyTrigger_##enemyName##_ProcessMessage(This, Edx, message, flag); \
     }
 
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyEChaserSV, 0xB76390)
@@ -62,7 +62,7 @@ HOOK_ENEMY_PROCESS_MESSAGE(CEnemyPawnBase, 0xB958D0) // include all CEnemyPawn
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyTaker, 0xBA3250)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyBiter, 0xB869B0)
 
-HOOK(bool, __fastcall, CEnemyBase_ProcessMessage, 0xBE0790, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
+HOOK(bool, __fastcall, EnemyTrigger_CEnemyBase_ProcessMessage, 0xBE0790, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
 {
     if (flag && message.Is<Sonic::Message::MsgGetEnemyType>())
     {
@@ -71,7 +71,7 @@ HOOK(bool, __fastcall, CEnemyBase_ProcessMessage, 0xBE0790, hh::fnd::CMessageAct
         return true;
     }
 
-    return originalCEnemyBase_ProcessMessage(This, Edx, message, flag);
+    return originalEnemyTrigger_CEnemyBase_ProcessMessage(This, Edx, message, flag);
 }
 
 void EnemyTrigger::applyPatches()
@@ -105,30 +105,30 @@ void EnemyTrigger::applyPatches()
     WRITE_MEMORY(0x16FAD14 + 0x2C, uint32_t, 0xEA2940); // CEnemyBiter
 
     // Send EventTrigger when enemy dies (when CObjChaosEnergy spawns)
-    WRITE_JUMP(0xBE0675, SendEnemyEventTrigger);
+    WRITE_JUMP(0xBE0675, EnemyTrigger_SendEnemyEventTrigger);
 
     // Handle MsgNotifyObjectEvent
-    INSTALL_HOOK(CEnemyEChaserSV_ProcessMessage);
-    INSTALL_HOOK(CEnemyAeroCannon_ProcessMessage);
-    INSTALL_HOOK(CEnemyBeetle_ProcessMessage);
-    INSTALL_HOOK(CEnemyEggRobo_ProcessMessage);
-    INSTALL_HOOK(CEnemyGrabber_ProcessMessage);
-    INSTALL_HOOK(CEnemyBatabata_ProcessMessage);
-    INSTALL_HOOK(CEnemyBeeton_ProcessMessage);
-    INSTALL_HOOK(CEnemyELauncher_ProcessMessage);
-    INSTALL_HOOK(CEnemyCrawler_ProcessMessage);
-    INSTALL_HOOK(CEnemyGunHunter_ProcessMessage);
-    INSTALL_HOOK(CEnemyCopSpeeder_ProcessMessage);
-    INSTALL_HOOK(CEnemyMotora_ProcessMessage);
-    INSTALL_HOOK(CEnemyGanigani_ProcessMessage);
-    INSTALL_HOOK(CEnemyLander_ProcessMessage);
-    INSTALL_HOOK(CEnemyEFighter_ProcessMessage);
-    INSTALL_HOOK(CEnemyNal_ProcessMessage);
-    INSTALL_HOOK(CEnemySpinner_ProcessMessage);
-    INSTALL_HOOK(CEnemyPawnBase_ProcessMessage);
-    INSTALL_HOOK(CEnemyTaker_ProcessMessage);
-    INSTALL_HOOK(CEnemyBiter_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyEChaserSV_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyAeroCannon_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyBeetle_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyEggRobo_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyGrabber_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyBatabata_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyBeeton_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyELauncher_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyCrawler_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyGunHunter_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyCopSpeeder_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyMotora_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyGanigani_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyLander_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyEFighter_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyNal_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemySpinner_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyPawnBase_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyTaker_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyBiter_ProcessMessage);
 
     // Handle MsgGetEnemyType
-    INSTALL_HOOK(CEnemyBase_ProcessMessage);
+    INSTALL_HOOK(EnemyTrigger_CEnemyBase_ProcessMessage);
 }
