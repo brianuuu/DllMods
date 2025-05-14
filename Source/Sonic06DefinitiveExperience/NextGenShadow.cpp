@@ -882,10 +882,10 @@ bool NextGenShadow::CheckChaosSnapTarget()
         return false;
     }
 
-    if (NextGenShadow::m_chaosSnapActivated)
-    {
-        return true;
-    }
+    //if (NextGenShadow::m_chaosSnapActivated)
+    //{
+    //    return true;
+    //}
 
     uint32_t enemyType = 0u;
     context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetEnemyType>(&enemyType));
