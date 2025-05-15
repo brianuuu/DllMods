@@ -631,7 +631,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
             useNextAttack |= NextGenShadow::m_chaosAttackCount > 0 && NextGenShadow::m_chaosAttackBuffered; // next attacks can be buffered
             useNextAttack |= NextGenShadow::m_chaosAttackCount == 0 && NextGenShadow::m_chaosBoostLevel > 0 && isHoldingA; // Chaos Snap immediately goes to next attack
 
-            if (isChaosSnapSearch && NextGenShadow::CheckChaosSnapTarget())
+            if (isChaosSnapSearch && NextGenShadow::CheckChaosSnapTarget() && *(uint32_t*)((uint32_t)context + 0x1174) != context->m_HomingAttackTargetActorID)
             {
                 // Chaos Snap immediately goes to next target if found
                 StateManager::ChangeState(StateAction::HomingAttack, *PLAYER_CONTEXT);
