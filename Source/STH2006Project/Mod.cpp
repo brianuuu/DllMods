@@ -10,6 +10,7 @@
 #include "Objects/twn/SoleannaNPC.h"
 #include "System/Application.h"
 #include "System/ChaosEnergy.h"
+#include "System/EnemyHealth.h"
 #include "System/EnemyTrigger.h"
 #include "UI/TitleUI.h"
 #include "UI/UIContext.h"
@@ -41,6 +42,7 @@ extern "C" __declspec(dllexport) void Init(ModInfo_t * modInfo)
 
     // Enable enemy event and triggers
     EnemyTrigger::applyPatches();
+    EnemyHealth::applyPatches();
 
     // Disable lightdash hints
     Navigation::applyPatches();

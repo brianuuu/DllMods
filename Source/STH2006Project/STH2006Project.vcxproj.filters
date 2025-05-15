@@ -70,6 +70,7 @@
     <ClCompile Include="Utils\SynchronizedObject.cpp" />
     <ClCompile Include="Utils\tinyxml2.cpp" />
     <ClCompile Include="Utils\Window.cpp" />
+    <ClCompile Include="System\EnemyHealth.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -111,6 +112,7 @@
     <ClInclude Include="Utils\SynchronizedObject.h" />
     <ClInclude Include="Utils\tinyxml2.h" />
     <ClInclude Include="Utils\Window.h" />
+    <ClInclude Include="System\EnemyHealth.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">

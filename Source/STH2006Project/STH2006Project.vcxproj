@@ -252,6 +252,7 @@
     </ClCompile>
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DllMain.cpp" />
+    <ClCompile Include="System\EnemyHealth.cpp" />
     <ClCompile Include="Managers\MissionManager.cpp" />
     <ClCompile Include="Managers\MstManager.cpp" />
     <ClCompile Include="Managers\ParamManager.cpp" />
@@ -302,6 +303,7 @@
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="DllMain.h" />
+    <ClInclude Include="System\EnemyHealth.h" />
     <ClInclude Include="Managers\MissionManager.h" />
     <ClInclude Include="Managers\MstManager.h" />
     <ClInclude Include="Managers\ParamManager.h" />
