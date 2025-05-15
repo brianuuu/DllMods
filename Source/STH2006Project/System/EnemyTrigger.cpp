@@ -22,7 +22,11 @@ void EnemyTrigger_HandleEnemyMsgNotifyObjectEvent(hh::fnd::CMessageActor* This, 
     auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
     if (msg.m_Event == 12)
     {
-        ScoreManager::addEnemyChain((uint32_t*)((uint32_t)This - 0x28));
+        // event damage always kills enemy, set HP to 0
+        uint32_t pCEnemyBase = (uint32_t)This - 0x28;
+        *(uint8_t*)(pCEnemyBase + 0x16F) = 0u;
+
+        ScoreManager::addEnemyChain((uint32_t*)pCEnemyBase);
         This->SendMessage(This->m_ActorID, boost::make_shared<Sonic::Message::MsgDamage>
             (
                 *(uint32_t*)0x1E0BE30, hh::math::CVector::Zero(), hh::math::CVector::Zero()
