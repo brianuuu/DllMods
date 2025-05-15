@@ -37,6 +37,7 @@ public:
 	static bool m_chaosAttackBuffered;
 	static bool m_chaosSnapActivated;
 	static bool m_chaosSnapNoDamage;
+	static bool m_chaosSnapHoldSameTarget;
 
 	// X Action
 	static float m_xHeldTimer;

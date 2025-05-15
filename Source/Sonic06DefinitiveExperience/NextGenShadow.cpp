@@ -65,6 +65,7 @@ float const cShadow_chaosSpearSuperLockDist = 30.0f;
 // Chaos Snap
 bool NextGenShadow::m_chaosSnapActivated = false;
 bool NextGenShadow::m_chaosSnapNoDamage = false;
+bool NextGenShadow::m_chaosSnapHoldSameTarget = false;
 float const cShadow_chaosSnapWaitTime = 0.1f;
 float const cShadow_chaosSnapStartHold = 0.25f;
 
@@ -581,8 +582,11 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
 
         if (message.IsAnimation(AnimationSetPatcher::ChaosAttackWait))
         {
-            bool const isChaosSnapSearch = isHoldingA && NextGenShadow::m_chaosBoostLevel > 0 && NextGenShadow::m_chaosAttackCount > 0 && NextGenShadow::m_chaosAttackCount < 5 && !NextGenShadow::m_chaosAttackBuffered;
+            bool const isChaosSnapSearch = (NextGenShadow::m_chaosSnapHoldSameTarget || isHoldingA) && NextGenShadow::m_chaosBoostLevel > 0 && NextGenShadow::m_chaosAttackCount > 0 && NextGenShadow::m_chaosAttackCount < 5 && !NextGenShadow::m_chaosAttackBuffered;
             bool const nextAttackNotBuffered = NextGenShadow::m_chaosAttackCount > 0 && !NextGenShadow::m_chaosAttackBuffered;
+            
+            bool const isSameTarget = *(uint32_t*)((uint32_t)context + 0x1174) == context->m_HomingAttackTargetActorID;
+            bool const quitHoldSameTarget = NextGenShadow::m_chaosSnapHoldSameTarget && isPressedA;
 
             if (isChaosSnapSearch)
             {
@@ -630,18 +634,30 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
             useNextAttack |= NextGenShadow::m_chaosAttackCount == 0 && isPressedA; // first attack must press A to start
             useNextAttack |= NextGenShadow::m_chaosAttackCount > 0 && NextGenShadow::m_chaosAttackBuffered; // next attacks can be buffered
             useNextAttack |= NextGenShadow::m_chaosAttackCount == 0 && NextGenShadow::m_chaosBoostLevel > 0 && isHoldingA; // Chaos Snap immediately goes to next attack
+            useNextAttack |= quitHoldSameTarget;
 
-            if (isChaosSnapSearch && NextGenShadow::CheckChaosSnapTarget() 
-            && *(uint32_t*)((uint32_t)context + 0x1174) != context->m_HomingAttackTargetActorID) // don't teleport to previously hit target
+            if (isChaosSnapSearch && !quitHoldSameTarget && NextGenShadow::CheckChaosSnapTarget())
             {
-                // Chaos Snap immediately goes to next target if found
-                StateManager::ChangeState(StateAction::HomingAttack, *PLAYER_CONTEXT);
+                hh::math::CVector targetPosition = hh::math::CVector::Identity();
+                context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, Sonic::Message::MsgGetHomingAttackPosition(&targetPosition));
+                bool const targetFarAway = (targetPosition - context->m_spMatrixNode->m_Transform.m_Position).norm() >= 2.0f;
+
+                if (isSameTarget && !targetFarAway)
+                {
+                    NextGenShadow::m_chaosSnapHoldSameTarget = true;
+                }
+                else if (!NextGenShadow::m_chaosSnapHoldSameTarget)
+                {
+                    // Chaos Snap immediately goes to next target if found
+                    StateManager::ChangeState(StateAction::HomingAttack, *PLAYER_CONTEXT);
+                }
             }
             else if (useNextAttack)
             {
                 PlayNextChaosAttack();
                 NextGenShadow::m_chaosAttackCount++;
                 NextGenShadow::m_chaosAttackBuffered = false;
+                NextGenShadow::m_chaosSnapHoldSameTarget = false;
 
                 if (context->m_HomingAttackTargetActorID)
                 {
@@ -713,6 +729,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterEnd, 0x11182F0)
         NextGenShadow::m_chaosAttackCount = -1;
     }
     NextGenShadow::m_chaosAttackBuffered = false;
+    NextGenShadow::m_chaosSnapHoldSameTarget = false;
 
     originalNextGenShadow_CSonicStateHomingAttackAfterEnd();
 }
