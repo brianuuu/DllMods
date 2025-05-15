@@ -712,6 +712,8 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterEnd, 0x11182F0)
         NextGenShadow::m_chaosAttackCount = -1;
     }
     NextGenShadow::m_chaosAttackBuffered = false;
+
+    originalNextGenShadow_CSonicStateHomingAttackAfterEnd();
 }
 
 //---------------------------------------------------
