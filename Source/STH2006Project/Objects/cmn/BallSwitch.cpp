@@ -149,7 +149,15 @@ void BallSwitch::SetUpdateParallel
 			float const currentDistToPlayer = horizontalDir.norm();
 			if (currentDistToPlayer < c_minDistFromPlayer)
 			{
-				newPosition += horizontalDir.normalized() * (c_minDistFromPlayer - currentDistToPlayer);
+				if (currentDistToPlayer < 0.001f)
+				{
+					horizontalDir = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitX();
+				}
+				else
+				{
+					horizontalDir.normalize();
+				}
+				newPosition += horizontalDir * (c_minDistFromPlayer - currentDistToPlayer);
 			}
 		}
 
