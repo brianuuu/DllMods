@@ -159,8 +159,14 @@ void HandleEnemyAddShock(hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Messa
     }
 }
 
-void HandleEnemyRemoveShock(uint32_t pCEnemyBase)
+void HandleEnemyRemoveShock(uint32_t pCEnemyBase, bool checkHP = false)
 {
+    // more than 2 HP, shouldn't remove shock
+    if (checkHP && *(uint8_t*)(pCEnemyBase + 0x16F) > 1)
+    {
+        return;
+    }
+
     *(bool*)(pCEnemyBase + 0x16E) = false;
 
     std::lock_guard<std::recursive_mutex> guard(EnemyShock::m_mutex);
@@ -219,8 +225,33 @@ HOOK(int, __fastcall, EnemyShock_CEnemyBaseDeathCallback, 0xBDEBE0, uint32_t pCE
     return originalEnemyShock_CEnemyBaseDeathCallback(pCEnemyBase, Edx, a2);
 }
 
+HOOK(void, __stdcall, EnemyShock_CEnemyAeroCannon_CStateFakeDeadBegin, 0x610AE0, uint32_t pCEnemyBase)
+{
+    HandleEnemyRemoveShock(pCEnemyBase);
+    originalEnemyShock_CEnemyAeroCannon_CStateFakeDeadBegin(pCEnemyBase);
+}
+
+HOOK(void, __fastcall, EnemyShock_CEnemyBeetle_CStateFakeDeadBegin, 0xBA50F0, void* This, void* Edx, uint32_t pCEnemyBase)
+{
+    HandleEnemyRemoveShock(pCEnemyBase);
+    originalEnemyShock_CEnemyBeetle_CStateFakeDeadBegin(This, Edx, pCEnemyBase);
+}
+
+HOOK(int, __stdcall, EnemyShock_CEnemyEggRobo_CStateFakeDeadBegin, 0x602A30, uint32_t pCEnemyBase)
+{
+    HandleEnemyRemoveShock(pCEnemyBase);
+    return originalEnemyShock_CEnemyEggRobo_CStateFakeDeadBegin(pCEnemyBase);
+}
+
+HOOK(int, __fastcall, EnemyShock_CEnemySpinner_CStateFakeDeadBegin, 0x5FC1B0, Hedgehog::Universe::CTinyStateMachineBase::CStateBase* stateBase)
+{
+    uint32_t pCEnemyBase = (uint32_t)stateBase->m_pContext;
+    HandleEnemyRemoveShock(pCEnemyBase);
+    return originalEnemyShock_CEnemySpinner_CStateFakeDeadBegin(stateBase);
+}
+
 #define HOOK_ENEMY_PROCESS_MESSAGE(enemyName, address) \
-    HOOK(bool, __fastcall, enemyName##_ProcessMessage, address, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag) \
+    HOOK(bool, __fastcall, EnemyShock_##enemyName##_ProcessMessage, address, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag) \
     { \
         if (flag && message.Is<Sonic::Message::MsgNotifyShockWave>()) \
         { \
@@ -229,9 +260,9 @@ HOOK(int, __fastcall, EnemyShock_CEnemyBaseDeathCallback, 0xBDEBE0, uint32_t pCE
         } \
         if (flag && message.Is<Sonic::Message::MsgDamage>()) \
         { \
-            HandleEnemyRemoveShock((uint32_t)This - 0x28); \
+            HandleEnemyRemoveShock((uint32_t)This - 0x28, true); \
         } \
-        return original##enemyName##_ProcessMessage(This, Edx, message, flag); \
+        return originalEnemyShock_##enemyName##_ProcessMessage(This, Edx, message, flag); \
     }
 
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyEChaserSV, 0xB76390)
@@ -263,24 +294,30 @@ void EnemyShock::applyPatches()
     INSTALL_HOOK(EnemyShock_CEnemyBaseUpdateParallel);
     INSTALL_HOOK(EnemyShock_CEnemyBaseDeathCallback);
 
-    INSTALL_HOOK(CEnemyEChaserSV_ProcessMessage);
-    INSTALL_HOOK(CEnemyAeroCannon_ProcessMessage);
-    INSTALL_HOOK(CEnemyBeetle_ProcessMessage);
-    INSTALL_HOOK(CEnemyEggRobo_ProcessMessage);
-    INSTALL_HOOK(CEnemyGrabber_ProcessMessage);
-    INSTALL_HOOK(CEnemyBatabata_ProcessMessage);
-    INSTALL_HOOK(CEnemyBeeton_ProcessMessage);
-    INSTALL_HOOK(CEnemyELauncher_ProcessMessage);
-    INSTALL_HOOK(CEnemyCrawler_ProcessMessage);
-    INSTALL_HOOK(CEnemyGunHunter_ProcessMessage);
-    INSTALL_HOOK(CEnemyCopSpeeder_ProcessMessage);
-    INSTALL_HOOK(CEnemyMotora_ProcessMessage);
-    INSTALL_HOOK(CEnemyGanigani_ProcessMessage);
-    INSTALL_HOOK(CEnemyLander_ProcessMessage);
-    INSTALL_HOOK(CEnemyEFighter_ProcessMessage);
-    INSTALL_HOOK(CEnemyNal_ProcessMessage);
-    INSTALL_HOOK(CEnemySpinner_ProcessMessage);
-    INSTALL_HOOK(CEnemyPawnBase_ProcessMessage);
-    INSTALL_HOOK(CEnemyTaker_ProcessMessage);
-    INSTALL_HOOK(CEnemyBiter_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemyEChaserSV_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemyAeroCannon_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemyBeetle_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemyEggRobo_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemyGrabber_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemyBatabata_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemyBeeton_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemyELauncher_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemyCrawler_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemyGunHunter_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemyCopSpeeder_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemyMotora_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemyGanigani_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemyLander_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemyEFighter_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemyNal_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemySpinner_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemyPawnBase_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemyTaker_ProcessMessage);
+    INSTALL_HOOK(EnemyShock_CEnemyBiter_ProcessMessage);
+
+    // FakeDead fixes
+    INSTALL_HOOK(EnemyShock_CEnemyAeroCannon_CStateFakeDeadBegin);
+    INSTALL_HOOK(EnemyShock_CEnemyBeetle_CStateFakeDeadBegin);
+    INSTALL_HOOK(EnemyShock_CEnemyEggRobo_CStateFakeDeadBegin);
+    INSTALL_HOOK(EnemyShock_CEnemySpinner_CStateFakeDeadBegin);
 }
