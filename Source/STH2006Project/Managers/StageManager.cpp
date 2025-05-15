@@ -787,9 +787,9 @@ void StageManager::applyPatches()
     // Hide ELauncher missile respawn
     WRITE_JUMP(0xB81488, (void*)StageManager_CEnemyELauncher_HideMissile);
 
-    // Increase ELauncher collision height 0.8->2.62
-    WRITE_MEMORY(0xB820D7, uint32_t, 0x17048D8);
-    WRITE_MEMORY(0xB821DB, uint32_t, 0x17048D8);
+    // ELauncher
+    WRITE_MEMORY(0xB820C0, uint32_t, 0x1574644); // rigidbody radius -> 1.0
+    WRITE_MEMORY(0xB8207F, uint32_t, 0x156460C); // attached rigidbody to Spine
 
     // Change EggRoboA beam data 
     WRITE_MEMORY(0x601C5C, uint32_t, 0x1A416CC); // 0.5 length
