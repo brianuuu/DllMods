@@ -17,7 +17,7 @@ void __declspec(naked) EnemyTrigger_SendEnemyEventTrigger()
     }
 }
 
-void EnemyTrigger_HandleEnemyMsgNotifyObjectEvent(hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message)
+void EnemyTrigger_HandleEnemyMsgNotifyObjectEvent(hh::fnd::CMessageActor* This, hh::fnd::Message& message)
 {
     auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
     if (msg.m_Event == 12)
@@ -35,12 +35,25 @@ void EnemyTrigger_HandleEnemyMsgNotifyObjectEvent(hh::fnd::CMessageActor* This, 
     }
 }
 
+bool EnemyTrigger_HandleEnemyMsgDamage(hh::fnd::CMessageActor* This, hh::fnd::Message& message)
+{
+    // Fix gens hitting FakeDead enemy multiple times
+    uint32_t pCEnemyBase = (uint32_t)This - 0x28;
+    Hedgehog::Universe::CTinyStateMachineBase* stateMachine = (Hedgehog::Universe::CTinyStateMachineBase*)(pCEnemyBase + 0x12C);
+    auto const& stateName = stateMachine->m_spCurrentState->GetName();
+    return stateName == "ReviveWait" || stateName == "FakeDead";
+}
+
 #define HOOK_ENEMY_PROCESS_MESSAGE(enemyName, address) \
     HOOK(bool, __fastcall, EnemyTrigger_##enemyName##_ProcessMessage, address, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag) \
     { \
         if (flag && message.Is<Sonic::Message::MsgNotifyObjectEvent>()) \
         { \
-            EnemyTrigger_HandleEnemyMsgNotifyObjectEvent(This, Edx, message); \
+            EnemyTrigger_HandleEnemyMsgNotifyObjectEvent(This, message); \
+        } \
+        if (flag && message.Is<Sonic::Message::MsgDamage>()) \
+        { \
+            if (EnemyTrigger_HandleEnemyMsgDamage(This, message)) return true; \
         } \
         return originalEnemyTrigger_##enemyName##_ProcessMessage(This, Edx, message, flag); \
     }
