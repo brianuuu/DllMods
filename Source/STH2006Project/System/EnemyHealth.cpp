@@ -247,10 +247,10 @@ bool EnemyHealth_HandleMsgDamage(hh::fnd::CMessageActor* This, hh::fnd::Message&
     return false;
 }
 
-HOOK(void, __fastcall, EnemyHealth_CEnemyBaseAddCallback, 0xBDF720, uint32_t This, void* Edx, int a2, int a3, int a4)
+HOOK(void, __fastcall, EnemyHealth_CEnemyBaseAddCallback, 0xBDF720, uint32_t pCEnemyBase, void* Edx, int a2, int a3, int a4)
 {
-    originalEnemyHealth_CEnemyBaseAddCallback(This, Edx, a2, a3, a4);
-    *(uint8_t*)(This + 0x16F) = EnemyHealth::GetMaxHealth(This);
+    originalEnemyHealth_CEnemyBaseAddCallback(pCEnemyBase, Edx, a2, a3, a4);
+    *(uint8_t*)(pCEnemyBase + 0x16F) = EnemyHealth::GetMaxHealth(pCEnemyBase);
 }
 
 HOOK(int, __fastcall, EnemyHealth_CEnemyBaseDeathCallback, 0xBDEBE0, uint32_t pCEnemyBase, void* Edx, void* a2)
@@ -268,6 +268,12 @@ HOOK(int, __fastcall, EnemyHealth_CEnemyBaseDeathCallback, 0xBDEBE0, uint32_t pC
     return originalEnemyHealth_CEnemyBaseDeathCallback(pCEnemyBase, Edx, a2);
 }
 
+HOOK(void, __stdcall, EnemyHealth_CEnemyEggRobo_CStateReviveBegin, 0x602AF0, uint32_t pCEnemyBase)
+{
+    *(uint8_t*)(pCEnemyBase + 0x16F) = EnemyHealth::GetMaxHealth(pCEnemyBase);
+    originalEnemyHealth_CEnemyEggRobo_CStateReviveBegin(pCEnemyBase);
+}
+
 #define HOOK_ENEMY_PROCESS_MESSAGE(enemyName, address) \
 HOOK(bool, __fastcall, EnemyHealth_##enemyName##_ProcessMessage, address, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag) \
 { \
@@ -281,6 +287,7 @@ HOOK(bool, __fastcall, EnemyHealth_##enemyName##_ProcessMessage, address, hh::fn
     return originalEnemyHealth_##enemyName##_ProcessMessage(This, Edx, message, flag); \
 }
 
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyEggRobo, 0xBB0220)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyELauncher, 0xB82B40)
 
 void EnemyHealth::applyPatches()
@@ -295,9 +302,16 @@ void EnemyHealth::applyPatches()
     INSTALL_HOOK(EnemyHealth_CEnemyBaseDeathCallback);
 
     // Individual enemy hooks
+    INSTALL_HOOK(EnemyHealth_CEnemyEggRobo_ProcessMessage);
     INSTALL_HOOK(EnemyHealth_CEnemyELauncher_ProcessMessage);
 
+    // Reset health for FakeDead enemies
+    INSTALL_HOOK(EnemyHealth_CEnemyEggRobo_CStateReviveBegin);
+
     // Replace enemy's interactionType to regular enemy lock-on
+    WRITE_MEMORY(0xBAF7EC, uint32_t, 0x1E0AF24); // CEnemyEggRobo
+    WRITE_MEMORY(0xBAF655, uint32_t, 0x1E0AF24); // CEnemyEggRobo
+    WRITE_MEMORY(0xBAB07F, uint32_t, 0x1E0AF24); // CEnemyEggRobo revive
     WRITE_MEMORY(0xB8211B, uint32_t, 0x1E0AF24); // CEnemyELauncher
 }
 
@@ -305,6 +319,10 @@ uint32_t EnemyHealth::GetMaxHealth(uint32_t pCEnemyBase)
 {
     switch (*(uint32_t*)pCEnemyBase)
     {
+    case 0x16F7C9C: // CEnemyEggRobo
+    {
+        return *(bool*)(pCEnemyBase + 416) ? 0u : 2u;
+    }
     case 0x16FB1FC: // CEnemyELauncher
     {
         return 3u;
