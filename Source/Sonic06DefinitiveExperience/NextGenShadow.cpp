@@ -1409,6 +1409,9 @@ public:
                 {
                     // try to get center position from lock-on for enemy
                     SendMessageImm(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
+
+                    // ignore HP
+                    *(uint8_t*)((uint32_t)senderActor + 0x16F) = 0u;
                 }
                 else if (isObjectPhysics)
                 {
