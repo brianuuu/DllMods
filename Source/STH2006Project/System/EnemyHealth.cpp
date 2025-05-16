@@ -277,6 +277,13 @@ HOOK(int, __fastcall, EnemyHealth_CEnemyBaseDeathCallback, 0xBDEBE0, uint32_t pC
     return originalEnemyHealth_CEnemyBaseDeathCallback(pCEnemyBase, Edx, a2);
 }
 
+HOOK(void, _fastcall, EnemyHealth_CEnemyBeeton_CStateReviveWaitEnd, 0x5F0390, Hedgehog::Universe::CTinyStateMachineBase::CStateBase* stateBase)
+{
+    uint32_t pCEnemyBase = (uint32_t)stateBase->m_pContext;
+    *(uint8_t*)(pCEnemyBase + 0x16F) = EnemyHealth::GetMaxHealth(pCEnemyBase);
+    originalEnemyHealth_CEnemyBeeton_CStateReviveWaitEnd(stateBase);
+}
+
 HOOK(void, __stdcall, EnemyHealth_CEnemyEggRobo_CStateReviveBegin, 0x602AF0, uint32_t pCEnemyBase)
 {
     *(uint8_t*)(pCEnemyBase + 0x16F) = EnemyHealth::GetMaxHealth(pCEnemyBase);
@@ -296,6 +303,7 @@ HOOK(bool, __fastcall, EnemyHealth_##enemyName##_ProcessMessage, address, hh::fn
     return originalEnemyHealth_##enemyName##_ProcessMessage(This, Edx, message, flag); \
 }
 
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyBeeton, 0xBDC180)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyEggRobo, 0xBB0220)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyELauncher, 0xB82B40)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyCrawler, 0xB99E10)
@@ -312,11 +320,13 @@ void EnemyHealth::applyPatches()
     INSTALL_HOOK(EnemyHealth_CEnemyBaseDeathCallback);
 
     // Individual enemy hooks
+    INSTALL_HOOK(EnemyHealth_CEnemyBeeton_ProcessMessage);
     INSTALL_HOOK(EnemyHealth_CEnemyEggRobo_ProcessMessage);
     INSTALL_HOOK(EnemyHealth_CEnemyELauncher_ProcessMessage);
     INSTALL_HOOK(EnemyHealth_CEnemyCrawler_ProcessMessage);
 
     // Reset health for FakeDead enemies
+    INSTALL_HOOK(EnemyHealth_CEnemyBeeton_CStateReviveWaitEnd);
     INSTALL_HOOK(EnemyHealth_CEnemyEggRobo_CStateReviveBegin);
 
     // Replace enemy's interactionType to regular enemy lock-on
@@ -330,6 +340,10 @@ float EnemyHealth::GetHealthOffset(uint32_t pCEnemyBase)
 { 
     switch (*(uint32_t*)pCEnemyBase)
     {
+    case 0x16F517C: // CEnemyBeeton
+    {
+        return 1.5f;
+    }
     case 0x16F7C9C: // CEnemyEggRobo
     {
         return 1.0f;
@@ -348,6 +362,10 @@ uint32_t EnemyHealth::GetMaxHealth(uint32_t pCEnemyBase)
 {
     switch (*(uint32_t*)pCEnemyBase)
     {
+    case 0x16F517C: // CEnemyBeeton
+    {
+        return *(bool*)(pCEnemyBase + 0x17C) ? 0u : 3u;
+    }
     case 0x16F7C9C: // CEnemyEggRobo
     {
         return *(bool*)(pCEnemyBase + 416) ? 0u : 2u;
