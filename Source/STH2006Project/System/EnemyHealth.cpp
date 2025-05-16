@@ -37,7 +37,6 @@ HOOK(void, __fastcall, EnemyHealth_CSonicStateHomingAttackAfterEnd, 0x11182F0)
     originalEnemyHealth_CSonicStateHomingAttackAfterEnd();
 }
 
-float const cEnemyHealth_healthBarYOffset = 1.0f;
 float const cEnemyHealth_noDamageCooldown = 0.1f;
 float const cEnemyHealth_hiddenTimer = 5.0f;
 
@@ -53,6 +52,7 @@ private:
     uint32_t m_attackerID = 0u;
     float m_damageCooldown = cEnemyHealth_noDamageCooldown;
     float m_hiddenTimer = cEnemyHealth_hiddenTimer;
+    float m_offset = 0.0f;
 
     uint8_t m_maxHP = 1u;
     uint8_t m_currentHP = 1u;
@@ -62,11 +62,13 @@ public:
     (
         uint32_t _targetID,
         uint32_t _attackerID,
+        float _offset,
         uint8_t _maxHP,
         uint8_t _currentHP
     )
         : m_targetID(_targetID)
         , m_attackerID(_attackerID)
+        , m_offset(_offset)
         , m_maxHP(_maxHP)
         , m_currentHP(_currentHP)
     {
@@ -166,7 +168,7 @@ public:
         }
 ;
         Eigen::Vector4f screenPosition;
-        Eigen::Vector4f position4(position.x(), position.y() + cEnemyHealth_healthBarYOffset, position.z(), 1.0f);
+        Eigen::Vector4f position4(position.x(), position.y() + m_offset, position.z(), 1.0f);
         Common::fGetScreenPosition(position4, screenPosition);
 
         auto spCamera = m_pMember->m_pWorld->GetCamera();
@@ -217,7 +219,14 @@ bool EnemyHealth_HandleMsgDamage(hh::fnd::CMessageActor* This, hh::fnd::Message&
             else
             {
                 Sonic::CObjectBase const* pObjectBase = (Sonic::CObjectBase*)pCEnemyBase;
-                data.m_spHealth = boost::make_shared<CObjHealth>(pObjectBase->m_ActorID, message.m_SenderActorID, EnemyHealth::GetMaxHealth(pCEnemyBase), *health);
+                data.m_spHealth = boost::make_shared<CObjHealth>
+                    (
+                        pObjectBase->m_ActorID, 
+                        message.m_SenderActorID, 
+                        EnemyHealth::GetHealthOffset(pCEnemyBase), 
+                        EnemyHealth::GetMaxHealth(pCEnemyBase), 
+                        *health
+                    );
                 Sonic::CGameDocument::GetInstance()->AddGameObject(data.m_spHealth);
             }
 
@@ -317,10 +326,22 @@ void EnemyHealth::applyPatches()
     WRITE_MEMORY(0xB8211B, uint32_t, 0x1E0AF24); // CEnemyELauncher
 }
 
-uint32_t EnemyHealth::GetHealthOffset(uint32_t pCEnemyBase)
-{
-    // TODO:
-    return 0u;
+float EnemyHealth::GetHealthOffset(uint32_t pCEnemyBase)
+{ 
+    switch (*(uint32_t*)pCEnemyBase)
+    {
+    case 0x16F7C9C: // CEnemyEggRobo
+    {
+        return 1.0f;
+    }
+    case 0x16FB1FC: // CEnemyELauncher
+    case 0x16F95CC: // CEnemyCrawler
+    {
+        return 2.0f;
+    }
+    }
+
+    return 0.0f;
 }
 
 uint32_t EnemyHealth::GetMaxHealth(uint32_t pCEnemyBase)
@@ -332,9 +353,6 @@ uint32_t EnemyHealth::GetMaxHealth(uint32_t pCEnemyBase)
         return *(bool*)(pCEnemyBase + 416) ? 0u : 2u;
     }
     case 0x16FB1FC: // CEnemyELauncher
-    {
-        return 3u;
-    }
     case 0x16F95CC: // CEnemyCrawler
     {
         return 3u;
