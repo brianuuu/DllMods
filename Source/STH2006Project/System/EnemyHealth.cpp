@@ -342,7 +342,7 @@ float EnemyHealth::GetHealthOffset(uint32_t pCEnemyBase)
     {
     case 0x16F517C: // CEnemyBeeton
     {
-        return 1.5f;
+        return 1.6f;
     }
     case 0x16F7C9C: // CEnemyEggRobo
     {
