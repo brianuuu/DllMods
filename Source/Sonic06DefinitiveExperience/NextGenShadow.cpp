@@ -582,17 +582,24 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
 
         if (message.IsAnimation(AnimationSetPatcher::ChaosAttackWait))
         {
+            // first attack triggered by pressing A
+            if (NextGenShadow::m_chaosAttackCount == 0 && isPressedA)
+            {
+                NextGenShadow::m_chaosAttackBuffered = true;
+            }
+
             bool const isChaosSnapSearch = (NextGenShadow::m_chaosSnapHoldSameTarget || isHoldingA) && NextGenShadow::m_chaosBoostLevel > 0 && NextGenShadow::m_chaosAttackCount > 0 && NextGenShadow::m_chaosAttackCount < 5 && !NextGenShadow::m_chaosAttackBuffered;
-            bool const nextAttackNotBuffered = NextGenShadow::m_chaosAttackCount > 0 && !NextGenShadow::m_chaosAttackBuffered;
+            bool const nextAttackNotBuffered = NextGenShadow::m_chaosAttackCount >= 0 && !NextGenShadow::m_chaosAttackBuffered;
             
             bool const isSameTarget = *(uint32_t*)((uint32_t)context + 0x1174) == context->m_HomingAttackTargetActorID;
             bool const quitHoldSameTarget = NextGenShadow::m_chaosSnapHoldSameTarget && isPressedA;
+            bool const isTimeout = This->m_Time >= cShadow_chaosAttackWaitTime;
 
             if (isChaosSnapSearch)
             {
                 originalNextGenShadow_HomingUpdate(context);
             }
-            else if (This->m_Time >= cShadow_chaosAttackWaitTime || nextAttackNotBuffered)
+            else if (nextAttackNotBuffered && (isTimeout || NextGenShadow::m_chaosAttackCount > 0))
             {
                 // timeout, resume original homing attack after
                 This->m_Time = 0.0f;
@@ -631,9 +638,9 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
 
             // Next attack
             bool useNextAttack = false;
-            useNextAttack |= NextGenShadow::m_chaosAttackCount == 0 && isPressedA; // first attack must press A to start
+            useNextAttack |= NextGenShadow::m_chaosAttackCount == 0 && NextGenShadow::m_chaosAttackBuffered && isTimeout; // first attack must wait full timer
             useNextAttack |= NextGenShadow::m_chaosAttackCount > 0 && NextGenShadow::m_chaosAttackBuffered; // next attacks can be buffered
-            useNextAttack |= NextGenShadow::m_chaosAttackCount == 0 && NextGenShadow::m_chaosBoostLevel > 0 && isHoldingA; // Chaos Snap immediately goes to next attack
+            useNextAttack |= NextGenShadow::m_chaosAttackCount == 0 && NextGenShadow::m_chaosBoostLevel > 0 && isHoldingA && !NextGenShadow::m_chaosAttackBuffered; // Chaos Snap immediately goes to next attack
             useNextAttack |= quitHoldSameTarget;
 
             if (isChaosSnapSearch && !quitHoldSameTarget && NextGenShadow::CheckChaosSnapTarget())
