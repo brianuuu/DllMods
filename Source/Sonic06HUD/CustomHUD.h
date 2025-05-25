@@ -59,6 +59,10 @@ public:
 	static void ScrollSonicGem(bool toRight, bool ignoreNone);
 	static void RestartSonicGem();
 	static void SetShadowChaosLevel(uint8_t level, float maturity);
+	static void SetGadgetMaxCount(int count);
+	static void SetGadgetCount(int count, int maxCount);
+	static void SetGadgetHP(float hp);
+	static void UpdateGadgetHPPosition();
 	static void PlayInfoHUD(bool intro, bool instantStart);
 
 	// Pause

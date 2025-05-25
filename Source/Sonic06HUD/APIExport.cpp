@@ -32,3 +32,18 @@ extern "C" __declspec(dllexport) void API_SetShadowChaosLevel(uint8_t level, flo
 {
 	CustomHUD::SetShadowChaosLevel(level, maturity);
 }
+
+extern "C" __declspec(dllexport) void API_SetGadgetMaxCount(int count)
+{
+	CustomHUD::SetGadgetMaxCount(count);
+}
+
+extern "C" __declspec(dllexport) void API_SetGadgetCount(int count, int maxCount)
+{
+	CustomHUD::SetGadgetCount(count, maxCount);
+}
+
+extern "C" __declspec(dllexport) void API_SetGadgetHP(float hp)
+{
+	CustomHUD::SetGadgetHP(hp);
+}

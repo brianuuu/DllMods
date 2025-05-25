@@ -90,6 +90,13 @@ Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectCountdown;
 boost::shared_ptr<Sonic::CGameObjectCSD> m_spCountdown;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneCountdown;
 
+Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectGadget;
+boost::shared_ptr<Sonic::CGameObjectCSD> m_spGadget;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneGadgetBar;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneGadgetHP;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneGadgetBG;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneGadgetText;
+
 bool CustomHUD::m_scoreEnabled = false;
 float CustomHUD::m_missionMaxTime = 0.0f;
 CustomHUD::SonicGemType CustomHUD::m_sonicGemType = SGT_COUNT;
@@ -109,6 +116,7 @@ void __fastcall CustomHUD::CHudSonicStageRemoveCallback(Sonic::CGameObject* This
 {
     KillScreen(m_spPlayScreen);
     KillScreen(m_spCountdown);
+    KillScreen(m_spGadget);
 
     Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneLifeCount);
     Chao::CSD::CProject::DestroyScene(m_projectPlayScreen.Get(), m_sceneLifeBG);
@@ -130,8 +138,14 @@ void __fastcall CustomHUD::CHudSonicStageRemoveCallback(Sonic::CGameObject* This
 
     Chao::CSD::CProject::DestroyScene(m_projectCountdown.Get(), m_sceneCountdown);
 
+    Chao::CSD::CProject::DestroyScene(m_projectGadget.Get(), m_sceneGadgetBar);
+    Chao::CSD::CProject::DestroyScene(m_projectGadget.Get(), m_sceneGadgetHP);
+    Chao::CSD::CProject::DestroyScene(m_projectGadget.Get(), m_sceneGadgetBG);
+    Chao::CSD::CProject::DestroyScene(m_projectGadget.Get(), m_sceneGadgetText);
+
     m_projectPlayScreen = nullptr;
     m_projectCountdown = nullptr;
+    m_projectGadget = nullptr;
 }
 
 void CustomHUD::ScrollSonicGem(bool toRight, bool ignoreNone)
@@ -226,6 +240,68 @@ void CustomHUD::SetShadowChaosLevel(uint8_t level, float maturity)
     m_sceneCustomBar->SetMotionFrame(min(100.0f, maturity));
 }
 
+void CustomHUD::SetGadgetMaxCount(int count)
+{
+    if (!m_sceneGadgetBar || !m_sceneGadgetBG || !m_sceneGadgetHP || !m_sceneGadgetText)
+    {
+        return;
+    }
+
+    auto fnPlayGadget = [&count](Chao::CSD::RCPtr<Chao::CSD::CScene>& scene)
+    {
+        scene->SetMotion("DefaultAnim");
+        scene->SetHideFlag(false);
+        scene->SetMotionFrame(count == 0 ? scene->m_MotionEndFrame : 0.0f);
+        scene->m_MotionSpeed = count == 0 ? -1.0f : 1.0f;
+        scene->m_MotionDisableFlag = false;
+        scene->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
+        *(uint32_t*)((uint32_t)scene.Get() + 0xB4) = 0; // this stops the reverse animation
+        scene->Update();
+    };
+
+    fnPlayGadget(m_sceneGadgetBar);
+    fnPlayGadget(m_sceneGadgetBG);
+    fnPlayGadget(m_sceneGadgetText);
+    SetGadgetCount(count, count);
+    SetGadgetHP(100.0f);
+    UpdateGadgetHPPosition();
+}
+
+void CustomHUD::SetGadgetCount(int count, int maxCount)
+{
+    if (!m_sceneGadgetText || maxCount == 0)
+    {
+        return;
+    }
+
+    std::string str = std::to_string(count) + "/" + std::to_string(maxCount);
+    m_sceneGadgetText->GetNode("missile_text")->SetText(str.c_str());
+}
+
+void CustomHUD::SetGadgetHP(float hp)
+{
+    if (!m_sceneGadgetHP)
+    {
+        return;
+    }
+
+    m_sceneGadgetHP->SetHideFlag(false);
+    m_sceneGadgetHP->m_MotionSpeed = 0.0f;
+    m_sceneGadgetHP->SetMotionFrame(hp);
+}
+
+void CustomHUD::UpdateGadgetHPPosition()
+{
+    if (!m_sceneGadgetHP)
+    {
+        return;
+    }
+
+    // HP doesn't have animation to move in/out
+    float x = 1300.0f - m_sceneGadgetBar->m_MotionFrame * 45.8f;
+    m_sceneGadgetHP->GetNode("bar")->SetPosition(x + 13.0f, 556.0f);
+}
+
 HOOK(int, __fastcall, CustomHUD_MsgRestartStage, 0x1096A40, uint32_t* This, void* Edx, void* message)
 {
     CustomHUD::RestartSonicGem();
@@ -257,6 +333,7 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
     Sonic::CCsdDatabaseWrapper wrapper(This->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
     m_projectPlayScreen = wrapper.GetCsdProject(playScreenName.c_str())->m_rcProject;
     m_projectCountdown = wrapper.GetCsdProject("time")->m_rcProject;
+    m_projectGadget = wrapper.GetCsdProject("gadget_bar")->m_rcProject;
 
     size_t& flags = ((size_t*)This)[151];
 
@@ -412,6 +489,7 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
         m_sceneCustomLevel->GetNode("custom_level")->SetPatternIndex(0);
     }
 
+    // boss health bar
     if (Common::IsCurrentStageBoss() && (Common::GetCurrentStageID() & 0xFF) != SMT_bsd)
     {
         m_sceneBossBG = m_projectPlayScreen->CreateScene("boss_gauge");
@@ -421,6 +499,16 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
 
     // Mask to prevent crash when game tries accessing the elements we disabled later on
     flags &= ~(0x1 | 0x2 | 0x4 | 0x200 | 0x800 | 0x400000);
+
+    // 06 vehicle
+    m_sceneGadgetBar = m_projectGadget->CreateScene("gadgetbar");
+    m_sceneGadgetHP = m_projectGadget->CreateScene("gadgetbar_anime");
+    m_sceneGadgetBG = m_projectGadget->CreateScene("gadgetbar_ue");
+    m_sceneGadgetText = m_projectGadget->CreateScene("icon_text");
+    m_sceneGadgetBar->SetHideFlag(true);
+    m_sceneGadgetHP->SetHideFlag(true);
+    m_sceneGadgetBG->SetHideFlag(true);
+    m_sceneGadgetText->SetHideFlag(true);
 }
 
 void __declspec(naked) CustomHUD_GetScoreEnabled()
@@ -455,6 +543,7 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageUpdate, 0x1098A50, Sonic::CGameOb
 
     CustomHUD::ToggleScreen(m_projectPlayScreen, m_spPlayScreen, "HUD_B1", false, This);
     CustomHUD::ToggleScreen(m_projectCountdown, m_spCountdown, "HUD", false, This);
+    CustomHUD::ToggleScreen(m_projectGadget, m_spGadget, "HUD_B1", false, This);
 
     if (!m_spPlayScreen)
     {
@@ -554,6 +643,8 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageUpdate, 0x1098A50, Sonic::CGameOb
             m_sceneCountdown->m_MotionDisableFlag = false;
         }
     }
+
+    CustomHUD::UpdateGadgetHPPosition();
 }
 
 HOOK(void, __fastcall, CustomHUD_MsgSetPinballHud, 0x1095D40, Sonic::CGameObject* This, void* Edx, MsgSetPinballHud const* message)

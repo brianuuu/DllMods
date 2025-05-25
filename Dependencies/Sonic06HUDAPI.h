@@ -24,6 +24,9 @@ private:
 	LIB_FUNCTION(void, "Sonic06HUD.dll", API_SetSonicGemEnabled, SonicGemType type, bool enabled);
 	LIB_FUNCTION(void, "Sonic06HUD.dll", API_CloseCaptionWindow);
 	LIB_FUNCTION(void, "Sonic06HUD.dll", API_SetShadowChaosLevel, uint8_t level, float maturity);
+	LIB_FUNCTION(void, "Sonic06HUD.dll", API_SetGadgetMaxCount, int count);
+	LIB_FUNCTION(void, "Sonic06HUD.dll", API_SetGadgetCount, int count, int maxCount);
+	LIB_FUNCTION(void, "Sonic06HUD.dll", API_SetGadgetHP, float hp);
 
 public:
     static S06HUD_API* GetInstance()
@@ -60,5 +63,20 @@ public:
 	static void SetShadowChaosLevel(uint8_t level, float maturity)
 	{
 		VOID_EXPORT(API_SetShadowChaosLevel, level, maturity);
+	}
+
+	static void SetGadgetMaxCount(int count)
+	{
+		VOID_EXPORT(API_SetGadgetMaxCount, count);
+	}
+
+	static void SetGadgetCount(int count, int maxCount)
+	{
+		VOID_EXPORT(API_SetGadgetCount, count, maxCount);
+	}
+
+	static void SetGadgetHP(float hp)
+	{
+		VOID_EXPORT(API_SetGadgetHP, hp);
 	}
 };
