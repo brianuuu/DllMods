@@ -192,6 +192,7 @@ bool JumpChain::ProcessMessage
 	if (message.Is<Sonic::Message::MsgExitedExternalControl>())
 	{
 		// got interrupted (damage etc.)
+		m_playerID = 0;
 		m_state = (int)State::Idle;
 		return true;
 	}
