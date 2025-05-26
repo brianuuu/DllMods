@@ -5,7 +5,7 @@
 #define DEG_TO_RAD PI_F / 180.0f
 #define RAD_TO_DEG 180.0f / PI_F
 
-#define DEBUG_VECTOR3(vec3) vec3.x(),vec3.y(),vec3.z()
+#define DEBUG_VECTOR3(vec3) printf("%.2f, %.2f, %.2f\n",vec3.x(),vec3.y(),vec3.z());
 
 typedef void CSonicContext;
 CSonicContext** const PLAYER_CONTEXT = (CSonicContext**)0x1E5E2F0;
