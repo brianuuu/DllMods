@@ -532,6 +532,18 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationDataSuper.emplace_back(ChaosBlastWaitLoop, "sh_chaosblast_wait_l_Root", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back(ChaosBlast, "sh_chaosblast_attack_s_Root", 1.0f, false, ChaosBlastLoop);
         m_newAnimationDataSuper.emplace_back(ChaosBlastLoop, "sh_chaosblast_attack_l_Root", 1.0f, true, nullptr);
+    
+        // Vehicles
+        m_newAnimationData.emplace_back("Glider", "sh_gldr_ride_l", 1.0f, true, nullptr);
+        m_newAnimationData.emplace_back("GliderL", "sh_gldr_rideL_l_Root", 1.0f, true, nullptr);
+        m_newAnimationData.emplace_back("GliderR", "sh_gldr_rideR_l_Root", 1.0f, true, nullptr);
+        m_newAnimationData.emplace_back("GliderU", "sh_gldr_rideU_l_Root", 1.0f, true, nullptr);
+        m_newAnimationData.emplace_back("GliderD", "sh_gldr_rideD_l_Root", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("Glider", "sh_gldr_ride_l", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GliderL", "sh_gldr_rideL_l_Root", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GliderR", "sh_gldr_rideR_l_Root", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GliderU", "sh_gldr_rideU_l_Root", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("GliderD", "sh_gldr_rideD_l_Root", 1.0f, true, nullptr);
     }
 
     if (!m_newAnimationData.empty())
