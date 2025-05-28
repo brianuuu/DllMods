@@ -262,8 +262,11 @@ void CustomHUD::SetGadgetMaxCount(int count)
     fnPlayGadget(m_sceneGadgetBar);
     fnPlayGadget(m_sceneGadgetBG);
     fnPlayGadget(m_sceneGadgetText);
-    SetGadgetCount(count, count);
-    SetGadgetHP(100.0f);
+    if (count > 0)
+    {
+        SetGadgetCount(count, count);
+        SetGadgetHP(100.0f);
+    }
     UpdateGadgetHPPosition();
 }
 
