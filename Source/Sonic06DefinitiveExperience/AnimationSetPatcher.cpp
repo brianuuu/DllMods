@@ -46,10 +46,20 @@ HOOK(void*, __cdecl, InitializeSonicAnimationList, 0x1272490)
     return pResult;
 }
 
-HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* Edx, void* A2, void* A3)
+HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* Edx, Sonic::CAnimationStateMachine* A2, void* A3)
 {
     AnimationSetPatcher::createAnimationState(A2, AnimationSetPatcher::m_newAnimationData);
     originalCSonicCreateAnimationStates(This, Edx, A2, A3);
+
+    if (Configuration::m_model == Configuration::ModelType::Shadow)
+    {
+        A2->SetAnimationBlend("Glider", "GliderL", 0.2f);
+        A2->SetAnimationBlend("Glider", "GliderR", 0.2f);
+        A2->SetAnimationBlend("GliderL", "Glider", 0.2f);
+        A2->SetAnimationBlend("GliderR", "Glider", 0.2f);
+        A2->SetAnimationBlend("GliderR", "GliderL", 0.2f);
+        A2->SetAnimationBlend("GliderL", "GliderR", 0.2f);
+    }
 }
 
 //---------------------------------------------------
@@ -537,13 +547,9 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationData.emplace_back("Glider", "sh_gldr_ride_l", 1.0f, true, nullptr);
         m_newAnimationData.emplace_back("GliderL", "sh_gldr_rideL_l_Root", 1.0f, true, nullptr);
         m_newAnimationData.emplace_back("GliderR", "sh_gldr_rideR_l_Root", 1.0f, true, nullptr);
-        m_newAnimationData.emplace_back("GliderU", "sh_gldr_rideU_l_Root", 1.0f, true, nullptr);
-        m_newAnimationData.emplace_back("GliderD", "sh_gldr_rideD_l_Root", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("Glider", "sh_gldr_ride_l", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("GliderL", "sh_gldr_rideL_l_Root", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("GliderR", "sh_gldr_rideR_l_Root", 1.0f, true, nullptr);
-        m_newAnimationDataSuper.emplace_back("GliderU", "sh_gldr_rideU_l_Root", 1.0f, true, nullptr);
-        m_newAnimationDataSuper.emplace_back("GliderD", "sh_gldr_rideD_l_Root", 1.0f, true, nullptr);
     }
 
     if (!m_newAnimationData.empty())
