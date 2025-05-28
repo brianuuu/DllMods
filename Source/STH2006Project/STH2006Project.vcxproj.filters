@@ -71,6 +71,7 @@
     <ClCompile Include="Utils\tinyxml2.cpp" />
     <ClCompile Include="Utils\Window.cpp" />
     <ClCompile Include="System\EnemyHealth.cpp" />
+    <ClCompile Include="Objects\vehicles\GadgetGlider.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -113,6 +114,7 @@
     <ClInclude Include="Utils\tinyxml2.h" />
     <ClInclude Include="Utils\Window.h" />
     <ClInclude Include="System\EnemyHealth.h" />
+    <ClInclude Include="Objects\vehicles\GadgetGlider.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">

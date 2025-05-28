@@ -9,6 +9,8 @@
 #include "cmn/Laser.h"
 #include "cmn/UpDownReel.h"
 
+#include "vehicles/GadgetGlider.h"
+
 void NextGenObjects::applyPatches()
 {
     // Ring
@@ -91,7 +93,7 @@ void NextGenObjects::applyPatches()
     // 06 itembox
     Itembox::applyPatches();
 
-    // New Set Objects
+    // cmn
     BallSwitch::registerObject();
     Cage::registerObject();
     Guillotine::registerObject();
@@ -99,4 +101,7 @@ void NextGenObjects::applyPatches()
     JumpChain::registerObject();
     Laser::registerObject();
     UpDownReel::registerObject();
+
+    // vehicles
+    GadgetGlider::registerObject();
 }
