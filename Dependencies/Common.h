@@ -5,6 +5,7 @@
 #define DEG_TO_RAD PI_F / 180.0f
 #define RAD_TO_DEG 180.0f / PI_F
 
+#define DEBUG_VECTOR2(vec2) printf("%.2f, %.2f\n",vec2.x(),vec2.y());
 #define DEBUG_VECTOR3(vec3) printf("%.2f, %.2f, %.2f\n",vec3.x(),vec3.y(),vec3.z());
 
 typedef void CSonicContext;
@@ -1937,6 +1938,26 @@ static void CopyCCsdProject
 		mov		eax, pCsdProject
 		call	[pCopyCCsdProject]
 	}
+}
+
+inline void ToggleRigidBodyCollision(Sonic::CRigidBody* This, bool enabled)
+{
+	if (enabled)
+	{
+		FUNCTION_PTR(void, __thiscall, fpEnableCollision, 0x10C0F90, Sonic::CRigidBody* This, Sonic::CPhysicsWorld* pWorld);
+		fpEnableCollision(This, This->m_pPhysicsWorld);
+	}
+	else
+	{
+		FUNCTION_PTR(void, __thiscall, fpDisableCollision, 0x10C0F40, Sonic::CRigidBody* This, Sonic::CPhysicsWorld* pWorld);
+		fpDisableCollision(This, This->m_pPhysicsWorld);
+	}
+}
+
+inline uint32_t MakeCollisionID(uint64_t self, uint64_t other)
+{
+	FUNCTION_PTR(uint32_t, __cdecl, fpMakeCollisionID, 0x10DFB30, int a1, int a2, bool a3, uint64_t self, uint64_t other);
+	return fpMakeCollisionID(0, 0, true, self, other);
 }
 
 static void* ObjectPlaySound

@@ -208,8 +208,7 @@ void Laser::LaserOff(bool bypassOffCheck)
 		Common::ObjectPlaySound(this, 200600015, sfx);
 	}
 
-	FUNCTION_PTR(void, __thiscall, fpDisableCollision, 0x10C0F40, Sonic::CRigidBody* This, Sonic::CPhysicsWorld* pWorld);
-	fpDisableCollision(m_spRigidBody.get(), m_spRigidBody->m_pPhysicsWorld);
+	Common::ToggleRigidBodyCollision(m_spRigidBody.get(), false);
 	Common::ObjectDisableEventCollision(m_spEventCollisionHolder.get());
 
 	for (int i = 0; i < m_Data.m_Number; i++)
@@ -226,8 +225,7 @@ void Laser::LaserOn()
 
 	Common::ObjectPlaySound(this, m_Data.m_IsMoving ? 200600016 : 200600014, m_loopSfx);
 
-	FUNCTION_PTR(void, __thiscall, fpEnableCollision, 0x10C0F90, Sonic::CRigidBody* This, Sonic::CPhysicsWorld* pWorld);
-	fpEnableCollision(m_spRigidBody.get(), m_spRigidBody->m_pPhysicsWorld);
+	Common::ToggleRigidBodyCollision(m_spRigidBody.get(), true);
 	Common::ObjectEnableEventCollision(m_spEventCollisionHolder.get());
 
 	for (int i = 0; i < m_Data.m_Number; i++)
