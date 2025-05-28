@@ -6,6 +6,7 @@
 
 #pragma once
 class GadgetGlider : public Sonic::CObjectBase, public Sonic::CSetObjectListener
+	, public Sonic::IAnimationContext, public Sonic::CAnimationStateMachine
 {
 public:
 	BB_SET_OBJECT_MAKE("GadgetGlider");
@@ -45,6 +46,7 @@ private:
 
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModelBase;
 	boost::shared_ptr<Sonic::CRigidBody> m_spRigidBody;
+	boost::shared_ptr<hh::anim::CAnimationPose> m_spAnimPose;
 
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModelBoosterL;
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModelBoosterR;
@@ -61,6 +63,11 @@ public:
 	void DeathCallback(Sonic::CGameDocument* in_pGameDocument) override;
 	void SetUpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo) override;
 	bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;
+
+	// from IAnimationContext
+	Hedgehog::Animation::CAnimationPose* GetAnimationPose() override { return m_spAnimPose.get(); }
+	Hedgehog::Math::CVector GetVelocityForAnimationSpeed() override { return hh::math::CVector::Ones(); }
+	Hedgehog::Math::CVector GetVelocityForAnimationChange() override { return hh::math::CVector::Ones(); }
 
 private:
 	bool IsValidPlayer() const;

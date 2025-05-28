@@ -31,11 +31,26 @@ bool GadgetGlider::SetAddRenderables
 	hh::mr::CMirageDatabaseWrapper wrapper(in_spDatabase.get());
 
 	// base
-	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData("Gadget_Glider", 0);
+	char const* modelName = "Gadget_Glider";
+	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData(modelName, 0);
 	m_spModelBase = boost::make_shared<hh::mr::CSingleElement>(spModelBaseData);
 	m_spModelBase->BindMatrixNode(m_spMatrixNodeTransform);
 	Sonic::CGameObject::AddRenderable("Object", m_spModelBase, m_pMember->m_CastShadow);
 
+	// animations
+	m_spAnimPose = boost::make_shared<Hedgehog::Animation::CAnimationPose>(in_spDatabase, modelName);
+	std::vector<hh::anim::SMotionInfo> entries = std::vector<hh::anim::SMotionInfo>(0, { "","" });
+	entries.push_back(hh::anim::SMotionInfo("Loop", modelName, 1.0f, hh::anim::eMotionRepeatType_Loop));
+	m_spAnimPose->AddMotionInfo(&entries.front(), entries.size());
+	m_spAnimPose->CreateAnimationCache();
+	m_spModelBase->BindPose(m_spAnimPose);
+
+	// states
+	SetContext(this);
+	AddAnimationState("Loop");
+	ChangeState("Loop");
+
+	// boosters
 	boost::shared_ptr<hh::mr::CModelData> spModelBoosterData = wrapper.GetModelData("Gadget_Glider_Booster", 0);
 	auto const attachNodeL = m_spModelBase->GetNode("Booster_L");
 	auto const attachNodeR = m_spModelBase->GetNode("Booster_R");
@@ -50,6 +65,7 @@ bool GadgetGlider::SetAddRenderables
 	Sonic::CGameObject::AddRenderable("Object", m_spModelBoosterL, m_pMember->m_CastShadow);
 	Sonic::CGameObject::AddRenderable("Object", m_spModelBoosterR, m_pMember->m_CastShadow);
 
+	// external control
 	auto const attachNode = m_spModelBase->GetNode("Charapoint");
 	m_spSonicControlNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
 	m_spSonicControlNode->SetParent(attachNode.get());
@@ -109,6 +125,9 @@ void GadgetGlider::SetUpdateParallel
 )
 {
 	if (!m_started) return;
+
+	// counterweight animation
+	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime * m_speed * 0.4f);
 
 	// helper function
 	auto fnAccel = [&in_rUpdateInfo](float& value, float target, float accel)
