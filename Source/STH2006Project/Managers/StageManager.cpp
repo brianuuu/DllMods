@@ -651,11 +651,6 @@ public:
             Kill();
         }
     }
-
-    void Kill()
-    {
-        SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
-    }
 };
 
 HOOK(void, __stdcall, StageManager_PhysicsReward, 0xEA49B0, uint32_t This, int a2, void* a3, bool a4)
