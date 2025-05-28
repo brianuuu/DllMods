@@ -21,8 +21,6 @@ public:
 	};
 
 private:
-	BB_INSERT_PADDING(0xC); // 0x104, set 0x10F in sub_1002580
-
 	struct Data 
 	{
 		Sonic::CParamTargetList* m_TargetListOFF = nullptr;
