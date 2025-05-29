@@ -6,14 +6,11 @@ bool GadgetGliderGun::SetAddRenderables
 	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
 )
 {
-	// set initial transform
-	UpdateTransform();
-
 	// model
 	hh::mr::CMirageDatabaseWrapper wrapper(in_spDatabase.get());
 	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData(m_modelName.c_str(), 0);
 	m_spModel = boost::make_shared<hh::mr::CSingleElement>(spModelBaseData);
-	m_spModel->BindMatrixNode(m_spMatrixNodeTransform);
+	m_spModel->BindMatrixNode(m_spNodeParent);
 	Sonic::CGameObject::AddRenderable("Object", m_spModel, m_pMember->m_CastShadow);
 
 	// animations
@@ -31,6 +28,9 @@ bool GadgetGliderGun::SetAddRenderables
 	AddAnimationState("Load");
 	AddAnimationState("Fire");
 	ChangeState("Load");
+
+	// set initial transform
+	UpdateTransform();
 
 	return true;
 }
@@ -94,6 +94,7 @@ void GadgetGliderGun::UpdateParallel
 
 	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
 	Update(in_rUpdateInfo);
+	UpdateTransform();
 }
 
 bool GadgetGliderGun::IsLoaded()
@@ -112,6 +113,7 @@ void GadgetGliderGun::FireMissile()
 
 void GadgetGliderGun::UpdateTransform()
 {
+	// follow attach point so sound can work
 	m_spMatrixNodeTransform->m_Transform.m_Matrix = m_spNodeParent->GetWorldMatrix();
 	m_spMatrixNodeTransform->m_Transform.m_Position = m_spNodeParent->GetWorldMatrix().translation();
 	m_spMatrixNodeTransform->NotifyChanged();
@@ -247,10 +249,6 @@ void GadgetGlider::SetUpdateParallel
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
 )
 {
-	// gun positions
-	m_spGunL->UpdateTransform();
-	m_spGunR->UpdateTransform();
-
 	if (!m_started) return;
 
 	// counterweight animation
