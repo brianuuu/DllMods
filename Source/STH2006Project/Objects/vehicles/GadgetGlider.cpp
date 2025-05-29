@@ -1,10 +1,127 @@
 #include "GadgetGlider.h"
 
+bool GadgetGliderGun::SetAddRenderables
+(
+	Sonic::CGameDocument* in_pGameDocument, 
+	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
+)
+{
+	// set initial transform
+	UpdateTransform();
+
+	// model
+	hh::mr::CMirageDatabaseWrapper wrapper(in_spDatabase.get());
+	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData(m_modelName.c_str(), 0);
+	m_spModel = boost::make_shared<hh::mr::CSingleElement>(spModelBaseData);
+	m_spModel->BindMatrixNode(m_spMatrixNodeTransform);
+	Sonic::CGameObject::AddRenderable("Object", m_spModel, m_pMember->m_CastShadow);
+
+	// animations
+	m_spAnimPose = boost::make_shared<Hedgehog::Animation::CAnimationPose>(in_spDatabase, m_modelName.c_str());
+	std::vector<hh::anim::SMotionInfo> entries = std::vector<hh::anim::SMotionInfo>(0, { "","" });
+	std::string const revName = m_modelName + "_rev";
+	entries.push_back(hh::anim::SMotionInfo("Load", m_modelName.c_str(), 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
+	entries.push_back(hh::anim::SMotionInfo("Fire", revName.c_str(), 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
+	m_spAnimPose->AddMotionInfo(&entries.front(), entries.size());
+	m_spAnimPose->CreateAnimationCache();
+	m_spModel->BindPose(m_spAnimPose);
+
+	// states
+	SetContext(this);
+	AddAnimationState("Load");
+	AddAnimationState("Fire");
+	ChangeState("Load");
+
+	return true;
+}
+
+bool GadgetGliderGun::ProcessMessage
+(
+	Hedgehog::Universe::Message& message,
+	bool flag
+)
+{
+	if (flag)
+	{
+		if (message.Is<Sonic::Message::MsgNotifyObjectEvent>())
+		{
+			auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
+			switch (msg.m_Event)
+			{
+			case 6: 
+			{
+				m_started = true;
+				break;
+			}
+			case 0:
+			{
+				FireMissile();
+				break;
+			}
+			}
+			return true;
+		}
+	}
+
+	return Sonic::CGameObject3D::ProcessMessage(message, flag);
+}
+
+float const c_gliderReloadTime = 1.0f;
+
+void GadgetGliderGun::UpdateParallel
+(
+	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
+)
+{
+	if (!m_started) return;
+
+	if (m_loadTimer > 0.0f)
+	{
+		if (GetCurrentState()->GetStateName() != "Fire")
+		{
+			ChangeState("Fire");
+		}
+
+		m_loadTimer = max(0.0f, m_loadTimer - in_rUpdateInfo.DeltaTime);
+		if (m_loadTimer == 0.0f)
+		{
+			ChangeState("Load");
+
+			SharedPtrTypeless sfx;
+			Common::ObjectPlaySound(this, 200612005, sfx);
+		}
+	}
+
+	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
+	Update(in_rUpdateInfo);
+}
+
+bool GadgetGliderGun::IsLoaded()
+{
+	return m_loadTimer <= 0.0f && GetCurrentState()->GetStateName() == "Load" && Common::IsAnimationFinished(this);
+}
+
+void GadgetGliderGun::FireMissile()
+{
+	if (m_loadTimer > 0.0f) return;
+	m_loadTimer = c_gliderReloadTime;
+
+	SharedPtrTypeless sfx;
+	Common::ObjectPlaySound(this, 200612006, sfx);
+}
+
+void GadgetGliderGun::UpdateTransform()
+{
+	m_spMatrixNodeTransform->m_Transform.m_Matrix = m_spNodeParent->GetWorldMatrix();
+	m_spMatrixNodeTransform->m_Transform.m_Position = m_spNodeParent->GetWorldMatrix().translation();
+	m_spMatrixNodeTransform->NotifyChanged();
+}
+
 BB_SET_OBJECT_MAKE_HOOK(GadgetGlider)
 void GadgetGlider::registerObject()
 {
 	BB_INSTALL_SET_OBJECT_MAKE_HOOK(GadgetGlider);
-	WRITE_NOP(0xB6B40F, 2);
+	WRITE_NOP(0xB6B40F, 2); // TODO: enemy projectile damage all
 }
 
 GadgetGlider::~GadgetGlider()
@@ -65,6 +182,14 @@ bool GadgetGlider::SetAddRenderables
 	Sonic::CGameObject::AddRenderable("Object", m_spModelBoosterL, m_pMember->m_CastShadow);
 	Sonic::CGameObject::AddRenderable("Object", m_spModelBoosterR, m_pMember->m_CastShadow);
 
+	// Guns
+	auto const attachNodeGunL = m_spModelBase->GetNode("GunUnder_L");
+	m_spGunL = boost::make_shared<GadgetGliderGun>("Gadget_Glider_GunL", attachNodeGunL);
+	in_pGameDocument->AddGameObject(m_spGunL, "main", this);
+	auto const attachNodeGunR = m_spModelBase->GetNode("GunUnder_R");
+	m_spGunR = boost::make_shared<GadgetGliderGun>("Gadget_Glider_GunR", attachNodeGunR);
+	in_pGameDocument->AddGameObject(m_spGunR, "main", this);
+
 	// external control
 	auto const attachNode = m_spModelBase->GetNode("Charapoint");
 	m_spSonicControlNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
@@ -101,15 +226,13 @@ bool GadgetGlider::SetAddColliders
 	return true;
 }
 
-void GadgetGlider::DeathCallback(Sonic::CGameDocument* in_pGameDocument)
+void GadgetGlider::KillCallback()
 {
 	if (m_playerID)
 	{
 		SendMessageImm(m_playerID, Sonic::Message::MsgFinishExternalControl(Sonic::Message::MsgFinishExternalControl::EChangeState::FALL));
 		S06HUD_API::SetGadgetMaxCount(0);
 	}
-
-	Sonic::CObjectBase::DeathCallback(in_pGameDocument);
 }
 
 float const c_gliderAccel = 10.0f;
@@ -124,6 +247,10 @@ void GadgetGlider::SetUpdateParallel
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
 )
 {
+	// gun positions
+	m_spGunL->UpdateTransform();
+	m_spGunR->UpdateTransform();
+
 	if (!m_started) return;
 
 	// counterweight animation
@@ -142,10 +269,31 @@ void GadgetGlider::SetUpdateParallel
 		}
 	};
 
-	float currentMaxSpeed = c_gliderMaxSpeed;
 
 	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+
+	// fire missiles
+	if (m_playerID)
+	{
+		bool const rLoaded = m_spGunR->IsLoaded();
+		bool const lLoaded = m_spGunL->IsLoaded();
+		S06HUD_API::SetGadgetCount(rLoaded + lLoaded, 2);
+		if (padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger))
+		{
+			if (rLoaded)
+			{
+				SendMessage(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(0));
+			}
+			else if (lLoaded)
+			{
+				SendMessage(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(0));
+			}
+		}
+	}
+
+	// boost max speed
+	float currentMaxSpeed = c_gliderMaxSpeed;
 	if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_A))
 	{
 		currentMaxSpeed = c_gliderBoostSpeed;
@@ -302,7 +450,11 @@ bool GadgetGlider::IsValidPlayer() const
 void GadgetGlider::BeginFlight()
 {
 	if (m_started) return;
+
 	m_started = true;
+	SendMessage(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+	SendMessage(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+
 	m_splinePos = m_spMatrixNodeTransform->m_Transform.m_Position;
 	m_rotation = m_spMatrixNodeTransform->m_Transform.m_Rotation;
 
@@ -329,6 +481,7 @@ void GadgetGlider::BeginFlight()
 
 void GadgetGlider::TakeDamage(float amount)
 {
+	std::lock_guard guard(m_mutex);
 	if (!m_playerID) return;
 
 	SharedPtrTypeless sfx;
@@ -397,5 +550,3 @@ std::string GadgetGlider::GetAnimationName() const
 	default: return "Glider";
 	}
 }
-
-

@@ -1393,6 +1393,19 @@ static bool IsPlayerAnimationFinished
 	}
 }
 
+static bool IsAnimationFinished
+(
+	Sonic::CAnimationStateMachine* pStateMachine
+)
+{
+	static void* const pfIsPlayerAnimationFinished = (void*)0xCDF4C0;
+	__asm
+	{
+		mov     esi, pStateMachine
+		call	[pfIsPlayerAnimationFinished]
+	}
+}
+
 inline bool IsAtLoadingScreen()
 {
 	uint32_t** hudCount = (uint32_t**)0x1E66B40;
