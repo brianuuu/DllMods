@@ -82,6 +82,8 @@ private:
 
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModelBase;
 	boost::shared_ptr<Sonic::CRigidBody> m_spRigidBody;
+	boost::shared_ptr<Sonic::CRigidBody> m_spRigidBodyMove;
+	boost::shared_ptr<Sonic::CRigidBody> m_spRigidBodyCockpit;
 	boost::shared_ptr<hh::anim::CAnimationPose> m_spAnimPose;
 
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModelBoosterL;
@@ -89,6 +91,7 @@ private:
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeBoosterL;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeBoosterR;
 
+	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeCockpit;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spSonicControlNode;
 

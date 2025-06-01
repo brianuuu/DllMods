@@ -220,9 +220,20 @@ bool GadgetGlider::SetAddColliders
 	uint32_t const typeEnemy = *(uint32_t*)0x1E5E7E8;
 	uint32_t const typeBreakable = *(uint32_t*)0x1E5E77C;
 	uint32_t const typeTerrain = *(uint32_t*)0x1E5E754;
+	uint32_t const typeInsulate = *(uint32_t*)0x1E5E780;
 	uint64_t const bitfield = (1llu << typeEnemy) | (1llu << typeBreakable) | (1llu << typeTerrain);
+	uint32_t const damageID = Common::MakeCollisionID(0, bitfield);
 	hk2010_2_0::hkpBoxShape* bodyEventTrigger = new hk2010_2_0::hkpBoxShape(4.9f, 0.7f, 2.0f);
-	AddEventCollision("Attack", bodyEventTrigger, Common::MakeCollisionID(0, bitfield), true, m_spMatrixNodeTransform);
+	AddEventCollision("Attack", bodyEventTrigger, damageID, true, m_spMatrixNodeTransform);
+	AddRigidBody(m_spRigidBodyMove, bodyEventTrigger, Common::MakeCollisionID((1llu << typeInsulate), 0), m_spMatrixNodeTransform);
+
+	m_spNodeCockpit = boost::make_shared<Sonic::CMatrixNodeTransform>();
+	m_spNodeCockpit->m_Transform.SetPosition(hh::math::CVector(0.0f, -0.6f, 0.0f));
+	m_spNodeCockpit->NotifyChanged();
+	m_spNodeCockpit->SetParent(m_spMatrixNodeTransform.get());
+	hk2010_2_0::hkpBoxShape* cockpitEventTrigger = new hk2010_2_0::hkpBoxShape(0.8f, 0.5f, 1.5f);
+	AddEventCollision("Attack", cockpitEventTrigger, damageID, true, m_spNodeCockpit);
+	AddRigidBody(m_spRigidBodyCockpit, cockpitEventTrigger, Common::MakeCollisionID((1llu << typeInsulate), 0), m_spNodeCockpit);
 
 	// player event collision
 	m_spNodeEventCollision = boost::make_shared<Sonic::CMatrixNodeTransform>();
@@ -378,10 +389,7 @@ bool GadgetGlider::ProcessMessage
 
 	if (message.Is<Sonic::Message::MsgDamage>())
 	{
-		if (!SendMessageImm(message.m_SenderActorID, Sonic::Message::MsgGetPlayerType()))
-		{
-			TakeDamage(6.0f);
-		}
+		TakeDamage(6.0f);
 		return true;
 	}
 
@@ -416,14 +424,17 @@ bool GadgetGlider::ProcessMessage
 		}
 		else if (msg.m_Symbol == "Attack")
 		{
-			TakeDamage(8.0f);
-			SendMessage(msg.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
-				(
-					*(uint32_t*)0x1E0BE28, // DamageID_SonicHeavy
-					m_spMatrixNodeTransform->m_Transform.m_Position,
-					m_rotation * hh::math::CVector::UnitZ() * m_speed
-				)
-			);
+			if (msg.m_SenderActorID != m_ActorID)
+			{
+				TakeDamage(8.0f);
+				SendMessage(msg.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
+					(
+						*(uint32_t*)0x1E0BE28, // DamageID_SonicHeavy
+						m_spMatrixNodeTransform->m_Transform.m_Position,
+						m_rotation * hh::math::CVector::UnitZ() * m_speed
+					)
+				);
+			}
 		}
 		return true;
 	}
