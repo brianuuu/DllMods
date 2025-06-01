@@ -252,6 +252,7 @@
     </ClCompile>
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DllMain.cpp" />
+    <ClCompile Include="Objects\vehicles\GadgetMissile.cpp" />
     <ClCompile Include="Objects\vehicles\GadgetGlider.cpp" />
     <ClCompile Include="System\EnemyHealth.cpp" />
     <ClCompile Include="Managers\MissionManager.cpp" />
@@ -304,6 +305,7 @@
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="DllMain.h" />
+    <ClInclude Include="Objects\vehicles\GadgetMissile.h" />
     <ClInclude Include="Objects\vehicles\GadgetGlider.h" />
     <ClInclude Include="System\EnemyHealth.h" />
     <ClInclude Include="Managers\MissionManager.h" />

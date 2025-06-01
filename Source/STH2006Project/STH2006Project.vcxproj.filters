@@ -72,6 +72,7 @@
     <ClCompile Include="Utils\Window.cpp" />
     <ClCompile Include="System\EnemyHealth.cpp" />
     <ClCompile Include="Objects\vehicles\GadgetGlider.cpp" />
+    <ClCompile Include="Objects\vehicles\GadgetMissile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -115,6 +116,7 @@
     <ClInclude Include="Utils\Window.h" />
     <ClInclude Include="System\EnemyHealth.h" />
     <ClInclude Include="Objects\vehicles\GadgetGlider.h" />
+    <ClInclude Include="Objects\vehicles\GadgetMissile.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">

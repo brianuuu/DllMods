@@ -15,11 +15,13 @@ private:
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
 	boost::shared_ptr<hh::anim::CAnimationPose> m_spAnimPose;
 
+	bool m_castShadow = true;
 	bool m_started = false;
 	float m_loadTimer = 0.0f;
+	uint32_t m_owner = 0;
 
 public:
-	GadgetGliderGun(std::string const& name, boost::shared_ptr<hh::mr::CMatrixNode> parent) : m_modelName(name), m_spNodeParent(parent) {}
+	GadgetGliderGun(std::string const& name, boost::shared_ptr<hh::mr::CMatrixNode> parent, bool castShadow, uint32_t owner) : m_modelName(name), m_spNodeParent(parent), m_castShadow(castShadow), m_owner(owner) {}
 
 	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;

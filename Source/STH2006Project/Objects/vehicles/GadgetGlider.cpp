@@ -1,4 +1,5 @@
 #include "GadgetGlider.h"
+#include "GadgetMissile.h"
 
 bool GadgetGliderGun::SetAddRenderables
 (
@@ -11,7 +12,7 @@ bool GadgetGliderGun::SetAddRenderables
 	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData(m_modelName.c_str(), 0);
 	m_spModel = boost::make_shared<hh::mr::CSingleElement>(spModelBaseData);
 	m_spModel->BindMatrixNode(m_spNodeParent);
-	Sonic::CGameObject::AddRenderable("Object", m_spModel, m_pMember->m_CastShadow);
+	Sonic::CGameObject::AddRenderable("Object", m_spModel, m_castShadow);
 
 	// animations
 	m_spAnimPose = boost::make_shared<Hedgehog::Animation::CAnimationPose>(in_spDatabase, m_modelName.c_str());
@@ -109,13 +110,19 @@ void GadgetGliderGun::FireMissile()
 
 	SharedPtrTypeless sfx;
 	Common::ObjectPlaySound(this, 200612006, sfx);
+
+	auto node = m_spModel->GetNode("MissilePoint");
+	hh::mr::CTransform startTrans;
+	startTrans.m_Rotation = hh::math::CQuaternion(node->GetWorldMatrix().rotation());
+	startTrans.m_Position = node->GetWorldMatrix().translation();
+	m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<GadgetMissile>(m_owner, startTrans));
 }
 
 void GadgetGliderGun::UpdateTransform()
 {
 	// follow attach point so sound can work
-	m_spMatrixNodeTransform->m_Transform.m_Matrix = m_spNodeParent->GetWorldMatrix();
-	m_spMatrixNodeTransform->m_Transform.m_Position = m_spNodeParent->GetWorldMatrix().translation();
+	hh::math::CMatrix const matrix = m_spNodeParent->GetWorldMatrix();
+	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(hh::math::CQuaternion(matrix.rotation()), matrix.translation());
 	m_spMatrixNodeTransform->NotifyChanged();
 }
 
@@ -186,10 +193,10 @@ bool GadgetGlider::SetAddRenderables
 
 	// Guns
 	auto const attachNodeGunL = m_spModelBase->GetNode("GunUnder_L");
-	m_spGunL = boost::make_shared<GadgetGliderGun>("Gadget_Glider_GunL", attachNodeGunL);
+	m_spGunL = boost::make_shared<GadgetGliderGun>("Gadget_Glider_GunL", attachNodeGunL, m_pMember->m_CastShadow, m_ActorID);
 	in_pGameDocument->AddGameObject(m_spGunL, "main", this);
 	auto const attachNodeGunR = m_spModelBase->GetNode("GunUnder_R");
-	m_spGunR = boost::make_shared<GadgetGliderGun>("Gadget_Glider_GunR", attachNodeGunR);
+	m_spGunR = boost::make_shared<GadgetGliderGun>("Gadget_Glider_GunR", attachNodeGunR, m_pMember->m_CastShadow, m_ActorID);
 	in_pGameDocument->AddGameObject(m_spGunR, "main", this);
 
 	// external control
@@ -214,7 +221,7 @@ bool GadgetGlider::SetAddColliders
 	uint32_t const typeBreakable = *(uint32_t*)0x1E5E77C;
 	uint32_t const typeTerrain = *(uint32_t*)0x1E5E754;
 	uint64_t const bitfield = (1llu << typeEnemy) | (1llu << typeBreakable) | (1llu << typeTerrain);
-	hk2010_2_0::hkpBoxShape* bodyEventTrigger = new hk2010_2_0::hkpBoxShape(4.5f, 0.5f, 2.0f);
+	hk2010_2_0::hkpBoxShape* bodyEventTrigger = new hk2010_2_0::hkpBoxShape(4.9f, 0.7f, 2.0f);
 	AddEventCollision("Attack", bodyEventTrigger, Common::MakeCollisionID(0, bitfield), true, m_spMatrixNodeTransform);
 
 	// player event collision
@@ -250,7 +257,7 @@ void GadgetGlider::SetUpdateParallel
 )
 {
 	if (!m_started) return;
-
+	
 	// counterweight animation
 	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime * m_speed * 0.4f);
 
@@ -266,7 +273,6 @@ void GadgetGlider::SetUpdateParallel
 			value = min(target, value + accel * in_rUpdateInfo.DeltaTime);
 		}
 	};
-
 
 	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
@@ -413,7 +419,7 @@ bool GadgetGlider::ProcessMessage
 			TakeDamage(8.0f);
 			SendMessage(msg.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
 				(
-					*(uint32_t*)0x1E0BE28,
+					*(uint32_t*)0x1E0BE28, // DamageID_SonicHeavy
 					m_spMatrixNodeTransform->m_Transform.m_Position,
 					m_rotation * hh::math::CVector::UnitZ() * m_speed
 				)
