@@ -15,7 +15,7 @@ namespace Sonic::Message
 		// Default constructor, most hit/leave events don't require IDs at all.
 		MsgHitEventCollision() : m_Symbol(), m_ID2(0) {}
 
-		MsgHitEventCollision(Hedgehog::Base::CStringSymbol symbol, int id2) : m_Symbol(symbol), m_ID2(id2) {}
+		MsgHitEventCollision(Hedgehog::Base::CStringSymbol const& symbol, int id2) : m_Symbol(symbol), m_ID2(id2) {}
 	};
 		
 	BB_ASSERT_OFFSETOF(MsgHitEventCollision, m_Symbol, 0x10);
