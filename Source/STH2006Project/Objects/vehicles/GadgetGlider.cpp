@@ -412,7 +412,10 @@ bool GadgetGlider::ProcessMessage
 
 	if (message.Is<Sonic::Message::MsgDamage>())
 	{
-		TakeDamage(6.0f);
+		if (!SendMessageImm(message.m_SenderActorID, Sonic::Message::MsgGetPlayerType()))
+		{
+			TakeDamage(6.0f);
+		}
 		return true;
 	}
 
@@ -488,7 +491,7 @@ bool GadgetGlider::ProcessMessage
 					(
 						*(uint32_t*)0x1E0BE28, // DamageID_SonicHeavy
 						m_spMatrixNodeTransform->m_Transform.m_Position,
-						m_rotation * hh::math::CVector::UnitZ() * m_speed
+						m_rotation * hh::math::CVector::UnitZ() * m_speed * 2.0f
 					)
 				);
 			}
@@ -555,6 +558,7 @@ void GadgetGlider::BeginFlight()
 
 	// set HUD
 	S06HUD_API::SetGadgetMaxCount(2);
+	S06HUD_API::SetGadgetHP(m_hp);
 	SharedPtrTypeless sfx;
 	Common::ObjectPlaySound(this, 200612005, sfx);
 }
@@ -562,20 +566,20 @@ void GadgetGlider::BeginFlight()
 void GadgetGlider::TakeDamage(float amount)
 {
 	std::lock_guard guard(m_mutex);
-	if (!m_playerID) return;
 
 	SharedPtrTypeless sfx;
 	Common::ObjectPlaySound(this, 200612004, sfx);
 
 	m_hp -= amount;
+
+	if (m_playerID && m_started)
+	{
+		S06HUD_API::SetGadgetHP(max(0.0f, m_hp));
+	}
+
 	if (m_hp <= 0.0f)
 	{
-		S06HUD_API::SetGadgetHP(0.0f);
 		Explode();
-	}
-	else
-	{
-		S06HUD_API::SetGadgetHP(m_hp);
 	}
 }
 
