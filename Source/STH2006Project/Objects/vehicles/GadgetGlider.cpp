@@ -594,7 +594,7 @@ void GadgetGlider::AdvancePlayerGetOn(float dt)
 {
 	if (!m_playerGetOnData.m_gettingOn) return;
 
-	float const timeToGetOn = m_playerGetOnData.m_start.y() < 0.0f ? 0.2f : 2.0f;
+	float constexpr timeToGetOn = 2.0f;
 	m_playerGetOnData.m_time += dt;
 
 	if (m_playerGetOnData.m_time >= timeToGetOn)
@@ -610,13 +610,10 @@ void GadgetGlider::AdvancePlayerGetOn(float dt)
 	float const prop = m_playerGetOnData.m_time / timeToGetOn;
 	hh::math::CVector targetPosition = m_playerGetOnData.m_start * (1.0f - prop);
 
-	if (m_playerGetOnData.m_start.y() >= 0.0f)
-	{
-		float constexpr initSpeed = 10.0f;
-		float const accel = initSpeed * -2.0f / timeToGetOn;
-		float const yOffset = initSpeed * m_playerGetOnData.m_time + 0.5f * accel * m_playerGetOnData.m_time * m_playerGetOnData.m_time;
-		targetPosition.y() += yOffset;
-	}
+	float constexpr initSpeed = 7.0f;
+	float constexpr accel = initSpeed * -2.0f / timeToGetOn;
+	float const yOffset = initSpeed * m_playerGetOnData.m_time + 0.5f * accel * m_playerGetOnData.m_time * m_playerGetOnData.m_time;
+	targetPosition.y() += yOffset;
 
 	m_spSonicControlNode->m_Transform.SetPosition(targetPosition);
 	m_spSonicControlNode->NotifyChanged();
