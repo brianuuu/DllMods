@@ -57,6 +57,13 @@ bool GadgetMissile::ProcessMessage(Hedgehog::Universe::Message& message, bool fl
 {
 	if (flag)
 	{
+		if (std::strstr(message.GetType(), "MsgRestartStage") != nullptr
+		 || std::strstr(message.GetType(), "MsgStageClear") != nullptr)
+		{
+			Kill();
+			return true;
+		}
+
 		if (message.Is<Sonic::Message::MsgHitEventCollision>())
 		{
 			auto& msg = static_cast<Sonic::Message::MsgHitEventCollision&>(message);
