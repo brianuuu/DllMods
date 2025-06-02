@@ -46,6 +46,7 @@ class GadgetGlider : public Sonic::CObjectBase, public Sonic::CSetObjectListener
 public:
 	BB_SET_OBJECT_MAKE("GadgetGlider");
 	static void registerObject();
+	static void applyPatches();
 
 	~GadgetGlider();
 
@@ -80,6 +81,13 @@ private:
 	hh::math::CQuaternion m_rotation = hh::math::CQuaternion::Identity();
 	bool m_started = false;
 
+	struct PlayerGetOnData
+	{
+		hh::math::CVector m_start = hh::math::CVector::Zero();
+		float m_time = 0.0f;
+		bool m_gettingOn = false;
+	} m_playerGetOnData;
+
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModelBase;
 	boost::shared_ptr<Sonic::CRigidBody> m_spRigidBody;
 	boost::shared_ptr<Sonic::CRigidBody> m_spRigidBodyMove;
@@ -113,9 +121,13 @@ public:
 
 private:
 	bool IsValidPlayer() const;
+
 	void BeginFlight();
 	void TakeDamage(float amount);
 	void Explode();
+
+	void AdvancePlayerGetOn(float dt);
+
 	Direction GetAnimationDirection(hh::math::CVector2 input) const;
 	std::string GetAnimationName() const;
 };

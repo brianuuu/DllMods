@@ -126,11 +126,31 @@ void GadgetGliderGun::UpdateTransform()
 	m_spMatrixNodeTransform->NotifyChanged();
 }
 
+uint32_t canGetOnGliderActorID = 0u;
+HOOK(bool, __fastcall, GadgetGlider_GroundedStateChange, 0xE013D0, Sonic::Player::CPlayerSpeedContext* context, void* Edx, int a2)
+{
+	if (context->m_Grounded && !context->StateFlag(eStateFlag_OutOfControl))
+	{
+		if (canGetOnGliderActorID && Common::fIsButtonTapped(Sonic::EKeyState::eKeyState_Y))
+		{
+			context->m_pPlayer->SendMessageImm(canGetOnGliderActorID, Sonic::Message::MsgNotifyObjectEvent(6));
+			return true;
+		}
+	}
+
+	return originalGadgetGlider_GroundedStateChange(context, Edx, a2);
+}
+
 BB_SET_OBJECT_MAKE_HOOK(GadgetGlider)
 void GadgetGlider::registerObject()
 {
 	BB_INSTALL_SET_OBJECT_MAKE_HOOK(GadgetGlider);
-	WRITE_NOP(0xB6B40F, 2); // TODO: enemy projectile damage all
+	applyPatches();
+}
+
+void GadgetGlider::applyPatches()
+{
+	INSTALL_HOOK(GadgetGlider_GroundedStateChange);
 }
 
 GadgetGlider::~GadgetGlider()
@@ -240,8 +260,8 @@ bool GadgetGlider::SetAddColliders
 	m_spNodeEventCollision->m_Transform.SetPosition(hh::math::CVector(0.0f, -0.8f, 0.0f));
 	m_spNodeEventCollision->NotifyChanged();
 	m_spNodeEventCollision->SetParent(m_spMatrixNodeTransform.get());
-	hk2010_2_0::hkpSphereShape* shapeEventTrigger = new hk2010_2_0::hkpSphereShape(0.6f);
-	AddEventCollision("Player", shapeEventTrigger, *(int*)0x1E0AF34, true, m_spNodeEventCollision);
+	hk2010_2_0::hkpSphereShape* shapeEventTrigger = new hk2010_2_0::hkpSphereShape(2.0f);
+	AddEventCollision("Player", shapeEventTrigger, *(int*)0x1E0AFD8, true, m_spNodeEventCollision); // ColID_PlayerEvent
 
 	return true;
 }
@@ -261,12 +281,15 @@ float const c_gliderBoostSpeed = 21.0f;
 float const c_gliderMaxSteer = 5.0f;
 float const c_gliderSteerRate = 10.0f;
 float const c_gliderSteerToAngle = 4.5f * DEG_TO_RAD;
+float const c_gliderGetOnTime = 1.0f;
 
 void GadgetGlider::SetUpdateParallel
 (
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
 )
 {
+	AdvancePlayerGetOn(in_rUpdateInfo.DeltaTime);
+
 	if (!m_started) return;
 	
 	// counterweight animation
@@ -411,15 +434,49 @@ bool GadgetGlider::ProcessMessage
 		return true;
 	}
 
+	if (message.Is<Sonic::Message::MsgNotifyObjectEvent>())
+	{
+		auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
+		if (msg.m_Event == 6 && !m_started)
+		{
+			canGetOnGliderActorID = 0u;
+			m_playerID = message.m_SenderActorID;
+			m_playerGetOnData.m_gettingOn = true;
+
+			hh::math::CVector playerPosition;
+			SendMessageImm(m_playerID, Sonic::Message::MsgGetPosition(playerPosition));
+
+			m_playerGetOnData.m_start = playerPosition - m_spSonicControlNode->GetWorldMatrix().translation();
+			m_playerGetOnData.m_start.x() *= -1.0f;
+			m_playerGetOnData.m_start.z() *= -1.0f;
+			m_spSonicControlNode->m_Transform.SetPosition(m_playerGetOnData.m_start);
+			m_spSonicControlNode->NotifyChanged();
+
+			// Jump sfx
+			SharedPtrTypeless soundHandle;
+			Common::SonicContextPlaySound(soundHandle, 2002027, 1);
+			Common::SonicContextPlayVoice(soundHandle, 3002000, 0);
+
+			// start external control
+			auto msgStartExternalControl = Sonic::Message::MsgStartExternalControl(m_spSonicControlNode, false, false);
+			msgStartExternalControl.NoDamage = true;
+			SendMessageImm(m_playerID, msgStartExternalControl);
+			SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl("JumpBall", true));
+
+			//BeginFlight();
+		}
+
+		return true;
+	}
+
 	if (message.Is<Sonic::Message::MsgHitEventCollision>())
 	{
 		auto& msg = static_cast<Sonic::Message::MsgHitEventCollision&>(message);
 		if (msg.m_Symbol == "Player")
 		{
-			if (!m_playerID && IsValidPlayer())
+			if (!m_started && IsValidPlayer())
 			{
-				m_playerID = message.m_SenderActorID;
-				BeginFlight();
+				canGetOnGliderActorID = m_ActorID;
 			}
 		}
 		else if (msg.m_Symbol == "Attack")
@@ -436,6 +493,17 @@ bool GadgetGlider::ProcessMessage
 				);
 			}
 		}
+		return true;
+	}
+
+	if (message.Is<Sonic::Message::MsgLeaveEventCollision>())
+	{
+		auto& msg = static_cast<Sonic::Message::MsgLeaveEventCollision&>(message);
+		if (msg.m_Symbol == "Player" && !m_started)
+		{
+			canGetOnGliderActorID = 0;
+		}
+
 		return true;
 	}
 
@@ -478,10 +546,7 @@ void GadgetGlider::BeginFlight()
 		Common::ObjectPlaySound(this, 200612001, m_loopSfx);
 	}
 
-	// start external control
-	auto msgStartExternalControl = Sonic::Message::MsgStartExternalControl(m_spSonicControlNode, false, false);
-	msgStartExternalControl.NoDamage = true;
-	SendMessageImm(m_playerID, msgStartExternalControl);
+	// Change animation
 	SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl("Glider", true));
 
 	// burner pfx
@@ -519,6 +584,38 @@ void GadgetGlider::Explode()
 	// TODO: sfx pfx
 
 	Kill();
+}
+
+void GadgetGlider::AdvancePlayerGetOn(float dt)
+{
+	if (!m_playerGetOnData.m_gettingOn) return;
+
+	float const timeToGetOn = m_playerGetOnData.m_start.y() < 0.0f ? 0.2f : 2.0f;
+	m_playerGetOnData.m_time += dt;
+
+	if (m_playerGetOnData.m_time >= timeToGetOn)
+	{
+		m_playerGetOnData.m_gettingOn = false;
+		m_spSonicControlNode->m_Transform.SetPosition(hh::math::CVector::Zero());
+		m_spSonicControlNode->NotifyChanged();
+
+		BeginFlight();
+		return;
+	}
+
+	float const prop = m_playerGetOnData.m_time / timeToGetOn;
+	hh::math::CVector targetPosition = m_playerGetOnData.m_start * (1.0f - prop);
+
+	if (m_playerGetOnData.m_start.y() >= 0.0f)
+	{
+		float constexpr initSpeed = 10.0f;
+		float const accel = initSpeed * -2.0f / timeToGetOn;
+		float const yOffset = initSpeed * m_playerGetOnData.m_time + 0.5f * accel * m_playerGetOnData.m_time * m_playerGetOnData.m_time;
+		targetPosition.y() += yOffset;
+	}
+
+	m_spSonicControlNode->m_Transform.SetPosition(targetPosition);
+	m_spSonicControlNode->NotifyChanged();
 }
 
 GadgetGlider::Direction GadgetGlider::GetAnimationDirection(hh::math::CVector2 input) const
