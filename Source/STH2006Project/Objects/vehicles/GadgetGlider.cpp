@@ -273,6 +273,11 @@ void GadgetGlider::KillCallback()
 		SendMessageImm(m_playerID, Sonic::Message::MsgFinishExternalControl(Sonic::Message::MsgFinishExternalControl::EChangeState::FALL));
 		S06HUD_API::SetGadgetMaxCount(0);
 	}
+
+	if (canGetOnGliderActorID == m_ActorID)
+	{
+		canGetOnGliderActorID = 0;
+	}
 }
 
 float const c_gliderAccel = 10.0f;
@@ -442,7 +447,6 @@ bool GadgetGlider::ProcessMessage
 		auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
 		if (msg.m_Event == 6 && !m_started)
 		{
-			canGetOnGliderActorID = 0u;
 			m_playerID = message.m_SenderActorID;
 			m_playerGetOnData.m_gettingOn = true;
 
@@ -502,7 +506,7 @@ bool GadgetGlider::ProcessMessage
 	if (message.Is<Sonic::Message::MsgLeaveEventCollision>())
 	{
 		auto& msg = static_cast<Sonic::Message::MsgLeaveEventCollision&>(message);
-		if (msg.m_Symbol == "Player" && !m_started)
+		if (msg.m_Symbol == "Player")
 		{
 			canGetOnGliderActorID = 0;
 		}
