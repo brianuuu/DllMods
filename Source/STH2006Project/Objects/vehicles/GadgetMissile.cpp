@@ -2,7 +2,7 @@
 
 float const c_gadgetMissileSpeed = 60.0f;
 float const c_gadgetMissileLifetime = 5.0f;
-float const c_gadgetMissileTurnRate = 45.0f * DEG_TO_RAD;
+float const c_gadgetMissileTurnRate = 90.0f * DEG_TO_RAD;
 
 bool GadgetMissile::SetAddRenderables
 (
@@ -47,7 +47,7 @@ bool GadgetMissile::SetAddColliders
 	AddEventCollision("Attack", bodyEventTrigger, Common::MakeCollisionID(0, bitfield), true, m_spMatrixNodeTransform);
 
 	// enemy search collision
-	hk2010_2_0::hkpCapsuleShape* searchEventTrigger = new hk2010_2_0::hkpCapsuleShape(hh::math::CVector(0.0f, 0.0f, 15.0f), hh::math::CVector(0.0f, 0.0f, 30.0f), 15.0f);
+	hk2010_2_0::hkpCapsuleShape* searchEventTrigger = new hk2010_2_0::hkpCapsuleShape(hh::math::CVector(0.0f, 0.0f, 20.0f), hh::math::CVector(0.0f, 0.0f, 40.0f), 20.0f);
 	AddEventCollision("Search", searchEventTrigger, *(uint32_t*)0x1E0AF54, true, m_spMatrixNodeTransform); // ColID_TypeEnemy
 
 	return true;
