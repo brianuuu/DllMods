@@ -798,6 +798,9 @@ void StageManager::applyPatches()
     WRITE_JUMP(0x601CE7, (void*)StageManager_CEnemyEggRobo_TrackBeam);
     WRITE_JUMP(0x601E54, (void*)0x601E7E); 
 
+    // Enemy projectile damage all rigid body not just aimed target
+    WRITE_NOP(0xB6B40F, 2);
+
     //---------------------------------------------------
     // Bombbox Explosion
     //---------------------------------------------------
