@@ -295,7 +295,7 @@ void GadgetGlider::SetUpdateParallel
 {
 	AdvancePlayerGetOn(in_rUpdateInfo.DeltaTime);
 
-	if (!m_started) return;
+	if (!IsFlight()) return;
 	
 	// counterweight animation
 	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime * m_speed * 0.4f);
@@ -445,32 +445,10 @@ bool GadgetGlider::ProcessMessage
 	if (message.Is<Sonic::Message::MsgNotifyObjectEvent>())
 	{
 		auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
-		if (msg.m_Event == 6 && !m_started)
+		if (msg.m_Event == 6 && m_state == State::Idle)
 		{
 			m_playerID = message.m_SenderActorID;
-			m_playerGetOnData.m_gettingOn = true;
-
-			hh::math::CVector playerPosition;
-			SendMessageImm(m_playerID, Sonic::Message::MsgGetPosition(playerPosition));
-
-			m_playerGetOnData.m_start = playerPosition - m_spSonicControlNode->GetWorldMatrix().translation();
-			m_playerGetOnData.m_start.x() *= -1.0f;
-			m_playerGetOnData.m_start.z() *= -1.0f;
-			m_spSonicControlNode->m_Transform.SetPosition(m_playerGetOnData.m_start);
-			m_spSonicControlNode->NotifyChanged();
-
-			// Jump sfx
-			SharedPtrTypeless soundHandle;
-			Common::SonicContextPlaySound(soundHandle, 2002027, 1);
-			Common::SonicContextPlayVoice(soundHandle, 3002000, 0);
-
-			// start external control
-			auto msgStartExternalControl = Sonic::Message::MsgStartExternalControl(m_spSonicControlNode, false, false);
-			msgStartExternalControl.NoDamage = true;
-			SendMessageImm(m_playerID, msgStartExternalControl);
-			SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl("JumpBall", true));
-
-			//BeginFlight();
+			BeginPlayerGetOn();
 		}
 
 		return true;
@@ -481,7 +459,7 @@ bool GadgetGlider::ProcessMessage
 		auto& msg = static_cast<Sonic::Message::MsgHitEventCollision&>(message);
 		if (msg.m_Symbol == "Player")
 		{
-			if (!m_started && IsValidPlayer())
+			if (!IsFlight() && IsValidPlayer())
 			{
 				canGetOnGliderActorID = m_ActorID;
 			}
@@ -523,7 +501,7 @@ bool GadgetGlider::ProcessMessage
 
 	if (message.Is<Sonic::Message::MsgDeactivate>())
 	{
-		if (m_started)
+		if (IsFlight())
 		{
 			return false;
 		}
@@ -537,11 +515,68 @@ bool GadgetGlider::IsValidPlayer() const
 	return *pModernSonicContext && S06DE_API::GetModelType() == S06DE_API::ModelType::Shadow;
 }
 
+bool GadgetGlider::IsFlight()
+{
+	return (int)m_state >= (int)State::Flight;
+}
+
+void GadgetGlider::BeginPlayerGetOn()
+{
+	m_state = State::PlayerGetOn;
+
+	hh::math::CVector playerPosition;
+	SendMessageImm(m_playerID, Sonic::Message::MsgGetPosition(playerPosition));
+
+	m_playerGetOnData.m_start = playerPosition - m_spSonicControlNode->GetWorldMatrix().translation();
+	m_playerGetOnData.m_start.x() *= -1.0f;
+	m_playerGetOnData.m_start.z() *= -1.0f;
+	m_spSonicControlNode->m_Transform.SetPosition(m_playerGetOnData.m_start);
+	m_spSonicControlNode->NotifyChanged();
+
+	// Jump sfx
+	SharedPtrTypeless soundHandle;
+	Common::SonicContextPlaySound(soundHandle, 2002027, 1);
+	Common::SonicContextPlayVoice(soundHandle, 3002000, 0);
+
+	// start external control
+	auto msgStartExternalControl = Sonic::Message::MsgStartExternalControl(m_spSonicControlNode, false, false);
+	msgStartExternalControl.NoDamage = true;
+	SendMessageImm(m_playerID, msgStartExternalControl);
+	SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl("JumpBall", true));
+}
+
+void GadgetGlider::AdvancePlayerGetOn(float dt)
+{
+	if (m_state != State::PlayerGetOn) return;
+
+	float constexpr timeToGetOn = 2.0f;
+	m_playerGetOnData.m_time += dt;
+
+	if (m_playerGetOnData.m_time >= timeToGetOn)
+	{
+		m_spSonicControlNode->m_Transform.SetPosition(hh::math::CVector::Zero());
+		m_spSonicControlNode->NotifyChanged();
+
+		BeginFlight();
+		return;
+	}
+
+	float const prop = m_playerGetOnData.m_time / timeToGetOn;
+	hh::math::CVector targetPosition = m_playerGetOnData.m_start * (1.0f - prop);
+
+	float constexpr initSpeed = 7.0f;
+	float constexpr accel = initSpeed * -2.0f / timeToGetOn;
+	float const yOffset = initSpeed * m_playerGetOnData.m_time + 0.5f * accel * m_playerGetOnData.m_time * m_playerGetOnData.m_time;
+	targetPosition.y() += yOffset;
+
+	m_spSonicControlNode->m_Transform.SetPosition(targetPosition);
+	m_spSonicControlNode->NotifyChanged();
+}
+
 void GadgetGlider::BeginFlight()
 {
-	if (m_started) return;
+	m_state = State::Flight;
 
-	m_started = true;
 	SendMessage(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
 	SendMessage(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
 
@@ -576,7 +611,7 @@ void GadgetGlider::TakeDamage(float amount)
 
 	m_hp -= amount;
 
-	if (m_playerID && m_started)
+	if (m_playerID && IsFlight())
 	{
 		S06HUD_API::SetGadgetHP(max(0.0f, m_hp));
 	}
@@ -592,35 +627,6 @@ void GadgetGlider::Explode()
 	// TODO: sfx pfx
 
 	Kill();
-}
-
-void GadgetGlider::AdvancePlayerGetOn(float dt)
-{
-	if (!m_playerGetOnData.m_gettingOn) return;
-
-	float constexpr timeToGetOn = 2.0f;
-	m_playerGetOnData.m_time += dt;
-
-	if (m_playerGetOnData.m_time >= timeToGetOn)
-	{
-		m_playerGetOnData.m_gettingOn = false;
-		m_spSonicControlNode->m_Transform.SetPosition(hh::math::CVector::Zero());
-		m_spSonicControlNode->NotifyChanged();
-
-		BeginFlight();
-		return;
-	}
-
-	float const prop = m_playerGetOnData.m_time / timeToGetOn;
-	hh::math::CVector targetPosition = m_playerGetOnData.m_start * (1.0f - prop);
-
-	float constexpr initSpeed = 7.0f;
-	float constexpr accel = initSpeed * -2.0f / timeToGetOn;
-	float const yOffset = initSpeed * m_playerGetOnData.m_time + 0.5f * accel * m_playerGetOnData.m_time * m_playerGetOnData.m_time;
-	targetPosition.y() += yOffset;
-
-	m_spSonicControlNode->m_Transform.SetPosition(targetPosition);
-	m_spSonicControlNode->NotifyChanged();
 }
 
 GadgetGlider::Direction GadgetGlider::GetAnimationDirection(hh::math::CVector2 input) const
