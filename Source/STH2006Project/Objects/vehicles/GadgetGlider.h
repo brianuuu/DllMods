@@ -59,6 +59,14 @@ public:
 		Right
 	};
 
+	enum class State
+	{
+		Idle,
+		PlayerGetOn,
+		Flight,
+		FlightNoControl,
+	};
+
 private:
 	struct Data
 	{
@@ -73,19 +81,18 @@ private:
 	std::mutex m_mutex;
 	uint32_t m_playerID = 0u;
 	Direction m_direction = Direction::None;
+	State m_state = State::Idle;
 	float m_hp = 100.0f;
 	float m_speed = 0.0f;
 	hh::math::CVector2 m_steer = hh::math::CVector2::Zero();
 	hh::math::CVector2 m_offset = hh::math::CVector2::Zero();
 	hh::math::CVector m_splinePos = hh::math::CVector::Zero();
 	hh::math::CQuaternion m_rotation = hh::math::CQuaternion::Identity();
-	bool m_started = false;
 
 	struct PlayerGetOnData
 	{
 		hh::math::CVector m_start = hh::math::CVector::Zero();
 		float m_time = 0.0f;
-		bool m_gettingOn = false;
 	} m_playerGetOnData;
 
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModelBase;
@@ -102,6 +109,9 @@ private:
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeCockpit;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spSonicControlNode;
+
+	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeExplodeL;
+	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeExplodeR;
 
 	boost::shared_ptr<GadgetGliderGun> m_spGunL;
 	boost::shared_ptr<GadgetGliderGun> m_spGunR;
@@ -121,12 +131,15 @@ public:
 
 private:
 	bool IsValidPlayer() const;
+	bool IsFlight();
+
+	void BeginPlayerGetOn();
+	void AdvancePlayerGetOn(float dt);
 
 	void BeginFlight();
+
 	void TakeDamage(float amount);
 	void Explode();
-
-	void AdvancePlayerGetOn(float dt);
 
 	Direction GetAnimationDirection(hh::math::CVector2 input) const;
 	std::string GetAnimationName() const;

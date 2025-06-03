@@ -219,6 +219,16 @@ bool GadgetGlider::SetAddRenderables
 	m_spGunR = boost::make_shared<GadgetGliderGun>("Gadget_Glider_GunR", attachNodeGunR, m_pMember->m_CastShadow, m_ActorID);
 	in_pGameDocument->AddGameObject(m_spGunR, "main", this);
 
+	// explosion
+	m_spNodeExplodeL = boost::make_shared<Sonic::CMatrixNodeTransform>();
+	m_spNodeExplodeR = boost::make_shared<Sonic::CMatrixNodeTransform>();
+	m_spNodeExplodeL->m_Transform.SetPosition(hh::math::CVector(1.7f, 0.0f, 0.0f));
+	m_spNodeExplodeR->m_Transform.SetPosition(hh::math::CVector(-1.7f, 0.0f, 0.0f));
+	m_spNodeExplodeL->NotifyChanged();
+	m_spNodeExplodeR->NotifyChanged();
+	m_spNodeExplodeL->SetParent(m_spMatrixNodeTransform.get());
+	m_spNodeExplodeR->SetParent(m_spMatrixNodeTransform.get());
+
 	// external control
 	auto const attachNode = m_spModelBase->GetNode("Charapoint");
 	m_spSonicControlNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
@@ -624,7 +634,12 @@ void GadgetGlider::TakeDamage(float amount)
 
 void GadgetGlider::Explode()
 {
-	// TODO: sfx pfx
+	m_pGlitterPlayer->PlayOneshot(m_spNodeExplodeL, "ef_en_com_yh2_explosion", 1.0f, 1);
+	m_pGlitterPlayer->PlayOneshot(m_spNodeExplodeR, "ef_en_com_yh2_explosion", 1.0f, 1);
+	m_pGlitterPlayer->PlayOneshot(m_spNodeCockpit, "ef_en_com_yh2_explosion", 1.0f, 1);
+
+	SharedPtrTypeless sfx;
+	Common::ObjectPlaySound(this, 200612007, sfx);
 
 	Kill();
 }
