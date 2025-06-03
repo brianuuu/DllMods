@@ -2181,6 +2181,12 @@ HOOK(int, __fastcall, NextGenShadow_MsgPlayerGoal, 0xE6C2C0, Sonic::Player::CPla
     return originalNextGenShadow_MsgPlayerGoal(player, Edx, message);
 }
 
+HOOK(int, __fastcall, NextGenShadow_MsgStartExternalControl, 0xE6CB30, Sonic::Player::CPlayer* player, void* Edx, void* message)
+{
+    isChaosControl = false;
+    return originalNextGenShadow_MsgStartExternalControl(player, Edx, message);
+}
+
 HOOK(void, __fastcall, NextGenShadow_MsgStartHangOn, 0xE6C0D0, Sonic::Player::CPlayer* player, void* Edx, uint32_t* message)
 {
     uint32_t type = message[4];
@@ -3165,6 +3171,7 @@ void NextGenShadow::applyPatches()
 
     // Situation that stops Chaos Control
     INSTALL_HOOK(NextGenShadow_MsgPlayerGoal);
+    INSTALL_HOOK(NextGenShadow_MsgStartExternalControl);
     INSTALL_HOOK(NextGenShadow_MsgStartHangOn);
     INSTALL_HOOK(NextGenShadow_CObjCannonMsgNotifyObjectEvent);
     INSTALL_HOOK(NextGenShadow_CObjSelectCanonMsgNotifyObjectEvent);
