@@ -119,6 +119,7 @@ float SubtitleUI::addSubtitle(mst::TextEntry const& entry, std::vector<float> co
         m_captionData.m_subtitles.push_back(newSubtitle);
     }
 
+    m_captionData.m_subtitleCount = m_captionData.m_subtitles.size();
     m_captionData.m_bypassLoading = Common::IsAtLoadingScreen();
 
     // Prevent dialog overlapping
@@ -232,6 +233,8 @@ void SubtitleUI::draw()
     if (!m_captionData.m_subtitles.empty())
     {
         Subtitle& subtitle = m_captionData.m_subtitles.front();
+        size_t const index = m_captionData.m_subtitleCount - m_captionData.m_subtitles.size();
+
         float sizeX = *BACKBUFFER_WIDTH * 890.0f / 1280.0f;
         float sizeY = *BACKBUFFER_HEIGHT * 170.0f / 720.0f;
         float posX = 0.143f;
@@ -244,12 +247,12 @@ void SubtitleUI::draw()
             // Fade in and out
             float frame1 = m_captionData.m_timer * 60.0f;
             float frame2 = (subtitle.m_duration - m_captionData.m_timer) * 60.0f;
-            if (frame1 < 5.0f)
+            if (frame1 < 5.0f && index == 0)
             {
                 posY += 0.03476f * (5.0f - frame1);
                 alpha = 0.2f * frame1;
             }
-            else if (frame2 < 5.0f)
+            else if (frame2 < 5.0f && m_captionData.m_subtitles.size() == 1)
             {
                 posY += 0.03476f * (5.0f - frame2);
                 alpha = 0.2f * frame2;

@@ -49,6 +49,7 @@ struct CaptionData
 
 	// subtitle system for Hint object
 	float m_timer;
+	size_t m_subtitleCount;
 	std::deque<Subtitle> m_subtitles;
 
 	IUnknown* m_textbox;
