@@ -166,6 +166,8 @@ void GadgetGlider::InitializeEditParam
 	Sonic::CEditParam& in_rEditParam
 )
 {
+	in_rEditParam.CreateParamFloat(&m_Data.m_Radius, "Radius");
+	in_rEditParam.CreateParamFloat(&m_Data.m_GetOffOutOfControl, "GetOffOutOfControl");
 }
 
 bool GadgetGlider::SetAddRenderables
@@ -278,11 +280,7 @@ bool GadgetGlider::SetAddColliders
 
 void GadgetGlider::KillCallback()
 {
-	if (m_playerID)
-	{
-		SendMessageImm(m_playerID, Sonic::Message::MsgFinishExternalControl(Sonic::Message::MsgFinishExternalControl::EChangeState::FALL));
-		S06HUD_API::SetGadgetMaxCount(0);
-	}
+	BeginPlayerGetOff();
 
 	if (canGetOnGliderActorID == m_ActorID)
 	{
@@ -297,6 +295,7 @@ float const c_gliderMaxSteer = 5.0f;
 float const c_gliderSteerRate = 10.0f;
 float const c_gliderSteerToAngle = 4.5f * DEG_TO_RAD;
 float const c_gliderGetOnTime = 1.0f;
+float const c_gliderExplodeTime = 5.0f;
 
 void GadgetGlider::SetUpdateParallel
 (
@@ -322,6 +321,17 @@ void GadgetGlider::SetUpdateParallel
 			value = min(target, value + accel * in_rUpdateInfo.DeltaTime);
 		}
 	};
+
+	// no player explode
+	if (!m_playerID)
+	{
+		m_explodeTimer += in_rUpdateInfo.DeltaTime;
+		if (m_explodeTimer >= c_gliderExplodeTime)
+		{
+			Explode();
+			return;
+		}
+	}
 
 	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
@@ -455,10 +465,25 @@ bool GadgetGlider::ProcessMessage
 	if (message.Is<Sonic::Message::MsgNotifyObjectEvent>())
 	{
 		auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
-		if (msg.m_Event == 6 && m_state == State::Idle)
+		switch (msg.m_Event)
 		{
-			m_playerID = message.m_SenderActorID;
-			BeginPlayerGetOn();
+		case 6:
+		{
+			if (m_state == State::Idle)
+			{
+				m_playerID = message.m_SenderActorID;
+				BeginPlayerGetOn();
+			}
+			break;
+		}
+		case 7:
+		{
+			if (IsFlight())
+			{
+				BeginPlayerGetOff();
+			}
+			break;
+		}
 		}
 
 		return true;
@@ -581,6 +606,20 @@ void GadgetGlider::AdvancePlayerGetOn(float dt)
 
 	m_spSonicControlNode->m_Transform.SetPosition(targetPosition);
 	m_spSonicControlNode->NotifyChanged();
+}
+
+void GadgetGlider::BeginPlayerGetOff()
+{
+	if (!m_playerID) return;
+
+	SendMessageImm(m_playerID, Sonic::Message::MsgFinishExternalControl(Sonic::Message::MsgFinishExternalControl::EChangeState::FALL));
+	S06HUD_API::SetGadgetMaxCount(0);
+
+	// out of control
+	if (m_Data.m_GetOffOutOfControl > 0.0f)
+	{
+		Common::SetPlayerOutOfControl(m_Data.m_GetOffOutOfControl);
+	}
 }
 
 void GadgetGlider::BeginFlight()

@@ -71,6 +71,7 @@ private:
 	struct Data
 	{
 		float m_Radius = 10.0f;
+		float m_GetOffOutOfControl = 0.5f;
 	} m_Data;
 
 private:
@@ -82,8 +83,11 @@ private:
 	uint32_t m_playerID = 0u;
 	Direction m_direction = Direction::None;
 	State m_state = State::Idle;
+
 	float m_hp = 100.0f;
 	float m_speed = 0.0f;
+	float m_explodeTimer = 0.0f;
+
 	hh::math::CVector2 m_steer = hh::math::CVector2::Zero();
 	hh::math::CVector2 m_offset = hh::math::CVector2::Zero();
 	hh::math::CVector m_splinePos = hh::math::CVector::Zero();
@@ -135,6 +139,7 @@ private:
 
 	void BeginPlayerGetOn();
 	void AdvancePlayerGetOn(float dt);
+	void BeginPlayerGetOff();
 
 	void BeginFlight();
 
