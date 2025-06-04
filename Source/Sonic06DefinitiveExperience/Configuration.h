@@ -4,6 +4,10 @@ class Configuration
 {
 
 public:
+    // Update files:
+    // Dependencies\Sonic06DefinitiveExperienceAPI.h
+    // Source\STH2006Project\Objects\cmn\Hint.cpp
+    // Source\Sonic06HUD\CustomHUD.cpp
     enum ModelType
     {
         Sonic = 0,
