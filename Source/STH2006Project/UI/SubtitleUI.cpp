@@ -54,7 +54,7 @@ float SubtitleUI::addSubtitle(mst::TextEntry const& entry, std::vector<float> co
                         float const duration = Common::GetSoundCueDuration(newSubtitle.m_cueID);
                         if (duration > 0.0f)
                         {
-                            newSubtitle.m_duration = duration;
+                            newSubtitle.m_duration = duration + 0.5f;
                         }
                     }
 
