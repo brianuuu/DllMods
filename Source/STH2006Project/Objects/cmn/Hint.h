@@ -24,10 +24,25 @@ public:
 		EventOnly
 	};
 
+	enum class CharacterType
+	{
+		All,
+		Sonic,
+		Shadow,
+		Silver,
+		Tails,
+		Amy,
+		Knuckles,
+		Omega,
+		Rouge,
+		Blaze
+	};
+
 private:
 	struct Data
 	{
 		int m_Type = 0;
+		int m_CharacterType = 0;
 		hh::math::CVector m_CollisionSize;
 		Sonic::CParamTypeList* m_HintFile = nullptr;
 		Sonic::CParamTypeList* m_HintName = nullptr;
@@ -60,5 +75,6 @@ public:
 
 private:
 	void PlayHint();
+	bool IsCharacterMatch();
 };
 

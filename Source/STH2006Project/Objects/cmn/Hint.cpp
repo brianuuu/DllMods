@@ -75,6 +75,7 @@ void Hint::InitializeEditParam
 	in_rEditParam.CreateParamBase(m_Data.m_HintTimes, hintTimes);
 
 	in_rEditParam.CreateParamInt(&m_Data.m_Type, "Type");
+	in_rEditParam.CreateParamInt(&m_Data.m_CharacterType, "CharacterType");
 	in_rEditParam.CreateParamFloat(&m_Data.m_CollisionSize.x(), "Collision_Width");
 	in_rEditParam.CreateParamFloat(&m_Data.m_CollisionSize.y(), "Collision_Height");
 	in_rEditParam.CreateParamFloat(&m_Data.m_CollisionSize.z(), "Collision_Length");
@@ -152,6 +153,13 @@ void Hint::AddCallback
 )
 {
 	Sonic::CObjectBase::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
+
+	// kill if character doesn't match
+	if (!IsCharacterMatch())
+	{
+		Kill();
+		return;
+	}
 
 	// cache .mst file and get subtitle entry
 	auto const& file = m_Data.m_HintFile->m_pMember->m_DefaultValueName;
@@ -273,4 +281,27 @@ void Hint::PlayHint()
 		auto const attachNode = m_spModel->GetNode("Hintring");
 		m_pGlitterPlayer->PlayOneshot(attachNode, "ef_hint_play", 1.0f, 1);
 	}
+}
+
+bool Hint::IsCharacterMatch()
+{
+	if (m_Data.m_CharacterType > 0)
+	{
+		S06DE_API::ModelType const modelType = S06DE_API::GetModelType();
+		switch (modelType)
+		{
+		case S06DE_API::ModelType::None:
+		case S06DE_API::ModelType::Sonic:
+		case S06DE_API::ModelType::SonicElise:
+			return m_Data.m_CharacterType == (int)CharacterType::Sonic;
+		case S06DE_API::ModelType::Blaze:
+			return m_Data.m_CharacterType == (int)CharacterType::Blaze;
+		case S06DE_API::ModelType::Shadow:
+			return m_Data.m_CharacterType == (int)CharacterType::Shadow;
+		default:
+			return false;
+		}
+	}
+
+	return true;
 }
