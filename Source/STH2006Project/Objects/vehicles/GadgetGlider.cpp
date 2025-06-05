@@ -348,6 +348,22 @@ bool GadgetGlider::ProcessMessage
 		auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
 		switch (msg.m_Event)
 		{
+		case 0:
+		{
+			if (IsFlight())
+			{
+				m_state = State::FlightNoControl;
+			}
+			break;
+		}
+		case 1:
+		{
+			if (IsFlight())
+			{
+				m_state = State::Flight;
+			}
+			break;
+		}
 		case 6:
 		{
 			if (m_state == State::Idle)
@@ -618,6 +634,39 @@ void GadgetGlider::AdvanceFlight(float dt)
 		{
 			fnAccel(m_steer.y(), 0.0f, c_gliderSteerRate);
 		}
+
+		// player animation
+		if (m_playerID)
+		{
+			Direction direction = GetAnimationDirection(hh::math::CVector2(-context->m_WorldInput.x(), -context->m_WorldInput.z()));
+			if (m_direction != direction)
+			{
+				m_direction = direction;
+				SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl(GetAnimationName().c_str()));
+			}
+		}
+	}
+	else if (m_state == State::FlightNoControl)
+	{
+		// auto steer back to center
+		float targetX = -m_offset.x();
+		Common::ClampFloat(targetX, -c_gliderMaxSteer, c_gliderMaxSteer);
+		fnAccel(m_steer.x(), targetX, c_gliderSteerRate);
+
+		float targetY = -m_offset.y();
+		Common::ClampFloat(targetY, -c_gliderMaxSteer, c_gliderMaxSteer);
+		fnAccel(m_steer.y(), targetY, c_gliderSteerRate);
+		
+		// player animation
+		if (m_playerID)
+		{
+			Direction direction = GetAnimationDirection(m_steer / c_gliderMaxSteer); // normalize to [0-1]
+			if (m_direction != direction)
+			{
+				m_direction = direction;
+				SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl(GetAnimationName().c_str()));
+			}
+		}
 	}
 
 	// roll, yaw, pitch
@@ -641,17 +690,6 @@ void GadgetGlider::AdvanceFlight(float dt)
 	hh::math::CQuaternion const boosterRRotation = Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle * 1.2f, -hh::math::CVector::UnitX()) * hh::math::CQuaternion::Identity();
 	m_spNodeBoosterR->m_Transform.SetRotation(boosterRRotation);
 	m_spNodeBoosterR->NotifyChanged();
-
-	// player animation
-	if (m_playerID)
-	{
-		Direction direction = GetAnimationDirection(hh::math::CVector2(-context->m_WorldInput.x(), -context->m_WorldInput.z()));
-		if (m_direction != direction)
-		{
-			m_direction = direction;
-			SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl(GetAnimationName().c_str()));
-		}
-	}
 
 	// update loop sfx position
 	if (m_loopSfx)
