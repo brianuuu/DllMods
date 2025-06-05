@@ -624,8 +624,23 @@ void GadgetGlider::AdvanceFlight(float dt)
 		}
 	}
 
-	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+	hh::math::CVector2 input = hh::math::CVector2::Zero();
+
+	// calculate input, follows sub_F82000
+	if (m_playerID)
+	{
+		input.x() = (abs(padState->LeftStickHorizontal) - 0.1f) / 0.8f;
+		Common::ClampFloat(input.x(), 0.0f, 1.0f);
+		if (padState->LeftStickHorizontal > 0.0f) input.x() *= -1.0f;
+		input.y() = (abs(padState->LeftStickVertical) - 0.1f) / 0.8f;
+		Common::ClampFloat(input.y(), 0.0f, 1.0f);
+		if (padState->LeftStickVertical < 0.0f) input.y() *= -1.0f;
+		if (padState->IsDown(Sonic::EKeyState::eKeyState_DpadLeft)) input.x() = 1.0f;
+		if (padState->IsDown(Sonic::EKeyState::eKeyState_DpadRight)) input.x() = -1.0f;
+		if (padState->IsDown(Sonic::EKeyState::eKeyState_DpadUp)) input.y() = 1.0f;
+		if (padState->IsDown(Sonic::EKeyState::eKeyState_DpadDown)) input.y() = -1.0f;
+	}
 
 	// speed
 	float currentMaxSpeed = c_gliderMaxSpeed;
@@ -659,9 +674,9 @@ void GadgetGlider::AdvanceFlight(float dt)
 		}
 
 		// steering x-axis
-		if (m_playerID && ((context->m_WorldInput.x() > 0.0f && m_offset.x() > -m_Data.m_Radius) || (context->m_WorldInput.x() < 0.0f && m_offset.x() < m_Data.m_Radius)))
+		if (m_playerID && ((input.x() < 0.0f && m_offset.x() > -m_Data.m_Radius) || (input.x() > 0.0f && m_offset.x() < m_Data.m_Radius)))
 		{
-			m_steer.x() += -context->m_WorldInput.x() * c_gliderSteerRate * dt;
+			m_steer.x() += input.x() * c_gliderSteerRate * dt;
 			Common::ClampFloat(m_steer.x(), -c_gliderMaxSteer, c_gliderMaxSteer);
 		}
 		else
@@ -670,9 +685,9 @@ void GadgetGlider::AdvanceFlight(float dt)
 		}
 
 		// steering y-axis
-		if (m_playerID && ((context->m_WorldInput.z() > 0.0f && m_offset.y() > -m_Data.m_Radius) || (context->m_WorldInput.z() < 0.0f && m_offset.y() < m_Data.m_Radius)))
+		if (m_playerID && ((input.y() < 0.0f && m_offset.y() > -m_Data.m_Radius) || (input.y() > 0.0f && m_offset.y() < m_Data.m_Radius)))
 		{
-			m_steer.y() += -context->m_WorldInput.z() * c_gliderSteerRate * dt;
+			m_steer.y() += input.y() * c_gliderSteerRate * dt;
 			Common::ClampFloat(m_steer.y(), -c_gliderMaxSteer, c_gliderMaxSteer);
 		}
 		else
@@ -683,7 +698,7 @@ void GadgetGlider::AdvanceFlight(float dt)
 		// player animation
 		if (m_playerID)
 		{
-			Direction direction = GetAnimationDirection(hh::math::CVector2(-context->m_WorldInput.x(), -context->m_WorldInput.z()));
+			Direction direction = GetAnimationDirection(input);
 			if (m_direction != direction)
 			{
 				m_direction = direction;
