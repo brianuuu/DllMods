@@ -555,6 +555,7 @@ void GadgetGlider::BeginPlayerGetOff()
 	if (!m_playerID) return;
 
 	SendMessageImm(m_playerID, Sonic::Message::MsgFinishExternalControl(Sonic::Message::MsgFinishExternalControl::EChangeState::FALL));
+	Common::SetPlayerVelocity(hh::math::CVector::Zero());
 	S06HUD_API::SetGadgetMaxCount(0);
 
 	// out of control
