@@ -309,20 +309,22 @@ void PathManager::followAdvance(PathFollowData& followData, float dt)
     // Calculate the new position and rotation
     Eigen::Vector3f dir = interpolateTangent(followData.m_pPathData->m_knots, followData.m_segmentID, followData.m_segmentTime);
     Eigen::Quaternionf rotation(0, 0, 0, 1);
-    if (followData.m_yawOnly)
+    
+    // yaw
+    Eigen::Vector3f hDir = dir;
+    hDir.y() = 0;
+    hDir.normalize();
+    float yaw = acos(hDir.z());
+    if (hDir.dot(Eigen::Vector3f::UnitX()) < 0) yaw = -yaw;
+    DebugDrawText::draw(format("yaw = %.4f", yaw * 180/PI), { 0,0 }, 3);
+    rotation = Eigen::AngleAxisf(yaw, Eigen::Vector3f::UnitY());
+ 
+    // pitch
+    if (!followData.m_yawOnly)
     {
-        dir.y() = 0;
-        dir.normalize();
-        float yaw = acos(dir.z());
-        if (dir.dot(Eigen::Vector3f::UnitX()) < 0) yaw = -yaw;
-        DebugDrawText::draw(format("yaw = %.4f", yaw * 180/PI), { 0,0 }, 3);
-        rotation = Eigen::AngleAxisf(yaw, Eigen::Vector3f::UnitY());
+        rotation = Eigen::Quaternionf::FromTwoVectors(hDir, dir) * rotation;
     }
-    else
-    {
-        dir.normalize();
-        rotation = Eigen::Quaternionf::FromTwoVectors(Eigen::Vector3f::UnitZ(), dir);
-    }
+
     followData.m_position = interpolateSegment(followData.m_pPathData->m_knots, followData.m_segmentID, followData.m_segmentTime);
     followData.m_rotation = rotation;
 }
