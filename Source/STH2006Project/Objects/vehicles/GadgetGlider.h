@@ -142,6 +142,7 @@ private:
 	void BeginPlayerGetOff();
 
 	void BeginFlight();
+	void AdvanceFlight(float dt);
 
 	void TakeDamage(float amount);
 	void Explode();

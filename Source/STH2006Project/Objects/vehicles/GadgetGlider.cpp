@@ -303,126 +303,7 @@ void GadgetGlider::SetUpdateParallel
 )
 {
 	AdvancePlayerGetOn(in_rUpdateInfo.DeltaTime);
-
-	if (!IsFlight()) return;
-	
-	// counterweight animation
-	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime * m_speed * 0.4f);
-
-	// helper function
-	auto fnAccel = [&in_rUpdateInfo](float& value, float target, float accel)
-	{
-		if (value > target)
-		{
-			value = max(target, value - accel * in_rUpdateInfo.DeltaTime);
-		}
-		else if (value < target)
-		{
-			value = min(target, value + accel * in_rUpdateInfo.DeltaTime);
-		}
-	};
-
-	// no player explode
-	if (!m_playerID)
-	{
-		m_explodeTimer += in_rUpdateInfo.DeltaTime;
-		if (m_explodeTimer >= c_gliderExplodeTime)
-		{
-			Explode();
-			return;
-		}
-	}
-
-	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-	Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-
-	// fire missiles
-	if (m_playerID)
-	{
-		bool const rLoaded = m_spGunR->IsLoaded();
-		bool const lLoaded = m_spGunL->IsLoaded();
-		S06HUD_API::SetGadgetCount(rLoaded + lLoaded, 2);
-		if (padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger))
-		{
-			if (rLoaded)
-			{
-				SendMessage(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(0));
-			}
-			else if (lLoaded)
-			{
-				SendMessage(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(0));
-			}
-		}
-	}
-
-	// boost max speed
-	float currentMaxSpeed = c_gliderMaxSpeed;
-	if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_A))
-	{
-		currentMaxSpeed = c_gliderBoostSpeed;
-	}
-
-	// steering x-axis
-	if (m_playerID && ((context->m_WorldInput.x() > 0.0f && m_offset.x() > -m_Data.m_Radius) || (context->m_WorldInput.x() < 0.0f && m_offset.x() < m_Data.m_Radius)))
-	{
-		m_steer.x() += -context->m_WorldInput.x() * c_gliderSteerRate * in_rUpdateInfo.DeltaTime;
-		Common::ClampFloat(m_steer.x(), -c_gliderMaxSteer, c_gliderMaxSteer);
-	}
-	else
-	{
-		fnAccel(m_steer.x(), 0.0f, c_gliderSteerRate);
-	}
-
-	// steering y-axis
-	if (m_playerID && ((context->m_WorldInput.z() > 0.0f && m_offset.y() > -m_Data.m_Radius) || (context->m_WorldInput.z() < 0.0f && m_offset.y() < m_Data.m_Radius)))
-	{
-		m_steer.y() += -context->m_WorldInput.z() * c_gliderSteerRate * in_rUpdateInfo.DeltaTime;
-		Common::ClampFloat(m_steer.y(), -c_gliderMaxSteer, c_gliderMaxSteer);
-	}
-	else
-	{
-		fnAccel(m_steer.y(), 0.0f, c_gliderSteerRate);
-	}
-
-	// roll, yaw, pitch
-	hh::math::CVector const upAxis = m_rotation * hh::math::CVector::UnitY();
-	hh::math::CVector const forward = m_rotation * hh::math::CVector::UnitZ();
-	hh::math::CVector const rightAxis = m_rotation * hh::math::CVector::UnitX();
-	hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(m_steer.y() * c_gliderSteerToAngle, -rightAxis) * Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle, upAxis) * Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle, -forward) * m_rotation;
-
-	// move along path
-	m_offset += m_steer * in_rUpdateInfo.DeltaTime;
-	fnAccel(m_speed, currentMaxSpeed, c_gliderAccel);
-	m_splinePos += forward * m_speed * in_rUpdateInfo.DeltaTime;
-	hh::math::CVector const newPosition = m_splinePos + upAxis * m_offset.y() + rightAxis * m_offset.x();
-
-	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(newRotation, newPosition);
-	m_spMatrixNodeTransform->NotifyChanged();
-
-	hh::math::CQuaternion const boosterLRotation = Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle * 1.2f, hh::math::CVector::UnitX()) * hh::math::CQuaternion::Identity();
-	m_spNodeBoosterL->m_Transform.SetRotation(boosterLRotation);
-	m_spNodeBoosterL->NotifyChanged();
-	hh::math::CQuaternion const boosterRRotation = Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle * 1.2f, -hh::math::CVector::UnitX()) * hh::math::CQuaternion::Identity();
-	m_spNodeBoosterR->m_Transform.SetRotation(boosterRRotation);
-	m_spNodeBoosterR->NotifyChanged();
-
-	// player animation
-	if (m_playerID)
-	{
-		Direction direction = GetAnimationDirection(hh::math::CVector2(-context->m_WorldInput.x(), -context->m_WorldInput.z()));
-		if (m_direction != direction)
-		{
-			m_direction = direction;
-			SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl(GetAnimationName().c_str()));
-		}
-	}
-
-	// update loop sfx position
-	if (m_loopSfx)
-	{
-		hh::math::CVector* pSoundHandle = (hh::math::CVector*)m_loopSfx.get();
-		pSoundHandle[2] = newPosition;
-	}
+	AdvanceFlight(in_rUpdateInfo.DeltaTime);
 }
 
 bool GadgetGlider::ProcessMessage
@@ -649,6 +530,135 @@ void GadgetGlider::BeginFlight()
 	S06HUD_API::SetGadgetHP(m_hp);
 	SharedPtrTypeless sfx;
 	Common::ObjectPlaySound(this, 200612005, sfx);
+}
+
+void GadgetGlider::AdvanceFlight(float dt)
+{
+	if (!IsFlight()) return;
+
+	// counterweight animation
+	m_spAnimPose->Update(dt * m_speed * 0.4f);
+
+	// helper function
+	auto fnAccel = [&dt](float& value, float target, float accel)
+	{
+		if (value > target)
+		{
+			value = max(target, value - accel * dt);
+		}
+		else if (value < target)
+		{
+			value = min(target, value + accel * dt);
+		}
+	};
+
+	// no player explode
+	if (!m_playerID)
+	{
+		m_explodeTimer += dt;
+		if (m_explodeTimer >= c_gliderExplodeTime)
+		{
+			Explode();
+			return;
+		}
+	}
+
+	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+
+	// speed
+	float currentMaxSpeed = c_gliderMaxSpeed;
+
+	// player input
+	if (m_state == State::Flight)
+	{
+		// fire missiles
+		if (m_playerID)
+		{
+			bool const rLoaded = m_spGunR->IsLoaded();
+			bool const lLoaded = m_spGunL->IsLoaded();
+			S06HUD_API::SetGadgetCount(rLoaded + lLoaded, 2);
+			if (padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger))
+			{
+				if (rLoaded)
+				{
+					SendMessage(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(0));
+				}
+				else if (lLoaded)
+				{
+					SendMessage(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(0));
+				}
+			}
+		}
+
+		// boost max speed
+		if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_A))
+		{
+			currentMaxSpeed = c_gliderBoostSpeed;
+		}
+
+		// steering x-axis
+		if (m_playerID && ((context->m_WorldInput.x() > 0.0f && m_offset.x() > -m_Data.m_Radius) || (context->m_WorldInput.x() < 0.0f && m_offset.x() < m_Data.m_Radius)))
+		{
+			m_steer.x() += -context->m_WorldInput.x() * c_gliderSteerRate * dt;
+			Common::ClampFloat(m_steer.x(), -c_gliderMaxSteer, c_gliderMaxSteer);
+		}
+		else
+		{
+			fnAccel(m_steer.x(), 0.0f, c_gliderSteerRate);
+		}
+
+		// steering y-axis
+		if (m_playerID && ((context->m_WorldInput.z() > 0.0f && m_offset.y() > -m_Data.m_Radius) || (context->m_WorldInput.z() < 0.0f && m_offset.y() < m_Data.m_Radius)))
+		{
+			m_steer.y() += -context->m_WorldInput.z() * c_gliderSteerRate * dt;
+			Common::ClampFloat(m_steer.y(), -c_gliderMaxSteer, c_gliderMaxSteer);
+		}
+		else
+		{
+			fnAccel(m_steer.y(), 0.0f, c_gliderSteerRate);
+		}
+	}
+
+	// roll, yaw, pitch
+	hh::math::CVector const upAxis = m_rotation * hh::math::CVector::UnitY();
+	hh::math::CVector const forward = m_rotation * hh::math::CVector::UnitZ();
+	hh::math::CVector const rightAxis = m_rotation * hh::math::CVector::UnitX();
+	hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(m_steer.y() * c_gliderSteerToAngle, -rightAxis) * Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle, upAxis) * Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle, -forward) * m_rotation;
+
+	// move along path
+	m_offset += m_steer * dt;
+	fnAccel(m_speed, currentMaxSpeed, c_gliderAccel);
+	m_splinePos += forward * m_speed * dt;
+	hh::math::CVector const newPosition = m_splinePos + upAxis * m_offset.y() + rightAxis * m_offset.x();
+
+	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(newRotation, newPosition);
+	m_spMatrixNodeTransform->NotifyChanged();
+
+	hh::math::CQuaternion const boosterLRotation = Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle * 1.2f, hh::math::CVector::UnitX()) * hh::math::CQuaternion::Identity();
+	m_spNodeBoosterL->m_Transform.SetRotation(boosterLRotation);
+	m_spNodeBoosterL->NotifyChanged();
+	hh::math::CQuaternion const boosterRRotation = Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle * 1.2f, -hh::math::CVector::UnitX()) * hh::math::CQuaternion::Identity();
+	m_spNodeBoosterR->m_Transform.SetRotation(boosterRRotation);
+	m_spNodeBoosterR->NotifyChanged();
+
+	// player animation
+	if (m_playerID)
+	{
+		Direction direction = GetAnimationDirection(hh::math::CVector2(-context->m_WorldInput.x(), -context->m_WorldInput.z()));
+		if (m_direction != direction)
+		{
+			m_direction = direction;
+			SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl(GetAnimationName().c_str()));
+		}
+	}
+
+	// update loop sfx position
+	if (m_loopSfx)
+	{
+		hh::math::CVector* pSoundHandle = (hh::math::CVector*)m_loopSfx.get();
+		pSoundHandle[2] = newPosition;
+	}
 }
 
 void GadgetGlider::TakeDamage(float amount)
