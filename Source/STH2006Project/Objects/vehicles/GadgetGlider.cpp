@@ -1,6 +1,8 @@
 #include "GadgetGlider.h"
 #include "GadgetMissile.h"
 
+#include "System/Application.h"
+
 bool GadgetGliderGun::SetAddRenderables
 (
 	Sonic::CGameDocument* in_pGameDocument, 
@@ -168,6 +170,17 @@ void GadgetGlider::InitializeEditParam
 {
 	in_rEditParam.CreateParamFloat(&m_Data.m_Radius, "Radius");
 	in_rEditParam.CreateParamFloat(&m_Data.m_GetOffOutOfControl, "GetOffOutOfControl");
+
+	uint32_t dummy = 0u;
+	char const* hintName = "FollowPath";
+	m_Data.m_FollowPath = Sonic::CParamTypeList::Create(&dummy, hintName);
+	m_Data.m_FollowPath->m_pMember->m_DefaultValue = 1;
+	m_Data.m_FollowPath->m_pMember->m_pFuncData->m_ValueMax = 1;
+	if (m_Data.m_FollowPath)
+	{
+		m_Data.m_FollowPath->AddRef();
+	}
+	in_rEditParam.CreateParamBase(m_Data.m_FollowPath, hintName);
 }
 
 bool GadgetGlider::SetAddRenderables
@@ -276,6 +289,38 @@ bool GadgetGlider::SetAddColliders
 	AddEventCollision("Player", shapeEventTrigger, *(int*)0x1E0AFD8, true, m_spNodeEventCollision); // ColID_PlayerEvent
 
 	return true;
+}
+
+void GadgetGlider::AddCallback
+(
+	const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, 
+	Sonic::CGameDocument* in_pGameDocument, 
+	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
+)
+{
+	Sonic::CObjectBase::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
+
+	if (!m_Data.m_FollowPath->m_pMember->m_DefaultValueName.empty())
+	{
+		bool const valid = PathManager::parsePathXml(m_path, false, (Application::getModDirString() + "Assets\\Stage\\" + m_Data.m_FollowPath->m_pMember->m_DefaultValueName.c_str() + ".path.xml").c_str()) == tinyxml2::XML_SUCCESS;
+		if (!valid || m_path.empty())
+		{
+			MessageBox(NULL, L"Failed to parse Glider path", NULL, MB_ICONERROR);
+			Kill();
+			return;
+		}
+
+		m_followData.m_yawOnly = false;
+		m_followData.m_speed = 0.0f;
+		m_followData.m_loop = false;
+		m_followData.m_pPathData = &m_path[0];
+
+		m_followData.m_rotation = Eigen::Quaternionf::Identity();
+		m_followData.m_position = m_path[0].m_knots[0].m_point;
+
+		m_spMatrixNodeTransform->m_Transform.SetPosition(m_followData.m_position);
+		m_spMatrixNodeTransform->NotifyChanged();
+	}
 }
 
 void GadgetGlider::KillCallback()
@@ -405,7 +450,7 @@ bool GadgetGlider::ProcessMessage
 					(
 						*(uint32_t*)0x1E0BE28, // DamageID_SonicHeavy
 						m_spMatrixNodeTransform->m_Transform.m_Position,
-						m_rotation * hh::math::CVector::UnitZ() * m_speed * 2.0f
+						m_followData.m_rotation * hh::math::CVector::UnitZ() * m_followData.m_speed * 2.0f
 					)
 				);
 			}
@@ -447,7 +492,7 @@ bool GadgetGlider::IsValidPlayer() const
 	return *pModernSonicContext && S06DE_API::GetModelType() == S06DE_API::ModelType::Shadow;
 }
 
-bool GadgetGlider::IsFlight()
+bool GadgetGlider::IsFlight() const
 {
 	return (int)m_state >= (int)State::Flight;
 }
@@ -526,8 +571,8 @@ void GadgetGlider::BeginFlight()
 	SendMessage(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
 	SendMessage(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
 
-	m_splinePos = m_spMatrixNodeTransform->m_Transform.m_Position;
-	m_rotation = m_spMatrixNodeTransform->m_Transform.m_Rotation;
+	m_followData.m_position = m_spMatrixNodeTransform->m_Transform.m_Position;
+	m_followData.m_rotation = m_spMatrixNodeTransform->m_Transform.m_Rotation;
 
 	if (!m_loopSfx)
 	{
@@ -553,7 +598,7 @@ void GadgetGlider::AdvanceFlight(float dt)
 	if (!IsFlight()) return;
 
 	// counterweight animation
-	m_spAnimPose->Update(dt * m_speed * 0.4f);
+	m_spAnimPose->Update(dt * m_followData.m_speed * 0.4f);
 
 	// helper function
 	auto fnAccel = [&dt](float& value, float target, float accel)
@@ -670,16 +715,24 @@ void GadgetGlider::AdvanceFlight(float dt)
 	}
 
 	// roll, yaw, pitch
-	hh::math::CVector const upAxis = m_rotation * hh::math::CVector::UnitY();
-	hh::math::CVector const forward = m_rotation * hh::math::CVector::UnitZ();
-	hh::math::CVector const rightAxis = m_rotation * hh::math::CVector::UnitX();
-	hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(m_steer.y() * c_gliderSteerToAngle, -rightAxis) * Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle, upAxis) * Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle, -forward) * m_rotation;
+	hh::math::CVector const upAxis = m_followData.m_rotation * hh::math::CVector::UnitY();
+	hh::math::CVector const forward = m_followData.m_rotation * hh::math::CVector::UnitZ();
+	hh::math::CVector const rightAxis = m_followData.m_rotation * hh::math::CVector::UnitX();
 
 	// move along path
 	m_offset += m_steer * dt;
-	fnAccel(m_speed, currentMaxSpeed, c_gliderAccel);
-	m_splinePos += forward * m_speed * dt;
-	hh::math::CVector const newPosition = m_splinePos + upAxis * m_offset.y() + rightAxis * m_offset.x();
+	fnAccel(m_followData.m_speed, currentMaxSpeed, c_gliderAccel);
+	if (m_followData.m_pPathData && !m_followData.m_finished)
+	{
+		PathManager::followAdvance(m_followData, dt);
+	}
+	else
+	{
+		m_followData.m_position += forward * m_followData.m_speed * dt;
+	}
+
+	hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(m_steer.y() * c_gliderSteerToAngle, -rightAxis) * Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle, upAxis) * Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle, -forward) * m_followData.m_rotation;
+	hh::math::CVector const newPosition = m_followData.m_position + upAxis * m_offset.y() + rightAxis * m_offset.x();
 
 	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(newRotation, newPosition);
 	m_spMatrixNodeTransform->NotifyChanged();

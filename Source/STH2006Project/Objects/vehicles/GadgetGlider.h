@@ -4,6 +4,8 @@
 ///	Description: Gadget_Glider object from 06
 /*----------------------------------------------------------*/
 
+#include "Managers/PathManager.h"
+
 #pragma once
 class GadgetGliderGun : public Sonic::CObjectBase
 	, public Sonic::IAnimationContext, public Sonic::CAnimationStateMachine
@@ -72,6 +74,7 @@ private:
 	{
 		float m_Radius = 10.0f;
 		float m_GetOffOutOfControl = 0.5f;
+		Sonic::CParamTypeList* m_FollowPath = nullptr;
 	} m_Data;
 
 private:
@@ -85,13 +88,13 @@ private:
 	State m_state = State::Idle;
 
 	float m_hp = 100.0f;
-	float m_speed = 0.0f;
 	float m_explodeTimer = 0.0f;
+
+	PathDataCollection m_path;
+	PathFollowData m_followData;
 
 	hh::math::CVector2 m_steer = hh::math::CVector2::Zero();
 	hh::math::CVector2 m_offset = hh::math::CVector2::Zero();
-	hh::math::CVector m_splinePos = hh::math::CVector::Zero();
-	hh::math::CQuaternion m_rotation = hh::math::CQuaternion::Identity();
 
 	struct PlayerGetOnData
 	{
@@ -124,6 +127,7 @@ public:
 	void InitializeEditParam(Sonic::CEditParam& in_rEditParam) override;
 	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	bool SetAddColliders(const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
+	void AddCallback(const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	void KillCallback() override;
 	void SetUpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo) override;
 	bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;
@@ -135,7 +139,7 @@ public:
 
 private:
 	bool IsValidPlayer() const;
-	bool IsFlight();
+	bool IsFlight() const;
 
 	void BeginPlayerGetOn();
 	void AdvancePlayerGetOn(float dt);
