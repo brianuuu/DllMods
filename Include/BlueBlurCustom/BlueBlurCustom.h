@@ -16,6 +16,7 @@
 #include <Sonic/Message/MsgHitEventCollision.h>
 #include <Sonic/Message/MsgIsExternalControl.h>
 #include <Sonic/Message/MsgLeaveEventCollision.h>
+#include <Sonic/Message/MsgNotifyInput.h>
 #include <Sonic/Message/MsgNotifyObjectEvent.h>
 #include <Sonic/Message/MsgNotifyShockWave.h>
 #include <Sonic/Message/MsgShakeCamera.h>
