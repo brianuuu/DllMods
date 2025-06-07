@@ -10,9 +10,15 @@ CaptionData SubtitleUI::m_captionData;
 std::set<SubtitleUI::DialogCallbackFunc> SubtitleUI::m_acceptCallbacks;
 std::set<SubtitleUI::DialogCallbackFunc> SubtitleUI::m_finishCallbacks;
 
+HOOK(int, __fastcall, SubtitleUI_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
+{
+    SubtitleUI::m_subtitleSfx.reset();
+    return originalSubtitleUI_MsgRestartStage(This, Edx, message);
+}
+
 void SubtitleUI::applyPatches()
 {
-    
+    INSTALL_HOOK(SubtitleUI_MsgRestartStage);
 }
 
 float SubtitleUI::addSubtitle(mst::TextEntry const& entry, std::vector<float> const& durationOverrides)

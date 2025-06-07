@@ -12,6 +12,7 @@
 #include "System/ChaosEnergy.h"
 #include "System/EnemyHealth.h"
 #include "System/EnemyTrigger.h"
+#include "UI/SubtitleUI.h"
 #include "UI/TitleUI.h"
 #include "UI/UIContext.h"
 #include "Utils/ArchiveTreePatcher.h"
@@ -71,7 +72,8 @@ extern "C" __declspec(dllexport) void Init(ModInfo_t * modInfo)
     // Mission related
     MissionManager::applyPatches();
 
-    // Title/Main Menu
+    // Subtitle/Title/Main Menu
+    SubtitleUI::applyPatches();
     TitleUI::applyPatches();
 
     // Custom window title
