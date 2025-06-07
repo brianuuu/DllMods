@@ -193,6 +193,13 @@ bool Laser::ProcessMessage
 		return true;
 	}
 
+	if (message.Is<Sonic::Message::MsgIsWall>())
+	{
+		auto& msg = static_cast<Sonic::Message::MsgIsWall&>(message);
+		*msg.m_pIsWall = m_isOn;
+		return true;
+	}
+
 	return Sonic::CObjectBase::ProcessMessage(message, flag);
 }
 
