@@ -57,8 +57,7 @@ bool GadgetMissile::ProcessMessage(Hedgehog::Universe::Message& message, bool fl
 {
 	if (flag)
 	{
-		if (std::strstr(message.GetType(), "MsgRestartStage") != nullptr
-		 || std::strstr(message.GetType(), "MsgStageClear") != nullptr)
+		if (message.Is<Sonic::Message::MsgRestartStage>() || message.Is<Sonic::Message::MsgStageClear>())
 		{
 			Kill();
 			return true;
