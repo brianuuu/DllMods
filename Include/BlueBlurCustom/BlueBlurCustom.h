@@ -15,11 +15,14 @@
 #include <Sonic/Message/MsgGetPlayerType.h>
 #include <Sonic/Message/MsgHitEventCollision.h>
 #include <Sonic/Message/MsgIsExternalControl.h>
+#include <Sonic/Message/MsgIsWall.h>
 #include <Sonic/Message/MsgLeaveEventCollision.h>
 #include <Sonic/Message/MsgNotifyInput.h>
 #include <Sonic/Message/MsgNotifyObjectEvent.h>
 #include <Sonic/Message/MsgNotifyShockWave.h>
+#include <Sonic/Message/MsgRestartStage.h>
 #include <Sonic/Message/MsgShakeCamera.h>
+#include <Sonic/Message/MsgStageClear.h>
 #include <Sonic/Message/MsgStartExternalControl.h>
 #include <Sonic/Message/MsgStartHangOn.h>
 
