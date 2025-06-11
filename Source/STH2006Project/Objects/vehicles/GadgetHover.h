@@ -123,7 +123,7 @@ private:
 
 	void BeginPlayerGetOn();
 	void AdvancePlayerGetOn(float dt);
-	void BeginPlayerGetOff();
+	void BeginPlayerGetOff(bool isJump);
 
 	void BeginDriving();
 	void AdvanceDriving(float dt);

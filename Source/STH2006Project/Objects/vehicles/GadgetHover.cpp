@@ -141,7 +141,7 @@ bool GadgetHover::SetAddColliders
 
 void GadgetHover::KillCallback()
 {
-	BeginPlayerGetOff();
+	BeginPlayerGetOff(m_hp > 0.0f);
 
 	if (canGetOnHoverActorID == m_ActorID)
 	{
@@ -329,7 +329,7 @@ void GadgetHover::AdvancePlayerGetOn(float dt)
 	m_spSonicControlNode->NotifyChanged();
 }
 
-void GadgetHover::BeginPlayerGetOff()
+void GadgetHover::BeginPlayerGetOff(bool isJump)
 {
 	if (!m_playerID) return;
 
@@ -339,18 +339,25 @@ void GadgetHover::BeginPlayerGetOff()
 
 	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	hh::math::CVector velocity = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitZ() * m_speed;
-	velocity.y() = context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_JumpPower);
-	Common::SetPlayerVelocity(velocity);
-	hh::math::CVector position = m_spSonicControlNode->GetWorldMatrix().translation();
-	position.y() += 0.8f;
-	Common::SetPlayerPosition(position);
+	if (isJump)
+	{
+		velocity.y() = context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_JumpPower);
+		Common::SetPlayerVelocity(velocity);
+		hh::math::CVector position = m_spSonicControlNode->GetWorldMatrix().translation();
+		position.y() += 0.8f;
+		Common::SetPlayerPosition(position);
 
-	// Jump animation
-	SharedPtrTypeless soundHandle;
-	Common::SonicContextPlaySound(soundHandle, 2002027, 1);
-	Common::SonicContextPlayVoice(soundHandle, 3002000, 0);
-	FUNCTION_PTR(void*, __thiscall, ChangeAnimationCustomPlayback, 0xE74BF0, void* context, Hedgehog::Base::CSharedString const& name, hh::math::CVector const& change);
-	ChangeAnimationCustomPlayback(context, "JumpBall", hh::math::CVector::Zero());
+		// Jump animation
+		SharedPtrTypeless soundHandle;
+		Common::SonicContextPlaySound(soundHandle, 2002027, 1);
+		Common::SonicContextPlayVoice(soundHandle, 3002000, 0);
+		FUNCTION_PTR(void*, __thiscall, ChangeAnimationCustomPlayback, 0xE74BF0, void* context, Hedgehog::Base::CSharedString const& name, hh::math::CVector const& change);
+		ChangeAnimationCustomPlayback(context, "JumpBall", hh::math::CVector::Zero());
+	}
+	else
+	{
+		Common::SetPlayerVelocity(velocity);
+	}
 
 	// TODO: unload gun
 	S06HUD_API::SetGadgetMaxCount(0);
@@ -396,7 +403,7 @@ void GadgetHover::AdvanceDriving(float dt)
 	// get off
 	if (m_playerID && padState->IsTapped(Sonic::EKeyState::eKeyState_Y))
 	{
-		BeginPlayerGetOff();
+		BeginPlayerGetOff(true);
 		return;
 	}
 }
