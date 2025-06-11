@@ -74,6 +74,7 @@
     <ClCompile Include="Objects\vehicles\GadgetGlider.cpp" />
     <ClCompile Include="Objects\vehicles\GadgetMissile.cpp" />
     <ClCompile Include="Objects\cmn\Explosion.cpp" />
+    <ClCompile Include="Objects\vehicles\GadgetHover.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -119,6 +120,7 @@
     <ClInclude Include="Objects\vehicles\GadgetGlider.h" />
     <ClInclude Include="Objects\vehicles\GadgetMissile.h" />
     <ClInclude Include="Objects\cmn\Explosion.h" />
+    <ClInclude Include="Objects\vehicles\GadgetHover.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">

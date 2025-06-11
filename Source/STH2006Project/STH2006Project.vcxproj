@@ -252,6 +252,7 @@
     </ClCompile>
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DllMain.cpp" />
+    <ClCompile Include="Objects\vehicles\GadgetHover.cpp" />
     <ClCompile Include="Objects\cmn\Explosion.cpp" />
     <ClCompile Include="Objects\vehicles\GadgetMissile.cpp" />
     <ClCompile Include="Objects\vehicles\GadgetGlider.cpp" />
@@ -306,6 +307,7 @@
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="DllMain.h" />
+    <ClInclude Include="Objects\vehicles\GadgetHover.h" />
     <ClInclude Include="Objects\cmn\Explosion.h" />
     <ClInclude Include="Objects\vehicles\GadgetMissile.h" />
     <ClInclude Include="Objects\vehicles\GadgetGlider.h" />
