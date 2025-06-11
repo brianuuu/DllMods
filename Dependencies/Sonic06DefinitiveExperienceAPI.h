@@ -16,6 +16,7 @@ public:
 private:
     LIB_FUNCTION(ModelType, "Sonic06DefinitiveExperience.dll", API_GetModelType);
     LIB_FUNCTION(bool, "Sonic06DefinitiveExperience.dll", API_IsUsingCharacterMoveset);
+    LIB_FUNCTION(int, "Sonic06DefinitiveExperience.dll", API_GetChaosBoostLevel);
 
 public:
     static S06DE_API* GetInstance()
@@ -32,5 +33,10 @@ public:
     static bool IsUsingCharacterMoveset()
 	{
 		BOOL_EXPORT(API_IsUsingCharacterMoveset);
+	}
+	
+    static int GetChaosBoostLevel()
+	{
+		INT_EXPORT(API_GetChaosBoostLevel);
 	}
 };
