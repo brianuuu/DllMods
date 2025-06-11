@@ -371,24 +371,6 @@ bool GadgetGlider::ProcessMessage
 		return true;
 	}
 
-	if (message.Is<Sonic::Message::MsgGetHomingAttackPriority>())
-	{
-		if (!IsValidPlayer()) return false;
-
-		auto& msg = static_cast<Sonic::Message::MsgGetHomingAttackPriority&>(message);
-		*msg.m_pPriority = 10;
-		return true;
-	}
-
-	if (message.Is<Sonic::Message::MsgGetHomingAttackPosition>())
-	{
-		if (!IsValidPlayer()) return false;
-
-		auto& msg = static_cast<Sonic::Message::MsgGetHomingAttackPosition&>(message);
-		*msg.m_pPosition = m_spSonicControlNode->GetWorldMatrix().translation();
-		return true;
-	}
-
 	if (message.Is<Sonic::Message::MsgNotifyObjectEvent>())
 	{
 		auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
