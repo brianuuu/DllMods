@@ -340,7 +340,6 @@ float const c_gliderBoostSpeed = 21.0f;
 float const c_gliderMaxSteer = 5.0f;
 float const c_gliderSteerRate = 10.0f;
 float const c_gliderSteerToAngle = 4.5f * DEG_TO_RAD;
-float const c_gliderGetOnTime = 1.0f;
 float const c_gliderExplodeTime = 5.0f;
 
 void GadgetGlider::SetUpdateParallel

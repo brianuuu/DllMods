@@ -133,7 +133,7 @@ bool GadgetHover::SetAddColliders
 	m_spNodeEventCollision->m_Transform.SetPosition(hh::math::CVector(0.0f, 0.856, 0.117));
 	m_spNodeEventCollision->NotifyChanged();
 	m_spNodeEventCollision->SetParent(m_spMatrixNodeTransform.get());
-	hk2010_2_0::hkpSphereShape* shapeEventTrigger = new hk2010_2_0::hkpSphereShape(2.0f);
+	hk2010_2_0::hkpSphereShape* shapeEventTrigger = new hk2010_2_0::hkpSphereShape(2.5f);
 	AddEventCollision("Player", shapeEventTrigger, *(int*)0x1E0AFD8, true, m_spNodeEventCollision); // ColID_PlayerEvent
 
 	return true;
@@ -154,20 +154,10 @@ void GadgetHover::SetUpdateParallel
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
 )
 {
-	switch (m_state)
-	{
-	case State::PlayerGetOn:
-	{
-		AdvancePlayerGetOn(in_rUpdateInfo.DeltaTime);
-		break;
-	}
-	case State::Idle:
-	case State::Driving:
-	{
-		AdvanceDriving(in_rUpdateInfo.DeltaTime);
-		break;
-	}
-	}
+	AdvancePlayerGetOn(in_rUpdateInfo.DeltaTime);
+	AdvanceDriving(in_rUpdateInfo.DeltaTime);
+	AdvanceGaurd(in_rUpdateInfo.DeltaTime);
+	AdvancePhysics(in_rUpdateInfo.DeltaTime);
 }
 
 bool GadgetHover::ProcessMessage
@@ -305,6 +295,8 @@ void GadgetHover::BeginPlayerGetOn()
 
 void GadgetHover::AdvancePlayerGetOn(float dt)
 {
+	if (m_state != State::PlayerGetOn) return;
+
 	float constexpr timeToGetOn = 2.0f;
 	m_playerGetOnData.m_time += dt;
 
@@ -333,6 +325,7 @@ void GadgetHover::BeginPlayerGetOff(bool isJump)
 {
 	if (!m_playerID) return;
 
+	m_direction = Direction::None;
 	m_state = State::Idle;
 
 	SendMessageImm(m_playerID, Sonic::Message::MsgFinishExternalControl(Sonic::Message::MsgFinishExternalControl::EChangeState::FALL));
@@ -371,17 +364,44 @@ void GadgetHover::BeginDriving()
 	m_state = State::Driving;
 
 	// Change animation
-	SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl("Glider", true));
+	SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl("Hover", true));
 
 	// set HUD
-	S06HUD_API::SetGadgetMaxCount(100);
+	S06HUD_API::SetGadgetMaxCount(m_bullets);
 	S06HUD_API::SetGadgetHP(m_hp);
 
 	// TODO:
 }
 
+float const c_hoverTurnRate = 2.0f * PI_F / 4.5f;
+float const c_hoverGuardMaxAngle = 40.0f * DEG_TO_RAD;
+float const c_hoverGuardTurnRate = c_hoverGuardMaxAngle / 0.1f;
+float const c_hoverMaxSpeed = 40.0f;
+float const c_hoverAccel = 8.0f;
+float const c_hoverBrake = 20.0f;
+float const c_hoverDecel = 2.0f;
+
 void GadgetHover::AdvanceDriving(float dt)
 {
+	// helper function
+	auto fnAccel = [&dt](float& value, float target, float accel)
+	{
+		if (value > target)
+		{
+			value = max(target, value - accel * dt);
+		}
+		else if (value < target)
+		{
+			value = min(target, value + accel * dt);
+		}
+	};
+
+	if (m_state != State::Driving)
+	{
+		fnAccel(m_guardAngle, 0.0f, c_hoverGuardTurnRate);
+		return;
+	}
+
 	Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 	hh::math::CVector2 input = hh::math::CVector2::Zero();
 
@@ -406,6 +426,67 @@ void GadgetHover::AdvanceDriving(float dt)
 		BeginPlayerGetOff(true);
 		return;
 	}
+
+	// rotation
+	if (input.x() != 0.0f)
+	{
+		hh::math::CVector const upAxis = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitY();
+		hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(input.x() * c_hoverTurnRate * dt, upAxis) * m_spMatrixNodeTransform->m_Transform.m_Rotation;
+		m_spMatrixNodeTransform->m_Transform.SetRotation(newRotation);
+		m_spMatrixNodeTransform->NotifyChanged();
+
+		fnAccel(m_guardAngle, -input.x() * c_hoverGuardMaxAngle, c_hoverGuardTurnRate);
+	}
+	else
+	{
+		fnAccel(m_guardAngle, 0.0f, c_hoverGuardTurnRate);
+	}
+
+	// player animation
+	if (m_playerID)
+	{
+		Direction direction = GetCurrentDirection(input);
+		if (m_direction != direction)
+		{
+			m_direction = direction;
+			SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl(GetAnimationName().c_str()));
+		}
+	}
+
+	if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_A))
+	{
+		// forward
+		fnAccel(m_speed, c_hoverMaxSpeed, m_speed < 0.0f ? c_hoverBrake : c_hoverAccel);
+	}
+	else if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_X))
+	{
+		// brake, reverse
+		fnAccel(m_speed, -c_hoverMaxSpeed, m_speed > 0.0f ? c_hoverBrake : c_hoverAccel);
+	}
+	else
+	{
+		// natural stop
+		fnAccel(m_speed, 0.0f, c_hoverDecel);
+	}
+}
+
+void GadgetHover::AdvanceGaurd(float dt)
+{
+	hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(m_guardAngle, hh::math::CVector::UnitY()) * hh::math::CQuaternion::Identity();
+	m_spNodeGuardL->m_Transform.SetRotation(newRotation);
+	m_spNodeGuardR->m_Transform.SetRotation(newRotation);
+	m_spNodeGuardL->NotifyChanged();
+	m_spNodeGuardR->NotifyChanged();
+
+	// TODO: uv-anim
+}
+
+void GadgetHover::AdvancePhysics(float dt)
+{
+	hh::math::CVector const forward = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitZ();
+	hh::math::CVector const newPosition = m_spMatrixNodeTransform->m_Transform.m_Position + forward * m_speed * dt;
+	m_spMatrixNodeTransform->m_Transform.SetPosition(newPosition);
+	m_spMatrixNodeTransform->NotifyChanged();
 }
 
 void GadgetHover::TakeDamage(float amount)
@@ -437,4 +518,35 @@ void GadgetHover::Explode()
 	Common::ObjectPlaySound(this, 200612007, sfx);
 
 	Kill();
+}
+
+GadgetHover::Direction GadgetHover::GetCurrentDirection(hh::math::CVector2 input) const
+{
+	if (m_speed < 0.0f)
+	{
+		return Direction::Back;
+	}
+
+	if (input.x() > 0)
+	{
+		return Direction::Left;
+	}
+
+	if (input.x() < 0)
+	{
+		return Direction::Right;
+	}
+
+	return Direction::None;
+}
+
+std::string GadgetHover::GetAnimationName() const
+{
+	switch (m_direction)
+	{
+	case Direction::Left: return "HoverL";
+	case Direction::Right: return "HoverR";
+	case Direction::Back: return "HoverB";
+	default: return "Hover";
+	}
 }

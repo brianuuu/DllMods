@@ -69,6 +69,14 @@ public:
 	static void registerObject();
 	static void applyPatches();
 
+	enum class Direction
+	{
+		None,
+		Left,
+		Right,
+		Back
+	};
+
 	enum class State
 	{
 		Idle,
@@ -84,10 +92,13 @@ private:
 private:
 	std::mutex m_mutex;
 	uint32_t m_playerID = 0u;
+	Direction m_direction = Direction::None;
 	State m_state = State::Idle;
 
 	float m_hp = 100.0f;
 	float m_speed = 0.0f;
+	float m_guardAngle = 0.0f;
+	uint8_t m_bullets = 100u;
 	bool m_started = false;
 
 	struct PlayerGetOnData
@@ -128,6 +139,12 @@ private:
 	void BeginDriving();
 	void AdvanceDriving(float dt);
 
+	void AdvanceGaurd(float dt);
+	void AdvancePhysics(float dt);
+
 	void TakeDamage(float amount);
 	void Explode();
+
+	Direction GetCurrentDirection(hh::math::CVector2 input) const;
+	std::string GetAnimationName() const;
 };
