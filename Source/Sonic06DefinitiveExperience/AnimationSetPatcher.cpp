@@ -59,6 +59,20 @@ HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* 
         A2->SetAnimationBlend("GliderR", "Glider", 0.2f);
         A2->SetAnimationBlend("GliderR", "GliderL", 0.2f);
         A2->SetAnimationBlend("GliderL", "GliderR", 0.2f);
+
+        A2->SetAnimationBlend("Hover", "HoverL", 0.1f);
+        A2->SetAnimationBlend("Hover", "HoverR", 0.1f);
+        A2->SetAnimationBlend("HoverL", "Hover", 0.1f);
+        A2->SetAnimationBlend("HoverR", "Hover", 0.1f);
+        A2->SetAnimationBlend("HoverR", "HoverL", 0.1f);
+        A2->SetAnimationBlend("HoverL", "HoverR", 0.1f);
+        A2->SetAnimationBlend("Hover", "HoverB", 0.1f);
+        A2->SetAnimationBlend("HoverL", "HoverB", 0.1f);
+        A2->SetAnimationBlend("HoverR", "HoverB", 0.1f);
+        A2->SetAnimationBlend("HoverB", "Hover", 0.1f);
+        A2->SetAnimationBlend("HoverBLoop", "Hover", 0.1f);
+        A2->SetAnimationBlend("HoverBLoop", "HoverL", 0.1f);
+        A2->SetAnimationBlend("HoverBLoop", "HoverR", 0.1f);
     }
 }
 
@@ -543,13 +557,25 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationDataSuper.emplace_back(ChaosBlast, "sh_chaosblast_attack_s_Root", 1.0f, false, ChaosBlastLoop);
         m_newAnimationDataSuper.emplace_back(ChaosBlastLoop, "sh_chaosblast_attack_l_Root", 1.0f, true, nullptr);
     
-        // Vehicles
+        // Glider
         m_newAnimationData.emplace_back("Glider", "sh_gldr_ride_l", 1.0f, true, nullptr);
         m_newAnimationData.emplace_back("GliderL", "sh_gldr_rideL_l_Root", 1.0f, true, nullptr);
         m_newAnimationData.emplace_back("GliderR", "sh_gldr_rideR_l_Root", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("Glider", "sh_gldr_ride_l", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("GliderL", "sh_gldr_rideL_l_Root", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("GliderR", "sh_gldr_rideR_l_Root", 1.0f, true, nullptr);
+
+        // Hover
+        m_newAnimationData.emplace_back("Hover", "sh_hover_ride_l", 1.0f, true, nullptr);
+        m_newAnimationData.emplace_back("HoverL", "sh_hover_curveL_l", 1.0f, true, nullptr);
+        m_newAnimationData.emplace_back("HoverR", "sh_hover_curveR_l", 1.0f, true, nullptr);
+        m_newAnimationData.emplace_back("HoverB", "sh_hover_back", 1.0f, false, "HoverBLoop");
+        m_newAnimationData.emplace_back("HoverBLoop", "sh_hover_back_l", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("Hover", "sh_hover_ride_l", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("HoverL", "sh_hover_curveL_l", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("HoverR", "sh_hover_curveR_l", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("HoverB", "sh_hover_back", 1.0f, false, "HoverBLoop");
+        m_newAnimationDataSuper.emplace_back("HoverBLoop", "sh_hover_back_l", 1.0f, true, nullptr);
     }
 
     if (!m_newAnimationData.empty())
