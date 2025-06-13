@@ -1,5 +1,7 @@
 #include "GadgetHover.h"
 
+#include "Objects/enemy/EnemyBullet.h"
+
 bool GadgetHoverSuspension::SetAddRenderables
 (
 	Sonic::CGameDocument* in_pGameDocument,
@@ -165,7 +167,14 @@ void GadgetHoverGun::FireBullet()
 {
 	SharedPtrTypeless sfx;
 	Common::ObjectPlaySound(this, 200612014, sfx);
+
 	ChangeState("Fire");
+
+	auto node = m_spModel->GetNode("MissilePoint_L");
+	hh::mr::CTransform startTrans;
+	startTrans.m_Rotation = m_spMatrixNodeTransform->m_Transform.m_Rotation;
+	startTrans.m_Position = node->GetWorldMatrix().translation();
+	m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<EnemyBullet>(m_owner, startTrans));
 }
 
 uint32_t canGetOnHoverActorID = 0u;
@@ -290,7 +299,7 @@ bool GadgetHover::SetAddColliders
 
 void GadgetHover::KillCallback()
 {
-	BeginPlayerGetOff(m_hp > 0.0f);
+	BeginPlayerGetOff(false);
 
 	if (canGetOnHoverActorID == m_ActorID)
 	{
@@ -471,7 +480,7 @@ void GadgetHover::AdvancePlayerGetOn(float dt)
 	m_spSonicControlNode->NotifyChanged();
 }
 
-void GadgetHover::BeginPlayerGetOff(bool isJump)
+void GadgetHover::BeginPlayerGetOff(bool isAlive)
 {
 	if (!m_playerID) return;
 
@@ -482,7 +491,7 @@ void GadgetHover::BeginPlayerGetOff(bool isJump)
 
 	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	hh::math::CVector velocity = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitZ() * m_speed;
-	if (isJump)
+	if (isAlive)
 	{
 		velocity.y() = context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_JumpPower);
 		Common::SetPlayerVelocity(velocity);
@@ -496,19 +505,19 @@ void GadgetHover::BeginPlayerGetOff(bool isJump)
 		Common::SonicContextPlayVoice(soundHandle, 3002000, 0);
 		FUNCTION_PTR(void*, __thiscall, ChangeAnimationCustomPlayback, 0xE74BF0, void* context, Hedgehog::Base::CSharedString const& name, hh::math::CVector const& change);
 		ChangeAnimationCustomPlayback(context, "JumpBall", hh::math::CVector::Zero());
+
+		// unload gun
+		SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+		SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+		S06HUD_API::SetGadgetMaxCount(0);
+
+		SharedPtrTypeless sfx;
+		Common::ObjectPlaySound(this, 200612013, sfx);
 	}
 	else
 	{
 		Common::SetPlayerVelocity(velocity);
 	}
-
-	// unload gun
-	SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
-	SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
-	S06HUD_API::SetGadgetMaxCount(0);
-
-	SharedPtrTypeless sfx;
-	Common::ObjectPlaySound(this, 200612013, sfx);
 
 	// out of control
 	Common::SetPlayerOutOfControl(0.1f);

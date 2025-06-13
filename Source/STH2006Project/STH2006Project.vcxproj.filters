@@ -75,6 +75,7 @@
     <ClCompile Include="Objects\vehicles\GadgetMissile.cpp" />
     <ClCompile Include="Objects\cmn\Explosion.cpp" />
     <ClCompile Include="Objects\vehicles\GadgetHover.cpp" />
+    <ClCompile Include="Objects\enemy\EnemyBullet.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -121,6 +122,7 @@
     <ClInclude Include="Objects\vehicles\GadgetMissile.h" />
     <ClInclude Include="Objects\cmn\Explosion.h" />
     <ClInclude Include="Objects\vehicles\GadgetHover.h" />
+    <ClInclude Include="Objects\enemy\EnemyBullet.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">
