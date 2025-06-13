@@ -1395,7 +1395,7 @@ static bool IsPlayerAnimationFinished
 
 static bool IsAnimationFinished
 (
-	Sonic::CAnimationStateMachine* pStateMachine
+	Sonic::CAnimationStateMachine const* pStateMachine
 )
 {
 	static void* const pfIsPlayerAnimationFinished = (void*)0xCDF4C0;

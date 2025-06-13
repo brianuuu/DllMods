@@ -100,7 +100,7 @@ void GadgetGliderGun::UpdateParallel
 	UpdateTransform();
 }
 
-bool GadgetGliderGun::IsLoaded()
+bool GadgetGliderGun::IsLoaded() const
 {
 	return m_loadTimer <= 0.0f && GetCurrentState()->GetStateName() == "Load" && Common::IsAnimationFinished(this);
 }

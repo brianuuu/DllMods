@@ -35,7 +35,7 @@ public:
 	Hedgehog::Math::CVector GetVelocityForAnimationChange() override { return hh::math::CVector::Ones(); }
 
 	// API
-	bool IsLoaded();
+	bool IsLoaded() const;
 	void UpdateTransform();
 
 private:
