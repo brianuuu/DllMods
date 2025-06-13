@@ -42,6 +42,132 @@ void GadgetHoverSuspension::UpdateParallel
 	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
 }
 
+bool GadgetHoverGun::SetAddRenderables
+(
+	Sonic::CGameDocument* in_pGameDocument, 
+	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
+)
+{
+	char const* modelName = "Gadget_Hover_Gun";
+
+	// model
+	hh::mr::CMirageDatabaseWrapper wrapper(in_spDatabase.get());
+	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData(modelName, 0);
+	m_spModel = boost::make_shared<hh::mr::CSingleElement>(spModelBaseData);
+	m_spModel->BindMatrixNode(m_spNodeParent);
+	Sonic::CGameObject::AddRenderable("Object", m_spModel, m_castShadow);
+
+	// animations
+	m_spAnimPose = boost::make_shared<Hedgehog::Animation::CAnimationPose>(in_spDatabase, modelName);
+	std::vector<hh::anim::SMotionInfo> entries = std::vector<hh::anim::SMotionInfo>(0, { "","" });
+	entries.push_back(hh::anim::SMotionInfo("Load", modelName, 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
+	entries.push_back(hh::anim::SMotionInfo("Unload", "Gadget_Hover_Gun_rev", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
+	entries.push_back(hh::anim::SMotionInfo("Fire", "Gadget_Hover_Gun_Fire", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
+	m_spAnimPose->AddMotionInfo(&entries.front(), entries.size());
+	m_spAnimPose->CreateAnimationCache();
+	m_spModel->BindPose(m_spAnimPose);
+
+	// states
+	SetContext(this);
+	AddAnimationState("Load");
+	AddAnimationState("Unload");
+	AddAnimationState("Fire");
+	ChangeState("Unload");
+	m_spAnimPose->Update(0.35f); // 21 frames
+
+	// set initial transform
+	UpdateTransform();
+
+	return true;
+}
+
+bool GadgetHoverGun::ProcessMessage
+(
+	Hedgehog::Universe::Message& message, bool flag
+)
+{
+	if (flag)
+	{
+		if (message.Is<Sonic::Message::MsgNotifyObjectEvent>())
+		{
+			auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
+			switch (msg.m_Event)
+			{
+			case 0:
+			{
+				m_loaded = false;
+				break;
+			}
+			case 1:
+			{
+				m_loaded = true;
+				break;
+			}
+			case 6:
+			{
+				m_started = true;
+				break;
+			}
+			case 7:
+			{
+				m_started = false;
+				break;
+			}
+			}
+			return true;
+		}
+	}
+
+	return Sonic::CGameObject3D::ProcessMessage(message, flag);
+}
+
+void GadgetHoverGun::UpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo)
+{
+	// handle animations
+	hh::base::CSharedString const currentState = GetCurrentState()->GetStateName();
+	bool const animationFinished = Common::IsAnimationFinished(this);
+	
+	if (currentState == "Unload" && m_loaded && m_started && animationFinished)
+	{
+		ChangeState("Load");
+	}
+	else if (currentState != "Unload" && (!m_loaded || !m_started))
+	{
+		ChangeState("Unload");
+	}
+
+	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
+	Update(in_rUpdateInfo);
+	UpdateTransform();
+}
+
+bool GadgetHoverGun::IsReady() const
+{
+	hh::base::CSharedString const currentState = GetCurrentState()->GetStateName();
+	return (currentState == "Load" && Common::IsAnimationFinished(this)) || currentState == "Fire";
+}
+
+bool GadgetHoverGun::CanUnload() const
+{
+	hh::base::CSharedString const currentState = GetCurrentState()->GetStateName();
+	return currentState != "Unload" && Common::IsAnimationFinished(this);
+}
+
+void GadgetHoverGun::UpdateTransform()
+{
+	// follow attach point so sound can work
+	hh::math::CMatrix const matrix = m_spNodeParent->GetWorldMatrix();
+	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(hh::math::CQuaternion(matrix.rotation()), matrix.translation());
+	m_spMatrixNodeTransform->NotifyChanged();
+}
+
+void GadgetHoverGun::FireBullet()
+{
+	SharedPtrTypeless sfx;
+	Common::ObjectPlaySound(this, 200612014, sfx);
+	ChangeState("Fire");
+}
+
 uint32_t canGetOnHoverActorID = 0u;
 HOOK(bool, __fastcall, GadgetHover_GroundedStateChange, 0xE013D0, Sonic::Player::CPlayerSpeedContext* context, void* Edx, int a2)
 {
@@ -111,6 +237,14 @@ bool GadgetHover::SetAddRenderables
 	Sonic::CGameObject::AddRenderable("Object", m_spModelGuardL, m_pMember->m_CastShadow);
 	Sonic::CGameObject::AddRenderable("Object", m_spModelGuardR, m_pMember->m_CastShadow);
 
+	// Guns
+	auto const attachNodeGunL = m_spModelBase->GetNode("GunUnder_L");
+	m_spGunL = boost::make_shared<GadgetHoverGun>(attachNodeGunL, m_pMember->m_CastShadow, m_ActorID);
+	in_pGameDocument->AddGameObject(m_spGunL, "main", this);
+	auto const attachNodeGunR = m_spModelBase->GetNode("GunUnder_R");
+	m_spGunR = boost::make_shared<GadgetHoverGun>(attachNodeGunR, m_pMember->m_CastShadow, m_ActorID);
+	in_pGameDocument->AddGameObject(m_spGunR, "main", this);
+
 	// external control
 	auto const attachNode = m_spModelBase->GetNode("Charapoint");
 	m_spSonicControlNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
@@ -172,6 +306,7 @@ void GadgetHover::SetUpdateParallel
 	AdvancePlayerGetOn(in_rUpdateInfo.DeltaTime);
 	AdvanceDriving(in_rUpdateInfo.DeltaTime);
 	AdvanceGaurd(in_rUpdateInfo.DeltaTime);
+	AdvanceGuns(in_rUpdateInfo.DeltaTime);
 	AdvancePhysics(in_rUpdateInfo.DeltaTime);
 }
 
@@ -367,8 +502,13 @@ void GadgetHover::BeginPlayerGetOff(bool isJump)
 		Common::SetPlayerVelocity(velocity);
 	}
 
-	// TODO: unload gun
+	// unload gun
+	SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+	SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
 	S06HUD_API::SetGadgetMaxCount(0);
+
+	SharedPtrTypeless sfx;
+	Common::ObjectPlaySound(this, 200612013, sfx);
 
 	// out of control
 	Common::SetPlayerOutOfControl(0.1f);
@@ -378,11 +518,19 @@ void GadgetHover::BeginDriving()
 {
 	m_state = State::Driving;
 
+	// load gun
+	SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+	SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+
+	SharedPtrTypeless sfx;
+	Common::ObjectPlaySound(this, 200612013, sfx);
+
 	// Change animation
 	SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl("Hover", true));
 
 	// set HUD
-	S06HUD_API::SetGadgetMaxCount(m_bullets);
+	S06HUD_API::SetGadgetMaxCount(100);
+	S06HUD_API::SetGadgetCount(m_bullets, 100);
 	S06HUD_API::SetGadgetHP(m_hp);
 
 	// TODO:
@@ -395,6 +543,8 @@ float const c_hoverMaxSpeed = 40.0f;
 float const c_hoverAccel = 8.0f;
 float const c_hoverBrake = 20.0f;
 float const c_hoverDecel = 2.0f;
+float const c_hoverGunInterval = 0.05f; // f_Missile_Interval
+float const c_hoverGunReloadTime = 3.0f; // f_Missile_RecoveryTime
 
 void GadgetHover::AdvanceDriving(float dt)
 {
@@ -468,6 +618,7 @@ void GadgetHover::AdvanceDriving(float dt)
 		}
 	}
 
+	// acceleration
 	if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_A))
 	{
 		// forward
@@ -483,6 +634,29 @@ void GadgetHover::AdvanceDriving(float dt)
 		// natural stop
 		fnAccel(m_speed, 0.0f, c_hoverDecel);
 	}
+
+	// vulcan
+	if (m_playerID)
+	{
+		m_bulletTimer = max(0.0f, m_bulletTimer - dt);
+		if (m_bullets > 0 && m_bulletTimer <= 0.0f && padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && m_spGunR->IsReady() && m_spGunL->IsReady())
+		{
+			if (m_useGunL)
+			{
+				m_spGunL->FireBullet();
+			}
+			else
+			{
+				m_spGunR->FireBullet();
+			}
+
+			m_bullets--;
+			m_bulletTimer = c_hoverGunInterval;
+			m_reloadTimer = c_hoverGunReloadTime;
+			S06HUD_API::SetGadgetCount(m_bullets, 100);
+			m_useGunL = !m_useGunL;
+		}
+	}
 }
 
 void GadgetHover::AdvanceGaurd(float dt)
@@ -494,6 +668,42 @@ void GadgetHover::AdvanceGaurd(float dt)
 	m_spNodeGuardR->NotifyChanged();
 
 	// TODO: uv-anim
+}
+
+void GadgetHover::AdvanceGuns(float dt)
+{
+	// unload gun
+	if (m_bullets == 0)
+	{
+		if (m_spGunL->CanUnload() && m_spGunR->CanUnload())
+		{
+			SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(0));
+			SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(0));
+			
+			SharedPtrTypeless sfx;
+			Common::ObjectPlaySound(this, 200612013, sfx);
+		}
+	}
+
+	// reload
+	if (m_reloadTimer > 0.0f)
+	{
+		m_reloadTimer -= dt;
+		if (m_reloadTimer <= 0.0f)
+		{
+			SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(1));
+			SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(1));
+			m_bullets = 100;
+
+			SharedPtrTypeless sfx;
+			Common::ObjectPlaySound(this, 200612013, sfx);
+
+			if (m_playerID)
+			{
+				S06HUD_API::SetGadgetCount(m_bullets, 100);
+			}
+		}
+	}
 }
 
 void GadgetHover::AdvancePhysics(float dt)

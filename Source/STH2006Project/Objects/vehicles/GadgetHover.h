@@ -39,15 +39,15 @@ private:
 
 	bool m_castShadow = true;
 	bool m_started = false;
-	float m_loadTimer = 0.0f;
+	bool m_loaded = true;
 	uint32_t m_owner = 0;
 
 public:
 	GadgetHoverGun(boost::shared_ptr<hh::mr::CMatrixNode> parent, bool castShadow, uint32_t owner) : m_spNodeParent(parent), m_castShadow(castShadow), m_owner(owner) {}
 
-	//bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
-	//bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;
-	//void UpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo) override;
+	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
+	bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;
+	void UpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo) override;
 
 	// from IAnimationContext
 	Hedgehog::Animation::CAnimationPose* GetAnimationPose() override { return m_spAnimPose.get(); }
@@ -55,11 +55,10 @@ public:
 	Hedgehog::Math::CVector GetVelocityForAnimationChange() override { return hh::math::CVector::Ones(); }
 
 	// API
-	//bool IsLoaded();
-	//void UpdateTransform();
-
-private:
-	//void FireBullet();
+	bool IsReady() const;
+	bool CanUnload() const;
+	void UpdateTransform();
+	void FireBullet();
 };
 
 class GadgetHover : public Sonic::CObjectBase, public Sonic::CSetObjectListener
@@ -98,8 +97,11 @@ private:
 	float m_hp = 100.0f;
 	float m_speed = 0.0f;
 	float m_guardAngle = 0.0f;
+	float m_reloadTimer = 0.0f;
+	float m_bulletTimer = 0.0f;
 	uint8_t m_bullets = 100u;
 	bool m_started = false;
+	bool m_useGunL = true;
 
 	struct PlayerGetOnData
 	{
@@ -115,10 +117,13 @@ private:
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeGuardL;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeGuardR;
 
+	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeCockpit;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spSonicControlNode;
 
 	boost::shared_ptr<GadgetHoverSuspension> m_spSuspension;
+	boost::shared_ptr<GadgetHoverGun> m_spGunL;
+	boost::shared_ptr<GadgetHoverGun> m_spGunR;
 
 private:
 	void InitializeEditParam(Sonic::CEditParam& in_rEditParam) override;
@@ -140,6 +145,7 @@ private:
 	void AdvanceDriving(float dt);
 
 	void AdvanceGaurd(float dt);
+	void AdvanceGuns(float dt);
 	void AdvancePhysics(float dt);
 
 	void TakeDamage(float amount);
