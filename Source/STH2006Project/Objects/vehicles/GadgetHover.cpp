@@ -128,6 +128,21 @@ bool GadgetHover::SetAddColliders
 	char const* rigidBodyName = "Gadget_Hover";
 	AddRigidBody(m_spRigidBody, rigidBodyName, rigidBodyName, *(int*)0x1E0AFF4, m_spMatrixNodeTransform, in_spDatabase);
 	
+	// damage to object
+	uint32_t const typeEnemy = *(uint32_t*)0x1E5E7E8;
+	uint32_t const typeBreakable = *(uint32_t*)0x1E5E77C;
+	uint64_t const bitfield = (1llu << typeEnemy) | (1llu << typeBreakable);
+	uint32_t const damageID = Common::MakeCollisionID(0, bitfield);
+	hk2010_2_0::hkpCylinderShape* bodyEventTrigger = new hk2010_2_0::hkpCylinderShape(hh::math::CVector(0.0f, 0.0f, 0.54f), hh::math::CVector(0.0f, 1.7f, 0.54f), 1.2f);
+	AddEventCollision("Attack", bodyEventTrigger, damageID, true, m_spMatrixNodeTransform);
+	
+	m_spNodeCockpit = boost::make_shared<Sonic::CMatrixNodeTransform>();
+	m_spNodeCockpit->m_Transform.SetPosition(hh::math::CVector(0.0f, 0.85f, -0.9f));
+	m_spNodeCockpit->NotifyChanged();
+	m_spNodeCockpit->SetParent(m_spMatrixNodeTransform.get());
+	hk2010_2_0::hkpBoxShape* cockpitEventTrigger = new hk2010_2_0::hkpBoxShape(1.5f, 1.7f, 1.2f);
+	AddEventCollision("Attack", cockpitEventTrigger, damageID, true, m_spNodeCockpit);
+	
 	// player event collision
 	m_spNodeEventCollision = boost::make_shared<Sonic::CMatrixNodeTransform>();
 	m_spNodeEventCollision->m_Transform.SetPosition(hh::math::CVector(0.0f, 0.856, 0.117));
