@@ -278,6 +278,15 @@ void UIContext::DrawSoundTest()
         ImGui::InputInt("Cue ID##sfx", &cueIDsfx);
         ImGui::InputInt("Flag", &flag);
 
+        static char buffer[128];
+        ImGui::InputText("Aisac Name##sfx", buffer, 128);
+        static float slider = 1.0f;
+        if (ImGui::SliderFloat("Value##sliderSfx", &slider, 0.0f, 1.0f) && soundHandleSfx && !std::string(buffer).empty())
+        {
+            FUNCTION_PTR(void*, __thiscall, SetAisac, 0x763D50, void* This, hh::base::CSharedString const& name, float value);
+            SetAisac(soundHandleSfx.get(), buffer, slider);
+        }
+
         if (ImGui::Button("Play System Sound"))
         {
             Common::PlaySoundStatic(soundHandleSfx, cueIDsfx);
@@ -355,6 +364,15 @@ void UIContext::DrawSoundTest()
                 if (ImGui::Button("Stop Sound##obj"))
                 {
                     soundHandleObj.reset();
+                }
+
+                static char bufferObj[128];
+                ImGui::InputText("Aisac Name##obj", bufferObj, 128);
+                static float sliderObj = 1.0f;
+                if (ImGui::SliderFloat("Value##sliderObj", &sliderObj, 0.0f, 1.0f) && soundHandleObj && !std::string(bufferObj).empty())
+                {
+                    FUNCTION_PTR(void*, __thiscall, SetAisac, 0x763D50, void* This, hh::base::CSharedString const& name, float value);
+                    SetAisac(soundHandleObj.get(), bufferObj, sliderObj);
                 }
             }
         }
