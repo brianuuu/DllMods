@@ -549,6 +549,7 @@ float const c_hoverTurnRate = 2.0f * PI_F / 4.5f;
 float const c_hoverGuardMaxAngle = 40.0f * DEG_TO_RAD;
 float const c_hoverGuardTurnRate = c_hoverGuardMaxAngle / 0.1f;
 float const c_hoverMaxSpeed = 40.0f;
+float const c_hoverMaxSpeedSteering = 20.0f;
 float const c_hoverAccel = 8.0f;
 float const c_hoverBrake = 20.0f;
 float const c_hoverDecel = 2.0f;
@@ -627,16 +628,19 @@ void GadgetHover::AdvanceDriving(float dt)
 		}
 	}
 
+	// max speed
+	float const currentMaxSpeed = input.x() == 0.0f ? c_hoverMaxSpeed : c_hoverMaxSpeedSteering;
+
 	// acceleration
 	if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_A))
 	{
 		// forward
-		fnAccel(m_speed, c_hoverMaxSpeed, m_speed < 0.0f ? c_hoverBrake : c_hoverAccel);
+		fnAccel(m_speed, currentMaxSpeed, m_speed < 0.0f ? c_hoverBrake : c_hoverAccel);
 	}
 	else if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_X))
 	{
 		// brake, reverse
-		fnAccel(m_speed, -c_hoverMaxSpeed, m_speed > 0.0f ? c_hoverBrake : c_hoverAccel);
+		fnAccel(m_speed, -currentMaxSpeed, m_speed > 0.0f ? c_hoverBrake : c_hoverAccel);
 	}
 	else
 	{
