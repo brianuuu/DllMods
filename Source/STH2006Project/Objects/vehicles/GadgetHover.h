@@ -89,6 +89,9 @@ private:
 	} m_Data;
 
 private:
+	SharedPtrTypeless m_loopSfx;
+	SharedPtrTypeless m_brakeSfx;
+
 	std::mutex m_mutex;
 	uint32_t m_playerID = 0u;
 	Direction m_direction = Direction::None;

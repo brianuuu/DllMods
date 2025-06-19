@@ -519,6 +519,9 @@ void GadgetHover::BeginPlayerGetOff(bool isAlive)
 		Common::SetPlayerVelocity(velocity);
 	}
 
+	m_loopSfx.reset();
+	m_brakeSfx.reset();
+
 	// out of control
 	Common::SetPlayerOutOfControl(0.1f);
 }
@@ -533,6 +536,8 @@ void GadgetHover::BeginDriving()
 
 	SharedPtrTypeless sfx;
 	Common::ObjectPlaySound(this, 200612013, sfx);
+	Common::ObjectPlaySound(this, 200612008, sfx);
+	Common::ObjectPlaySound(this, 200612009, m_loopSfx);
 
 	// Change animation
 	SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl("Hover", true));
@@ -550,6 +555,7 @@ float const c_hoverGuardMaxAngle = 40.0f * DEG_TO_RAD;
 float const c_hoverGuardTurnRate = c_hoverGuardMaxAngle / 0.1f;
 float const c_hoverMaxSpeed = 40.0f;
 float const c_hoverMaxSpeedSteering = 20.0f;
+float const c_hoverMinBrakeSpeed = 5.0f;
 float const c_hoverAccel = 8.0f;
 float const c_hoverBrake = 20.0f;
 float const c_hoverDecel = 2.0f;
@@ -632,20 +638,35 @@ void GadgetHover::AdvanceDriving(float dt)
 	float const currentMaxSpeed = input.x() == 0.0f ? c_hoverMaxSpeed : c_hoverMaxSpeedSteering;
 
 	// acceleration
+	bool shouldStopBrakeSfx = (m_speed <= c_hoverMinBrakeSpeed);
 	if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_A))
 	{
 		// forward
 		fnAccel(m_speed, currentMaxSpeed, m_speed < 0.0f ? c_hoverBrake : c_hoverAccel);
+		shouldStopBrakeSfx = true;
 	}
 	else if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_X))
 	{
 		// brake, reverse
 		fnAccel(m_speed, -currentMaxSpeed, m_speed > 0.0f ? c_hoverBrake : c_hoverAccel);
+
+		// brake sfx
+		if (m_speed > c_hoverMinBrakeSpeed && !m_brakeSfx)
+		{
+			Common::ObjectPlaySound(this, 200612011, m_brakeSfx);
+		}
 	}
 	else
 	{
 		// natural stop
 		fnAccel(m_speed, 0.0f, c_hoverDecel);
+		shouldStopBrakeSfx = true;
+	}
+
+	// stop brake sfx
+	if (m_brakeSfx && shouldStopBrakeSfx)
+	{
+		m_brakeSfx.reset();
 	}
 
 	// vulcan
@@ -669,6 +690,20 @@ void GadgetHover::AdvanceDriving(float dt)
 			S06HUD_API::SetGadgetCount(m_bullets, 100);
 			m_useGunL = !m_useGunL;
 		}
+	}
+
+	// sfx pitch
+	if (m_loopSfx)
+	{
+		float value = 0.5f;
+		if (m_speed != 0.0f)
+		{
+			value += m_speed * 0.5f / c_hoverMaxSpeed;
+			Common::ClampFloat(value, 0.0f, 1.0f);
+		}
+
+		FUNCTION_PTR(void*, __thiscall, SetAisac, 0x763D50, void* This, hh::base::CSharedString const& name, float value);
+		SetAisac(m_loopSfx.get(), "gadget_speed", value);
 	}
 }
 
@@ -725,6 +760,13 @@ void GadgetHover::AdvancePhysics(float dt)
 	hh::math::CVector const newPosition = m_spMatrixNodeTransform->m_Transform.m_Position + forward * m_speed * dt;
 	m_spMatrixNodeTransform->m_Transform.SetPosition(newPosition);
 	m_spMatrixNodeTransform->NotifyChanged();
+
+	// update loop sfx position
+	if (m_loopSfx)
+	{
+		hh::math::CVector* pSoundHandle = (hh::math::CVector*)m_loopSfx.get();
+		pSoundHandle[2] = newPosition;
+	}
 }
 
 void GadgetHover::TakeDamage(float amount)
