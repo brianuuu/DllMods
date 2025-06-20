@@ -259,6 +259,31 @@ bool GadgetHover::SetAddRenderables
 	m_spSonicControlNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
 	m_spSonicControlNode->SetParent(attachNode.get());
 
+	// mat-anim
+	m_spEffectMotionAll = boost::make_shared<hh::mot::CSingleElementEffectMotionAll>();
+	m_spModelBase->BindEffect(m_spEffectMotionAll);
+
+	FUNCTION_PTR(void, __thiscall, fpGetMaterialAnimData, 0x759720,
+		hh::mot::CMotionDatabaseWrapper const& wrapper,
+		boost::shared_ptr<Hedgehog::Motion::CMaterialAnimationData>& materialAnimData,
+		hh::base::CSharedString const& name,
+		uint32_t flag
+	);
+
+	FUNCTION_PTR(void, __thiscall, fpCreateMatAnim, 0x753910,
+		Hedgehog::Motion::CSingleElementEffectMotionAll * This,
+		boost::shared_ptr<hh::mr::CModelData> const& modelData,
+		boost::shared_ptr<Hedgehog::Motion::CMaterialAnimationData> const& materialAnimData
+	);
+
+	hh::mot::CMotionDatabaseWrapper motWrapper(in_spDatabase.get());
+	boost::shared_ptr<Hedgehog::Motion::CMaterialAnimationData> materialAnimData;
+	fpGetMaterialAnimData(motWrapper, materialAnimData, "Gadget_Hover_Reverse", 0);
+	fpCreateMatAnim(m_spEffectMotionAll.get(), spModelBaseData, materialAnimData);
+
+	FUNCTION_PTR(void, __thiscall, fpUpdateMotionAll, 0x752F00, Hedgehog::Motion::CSingleElementEffectMotionAll * This, float dt);
+	fpUpdateMotionAll(m_spEffectMotionAll.get(), 0.0f);
+
 	return true;
 }
 
@@ -521,6 +546,7 @@ void GadgetHover::BeginPlayerGetOff(bool isAlive)
 
 	m_loopSfx.reset();
 	m_brakeSfx.reset();
+	ToggleBrakeLights(false);
 
 	// out of control
 	Common::SetPlayerOutOfControl(0.1f);
@@ -643,12 +669,14 @@ void GadgetHover::AdvanceDriving(float dt)
 	{
 		// forward
 		fnAccel(m_speed, currentMaxSpeed, m_speed < 0.0f ? c_hoverBrake : c_hoverAccel);
+		ToggleBrakeLights(false);
 		shouldStopBrakeSfx = true;
 	}
 	else if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_X))
 	{
 		// brake, reverse
 		fnAccel(m_speed, -currentMaxSpeed, m_speed > 0.0f ? c_hoverBrake : c_hoverAccel);
+		ToggleBrakeLights(true);
 
 		// brake sfx
 		if (m_speed > c_hoverMinBrakeSpeed && !m_brakeSfx)
@@ -660,6 +688,7 @@ void GadgetHover::AdvanceDriving(float dt)
 	{
 		// natural stop
 		fnAccel(m_speed, 0.0f, c_hoverDecel);
+		ToggleBrakeLights(false);
 		shouldStopBrakeSfx = true;
 	}
 
@@ -766,6 +795,21 @@ void GadgetHover::AdvancePhysics(float dt)
 	{
 		hh::math::CVector* pSoundHandle = (hh::math::CVector*)m_loopSfx.get();
 		pSoundHandle[2] = newPosition;
+	}
+}
+
+void GadgetHover::ToggleBrakeLights(bool on)
+{
+	FUNCTION_PTR(void, __thiscall, fpUpdateMotionAll, 0x752F00, Hedgehog::Motion::CSingleElementEffectMotionAll * This, float dt);
+	if (on && !m_brakeLights)
+	{
+		m_brakeLights = true;
+		fpUpdateMotionAll(m_spEffectMotionAll.get(), 1.0f);
+	}
+	else if (!on && m_brakeLights)
+	{
+		m_brakeLights = false;
+		fpUpdateMotionAll(m_spEffectMotionAll.get(), -1.0f);
 	}
 }
 

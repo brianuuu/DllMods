@@ -105,6 +105,7 @@ private:
 	uint8_t m_bullets = 100u;
 	bool m_started = false;
 	bool m_useGunL = true;
+	bool m_brakeLights = false;
 
 	struct PlayerGetOnData
 	{
@@ -123,6 +124,8 @@ private:
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeCockpit;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spSonicControlNode;
+
+	boost::shared_ptr<hh::mot::CSingleElementEffectMotionAll> m_spEffectMotionAll;
 
 	boost::shared_ptr<GadgetHoverSuspension> m_spSuspension;
 	boost::shared_ptr<GadgetHoverGun> m_spGunL;
@@ -151,6 +154,7 @@ private:
 	void AdvanceGuns(float dt);
 	void AdvancePhysics(float dt);
 
+	void ToggleBrakeLights(bool on);
 	void TakeDamage(float amount);
 	void Explode();
 
