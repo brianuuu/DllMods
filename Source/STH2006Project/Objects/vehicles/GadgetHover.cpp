@@ -262,6 +262,10 @@ bool GadgetHover::SetAddRenderables
 	// mat-anim
 	m_spEffectMotionAll = boost::make_shared<hh::mot::CSingleElementEffectMotionAll>();
 	m_spModelBase->BindEffect(m_spEffectMotionAll);
+	m_spEffectMotionGuardL = boost::make_shared<hh::mot::CSingleElementEffectMotionAll>();
+	m_spModelGuardL->BindEffect(m_spEffectMotionGuardL);
+	m_spEffectMotionGuardR = boost::make_shared<hh::mot::CSingleElementEffectMotionAll>();
+	m_spModelGuardR->BindEffect(m_spEffectMotionGuardR);
 
 	FUNCTION_PTR(void, __thiscall, fpGetMaterialAnimData, 0x759720,
 		hh::mot::CMotionDatabaseWrapper const& wrapper,
@@ -280,9 +284,14 @@ bool GadgetHover::SetAddRenderables
 	boost::shared_ptr<Hedgehog::Motion::CMaterialAnimationData> materialAnimData;
 	fpGetMaterialAnimData(motWrapper, materialAnimData, "Gadget_Hover_Reverse", 0);
 	fpCreateMatAnim(m_spEffectMotionAll.get(), spModelBaseData, materialAnimData);
+	fpGetMaterialAnimData(motWrapper, materialAnimData, "Gadget_Hover_Accel", 0);
+	fpCreateMatAnim(m_spEffectMotionGuardL.get(), spModelGuardData, materialAnimData);
+	fpCreateMatAnim(m_spEffectMotionGuardR.get(), spModelGuardData, materialAnimData);
 
 	FUNCTION_PTR(void, __thiscall, fpUpdateMotionAll, 0x752F00, Hedgehog::Motion::CSingleElementEffectMotionAll * This, float dt);
 	fpUpdateMotionAll(m_spEffectMotionAll.get(), 0.0f);
+	fpUpdateMotionAll(m_spEffectMotionGuardL.get(), 0.25f);
+	fpUpdateMotionAll(m_spEffectMotionGuardR.get(), 0.25f);
 
 	return true;
 }
@@ -546,6 +555,7 @@ void GadgetHover::BeginPlayerGetOff(bool isAlive)
 
 	m_loopSfx.reset();
 	m_brakeSfx.reset();
+	m_guardLights = false;
 	ToggleBrakeLights(false);
 
 	// out of control
@@ -669,6 +679,7 @@ void GadgetHover::AdvanceDriving(float dt)
 	{
 		// forward
 		fnAccel(m_speed, currentMaxSpeed, m_speed < 0.0f ? c_hoverBrake : c_hoverAccel);
+		m_guardLights = true;
 		ToggleBrakeLights(false);
 		shouldStopBrakeSfx = true;
 	}
@@ -676,6 +687,7 @@ void GadgetHover::AdvanceDriving(float dt)
 	{
 		// brake, reverse
 		fnAccel(m_speed, -currentMaxSpeed, m_speed > 0.0f ? c_hoverBrake : c_hoverAccel);
+		m_guardLights = false;
 		ToggleBrakeLights(true);
 
 		// brake sfx
@@ -688,6 +700,7 @@ void GadgetHover::AdvanceDriving(float dt)
 	{
 		// natural stop
 		fnAccel(m_speed, 0.0f, c_hoverDecel);
+		m_guardLights = false;
 		ToggleBrakeLights(false);
 		shouldStopBrakeSfx = true;
 	}
@@ -744,7 +757,27 @@ void GadgetHover::AdvanceGaurd(float dt)
 	m_spNodeGuardL->NotifyChanged();
 	m_spNodeGuardR->NotifyChanged();
 
-	// TODO: uv-anim
+	// mat-anim
+	float constexpr guardLightMaxTime = 5.0f / 60.0f;
+	FUNCTION_PTR(void, __thiscall, fpUpdateMotionAll, 0x752F00, Hedgehog::Motion::CSingleElementEffectMotionAll * This, float dt);
+	if (m_guardLights)
+	{
+		if (m_guardLightTime < guardLightMaxTime)
+		{
+			m_guardLightTime += dt;
+			fpUpdateMotionAll(m_spEffectMotionGuardL.get(), dt);
+			fpUpdateMotionAll(m_spEffectMotionGuardR.get(), dt);
+		}
+	}
+	else
+	{
+		if (m_guardLightTime > 0.0f)
+		{
+			m_guardLightTime -= dt;
+			fpUpdateMotionAll(m_spEffectMotionGuardL.get(), -dt);
+			fpUpdateMotionAll(m_spEffectMotionGuardR.get(), -dt);
+		}
+	}
 }
 
 void GadgetHover::AdvanceGuns(float dt)

@@ -106,6 +106,8 @@ private:
 	bool m_started = false;
 	bool m_useGunL = true;
 	bool m_brakeLights = false;
+	bool m_guardLights = false;
+	float m_guardLightTime = 0.0f;
 
 	struct PlayerGetOnData
 	{
@@ -126,6 +128,8 @@ private:
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spSonicControlNode;
 
 	boost::shared_ptr<hh::mot::CSingleElementEffectMotionAll> m_spEffectMotionAll;
+	boost::shared_ptr<hh::mot::CSingleElementEffectMotionAll> m_spEffectMotionGuardL;
+	boost::shared_ptr<hh::mot::CSingleElementEffectMotionAll> m_spEffectMotionGuardR;
 
 	boost::shared_ptr<GadgetHoverSuspension> m_spSuspension;
 	boost::shared_ptr<GadgetHoverGun> m_spGunL;
