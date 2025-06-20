@@ -91,6 +91,8 @@ private:
 private:
 	SharedPtrTypeless m_loopSfx;
 	SharedPtrTypeless m_brakeSfx;
+	uint32_t m_guardLID = 0;
+	uint32_t m_guardRID = 0;
 
 	std::mutex m_mutex;
 	uint32_t m_playerID = 0u;

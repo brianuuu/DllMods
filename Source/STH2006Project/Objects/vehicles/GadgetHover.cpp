@@ -768,6 +768,13 @@ void GadgetHover::AdvanceGaurd(float dt)
 			fpUpdateMotionAll(m_spEffectMotionGuardL.get(), dt);
 			fpUpdateMotionAll(m_spEffectMotionGuardR.get(), dt);
 		}
+
+		// burner pfx
+		if (!m_guardLID)
+		{
+			m_guardLID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spNodeGuardL, "ef_hover_guard", 1.0f);
+			m_guardRID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spNodeGuardR, "ef_hover_guard", 1.0f);
+		}
 	}
 	else
 	{
@@ -776,6 +783,15 @@ void GadgetHover::AdvanceGaurd(float dt)
 			m_guardLightTime -= dt;
 			fpUpdateMotionAll(m_spEffectMotionGuardL.get(), -dt);
 			fpUpdateMotionAll(m_spEffectMotionGuardR.get(), -dt);
+		}
+
+		// burner pfx
+		if (m_guardLID)
+		{
+			m_pGlitterPlayer->StopByID(m_guardLID, false);
+			m_pGlitterPlayer->StopByID(m_guardRID, false);
+			m_guardLID = 0;
+			m_guardRID = 0;
 		}
 	}
 }
