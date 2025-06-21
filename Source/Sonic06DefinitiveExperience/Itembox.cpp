@@ -65,16 +65,15 @@ HOOK(bool, __fastcall, Itembox_CObjItemProcessMessage, 0xFFFD70, hh::fnd::CMessa
 
 HOOK(void, __fastcall, Itembox_CObjItemMsgHitEventCollision, 0xFFF810, Sonic::CGameObject3D* This, void* Edx, hh::fnd::Message& message)
 {
-	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-	if (context && message.m_SenderActorID != context->m_pPlayer->m_ActorID)
-	{
-		Common::SonicContextGetItemType(2); // 1-up
-	}
-
 	SendMsgDamageSuccess(This, Edx, message);
 	originalItembox_CObjItemMsgHitEventCollision(This, Edx, message);
-}
 
+	// STH2006 project Gauge Up
+	if (((uint32_t*)This)[71] == 5)
+	{
+		NextGenShadow::AddChaosMaturity(100.0f);
+	}
+}
 
 HOOK(bool, __fastcall, Itembox_CObjSuperRingProcessMessage, 0x11F3680, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
 {
@@ -86,20 +85,22 @@ HOOK(bool, __fastcall, Itembox_CObjSuperRingProcessMessage, 0x11F3680, hh::fnd::
 	return originalItembox_CObjSuperRingProcessMessage(This, Edx, message, flag);
 }
 
+HOOK(bool, __fastcall, Itembox_CObjSshBobsleighCStateMoveProcessMessage, 0x496DC0, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
+{
+	if (message.Is<Sonic::Message::MsgGetItemType>())
+	{
+		auto& msg = static_cast<Sonic::Message::MsgGetItemType&>(message);
+		Common::SonicContextGetItemType(msg.m_Type);
+		return true;
+	}
+
+	return originalItembox_CObjSshBobsleighCStateMoveProcessMessage(This, Edx, message, flag);
+}
+
 HOOK(void, __fastcall, Itembox_CObjSuperRingMsgHitEventCollision, 0x11F2F10, Sonic::CGameObject3D* This, void* Edx, hh::fnd::Message& message)
 {
 	SendMsgDamageSuccess(This, Edx, message);
 	originalItembox_CObjSuperRingMsgHitEventCollision(This, Edx, message);
-}
-
-HOOK(void, __fastcall, Itembox_GetItem, 0xFFF810, uint32_t* This, void* Edx, void* message)
-{
-	originalItembox_GetItem(This, Edx, message);
-	
-	if (This[71] == 5)
-	{
-		NextGenShadow::AddChaosMaturity(100.0f);
-	}
 }
 
 void Itembox::applyPatches()
@@ -143,8 +144,8 @@ void Itembox::applyPatches()
 	// Prevent bouncing off Itembox right as you land
 	INSTALL_HOOK(Itembox_CStateLandJumpShortMsgDamageSuccess);
 
-	// Handle items from STH2006 Project
-	INSTALL_HOOK(Itembox_GetItem);
+	// Blobsleigh Itembox fix
+	INSTALL_HOOK(Itembox_CObjSshBobsleighCStateMoveProcessMessage);
 }
 
 void Itembox::playItemboxSfx()
