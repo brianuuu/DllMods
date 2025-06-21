@@ -2024,6 +2024,25 @@ static void* ObjectDisableEventCollision
 	}
 }
 
+static void* ObjectToggleEventCollision
+(
+	Sonic::CEventCollisionHolder* pHolder,
+	Hedgehog::Base::CStringSymbol const& symbol,
+	bool enabled
+)
+{
+	if (!pHolder) return nullptr;
+
+	static void* const pObjectToggleEventCollision = (void*)0x1182DB0;
+	__asm
+	{
+		mov		eax, pHolder
+		mov		ecx, symbol
+		push	enabled
+		call	[pObjectToggleEventCollision]
+	}
+}
+
 static void EnemyChangeState
 (
 	void* pCEnemyBase,
