@@ -328,6 +328,11 @@ bool GadgetHover::SetAddColliders
 	hk2010_2_0::hkpSphereShape* shapeEventTrigger = new hk2010_2_0::hkpSphereShape(2.5f);
 	AddEventCollision("Player", shapeEventTrigger, *(int*)0x1E0AFD8, true, m_spNodeEventCollision); // ColID_PlayerEvent
 
+	// fake player collision
+	hk2010_2_0::hkpCylinderShape* playerEventTrigger = new hk2010_2_0::hkpCylinderShape(hh::math::CVector(0.0f, 0.85f, -0.63f), hh::math::CVector(0.0f, 1.85f, -0.63f), 0.5f);
+	AddEventCollision("FakePlayer", playerEventTrigger, *(int*)0x1E0AF90, true, m_spMatrixNodeTransform); // TypePlayer
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
+
 	return true;
 }
 
@@ -434,6 +439,16 @@ bool GadgetHover::ProcessMessage
 	{
 		m_playerID = 0;
 		S06HUD_API::SetGadgetMaxCount(0);
+		return true;
+	}
+
+	if (message.Is<Sonic::Message::MsgGetItemType>())
+	{
+		if (m_playerID)
+		{
+			// forward message to player
+			SendMessageImm(m_playerID, message);
+		}
 		return true;
 	}
 
@@ -560,6 +575,9 @@ void GadgetHover::BeginPlayerGetOff(bool isAlive)
 
 	// out of control
 	Common::SetPlayerOutOfControl(0.1f);
+
+	// player collision
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
 }
 
 void GadgetHover::BeginDriving()
@@ -582,6 +600,9 @@ void GadgetHover::BeginDriving()
 	S06HUD_API::SetGadgetMaxCount(100);
 	S06HUD_API::SetGadgetCount(m_bullets, 100);
 	S06HUD_API::SetGadgetHP(m_hp);
+
+	// player collision
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", true);
 
 	// TODO:
 }
