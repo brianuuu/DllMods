@@ -333,6 +333,12 @@ bool GadgetHover::SetAddColliders
 	AddEventCollision("FakePlayer", playerEventTrigger, *(int*)0x1E0AF90, true, m_spMatrixNodeTransform); // TypePlayer
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
 
+	// land collision
+	uint32_t const typeTerrain = *(uint32_t*)0x1E5E754;
+	uint32_t const typeWater = *(uint32_t*)0x1E5E7C8;
+	uint64_t const bitfieldLand = (1llu << typeTerrain) | (1llu << typeWater);
+	m_landCollisionID = Common::MakeCollisionID(0, bitfieldLand);
+
 	return true;
 }
 
@@ -573,6 +579,7 @@ void GadgetHover::BeginPlayerGetOff(bool isAlive)
 	m_brakeSfx.reset();
 	m_guardLights = false;
 	ToggleBrakeLights(false);
+	m_doubleTapTime = 0.0f;
 
 	// out of control
 	Common::SetPlayerOutOfControl(0.1f);
@@ -619,6 +626,12 @@ float const c_hoverBrake = 20.0f;
 float const c_hoverDecel = 2.0f;
 float const c_hoverGunInterval = 0.05f; // f_Missile_Interval
 float const c_hoverGunReloadTime = 3.0f; // f_Missile_RecoveryTime
+float const c_hoverDoubleTapTime = 0.2f;
+float const c_hoverJumpGuardTime = 0.25f;
+float const c_hoverJumpAccel = 18.0f;
+float const c_hoverJumpAccelTime = 0.5f;
+float const c_hoverJumpHoldSpeed = -0.5f;
+float const c_hoverGravity = 10.0f;
 
 void GadgetHover::AdvanceDriving(float dt)
 {
@@ -697,7 +710,7 @@ void GadgetHover::AdvanceDriving(float dt)
 
 	// acceleration
 	bool shouldStopBrakeSfx = (m_speed <= c_hoverMinBrakeSpeed);
-	if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_A))
+	if (m_playerID && m_isLanded && padState->IsDown(Sonic::EKeyState::eKeyState_A))
 	{
 		// forward
 		fnAccel(m_speed, currentMaxSpeed, m_speed < 0.0f ? c_hoverBrake : c_hoverAccel);
@@ -705,7 +718,7 @@ void GadgetHover::AdvanceDriving(float dt)
 		ToggleBrakeLights(false);
 		shouldStopBrakeSfx = true;
 	}
-	else if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_X))
+	else if (m_playerID && m_isLanded && padState->IsDown(Sonic::EKeyState::eKeyState_X))
 	{
 		// brake, reverse
 		fnAccel(m_speed, -currentMaxSpeed, m_speed > 0.0f ? c_hoverBrake : c_hoverAccel);
@@ -722,7 +735,7 @@ void GadgetHover::AdvanceDriving(float dt)
 	{
 		// natural stop
 		fnAccel(m_speed, 0.0f, c_hoverDecel);
-		m_guardLights = false;
+		m_guardLights = !m_isLanded && padState->IsDown(Sonic::EKeyState::eKeyState_A); // floating
 		ToggleBrakeLights(false);
 		shouldStopBrakeSfx = true;
 	}
@@ -731,6 +744,24 @@ void GadgetHover::AdvanceDriving(float dt)
 	if (m_brakeSfx && shouldStopBrakeSfx)
 	{
 		m_brakeSfx.reset();
+	}
+
+	// jump
+	m_doubleTapTime = max(0.0f, m_doubleTapTime - dt);
+	if (m_playerID && m_isLanded && padState->IsTapped(Sonic::EKeyState::eKeyState_A))
+	{
+		if (m_doubleTapTime > 0.0f)
+		{
+			SharedPtrTypeless sfx;
+			Common::ObjectPlaySound(this, 200612010, sfx);
+
+			m_jumpGuardTime = c_hoverJumpGuardTime;
+			m_jumpAccelTime = c_hoverJumpAccelTime;
+		}
+		else
+		{
+			m_doubleTapTime = c_hoverDoubleTapTime;
+		}
 	}
 
 	// vulcan
@@ -773,7 +804,25 @@ void GadgetHover::AdvanceDriving(float dt)
 
 void GadgetHover::AdvanceGaurd(float dt)
 {
-	hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(m_guardAngle, hh::math::CVector::UnitY()) * hh::math::CQuaternion::Identity();
+	hh::math::CQuaternion newRotation = Eigen::AngleAxisf(m_guardAngle, hh::math::CVector::UnitY()) * hh::math::CQuaternion::Identity();
+	if (m_jumpGuardTime > 0.0f)
+	{
+		float pitch = 0.0f;
+		float constexpr startDownTime = 5.0f / 60.0f;
+		float constexpr returnDownTime = 10.0f / 60.0f;
+		if (m_jumpGuardTime > returnDownTime)
+		{
+			pitch = (1.0f - ((m_jumpGuardTime - returnDownTime) / startDownTime)) * PI_F * 0.5f;
+		}
+		else
+		{
+			pitch = (m_jumpGuardTime / returnDownTime) * PI_F * 0.5f;
+		}
+
+		newRotation = Eigen::AngleAxisf(pitch, -hh::math::CVector::UnitX()) * newRotation;
+		m_jumpGuardTime = max(0.0f, m_jumpGuardTime - dt);
+	}
+
 	m_spNodeGuardL->m_Transform.SetRotation(newRotation);
 	m_spNodeGuardR->m_Transform.SetRotation(newRotation);
 	m_spNodeGuardL->NotifyChanged();
@@ -790,13 +839,6 @@ void GadgetHover::AdvanceGaurd(float dt)
 			fpUpdateMotionAll(m_spEffectMotionGuardL.get(), dt);
 			fpUpdateMotionAll(m_spEffectMotionGuardR.get(), dt);
 		}
-
-		// burner pfx
-		if (!m_guardLID)
-		{
-			m_guardLID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spNodeGuardL, "ef_hover_guard", 1.0f);
-			m_guardRID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spNodeGuardR, "ef_hover_guard", 1.0f);
-		}
 	}
 	else
 	{
@@ -806,15 +848,20 @@ void GadgetHover::AdvanceGaurd(float dt)
 			fpUpdateMotionAll(m_spEffectMotionGuardL.get(), -dt);
 			fpUpdateMotionAll(m_spEffectMotionGuardR.get(), -dt);
 		}
+	}
 
-		// burner pfx
-		if (m_guardLID)
-		{
-			m_pGlitterPlayer->StopByID(m_guardLID, false);
-			m_pGlitterPlayer->StopByID(m_guardRID, false);
-			m_guardLID = 0;
-			m_guardRID = 0;
-		}
+	// burner pfx
+	if (m_guardLights && !m_guardLID && m_isLanded)
+	{
+		m_guardLID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spNodeGuardL, "ef_hover_guard", 1.0f);
+		m_guardRID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spNodeGuardR, "ef_hover_guard", 1.0f);
+	}
+	else if (m_guardLID)
+	{
+		m_pGlitterPlayer->StopByID(m_guardLID, false);
+		m_pGlitterPlayer->StopByID(m_guardRID, false);
+		m_guardLID = 0;
+		m_guardRID = 0;
 	}
 }
 
@@ -857,7 +904,63 @@ void GadgetHover::AdvanceGuns(float dt)
 void GadgetHover::AdvancePhysics(float dt)
 {
 	hh::math::CVector const forward = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitZ();
-	hh::math::CVector const newPosition = m_spMatrixNodeTransform->m_Transform.m_Position + forward * m_speed * dt;
+	hh::math::CVector newPosition = m_spMatrixNodeTransform->m_Transform.m_Position + forward * m_speed * dt;
+
+	// jumping
+	if (m_jumpAccelTime > 0.0f)
+	{
+		m_isLanded = false;
+		m_upSpeed += c_hoverJumpAccel * dt;
+	}
+	m_jumpAccelTime = max(0.0f, m_jumpAccelTime - dt);
+
+	// floor detection
+	hh::math::CVector outPos = hh::math::CVector::Zero();
+	hh::math::CVector outNormal = hh::math::CVector::Zero();
+
+	// hovering
+	if (!m_isLanded)
+	{
+		if (m_jumpAccelTime == 0.0f)
+		{
+			m_upSpeed -= c_hoverGravity * dt;
+
+			Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+			if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_A))
+			{
+				m_upSpeed = max(m_upSpeed, c_hoverJumpHoldSpeed);
+			}
+		}
+		newPosition += hh::math::CVector::UnitY() * m_upSpeed * dt;
+		
+		// check landing
+		if (m_upSpeed < 0.0f && Common::fRaycast(m_spMatrixNodeTransform->m_Transform.m_Position, newPosition, outPos, outNormal, m_landCollisionID))
+		{
+			SharedPtrTypeless sfx;
+			Common::ObjectPlaySound(this, 200612012, sfx);
+
+			// TODO: pfx
+
+			newPosition = outPos;
+			m_upSpeed = 0.0f;
+			m_isLanded = true;
+		}
+	}
+	else
+	{
+		// check leaving terrain
+		hh::math::CVector const testStart = m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector(0.0f, 1.0f, 0.0f);
+		hh::math::CVector const testEnd = m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector(0.0f, -0.1f, 0.0f);
+		if (Common::fRaycast(testStart, testEnd, outPos, outNormal, m_landCollisionID))
+		{
+			newPosition.y() = outPos.y();
+		}
+		else
+		{
+			m_isLanded = false;
+		}
+	}
+
 	m_spMatrixNodeTransform->m_Transform.SetPosition(newPosition);
 	m_spMatrixNodeTransform->NotifyChanged();
 

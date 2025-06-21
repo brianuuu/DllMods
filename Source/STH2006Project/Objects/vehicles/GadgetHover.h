@@ -111,6 +111,13 @@ private:
 	bool m_guardLights = false;
 	float m_guardLightTime = 0.0f;
 
+	uint32_t m_landCollisionID = 0u;
+	float m_jumpGuardTime = 0.0f;
+	float m_jumpAccelTime = 0.0f;
+	float m_doubleTapTime = 0.0f;
+	float m_upSpeed = 0.0f;
+	bool m_isLanded = true;
+
 	struct PlayerGetOnData
 	{
 		hh::math::CVector m_start = hh::math::CVector::Zero();
