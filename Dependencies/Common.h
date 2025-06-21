@@ -1150,6 +1150,34 @@ static bool fRaycast
 	}
 }
 
+static bool fRaycast
+(
+	hh::math::CVector const& rayStartPos,
+	hh::math::CVector const& rayEndPos,
+	hh::math::CVector& outPos,
+	hh::math::CVector& outNormal,
+	uint32_t flag
+)
+{
+	static void* const pfRaycast = (void*)0x10BE3B0;
+	__asm
+	{
+		mov		ecx, rayEndPos
+		push	ecx
+		mov		edx, outNormal
+		push	edx
+		mov		eax, outPos
+		push	eax
+		mov		ebx, PLAYER_CONTEXT
+		mov		ebx, [ebx]
+		mov     eax, [ebx + 5ECh]
+		mov     edi, [eax]
+		mov		edx, flag
+		mov		eax, rayStartPos
+		call	[pfRaycast]
+	}
+}
+
 static void* fGetScreenPosition
 (
 	Eigen::Vector4f const& pos3D,
