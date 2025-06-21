@@ -30,6 +30,8 @@ bool GadgetHoverSuspension::SetAddRenderables
 	AddAnimationState("Loop");
 	ChangeState("Loop");
 
+	SetCullingRange(0.0f);
+
 	return true;
 }
 
@@ -79,6 +81,8 @@ bool GadgetHoverGun::SetAddRenderables
 
 	// set initial transform
 	UpdateTransform();
+
+	SetCullingRange(0.0f);
 
 	return true;
 }
@@ -292,6 +296,8 @@ bool GadgetHover::SetAddRenderables
 	fpUpdateMotionAll(m_spEffectMotionAll.get(), 0.0f);
 	fpUpdateMotionAll(m_spEffectMotionGuardL.get(), 0.25f);
 	fpUpdateMotionAll(m_spEffectMotionGuardR.get(), 0.25f);
+
+	SetCullingRange(0.0f);
 
 	return true;
 }

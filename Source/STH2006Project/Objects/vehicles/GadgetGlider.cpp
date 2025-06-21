@@ -35,6 +35,8 @@ bool GadgetGliderGun::SetAddRenderables
 	// set initial transform
 	UpdateTransform();
 
+	SetCullingRange(0.0f);
+
 	return true;
 }
 
@@ -248,6 +250,8 @@ bool GadgetGlider::SetAddRenderables
 	auto const attachNode = m_spModelBase->GetNode("Charapoint");
 	m_spSonicControlNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
 	m_spSonicControlNode->SetParent(attachNode.get());
+
+	SetCullingRange(0.0f);
 
 	return true;
 }
