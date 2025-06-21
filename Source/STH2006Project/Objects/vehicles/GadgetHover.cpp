@@ -558,7 +558,6 @@ void GadgetHover::BeginPlayerGetOff(bool isAlive)
 		// unload gun
 		SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
 		SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
-		S06HUD_API::SetGadgetMaxCount(0);
 
 		SharedPtrTypeless sfx;
 		Common::ObjectPlaySound(this, 200612013, sfx);
@@ -567,6 +566,8 @@ void GadgetHover::BeginPlayerGetOff(bool isAlive)
 	{
 		Common::SetPlayerVelocity(velocity);
 	}
+
+	S06HUD_API::SetGadgetMaxCount(0);
 
 	m_loopSfx.reset();
 	m_brakeSfx.reset();
