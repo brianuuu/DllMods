@@ -790,12 +790,8 @@ void GadgetHover::AdvanceDriving(float dt)
 	// sfx pitch
 	if (m_loopSfx)
 	{
-		float value = 0.5f;
-		if (m_speed != 0.0f)
-		{
-			value += m_speed * 0.5f / c_hoverMaxSpeed;
-			Common::ClampFloat(value, 0.0f, 1.0f);
-		}
+		float value = 0.5f + (m_speed + abs(m_upSpeed)) * 0.5f / c_hoverMaxSpeed;
+		Common::ClampFloat(value, 0.0f, 1.0f);
 
 		FUNCTION_PTR(void*, __thiscall, SetAisac, 0x763D50, void* This, hh::base::CSharedString const& name, float value);
 		SetAisac(m_loopSfx.get(), "gadget_speed", value);
