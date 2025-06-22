@@ -40,6 +40,7 @@ private:
 	bool m_castShadow = true;
 	bool m_started = false;
 	bool m_loaded = true;
+	bool m_sfxPlayed = true;
 	uint32_t m_owner = 0;
 
 public:
@@ -93,6 +94,8 @@ private:
 	SharedPtrTypeless m_brakeSfx;
 	uint32_t m_guardLID = 0;
 	uint32_t m_guardRID = 0;
+	uint32_t m_suspensionID = 0;
+	uint32_t m_jumpID = 0;
 
 	std::mutex m_mutex;
 	uint32_t m_playerID = 0u;

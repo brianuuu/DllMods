@@ -133,13 +133,24 @@ void GadgetHoverGun::UpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rU
 	hh::base::CSharedString const currentState = GetCurrentState()->GetStateName();
 	bool const animationFinished = Common::IsAnimationFinished(this);
 	
-	if (currentState == "Unload" && m_loaded && m_started && animationFinished)
+	if (currentState == "Unload" && animationFinished)
 	{
-		ChangeState("Load");
+		if (!m_sfxPlayed)
+		{
+			m_sfxPlayed = true;
+			auto const attachNodeL = m_spModel->GetNode("pReload_L");
+			m_pGlitterPlayer->PlayOneshot(attachNodeL, "ef_hover_reload", 1.0f, 1);
+		}
+
+		if (m_loaded && m_started)
+		{
+			ChangeState("Load");
+		}
 	}
 	else if (currentState != "Unload" && (!m_loaded || !m_started))
 	{
 		ChangeState("Unload");
+		m_sfxPlayed = false;
 	}
 
 	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
@@ -592,6 +603,13 @@ void GadgetHover::BeginPlayerGetOff(bool isAlive)
 
 	// player collision
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
+
+	// pfx
+	if (m_suspensionID)
+	{
+		m_pGlitterPlayer->StopByID(m_suspensionID, false);
+		m_suspensionID = 0;
+	}
 }
 
 void GadgetHover::BeginDriving()
@@ -618,7 +636,12 @@ void GadgetHover::BeginDriving()
 	// player collision
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", true);
 
-	// TODO:
+	// pfx
+	m_pGlitterPlayer->PlayOneshot(m_spMatrixNodeTransform, "ef_hover_start", 1.0f, 1);
+	if (!m_suspensionID)
+	{
+		m_suspensionID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_hover_suspension", 1.0f);
+	}
 }
 
 float const c_hoverTurnRate = 2.0f * PI_F / 4.5f;
@@ -905,7 +928,13 @@ void GadgetHover::AdvanceGuns(float dt)
 
 void GadgetHover::AdvancePhysics(float dt)
 {
-	hh::math::CVector const forward = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitZ();
+	hh::math::CVector forward = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitZ();
+	if (!m_isLanded)
+	{
+		// not grounded, let gravity handle y-axis
+		forward.y() = 0.0f;
+		forward.normalize();
+	}
 	hh::math::CVector newPosition = m_spMatrixNodeTransform->m_Transform.m_Position + forward * m_speed * dt;
 
 	// jumping
@@ -913,12 +942,18 @@ void GadgetHover::AdvancePhysics(float dt)
 	{
 		m_isLanded = false;
 		m_upSpeed += c_hoverJumpAccel * dt;
+
+		// pfx
+		if (!m_jumpID)
+		{
+			m_jumpID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_hover_jump", 1.0f);
+		}
 	}
 	m_jumpAccelTime = max(0.0f, m_jumpAccelTime - dt);
 
 	// floor detection
 	hh::math::CVector outPos = hh::math::CVector::Zero();
-	hh::math::CVector outNormal = hh::math::CVector::Zero();
+	hh::math::CVector outNormal = hh::math::CVector::UnitY();
 
 	// hovering
 	if (!m_isLanded)
@@ -941,7 +976,15 @@ void GadgetHover::AdvancePhysics(float dt)
 			SharedPtrTypeless sfx;
 			Common::ObjectPlaySound(this, 200612012, sfx);
 
-			// TODO: pfx
+			// pfx
+			hh::math::CVector temp1, temp2;
+			bool const isWater = Common::fRaycast(m_spMatrixNodeTransform->m_Transform.m_Position, newPosition, temp1, temp2, *(int*)0x1E0AF9C);
+			m_pGlitterPlayer->PlayOneshot(m_spMatrixNodeTransform, isWater ? "ef_hover_water" : "ef_hover_land", 1.0f, 1);
+			if (m_jumpID)
+			{
+				m_pGlitterPlayer->StopByID(m_jumpID, false);
+				m_jumpID = 0;
+			}
 
 			newPosition = outPos;
 			m_upSpeed = 0.0f;
@@ -956,13 +999,28 @@ void GadgetHover::AdvancePhysics(float dt)
 		if (Common::fRaycast(testStart, testEnd, outPos, outNormal, m_landCollisionID))
 		{
 			newPosition.y() = outPos.y();
+
+			// pitch
+			float constexpr pitchRate = 5.0f;
+			hh::math::CVector const upAxis = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitY();
+			hh::math::CQuaternion const targetPitch = hh::math::CQuaternion::FromTwoVectors(upAxis.head<3>(), outNormal.head<3>());
+			hh::math::CQuaternion const newRotation = hh::math::CQuaternion::Identity().slerp(dt * pitchRate, targetPitch) * m_spMatrixNodeTransform->m_Transform.m_Rotation;
+			m_spMatrixNodeTransform->m_Transform.SetRotation(newRotation);
+			m_spMatrixNodeTransform->NotifyChanged();
 		}
 		else
 		{
 			m_isLanded = false;
+
+			// left ground, separate up/forward component
+			hh::math::CVector forwardHorizontal = forward;
+			forwardHorizontal.y() = 0.0f;
+			forwardHorizontal.normalize();
+			m_speed = forwardHorizontal.dot(forward * m_speed);
+			m_upSpeed = hh::math::CVector::UnitY().dot(forward * m_speed);
 		}
 	}
-
+	
 	m_spMatrixNodeTransform->m_Transform.SetPosition(newPosition);
 	m_spMatrixNodeTransform->NotifyChanged();
 
