@@ -2,6 +2,7 @@
 
 float const c_enemyBulletSpeed = 60.0f;
 float const c_enemyBulletLifetime = 2.0f;
+hh::math::CVector const c_enemyBulletHead = hh::math::CVector(0.0f, 0.0f, 0.2f);
 
 EnemyBullet::EnemyBullet
 (
@@ -13,6 +14,12 @@ EnemyBullet::EnemyBullet
 	// initial transform
 	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(startTrans.m_Rotation, startTrans.m_Position);
 	m_spMatrixNodeTransform->NotifyChanged();
+
+	m_spNodeHead = boost::make_shared<Sonic::CMatrixNodeTransform>();
+	m_spNodeHead->m_Transform.SetPosition(c_enemyBulletHead);
+	m_spNodeHead->NotifyChanged();
+	m_spNodeHead->SetParent(m_spMatrixNodeTransform.get());
+	m_headPositionPrev = m_spNodeHead->GetWorldMatrix().translation();
 }
 
 bool EnemyBullet::SetAddRenderables
@@ -41,8 +48,9 @@ bool EnemyBullet::SetAddColliders
 	uint32_t const typeBreakable = *(uint32_t*)0x1E5E77C;
 	uint32_t const typeTerrain = *(uint32_t*)0x1E5E754;
 	uint64_t const bitfield = (1llu << typeEnemy) | (1llu << typeBreakable) | (1llu << typeTerrain);
+	m_collisionID = Common::MakeCollisionID(0, bitfield);
 	hk2010_2_0::hkpCapsuleShape* bodyEventTrigger = new hk2010_2_0::hkpCapsuleShape(hh::math::CVector(0.0f, 0.0f, 0.1f), hh::math::CVector(0.0f, 0.0f, -0.3f), 0.08f);
-	AddEventCollision("Attack", bodyEventTrigger, Common::MakeCollisionID(0, bitfield), true, m_spMatrixNodeTransform);
+	AddEventCollision("Attack", bodyEventTrigger, m_collisionID, true, m_spMatrixNodeTransform);
 
 	return true;
 }
@@ -64,6 +72,15 @@ bool EnemyBullet::ProcessMessage
 		{
 			if (message.m_SenderActorID != m_owner)
 			{
+				hh::math::CVector outPos = hh::math::CVector::Zero();
+				hh::math::CVector outNormal = hh::math::CVector::UnitY();
+				if (m_lifetime > 0.0f && Common::fRaycast(m_headPositionPrev, m_spNodeHead->GetWorldMatrix().translation(), outPos, outNormal, m_collisionID))
+				{
+					m_spMatrixNodeTransform->m_Transform.SetPosition(outPos);
+					m_spMatrixNodeTransform->NotifyChanged();
+				}
+				m_pGlitterPlayer->PlayOneshot(m_spMatrixNodeTransform, "ef_bullet_hit", 1.0f, 1);
+
 				SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
 					(
 						*(uint32_t*)0x1E0BE28, // DamageID_SonicHeavy
@@ -93,6 +110,7 @@ void EnemyBullet::UpdateParallel
 		return;
 	}
 
+	m_headPositionPrev = m_spNodeHead->GetWorldMatrix().translation();
 	hh::math::CVector const newPosition = m_spMatrixNodeTransform->m_Transform.m_Position + m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitZ() * c_enemyBulletSpeed * in_rUpdateInfo.DeltaTime;
 	m_spMatrixNodeTransform->m_Transform.SetPosition(newPosition);
 	m_spMatrixNodeTransform->NotifyChanged();
