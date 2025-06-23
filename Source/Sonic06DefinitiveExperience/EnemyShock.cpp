@@ -24,7 +24,9 @@ public:
         , m_Position(_Position)
         , m_IsCrisisCityEnemy(_IsCrisisCityEnemy)
     {
-
+        // Set initial transform
+        m_spMatrixNodeTransform->m_Transform.SetPosition(m_Position);
+        m_spMatrixNodeTransform->NotifyChanged();
     }
 
     ~CObjShock()
@@ -47,10 +49,6 @@ public:
 
         Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
         pGameDocument->AddUpdateUnit("0", this);
-
-        // Set initial transform
-        m_spMatrixNodeTransform->m_Transform.SetPosition(m_Position);
-        m_spMatrixNodeTransform->NotifyChanged();
 
         // play pfx
         m_pfxID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, m_IsCrisisCityEnemy ? "ef_ch_sns_yh1_damage_shock2" : "ef_ch_sns_yh1_damage_shock", 1.0f);

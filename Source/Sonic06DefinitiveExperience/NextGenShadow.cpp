@@ -977,7 +977,8 @@ public:
         , m_Velocity(_StartDir.normalized() * m_Speed)
         , m_IsDamage(_IsDamage)
     {
-
+        // Set initial transform
+        UpdateTransform();
     }
 
     ~CObjChaosSpear()
@@ -1000,9 +1001,6 @@ public:
 
         Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
         pGameDocument->AddUpdateUnit("0", this);
-
-        // Set initial transform
-        UpdateTransform();
 
         // play pfx
         if (Common::IsPlayerSuper())
