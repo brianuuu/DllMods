@@ -27,4 +27,6 @@
 #include <Sonic/Message/MsgStartExternalControl.h>
 #include <Sonic/Message/MsgStartHangOn.h>
 
+#include <Sonic/CCharacterProxy.h>
 #include <Sonic/CGlitterPlayer.h>
+#include <Sonic/CShapeCollision.h>

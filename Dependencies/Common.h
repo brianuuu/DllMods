@@ -7,6 +7,7 @@
 
 #define DEBUG_VECTOR2(vec2) printf("%.2f, %.2f\n",vec2.x(),vec2.y());
 #define DEBUG_VECTOR3(vec3) printf("%.2f, %.2f, %.2f\n",vec3.x(),vec3.y(),vec3.z());
+#define DEBUG_VECTOR4(vec4) printf("%.2f, %.2f, %.2f, %.2f\n",vec4.x(),vec4.y(),vec4.z(),vec4.w());
 
 typedef void CSonicContext;
 CSonicContext** const PLAYER_CONTEXT = (CSonicContext**)0x1E5E2F0;
@@ -2068,6 +2069,43 @@ static void* ObjectToggleEventCollision
 		mov		ecx, symbol
 		push	enabled
 		call	[pObjectToggleEventCollision]
+	}
+}
+
+static void MakeSharedShapeCollision
+(
+	boost::shared_ptr<Sonic::CShapeCollision>& pShapeCollision,
+	Sonic::CWorld* pWorld,
+	hk2010_2_0::hkpShape* pShape,
+	uint32_t collisionID
+)
+{
+	uint32_t holder = (uint32_t)pWorld + 0x7C;
+	static void* const pMakeSharedShapeCollision = (void*)0x11823C0;
+	__asm
+	{
+		push	collisionID
+		lea		ecx, [pShape]
+		push	ecx
+		lea		edx, [holder]
+		push	edx
+		mov		esi, pShapeCollision
+		call	[pMakeSharedShapeCollision]
+	}
+}
+
+static int fCCharacterProxyIntegrate
+(
+	Sonic::CCharacterProxy* proxy,
+	float dt
+)
+{
+	static void* const pCCharacterProxyIntegrate = (void*)0x10E3CF0;
+	__asm
+	{
+		push	dt
+		mov		eax, proxy
+		call	[pCCharacterProxyIntegrate]
 	}
 }
 
