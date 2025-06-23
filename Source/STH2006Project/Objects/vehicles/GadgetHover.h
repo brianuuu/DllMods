@@ -101,6 +101,7 @@ private:
 	uint32_t m_playerID = 0u;
 	Direction m_direction = Direction::None;
 	State m_state = State::Idle;
+	hh::math::CVector2 m_input = hh::math::CVector2::Zero();
 
 	float m_hp = 100.0f;
 	float m_speed = 0.0f;

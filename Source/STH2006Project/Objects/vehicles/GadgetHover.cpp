@@ -684,21 +684,20 @@ void GadgetHover::AdvanceDriving(float dt)
 	}
 
 	Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-	hh::math::CVector2 input = hh::math::CVector2::Zero();
 
 	// calculate input, follows sub_F82000
 	if (m_playerID)
 	{
-		input.x() = (abs(padState->LeftStickHorizontal) - 0.1f) / 0.8f;
-		Common::ClampFloat(input.x(), 0.0f, 1.0f);
-		if (padState->LeftStickHorizontal > 0.0f) input.x() *= -1.0f;
-		input.y() = (abs(padState->LeftStickVertical) - 0.1f) / 0.8f;
-		Common::ClampFloat(input.y(), 0.0f, 1.0f);
-		if (padState->LeftStickVertical < 0.0f) input.y() *= -1.0f;
-		if (padState->IsDown(Sonic::EKeyState::eKeyState_DpadLeft)) input.x() = 1.0f;
-		if (padState->IsDown(Sonic::EKeyState::eKeyState_DpadRight)) input.x() = -1.0f;
-		if (padState->IsDown(Sonic::EKeyState::eKeyState_DpadUp)) input.y() = 1.0f;
-		if (padState->IsDown(Sonic::EKeyState::eKeyState_DpadDown)) input.y() = -1.0f;
+		m_input.x() = (abs(padState->LeftStickHorizontal) - 0.1f) / 0.8f;
+		Common::ClampFloat(m_input.x(), 0.0f, 1.0f);
+		if (padState->LeftStickHorizontal > 0.0f) m_input.x() *= -1.0f;
+		m_input.y() = (abs(padState->LeftStickVertical) - 0.1f) / 0.8f;
+		Common::ClampFloat(m_input.y(), 0.0f, 1.0f);
+		if (padState->LeftStickVertical < 0.0f) m_input.y() *= -1.0f;
+		if (padState->IsDown(Sonic::EKeyState::eKeyState_DpadLeft)) m_input.x() = 1.0f;
+		if (padState->IsDown(Sonic::EKeyState::eKeyState_DpadRight)) m_input.x() = -1.0f;
+		if (padState->IsDown(Sonic::EKeyState::eKeyState_DpadUp)) m_input.y() = 1.0f;
+		if (padState->IsDown(Sonic::EKeyState::eKeyState_DpadDown)) m_input.y() = -1.0f;
 	}
 
 	// get off
@@ -709,33 +708,21 @@ void GadgetHover::AdvanceDriving(float dt)
 	}
 
 	// rotation
-	if (input.x() != 0.0f)
 	{
 		hh::math::CVector const upAxis = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitY();
-		hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(input.x() * c_hoverTurnRate * dt, upAxis) * m_spMatrixNodeTransform->m_Transform.m_Rotation;
+		hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(m_input.x() * c_hoverTurnRate * dt, upAxis) * m_spMatrixNodeTransform->m_Transform.m_Rotation;
 		m_spMatrixNodeTransform->m_Transform.SetRotation(newRotation);
 		m_spMatrixNodeTransform->NotifyChanged();
 
-		fnAccel(m_guardAngle, -input.x() * c_hoverGuardMaxAngle, c_hoverGuardTurnRate);
+		fnAccel(m_guardAngle, -m_input.x() * c_hoverGuardMaxAngle, c_hoverGuardTurnRate);
 	}
 	else
 	{
 		fnAccel(m_guardAngle, 0.0f, c_hoverGuardTurnRate);
 	}
 
-	// player animation
-	if (m_playerID)
-	{
-		Direction direction = GetCurrentDirection(input);
-		if (m_direction != direction)
-		{
-			m_direction = direction;
-			SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl(GetAnimationName().c_str()));
-		}
-	}
-
 	// max speed
-	float const currentMaxSpeed = input.x() == 0.0f ? c_hoverMaxSpeed : c_hoverMaxSpeedSteering;
+	float const currentMaxSpeed = m_input.x() == 0.0f ? c_hoverMaxSpeed : c_hoverMaxSpeedSteering;
 
 	// acceleration
 	bool shouldStopBrakeSfx = (m_speed <= c_hoverMinBrakeSpeed);
@@ -1029,6 +1016,17 @@ void GadgetHover::AdvancePhysics(float dt)
 	{
 		hh::math::CVector* pSoundHandle = (hh::math::CVector*)m_loopSfx.get();
 		pSoundHandle[2] = newPosition;
+	}
+
+	// player animation
+	if (m_playerID)
+	{
+		Direction direction = GetCurrentDirection(m_input);
+		if (m_direction != direction)
+		{
+			m_direction = direction;
+			SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl(GetAnimationName().c_str()));
+		}
 	}
 }
 
