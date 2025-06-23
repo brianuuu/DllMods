@@ -8,7 +8,6 @@
 class GadgetMissile : public Sonic::CObjectBase
 {
 private:
-	hh::mr::CTransform m_startTrans;
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEffect;
 
@@ -18,7 +17,7 @@ private:
 	hh::math::CVector m_velocity = hh::math::CVector::Zero();
 
 public:
-	GadgetMissile(uint32_t owner, hh::mr::CTransform const& startTrans) : m_owner(owner), m_startTrans(startTrans) {}
+	GadgetMissile(uint32_t owner, hh::mr::CTransform const& startTrans);
 
 	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	bool SetAddColliders(const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;

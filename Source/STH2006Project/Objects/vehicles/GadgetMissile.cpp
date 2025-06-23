@@ -4,17 +4,25 @@ float const c_gadgetMissileSpeed = 60.0f;
 float const c_gadgetMissileLifetime = 5.0f;
 float const c_gadgetMissileTurnRate = 90.0f * DEG_TO_RAD;
 
+GadgetMissile::GadgetMissile
+(
+	uint32_t owner, 
+	hh::mr::CTransform const& startTrans
+)
+	: m_owner(owner)
+{
+	// initial transform
+	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(startTrans.m_Rotation, startTrans.m_Position);
+	m_spMatrixNodeTransform->NotifyChanged();
+	m_velocity = startTrans.m_Rotation * hh::math::CVector::UnitZ() * c_gadgetMissileSpeed;
+}
+
 bool GadgetMissile::SetAddRenderables
 (
 	Sonic::CGameDocument* in_pGameDocument, 
 	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
 )
 {
-	// initial transform
-	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(m_startTrans.m_Rotation, m_startTrans.m_Position);
-	m_spMatrixNodeTransform->NotifyChanged();
-	m_velocity = m_startTrans.m_Rotation * hh::math::CVector::UnitZ() * c_gadgetMissileSpeed;
-
 	// model
 	hh::mr::CMirageDatabaseWrapper wrapper(in_spDatabase.get());
 	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData("Gadget_Missile", 0);

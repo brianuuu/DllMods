@@ -3,16 +3,24 @@
 float const c_enemyBulletSpeed = 60.0f;
 float const c_enemyBulletLifetime = 2.0f;
 
+EnemyBullet::EnemyBullet
+(
+	uint32_t owner, 
+	hh::mr::CTransform const& startTrans
+)
+	: m_owner(owner)
+{
+	// initial transform
+	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(startTrans.m_Rotation, startTrans.m_Position);
+	m_spMatrixNodeTransform->NotifyChanged();
+}
+
 bool EnemyBullet::SetAddRenderables
 (
 	Sonic::CGameDocument* in_pGameDocument, 
 	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
 )
 {
-	// initial transform
-	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(m_startTrans.m_Rotation, m_startTrans.m_Position);
-	m_spMatrixNodeTransform->NotifyChanged();
-
 	// model
 	hh::mr::CMirageDatabaseWrapper wrapper(in_spDatabase.get());
 	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData("en_cmn_bullet", 0);
@@ -54,7 +62,7 @@ bool EnemyBullet::ProcessMessage
 
 		if (message.Is<Sonic::Message::MsgHitEventCollision>())
 		{
-			if (message.m_SenderActorID != m_owner && m_frames > 1)
+			if (message.m_SenderActorID != m_owner)
 			{
 				SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
 					(
@@ -78,7 +86,6 @@ void EnemyBullet::UpdateParallel
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
 )
 {
-	m_frames++;
 	m_lifetime += in_rUpdateInfo.DeltaTime;
 	if (m_lifetime > c_enemyBulletLifetime)
 	{
