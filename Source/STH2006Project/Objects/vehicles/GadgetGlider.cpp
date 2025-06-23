@@ -506,9 +506,7 @@ void GadgetGlider::BeginPlayerGetOn()
 	hh::math::CVector playerPosition;
 	SendMessageImm(m_playerID, Sonic::Message::MsgGetPosition(playerPosition));
 
-	m_playerGetOnData.m_start = playerPosition - m_spSonicControlNode->GetWorldMatrix().translation();
-	m_playerGetOnData.m_start.x() *= -1.0f;
-	m_playerGetOnData.m_start.z() *= -1.0f;
+	m_playerGetOnData.m_start = m_spMatrixNodeTransform->m_Transform.m_Rotation.conjugate() * (playerPosition - m_spSonicControlNode->GetWorldMatrix().translation());
 	m_spSonicControlNode->m_Transform.SetPosition(m_playerGetOnData.m_start);
 	m_spSonicControlNode->NotifyChanged();
 
