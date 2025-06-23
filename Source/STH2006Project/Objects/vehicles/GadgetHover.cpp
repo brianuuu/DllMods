@@ -356,6 +356,11 @@ bool GadgetHover::SetAddColliders
 	uint64_t const bitfieldLand = (1llu << typeTerrain) | (1llu << typeWater);
 	m_landCollisionID = Common::MakeCollisionID(0, bitfieldLand);
 
+	// proxy collision
+	Hedgehog::Base::THolder<Sonic::CWorld> holder(m_pMember->m_pWorld.get());
+	hk2010_2_0::hkpCylinderShape* proxyShape = new hk2010_2_0::hkpCylinderShape(hh::math::CVector(0.0f, 2.0f, 0.0f), hh::math::CVector(0.0f, 2.1f, 0.0f), 1.5f);
+	m_spProxy = boost::make_shared<Sonic::CCharacterProxy>(this, holder, proxyShape, hh::math::CVector::Zero(), hh::math::CQuaternion::Identity(), *(int*)0x1E0AFAC);
+
 	return true;
 }
 
@@ -708,6 +713,7 @@ void GadgetHover::AdvanceDriving(float dt)
 	}
 
 	// rotation
+	if (m_input.x() != 0.0f)
 	{
 		hh::math::CVector const upAxis = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitY();
 		hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(m_input.x() * c_hoverTurnRate * dt, upAxis) * m_spMatrixNodeTransform->m_Transform.m_Rotation;
@@ -922,7 +928,17 @@ void GadgetHover::AdvancePhysics(float dt)
 		forward.y() = 0.0f;
 		forward.normalize();
 	}
-	hh::math::CVector newPosition = m_spMatrixNodeTransform->m_Transform.m_Position + forward * m_speed * dt;
+
+	hh::math::CVector newPosition = m_spMatrixNodeTransform->m_Transform.m_Position;
+	if (m_speed != 0.0f)
+	{
+		m_spProxy->m_Position = m_spMatrixNodeTransform->m_Transform.m_Position;
+		m_spProxy->m_UpVector = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitY();
+		m_spProxy->m_Velocity = forward * m_speed;
+		Common::fCCharacterProxyIntegrate(m_spProxy.get(), dt);
+		newPosition = m_spProxy->m_Position;
+		m_speed = m_spProxy->m_Velocity.dot(forward);
+	}
 
 	// jumping
 	if (m_jumpAccelTime > 0.0f)
@@ -974,8 +990,18 @@ void GadgetHover::AdvancePhysics(float dt)
 			}
 
 			newPosition = outPos;
+			m_jumpAccelTime = 0.0f;
 			m_upSpeed = 0.0f;
 			m_isLanded = true;
+		}
+
+		// check ceiling
+		hh::math::CVector const top = hh::math::CVector::UnitY() * 2.1f;
+		if (m_upSpeed > 0.0f && Common::fRaycast(m_spMatrixNodeTransform->m_Transform.m_Position + top, newPosition + top, outPos, outNormal, m_landCollisionID))
+		{
+			newPosition = outPos - top;
+			m_jumpAccelTime = 0.0f;
+			m_upSpeed = 0.0f;
 		}
 	}
 	else

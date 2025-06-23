@@ -148,6 +148,8 @@ private:
 	boost::shared_ptr<GadgetHoverGun> m_spGunL;
 	boost::shared_ptr<GadgetHoverGun> m_spGunR;
 
+	boost::shared_ptr<Sonic::CCharacterProxy> m_spProxy;
+
 private:
 	void InitializeEditParam(Sonic::CEditParam& in_rEditParam) override;
 	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
