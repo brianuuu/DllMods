@@ -9,6 +9,7 @@
 #include "cmn/Laser.h"
 #include "cmn/UpDownReel.h"
 
+#include "vehicles/GadgetBike.h"
 #include "vehicles/GadgetHover.h"
 #include "vehicles/GadgetGlider.h"
 
@@ -104,6 +105,7 @@ void NextGenObjects::applyPatches()
     UpDownReel::registerObject();
 
     // vehicles
+    GadgetBike::registerObject();
     GadgetHover::registerObject();
     GadgetGlider::registerObject();
 }
