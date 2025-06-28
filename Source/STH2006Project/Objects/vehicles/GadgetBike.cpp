@@ -172,7 +172,7 @@ bool GadgetBike::ProcessMessage
 	if (message.Is<Sonic::Message::MsgExitedExternalControl>())
 	{
 		m_playerID = 0;
-		S06HUD_API::SetGadgetMaxCount(0);
+		S06HUD_API::SetGadgetMaxCount(-1);
 		return true;
 	}
 
@@ -299,7 +299,7 @@ void GadgetBike::BeginPlayerGetOff(bool isAlive)
 		Common::SetPlayerVelocity(velocity);
 	}
 
-	S06HUD_API::SetGadgetMaxCount(0);
+	S06HUD_API::SetGadgetMaxCount(-1);
 
 	// TODO: sfx
 	ToggleBrakeLights(false);
@@ -318,19 +318,23 @@ void GadgetBike::BeginDriving()
 	m_state = State::Driving;
 	m_direction = Direction::None;
 
-	// load gun
-	//SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
-	//SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
-
 	// TODO: sfx
 	SharedPtrTypeless sfx;
+
+	// load gun
+	if (m_Data.m_HasGun)
+	{
+		//SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+		//SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+		Common::ObjectPlaySound(this, 200612013, sfx);
+	}
 
 	// Change animation
 	SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl("Bike", true));
 
 	// set HUD
-	S06HUD_API::SetGadgetMaxCount(100); // TODO: no gun
-	S06HUD_API::SetGadgetCount(m_bullets, 100);
+	S06HUD_API::SetGadgetMaxCount(m_Data.m_HasGun ? 100 : 0);
+	S06HUD_API::SetGadgetCount(m_Data.m_HasGun ? m_bullets : 0, m_Data.m_HasGun ? 100 : 0);
 	S06HUD_API::SetGadgetHP(m_hp);
 
 	// player collision

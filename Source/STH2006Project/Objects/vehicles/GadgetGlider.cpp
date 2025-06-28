@@ -474,7 +474,7 @@ bool GadgetGlider::ProcessMessage
 	if (message.Is<Sonic::Message::MsgExitedExternalControl>())
 	{
 		m_playerID = 0;
-		S06HUD_API::SetGadgetMaxCount(0);
+		S06HUD_API::SetGadgetMaxCount(-1);
 		return true;
 	}
 
@@ -556,7 +556,7 @@ void GadgetGlider::BeginPlayerGetOff()
 
 	SendMessageImm(m_playerID, Sonic::Message::MsgFinishExternalControl(Sonic::Message::MsgFinishExternalControl::EChangeState::FALL));
 	Common::SetPlayerVelocity(hh::math::CVector::Zero());
-	S06HUD_API::SetGadgetMaxCount(0);
+	S06HUD_API::SetGadgetMaxCount(-1);
 
 	// out of control
 	if (m_Data.m_GetOffOutOfControl > 0.0f)
@@ -589,6 +589,7 @@ void GadgetGlider::BeginFlight()
 
 	// set HUD
 	S06HUD_API::SetGadgetMaxCount(2);
+	S06HUD_API::SetGadgetCount(2, 2);
 	S06HUD_API::SetGadgetHP(m_hp);
 	SharedPtrTypeless sfx;
 	Common::ObjectPlaySound(this, 200612005, sfx);

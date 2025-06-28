@@ -466,7 +466,7 @@ bool GadgetHover::ProcessMessage
 	if (message.Is<Sonic::Message::MsgExitedExternalControl>())
 	{
 		m_playerID = 0;
-		S06HUD_API::SetGadgetMaxCount(0);
+		S06HUD_API::SetGadgetMaxCount(-1);
 		return true;
 	}
 
@@ -593,7 +593,7 @@ void GadgetHover::BeginPlayerGetOff(bool isAlive)
 		Common::SetPlayerVelocity(velocity);
 	}
 
-	S06HUD_API::SetGadgetMaxCount(0);
+	S06HUD_API::SetGadgetMaxCount(-1);
 
 	m_loopSfx.reset();
 	m_brakeSfx.reset();
