@@ -50,6 +50,21 @@ bool GadgetBike::SetAddRenderables
 	m_spModelBase->BindMatrixNode(m_spMatrixNodeTransform);
 	Sonic::CGameObject::AddRenderable("Object", m_spModelBase, m_pMember->m_CastShadow);
 
+	// wheels
+	boost::shared_ptr<hh::mr::CModelData> spModelWheelData = wrapper.GetModelData("Gadget_Bike_Wheel", 0);
+	auto const attachNodeF = m_spModelBase->GetNode("Wheel_F");
+	auto const attachNodeB = m_spModelBase->GetNode("Wheel_B");
+	m_spNodeWheelF = boost::make_shared<Sonic::CMatrixNodeTransform>();
+	m_spNodeWheelB = boost::make_shared<Sonic::CMatrixNodeTransform>();
+	m_spNodeWheelF->SetParent(attachNodeF.get());
+	m_spNodeWheelB->SetParent(attachNodeB.get());
+	m_spModelWheelF = boost::make_shared<hh::mr::CSingleElement>(spModelWheelData);
+	m_spModelWheelB = boost::make_shared<hh::mr::CSingleElement>(spModelWheelData);
+	m_spModelWheelF->BindMatrixNode(m_spNodeWheelF);
+	m_spModelWheelB->BindMatrixNode(m_spNodeWheelB);
+	Sonic::CGameObject::AddRenderable("Object", m_spModelWheelF, m_pMember->m_CastShadow);
+	Sonic::CGameObject::AddRenderable("Object", m_spModelWheelB, m_pMember->m_CastShadow);
+
 	// Guns
 	if (m_Data.m_HasGun)
 	{
@@ -77,11 +92,28 @@ bool GadgetBike::SetAddColliders
 	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
 )
 {
+	// damage to object
+	uint32_t const typeEnemy = *(uint32_t*)0x1E5E7E8;
+	uint32_t const typeBreakable = *(uint32_t*)0x1E5E77C;
+	uint64_t const bitfield = (1llu << typeEnemy) | (1llu << typeBreakable);
+	uint32_t const damageID = Common::MakeCollisionID(0, bitfield);
+	m_spNodeCockpit = boost::make_shared<Sonic::CMatrixNodeTransform>();
+	m_spNodeCockpit->m_Transform.SetPosition(hh::math::CVector(0.0f, 0.6f, -0.1f));
+	m_spNodeCockpit->NotifyChanged();
+	m_spNodeCockpit->SetParent(m_spMatrixNodeTransform.get());
+	hk2010_2_0::hkpBoxShape* cockpitEventTrigger = new hk2010_2_0::hkpBoxShape(1.0f, 1.2f, 2.4f);
+	AddEventCollision("Attack", cockpitEventTrigger, damageID, true, m_spNodeCockpit);
+
 	// player event collision
 	m_spNodeEventCollision = boost::make_shared<Sonic::CMatrixNodeTransform>();
 	m_spNodeEventCollision->SetParent(m_spMatrixNodeTransform.get());
 	hk2010_2_0::hkpCapsuleShape* shapeEventTrigger = new hk2010_2_0::hkpCapsuleShape(hh::math::CVector(0.0f, 0.5f, 1.0f), hh::math::CVector(0.0f, 0.5f, -1.0f), 2.0f);
 	AddEventCollision("Player", shapeEventTrigger, *(int*)0x1E0AFD8, true, m_spNodeEventCollision); // ColID_PlayerEvent
+
+	// fake player collision
+	hk2010_2_0::hkpCylinderShape* playerEventTrigger = new hk2010_2_0::hkpCylinderShape(hh::math::CVector(0.0f, 0.0f, -0.3f), hh::math::CVector(0.0f, 1.2f, -0.3f), 0.5f);
+	AddEventCollision("FakePlayer", playerEventTrigger, *(int*)0x1E0AF90, true, m_spMatrixNodeTransform); // TypePlayer
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
 
 	return true;
 }

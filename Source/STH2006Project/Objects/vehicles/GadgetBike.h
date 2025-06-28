@@ -58,6 +58,12 @@ private:
 
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModelBase;
 
+	boost::shared_ptr<hh::mr::CSingleElement> m_spModelWheelF;
+	boost::shared_ptr<hh::mr::CSingleElement> m_spModelWheelB;
+	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeWheelF;
+	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeWheelB;
+
+	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeCockpit;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spSonicControlNode;
 
