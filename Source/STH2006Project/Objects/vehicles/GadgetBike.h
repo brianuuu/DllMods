@@ -3,6 +3,7 @@
 ///	Year: 2025
 ///	Description: Gadget_Bike object from 06
 /*----------------------------------------------------------*/
+#include "GadgetGun.h"
 
 #pragma once
 class GadgetBike : public Sonic::CObjectBase, public Sonic::CSetObjectListener
@@ -60,6 +61,9 @@ private:
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spSonicControlNode;
 
+	boost::shared_ptr<GadgetGun> m_spGunL;
+	boost::shared_ptr<GadgetGun> m_spGunR;
+
 private:
 	void InitializeEditParam(Sonic::CEditParam& in_rEditParam) override;
 	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
@@ -78,6 +82,8 @@ private:
 
 	void BeginDriving();
 	void AdvanceDriving(float dt);
+
+	void AdvanceGuns(float dt);
 
 	void ToggleBrakeLights(bool on);
 	void TakeDamage(float amount);

@@ -14,6 +14,7 @@ private:
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
 	boost::shared_ptr<hh::anim::CAnimationPose> m_spAnimPose;
 
+	bool m_isRight = false;
 	bool m_castShadow = true;
 	bool m_started = false;
 	bool m_loaded = true;
@@ -34,6 +35,7 @@ public:
 	Hedgehog::Math::CVector GetVelocityForAnimationChange() override { return hh::math::CVector::Ones(); }
 
 	// API
+	void SetIsRight() { m_isRight = true; }
 	bool IsReady() const;
 	bool CanUnload() const;
 	void UpdateTransform();

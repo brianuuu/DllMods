@@ -50,6 +50,18 @@ bool GadgetBike::SetAddRenderables
 	m_spModelBase->BindMatrixNode(m_spMatrixNodeTransform);
 	Sonic::CGameObject::AddRenderable("Object", m_spModelBase, m_pMember->m_CastShadow);
 
+	// Guns
+	if (m_Data.m_HasGun)
+	{
+		auto const attachNodeGunL = m_spModelBase->GetNode("GunUnder_L");
+		m_spGunL = boost::make_shared<GadgetGun>("Gadget_Bike_GunL", attachNodeGunL, m_pMember->m_CastShadow, m_ActorID);
+		in_pGameDocument->AddGameObject(m_spGunL, "main", this);
+		auto const attachNodeGunR = m_spModelBase->GetNode("GunUnder_R");
+		m_spGunR = boost::make_shared<GadgetGun>("Gadget_Bike_GunR", attachNodeGunR, m_pMember->m_CastShadow, m_ActorID);
+		m_spGunR->SetIsRight();
+		in_pGameDocument->AddGameObject(m_spGunR, "main", this);
+	}
+
 	// external control
 	auto const attachNode = m_spModelBase->GetNode("Charapoint");
 	m_spSonicControlNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
@@ -91,6 +103,7 @@ void GadgetBike::SetUpdateParallel
 {
 	AdvancePlayerGetOn(in_rUpdateInfo.DeltaTime);
 	AdvanceDriving(in_rUpdateInfo.DeltaTime);
+	AdvanceGuns(in_rUpdateInfo.DeltaTime);
 }
 
 bool GadgetBike::ProcessMessage
@@ -151,7 +164,7 @@ bool GadgetBike::ProcessMessage
 						*(uint32_t*)0x1E0BE28, // DamageID_SonicHeavy
 						m_spMatrixNodeTransform->m_Transform.m_Position,
 						m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitZ() * m_speed * 2.0f
-						)
+					)
 				);
 			}
 		}
@@ -288,11 +301,14 @@ void GadgetBike::BeginPlayerGetOff(bool isAlive)
 		ChangeAnimationCustomPlayback(context, "JumpBall", hh::math::CVector::Zero());
 
 		// unload gun
-		//SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
-		//SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+		if (m_Data.m_HasGun)
+		{
+			SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+			SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
 
-		SharedPtrTypeless sfx;
-		Common::ObjectPlaySound(this, 200612013, sfx);
+			SharedPtrTypeless sfx;
+			Common::ObjectPlaySound(this, 200612013, sfx);
+		}
 	}
 	else
 	{
@@ -324,8 +340,8 @@ void GadgetBike::BeginDriving()
 	// load gun
 	if (m_Data.m_HasGun)
 	{
-		//SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
-		//SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+		SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+		SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
 		Common::ObjectPlaySound(this, 200612013, sfx);
 	}
 
@@ -340,6 +356,9 @@ void GadgetBike::BeginDriving()
 	// player collision
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", true);
 }
+
+float const c_bikeGunInterval = 0.05f; // f_Missile_Interval
+float const c_bikeGunReloadTime = 3.0f; // f_Missile_RecoveryTime
 
 void GadgetBike::AdvanceDriving(float dt)
 {
@@ -383,6 +402,67 @@ void GadgetBike::AdvanceDriving(float dt)
 	}
 
 	// TODO:
+
+	// vulcan
+	if (m_playerID && m_Data.m_HasGun)
+	{
+		m_bulletTimer = max(0.0f, m_bulletTimer - dt);
+		if (m_bullets > 0 && m_bulletTimer <= 0.0f && padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && m_spGunR->IsReady() && m_spGunL->IsReady())
+		{
+			if (m_useGunL)
+			{
+				m_spGunL->FireBullet();
+			}
+			else
+			{
+				m_spGunR->FireBullet();
+			}
+
+			m_bullets--;
+			m_bulletTimer = c_bikeGunInterval;
+			m_reloadTimer = c_bikeGunReloadTime;
+			S06HUD_API::SetGadgetCount(m_bullets, 100);
+			m_useGunL = !m_useGunL;
+		}
+	}
+}
+
+void GadgetBike::AdvanceGuns(float dt)
+{
+	if (!m_Data.m_HasGun) return;
+
+	// unload gun
+	if (m_bullets == 0)
+	{
+		if (m_spGunL->CanUnload() && m_spGunR->CanUnload())
+		{
+			SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(0));
+			SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(0));
+
+			SharedPtrTypeless sfx;
+			Common::ObjectPlaySound(this, 200612013, sfx);
+		}
+	}
+
+	// reload
+	if (m_reloadTimer > 0.0f)
+	{
+		m_reloadTimer -= dt;
+		if (m_reloadTimer <= 0.0f)
+		{
+			SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(1));
+			SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(1));
+			m_bullets = 100;
+
+			SharedPtrTypeless sfx;
+			Common::ObjectPlaySound(this, 200612013, sfx);
+
+			if (m_playerID)
+			{
+				S06HUD_API::SetGadgetCount(m_bullets, 100);
+			}
+		}
+	}
 }
 
 void GadgetBike::ToggleBrakeLights(bool on)

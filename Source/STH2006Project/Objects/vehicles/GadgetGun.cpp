@@ -94,7 +94,7 @@ void GadgetGun::UpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdate
 		if (!m_sfxPlayed)
 		{
 			m_sfxPlayed = true;
-			auto const attachNodeL = m_spModel->GetNode("pReload_L");
+			auto const attachNodeL = m_spModel->GetNode(m_isRight ? "pReload_R" : "pReload_L");
 			m_pGlitterPlayer->PlayOneshot(attachNodeL, "ef_hover_reload", 1.0f, 1);
 		}
 
@@ -139,9 +139,12 @@ void GadgetGun::FireBullet()
 	SharedPtrTypeless sfx;
 	Common::ObjectPlaySound(this, 200612014, sfx);
 
-	ChangeState("Fire");
+	if (Common::IsAnimationFinished(this))
+	{
+		ChangeState("Fire");
+	}
 
-	auto node = m_spModel->GetNode("MissilePoint_L");
+	auto node = m_spModel->GetNode(m_isRight ? "MissilePoint_R" : "MissilePoint_L");
 	hh::mr::CTransform startTrans;
 	startTrans.m_Rotation = m_spMatrixNodeTransform->m_Transform.m_Rotation;
 	startTrans.m_Position = node->GetWorldMatrix().translation();
