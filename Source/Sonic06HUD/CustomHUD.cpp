@@ -240,6 +240,7 @@ void CustomHUD::SetShadowChaosLevel(uint8_t level, float maturity)
     m_sceneCustomBar->SetMotionFrame(min(100.0f, maturity));
 }
 
+bool gadgetCountWasHidden = false;
 void CustomHUD::SetGadgetMaxCount(int count)
 {
     if (!m_sceneGadgetBar || !m_sceneGadgetBG || !m_sceneGadgetHP || !m_sceneGadgetText)
@@ -247,10 +248,10 @@ void CustomHUD::SetGadgetMaxCount(int count)
         return;
     }
 
-    auto fnPlayGadget = [&count](Chao::CSD::RCPtr<Chao::CSD::CScene>& scene)
+    auto fnPlayGadget = [&count](Chao::CSD::RCPtr<Chao::CSD::CScene>& scene, bool hide = false)
     {
         scene->SetMotion("DefaultAnim");
-        scene->SetHideFlag(false);
+        scene->SetHideFlag(hide);
         scene->SetMotionFrame(count == -1 ? scene->m_MotionEndFrame : 0.0f);
         scene->m_MotionSpeed = count == -1 ? -1.0f : 1.0f;
         scene->m_MotionDisableFlag = false;
@@ -259,9 +260,22 @@ void CustomHUD::SetGadgetMaxCount(int count)
         scene->Update();
     };
 
+    if (count == 0)
+    {
+        gadgetCountWasHidden = true;
+    }
+    else if (count > 0)
+    {
+        gadgetCountWasHidden = false;
+    }
+
     fnPlayGadget(m_sceneGadgetBar);
     fnPlayGadget(m_sceneGadgetBG);
-    fnPlayGadget(m_sceneGadgetText);
+    fnPlayGadget(m_sceneGadgetText, gadgetCountWasHidden);
+
+    m_sceneGadgetBar->GetNode("Null_0363")->SetHideFlag(gadgetCountWasHidden);
+    m_sceneGadgetText->SetHideFlag(gadgetCountWasHidden);
+
     UpdateGadgetHPPosition();
 }
 
