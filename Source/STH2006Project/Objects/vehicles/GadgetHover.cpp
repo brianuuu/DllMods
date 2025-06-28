@@ -1,7 +1,5 @@
 #include "GadgetHover.h"
 
-#include "Objects/enemy/EnemyBullet.h"
-
 bool GadgetHoverSuspension::SetAddRenderables
 (
 	Sonic::CGameDocument* in_pGameDocument,
@@ -44,152 +42,6 @@ void GadgetHoverSuspension::UpdateParallel
 	m_spMatrixNodeTransform->NotifyChanged();
 
 	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
-}
-
-bool GadgetHoverGun::SetAddRenderables
-(
-	Sonic::CGameDocument* in_pGameDocument, 
-	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
-)
-{
-	char const* modelName = "Gadget_Hover_Gun";
-
-	// model
-	hh::mr::CMirageDatabaseWrapper wrapper(in_spDatabase.get());
-	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData(modelName, 0);
-	m_spModel = boost::make_shared<hh::mr::CSingleElement>(spModelBaseData);
-	m_spModel->BindMatrixNode(m_spNodeParent);
-	Sonic::CGameObject::AddRenderable("Object", m_spModel, m_castShadow);
-
-	// animations
-	m_spAnimPose = boost::make_shared<Hedgehog::Animation::CAnimationPose>(in_spDatabase, modelName);
-	std::vector<hh::anim::SMotionInfo> entries = std::vector<hh::anim::SMotionInfo>(0, { "","" });
-	entries.push_back(hh::anim::SMotionInfo("Load", modelName, 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
-	entries.push_back(hh::anim::SMotionInfo("Unload", "Gadget_Hover_Gun_rev", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
-	entries.push_back(hh::anim::SMotionInfo("Fire", "Gadget_Hover_Gun_Fire", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
-	m_spAnimPose->AddMotionInfo(&entries.front(), entries.size());
-	m_spAnimPose->CreateAnimationCache();
-	m_spModel->BindPose(m_spAnimPose);
-
-	// states
-	SetContext(this);
-	AddAnimationState("Load");
-	AddAnimationState("Unload");
-	AddAnimationState("Fire");
-	ChangeState("Unload");
-	m_spAnimPose->Update(0.35f); // 21 frames
-
-	// set initial transform
-	UpdateTransform();
-
-	SetCullingRange(0.0f);
-
-	return true;
-}
-
-bool GadgetHoverGun::ProcessMessage
-(
-	Hedgehog::Universe::Message& message, bool flag
-)
-{
-	if (flag)
-	{
-		if (message.Is<Sonic::Message::MsgNotifyObjectEvent>())
-		{
-			auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
-			switch (msg.m_Event)
-			{
-			case 0:
-			{
-				m_loaded = false;
-				break;
-			}
-			case 1:
-			{
-				m_loaded = true;
-				break;
-			}
-			case 6:
-			{
-				m_started = true;
-				break;
-			}
-			case 7:
-			{
-				m_started = false;
-				break;
-			}
-			}
-			return true;
-		}
-	}
-
-	return Sonic::CGameObject3D::ProcessMessage(message, flag);
-}
-
-void GadgetHoverGun::UpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo)
-{
-	// handle animations
-	hh::base::CSharedString const currentState = GetCurrentState()->GetStateName();
-	bool const animationFinished = Common::IsAnimationFinished(this);
-	
-	if (currentState == "Unload" && animationFinished)
-	{
-		if (!m_sfxPlayed)
-		{
-			m_sfxPlayed = true;
-			auto const attachNodeL = m_spModel->GetNode("pReload_L");
-			m_pGlitterPlayer->PlayOneshot(attachNodeL, "ef_hover_reload", 1.0f, 1);
-		}
-
-		if (m_loaded && m_started)
-		{
-			ChangeState("Load");
-		}
-	}
-	else if (currentState != "Unload" && (!m_loaded || !m_started))
-	{
-		ChangeState("Unload");
-		m_sfxPlayed = false;
-	}
-
-	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
-	Update(in_rUpdateInfo);
-	UpdateTransform();
-}
-
-bool GadgetHoverGun::IsReady() const
-{
-	hh::base::CSharedString const currentState = GetCurrentState()->GetStateName();
-	return (currentState == "Load" && Common::IsAnimationFinished(this)) || currentState == "Fire";
-}
-
-bool GadgetHoverGun::CanUnload() const
-{
-	hh::base::CSharedString const currentState = GetCurrentState()->GetStateName();
-	return currentState != "Unload" && Common::IsAnimationFinished(this);
-}
-
-void GadgetHoverGun::UpdateTransform()
-{
-	// follow attach point so sound can work
-	hh::math::CMatrix const matrix = m_spNodeParent->GetWorldMatrix();
-	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(hh::math::CQuaternion(matrix.rotation()), matrix.translation());
-	m_spMatrixNodeTransform->NotifyChanged();
-}
-
-void GadgetHoverGun::FireBullet()
-{
-	SharedPtrTypeless sfx;
-	Common::ObjectPlaySound(this, 200612014, sfx);
-
-	ChangeState("Fire");
-
-	auto node = m_spModel->GetNode("MissilePoint_L");
-	hh::mr::CTransform startTrans;
-	startTrans.m_Rotation = m_spMatrixNodeTransform->m_Transform.m_Rotation;
-	startTrans.m_Position = node->GetWorldMatrix().translation();
-	m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<EnemyBullet>(m_owner, startTrans));
 }
 
 uint32_t canGetOnHoverActorID = 0u;
@@ -263,10 +115,10 @@ bool GadgetHover::SetAddRenderables
 
 	// Guns
 	auto const attachNodeGunL = m_spModelBase->GetNode("GunUnder_L");
-	m_spGunL = boost::make_shared<GadgetHoverGun>(attachNodeGunL, m_pMember->m_CastShadow, m_ActorID);
+	m_spGunL = boost::make_shared<GadgetGun>("Gadget_Hover_Gun", attachNodeGunL, m_pMember->m_CastShadow, m_ActorID);
 	in_pGameDocument->AddGameObject(m_spGunL, "main", this);
 	auto const attachNodeGunR = m_spModelBase->GetNode("GunUnder_R");
-	m_spGunR = boost::make_shared<GadgetHoverGun>(attachNodeGunR, m_pMember->m_CastShadow, m_ActorID);
+	m_spGunR = boost::make_shared<GadgetGun>("Gadget_Hover_Gun", attachNodeGunR, m_pMember->m_CastShadow, m_ActorID);
 	in_pGameDocument->AddGameObject(m_spGunR, "main", this);
 
 	// external control

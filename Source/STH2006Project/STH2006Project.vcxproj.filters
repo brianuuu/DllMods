@@ -77,6 +77,7 @@
     <ClCompile Include="Objects\vehicles\GadgetHover.cpp" />
     <ClCompile Include="Objects\enemy\EnemyBullet.cpp" />
     <ClCompile Include="Objects\vehicles\GadgetBike.cpp" />
+    <ClCompile Include="Objects\vehicles\GadgetGun.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -125,6 +126,7 @@
     <ClInclude Include="Objects\vehicles\GadgetHover.h" />
     <ClInclude Include="Objects\enemy\EnemyBullet.h" />
     <ClInclude Include="Objects\vehicles\GadgetBike.h" />
+    <ClInclude Include="Objects\vehicles\GadgetGun.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">

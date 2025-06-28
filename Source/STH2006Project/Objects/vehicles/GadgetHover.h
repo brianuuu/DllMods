@@ -3,6 +3,7 @@
 ///	Year: 2025
 ///	Description: Gadget_Hover object from 06
 /*----------------------------------------------------------*/
+#include "GadgetGun.h"
 
 #pragma once
 class GadgetHoverSuspension : public Sonic::CObjectBase
@@ -26,40 +27,6 @@ public:
 	Hedgehog::Animation::CAnimationPose* GetAnimationPose() override { return m_spAnimPose.get(); }
 	Hedgehog::Math::CVector GetVelocityForAnimationSpeed() override { return hh::math::CVector::Ones(); }
 	Hedgehog::Math::CVector GetVelocityForAnimationChange() override { return hh::math::CVector::Ones(); }
-};
-
-class GadgetHoverGun : public Sonic::CObjectBase
-	, public Sonic::IAnimationContext, public Sonic::CAnimationStateMachine
-{
-private:
-	boost::shared_ptr<hh::mr::CMatrixNode> m_spNodeParent;
-
-	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
-	boost::shared_ptr<hh::anim::CAnimationPose> m_spAnimPose;
-
-	bool m_castShadow = true;
-	bool m_started = false;
-	bool m_loaded = true;
-	bool m_sfxPlayed = true;
-	uint32_t m_owner = 0;
-
-public:
-	GadgetHoverGun(boost::shared_ptr<hh::mr::CMatrixNode> parent, bool castShadow, uint32_t owner) : m_spNodeParent(parent), m_castShadow(castShadow), m_owner(owner) {}
-
-	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
-	bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;
-	void UpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo) override;
-
-	// from IAnimationContext
-	Hedgehog::Animation::CAnimationPose* GetAnimationPose() override { return m_spAnimPose.get(); }
-	Hedgehog::Math::CVector GetVelocityForAnimationSpeed() override { return hh::math::CVector::Ones(); }
-	Hedgehog::Math::CVector GetVelocityForAnimationChange() override { return hh::math::CVector::Ones(); }
-
-	// API
-	bool IsReady() const;
-	bool CanUnload() const;
-	void UpdateTransform();
-	void FireBullet();
 };
 
 class GadgetHover : public Sonic::CObjectBase, public Sonic::CSetObjectListener
@@ -145,8 +112,8 @@ private:
 	boost::shared_ptr<hh::mot::CSingleElementEffectMotionAll> m_spEffectMotionGuardR;
 
 	boost::shared_ptr<GadgetHoverSuspension> m_spSuspension;
-	boost::shared_ptr<GadgetHoverGun> m_spGunL;
-	boost::shared_ptr<GadgetHoverGun> m_spGunR;
+	boost::shared_ptr<GadgetGun> m_spGunL;
+	boost::shared_ptr<GadgetGun> m_spGunR;
 
 	boost::shared_ptr<Sonic::CCharacterProxy> m_spProxy;
 
