@@ -307,7 +307,7 @@ bool GadgetHover::ProcessMessage
 	if (message.Is<Sonic::Message::MsgLeaveEventCollision>())
 	{
 		auto& msg = static_cast<Sonic::Message::MsgLeaveEventCollision&>(message);
-		if (msg.m_Symbol == "Player")
+		if (msg.m_Symbol == "Player" && canGetOnHoverActorID == m_ActorID)
 		{
 			canGetOnHoverActorID = 0;
 		}

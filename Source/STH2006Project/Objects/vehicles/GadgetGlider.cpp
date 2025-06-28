@@ -463,7 +463,7 @@ bool GadgetGlider::ProcessMessage
 	if (message.Is<Sonic::Message::MsgLeaveEventCollision>())
 	{
 		auto& msg = static_cast<Sonic::Message::MsgLeaveEventCollision&>(message);
-		if (msg.m_Symbol == "Player")
+		if (msg.m_Symbol == "Player" && canGetOnGliderActorID == m_ActorID)
 		{
 			canGetOnGliderActorID = 0;
 		}
