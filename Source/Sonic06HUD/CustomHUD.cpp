@@ -251,8 +251,8 @@ void CustomHUD::SetGadgetMaxCount(int count)
     {
         scene->SetMotion("DefaultAnim");
         scene->SetHideFlag(false);
-        scene->SetMotionFrame(count == 0 ? scene->m_MotionEndFrame : 0.0f);
-        scene->m_MotionSpeed = count == 0 ? -1.0f : 1.0f;
+        scene->SetMotionFrame(count == -1 ? scene->m_MotionEndFrame : 0.0f);
+        scene->m_MotionSpeed = count == -1 ? -1.0f : 1.0f;
         scene->m_MotionDisableFlag = false;
         scene->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
         *(uint32_t*)((uint32_t)scene.Get() + 0xB4) = 0; // this stops the reverse animation
@@ -262,17 +262,12 @@ void CustomHUD::SetGadgetMaxCount(int count)
     fnPlayGadget(m_sceneGadgetBar);
     fnPlayGadget(m_sceneGadgetBG);
     fnPlayGadget(m_sceneGadgetText);
-    if (count > 0)
-    {
-        SetGadgetCount(count, count);
-        SetGadgetHP(100.0f);
-    }
     UpdateGadgetHPPosition();
 }
 
 void CustomHUD::SetGadgetCount(int count, int maxCount)
 {
-    if (!m_sceneGadgetText || maxCount == 0)
+    if (!m_sceneGadgetText || maxCount == -1)
     {
         return;
     }
