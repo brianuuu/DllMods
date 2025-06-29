@@ -528,7 +528,12 @@ void GadgetBike::TakeDamage(float amount)
 
 void GadgetBike::Explode()
 {
-	// TODO:
+	m_pGlitterPlayer->PlayOneshot(m_spMatrixNodeTransform, "ef_en_com_yh2_explosion", 1.0f, 1);
+
+	SharedPtrTypeless sfx;
+	Common::ObjectPlaySound(this, 200612007, sfx);
+
+	Kill();
 }
 
 GadgetBike::Direction GadgetBike::GetCurrentDirection(hh::math::CVector2 input) const
