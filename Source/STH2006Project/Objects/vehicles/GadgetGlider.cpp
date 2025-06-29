@@ -777,6 +777,10 @@ void GadgetGlider::TakeDamage(float amount)
 	Common::ObjectPlaySound(this, 200612004, sfx);
 
 	m_hp -= amount;
+	if (m_hp <= 50.0f && !m_brokenID)
+	{
+		m_brokenID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spModelBase->GetNode("pBroken"), "ef_vehicle_broken", 1.0f);
+	}
 
 	if (m_playerID && IsFlight())
 	{

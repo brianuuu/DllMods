@@ -81,6 +81,7 @@ private:
 	SharedPtrTypeless m_loopSfx;
 	uint32_t m_burnerLID = 0;
 	uint32_t m_burnerRID = 0;
+	uint32_t m_brokenID = 0;
 
 	std::mutex m_mutex;
 	uint32_t m_playerID = 0u;

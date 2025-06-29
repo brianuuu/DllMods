@@ -35,6 +35,8 @@ private:
 	} m_Data;
 
 private:
+	uint32_t m_brokenID = 0;
+
 	std::mutex m_mutex;
 	uint32_t m_playerID = 0u;
 	Direction m_direction = Direction::None;

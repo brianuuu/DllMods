@@ -62,6 +62,7 @@ private:
 	uint32_t m_guardLID = 0;
 	uint32_t m_guardRID = 0;
 	uint32_t m_suspensionID = 0;
+	uint32_t m_brokenID = 0;
 	uint32_t m_jumpID = 0;
 
 	std::mutex m_mutex;
