@@ -75,6 +75,8 @@ private:
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spSonicControlNode;
 
+	boost::shared_ptr<hh::mot::CSingleElementEffectMotionAll> m_spEffectMotionAll;
+
 	boost::shared_ptr<GadgetGun> m_spGunL;
 	boost::shared_ptr<GadgetGun> m_spGunR;
 

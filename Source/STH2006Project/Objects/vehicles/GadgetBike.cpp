@@ -82,6 +82,31 @@ bool GadgetBike::SetAddRenderables
 	m_spSonicControlNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
 	m_spSonicControlNode->SetParent(attachNode.get());
 
+	// mat-anim
+	m_spEffectMotionAll = boost::make_shared<hh::mot::CSingleElementEffectMotionAll>();
+	m_spModelBase->BindEffect(m_spEffectMotionAll);
+
+	FUNCTION_PTR(void, __thiscall, fpGetMaterialAnimData, 0x759720,
+		hh::mot::CMotionDatabaseWrapper const& wrapper,
+		boost::shared_ptr<Hedgehog::Motion::CMaterialAnimationData>&materialAnimData,
+		hh::base::CSharedString const& name,
+		uint32_t flag
+	);
+
+	FUNCTION_PTR(void, __thiscall, fpCreateMatAnim, 0x753910,
+		Hedgehog::Motion::CSingleElementEffectMotionAll * This,
+		boost::shared_ptr<hh::mr::CModelData> const& modelData,
+		boost::shared_ptr<Hedgehog::Motion::CMaterialAnimationData> const& materialAnimData
+	);
+
+	hh::mot::CMotionDatabaseWrapper motWrapper(in_spDatabase.get());
+	boost::shared_ptr<Hedgehog::Motion::CMaterialAnimationData> materialAnimData;
+	fpGetMaterialAnimData(motWrapper, materialAnimData, "Gadget_Bike_Brake", 0);
+	fpCreateMatAnim(m_spEffectMotionAll.get(), spModelBaseData, materialAnimData);
+
+	FUNCTION_PTR(void, __thiscall, fpUpdateMotionAll, 0x752F00, Hedgehog::Motion::CSingleElementEffectMotionAll * This, float dt);
+	fpUpdateMotionAll(m_spEffectMotionAll.get(), 0.0f);
+
 	SetCullingRange(0.0f);
 
 	return true;
@@ -468,6 +493,22 @@ void GadgetBike::AdvanceDriving(float dt)
 
 	// TODO:
 
+	// acceleration
+	if (m_playerID && m_isLanded && padState->IsDown(Sonic::EKeyState::eKeyState_A))
+	{
+		// forward
+		ToggleBrakeLights(false);
+	}
+	else if (m_playerID && m_isLanded && padState->IsDown(Sonic::EKeyState::eKeyState_X))
+	{
+		// brake, reverse
+		ToggleBrakeLights(true);
+	}
+	else
+	{
+		ToggleBrakeLights(false);
+	}
+
 	// vulcan
 	if (m_playerID && m_Data.m_HasGun)
 	{
@@ -559,7 +600,17 @@ void GadgetBike::AdvancePhysics(float dt)
 
 void GadgetBike::ToggleBrakeLights(bool on)
 {
-	// TODO:
+	FUNCTION_PTR(void, __thiscall, fpUpdateMotionAll, 0x752F00, Hedgehog::Motion::CSingleElementEffectMotionAll * This, float dt);
+	if (on && !m_brakeLights)
+	{
+		m_brakeLights = true;
+		fpUpdateMotionAll(m_spEffectMotionAll.get(), 1.0f);
+	}
+	else if (!on && m_brakeLights)
+	{
+		m_brakeLights = false;
+		fpUpdateMotionAll(m_spEffectMotionAll.get(), -1.0f);
+	}
 }
 
 void GadgetBike::TakeDamage(float amount)
