@@ -92,6 +92,10 @@ bool GadgetBike::SetAddColliders
 	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
 )
 {
+	// Rigid body
+	char const* rigidBodyName = "Gadget_Bike";
+	AddRigidBody(m_spRigidBody, rigidBodyName, rigidBodyName, *(int*)0x1E0AFF4, m_spMatrixNodeTransform, in_spDatabase);
+
 	// damage to object
 	uint32_t const typeEnemy = *(uint32_t*)0x1E5E7E8;
 	uint32_t const typeBreakable = *(uint32_t*)0x1E5E77C;
