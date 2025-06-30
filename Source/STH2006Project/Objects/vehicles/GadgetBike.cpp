@@ -122,6 +122,18 @@ bool GadgetBike::SetAddColliders
 	return true;
 }
 
+void GadgetBike::AddCallback
+(
+	const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, 
+	Sonic::CGameDocument* in_pGameDocument, 
+	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
+)
+{
+	Sonic::CObjectBase::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
+
+	m_rotation = m_spMatrixNodeTransform->m_Transform.m_Rotation;
+}
+
 void GadgetBike::KillCallback()
 {
 	BeginPlayerGetOff(false);
@@ -140,6 +152,7 @@ void GadgetBike::SetUpdateParallel
 	AdvancePlayerGetOn(in_rUpdateInfo.DeltaTime);
 	AdvanceDriving(in_rUpdateInfo.DeltaTime);
 	AdvanceGuns(in_rUpdateInfo.DeltaTime);
+	AdvancePhysics(in_rUpdateInfo.DeltaTime);
 }
 
 bool GadgetBike::ProcessMessage
@@ -393,6 +406,10 @@ void GadgetBike::BeginDriving()
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", true);
 }
 
+float const c_bikeTiltMaxAngle = 15.0f * DEG_TO_RAD;
+float const c_bikeTiltTurnRate = c_bikeTiltMaxAngle / 0.1f;
+float const c_bikeWheelMaxAngle = 25.0f * DEG_TO_RAD;
+float const c_bikeWheelTurnRate = c_bikeWheelMaxAngle / 0.1f;
 float const c_bikeGunInterval = 0.05f; // f_Missile_Interval
 float const c_bikeGunReloadTime = 3.0f; // f_Missile_RecoveryTime
 
@@ -435,6 +452,18 @@ void GadgetBike::AdvanceDriving(float dt)
 	{
 		BeginPlayerGetOff(true);
 		return;
+	}
+
+	// rotation
+	if (m_input.x() != 0.0f)
+	{
+		fnAccel(m_tiltAngle, -m_input.x() * c_bikeTiltMaxAngle, c_bikeTiltTurnRate);
+		fnAccel(m_wheelAngle, m_isLanded ? m_input.x() * c_bikeWheelMaxAngle : 0.0f, c_bikeWheelTurnRate);
+	}
+	else
+	{
+		fnAccel(m_tiltAngle, 0.0f, c_bikeTiltTurnRate);
+		fnAccel(m_wheelAngle, 0.0f, c_bikeTiltTurnRate);
 	}
 
 	// TODO:
@@ -497,6 +526,33 @@ void GadgetBike::AdvanceGuns(float dt)
 			{
 				S06HUD_API::SetGadgetCount(m_bullets, 100);
 			}
+		}
+	}
+}
+
+void GadgetBike::AdvancePhysics(float dt)
+{
+	// front wheel
+	{
+		hh::math::CVector const upAxis = hh::math::CVector::UnitY();
+		hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(m_wheelAngle, upAxis) * hh::math::CQuaternion::Identity();
+		m_spNodeWheelF->m_Transform.SetRotation(newRotation);
+		m_spNodeWheelF->NotifyChanged();
+	}
+
+	hh::math::CVector const forwardAxis = m_rotation * hh::math::CVector::UnitZ();
+	hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(m_tiltAngle, forwardAxis) * m_rotation;
+	m_spMatrixNodeTransform->m_Transform.SetRotation(newRotation);
+	m_spMatrixNodeTransform->NotifyChanged();
+
+	// player animation
+	if (m_playerID)
+	{
+		Direction direction = GetCurrentDirection(m_input);
+		if (m_direction != direction)
+		{
+			m_direction = direction;
+			SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl(GetAnimationName().c_str()));
 		}
 	}
 }

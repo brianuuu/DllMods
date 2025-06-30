@@ -41,7 +41,11 @@ private:
 	uint32_t m_playerID = 0u;
 	Direction m_direction = Direction::None;
 	State m_state = State::Idle;
+
 	hh::math::CVector2 m_input = hh::math::CVector2::Zero();
+	hh::math::CQuaternion m_rotation = hh::math::CQuaternion::Identity();
+	float m_wheelAngle = 0.0f;
+	float m_tiltAngle = 0.0f;
 
 	float m_hp = 100.0f;
 	float m_speed = 0.0f;
@@ -51,6 +55,7 @@ private:
 	bool m_started = false;
 	bool m_useGunL = true;
 	bool m_brakeLights = false;
+	bool m_isLanded = true;
 
 	struct PlayerGetOnData
 	{
@@ -77,6 +82,7 @@ private:
 	void InitializeEditParam(Sonic::CEditParam& in_rEditParam) override;
 	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	bool SetAddColliders(const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
+	void AddCallback(const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	void KillCallback() override;
 	void SetUpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo) override;
 	bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;
@@ -93,6 +99,7 @@ private:
 	void AdvanceDriving(float dt);
 
 	void AdvanceGuns(float dt);
+	void AdvancePhysics(float dt);
 
 	void ToggleBrakeLights(bool on);
 	void TakeDamage(float amount);
