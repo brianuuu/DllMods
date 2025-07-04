@@ -45,6 +45,7 @@ private:
 	hh::math::CVector2 m_input = hh::math::CVector2::Zero();
 	hh::math::CQuaternion m_rotation = hh::math::CQuaternion::Identity();
 	float m_wheelAngle = 0.0f;
+	float m_wheelSpin = 0.0f;
 	float m_tiltAngle = 0.0f;
 
 	float m_hp = 100.0f;

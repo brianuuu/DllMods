@@ -433,8 +433,13 @@ void GadgetBike::BeginDriving()
 
 float const c_bikeTiltMaxAngle = 15.0f * DEG_TO_RAD;
 float const c_bikeTiltTurnRate = c_bikeTiltMaxAngle / 0.1f;
-float const c_bikeWheelMaxAngle = 25.0f * DEG_TO_RAD;
+float const c_bikeWheelMaxAngle = 20.0f * DEG_TO_RAD;
 float const c_bikeWheelTurnRate = c_bikeWheelMaxAngle / 0.1f;
+float const c_bikeMaxSpeed = 40.0f;
+float const c_bikeReverseSpeed = -3.0f;
+float const c_bikeAccel = 8.0f;
+float const c_bikeBrake = 40.0f;
+float const c_bikeDecel = 2.0f;
 float const c_bikeGunInterval = 0.05f; // f_Missile_Interval
 float const c_bikeGunReloadTime = 3.0f; // f_Missile_RecoveryTime
 
@@ -497,15 +502,19 @@ void GadgetBike::AdvanceDriving(float dt)
 	if (m_playerID && m_isLanded && padState->IsDown(Sonic::EKeyState::eKeyState_A))
 	{
 		// forward
+		fnAccel(m_speed, c_bikeMaxSpeed, m_speed < 0.0f ? c_bikeBrake : c_bikeAccel);
 		ToggleBrakeLights(false);
 	}
 	else if (m_playerID && m_isLanded && padState->IsDown(Sonic::EKeyState::eKeyState_X))
 	{
 		// brake, reverse
+		fnAccel(m_speed, c_bikeReverseSpeed, m_speed > 0.0f ? c_bikeBrake : c_bikeAccel);
 		ToggleBrakeLights(true);
 	}
 	else
 	{
+		// natural stop
+		fnAccel(m_speed, 0.0f, c_bikeAccel);
 		ToggleBrakeLights(false);
 	}
 
@@ -573,17 +582,40 @@ void GadgetBike::AdvanceGuns(float dt)
 
 void GadgetBike::AdvancePhysics(float dt)
 {
-	// front wheel
+	hh::math::CVector const upAxis = hh::math::CVector::UnitY();
+
+	if (m_speed != 0.0f)
 	{
-		hh::math::CVector const upAxis = hh::math::CVector::UnitY();
-		hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(m_wheelAngle, upAxis) * hh::math::CQuaternion::Identity();
+		float const speedRatio = m_speed / c_bikeMaxSpeed;
+		float constexpr steerScale = 12.0f;
+		m_rotation = Eigen::AngleAxisf(m_wheelAngle * speedRatio * steerScale * dt, upAxis) * m_rotation;
+
+		// wheel spin
+		float constexpr wheelRadius = 0.68f;
+		m_wheelSpin += (m_speed / wheelRadius) * dt;
+		if (m_wheelSpin > PI_F * 2.0f) m_wheelSpin -= PI_F * 2.0f;
+		if (m_wheelSpin < PI_F * -2.0f) m_wheelSpin += PI_F * 2.0f;
+	}
+
+	// wheels
+	{
+		hh::math::CVector const rightAxis = hh::math::CVector::UnitX();
+
+		// back
+		hh::math::CQuaternion newRotation = Eigen::AngleAxisf(m_wheelSpin, rightAxis) * hh::math::CQuaternion::Identity();
+		m_spNodeWheelB->m_Transform.SetRotation(newRotation);
+		m_spNodeWheelB->NotifyChanged();
+
+		// front
+		newRotation = Eigen::AngleAxisf(m_wheelAngle, upAxis) * newRotation;
 		m_spNodeWheelF->m_Transform.SetRotation(newRotation);
 		m_spNodeWheelF->NotifyChanged();
 	}
 
 	hh::math::CVector const forwardAxis = m_rotation * hh::math::CVector::UnitZ();
+	hh::math::CVector const newPosition = m_spMatrixNodeTransform->m_Transform.m_Position + forwardAxis * m_speed * dt;
 	hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(m_tiltAngle, forwardAxis) * m_rotation;
-	m_spMatrixNodeTransform->m_Transform.SetRotation(newRotation);
+	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(newRotation, newPosition);
 	m_spMatrixNodeTransform->NotifyChanged();
 
 	// player animation
