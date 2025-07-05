@@ -592,13 +592,14 @@ void GadgetBike::AdvancePhysics(float dt)
 
 	if (m_speed != 0.0f)
 	{
+		// vehicle yaw
 		float const speedRatio = m_speed / c_bikeMaxSpeed;
 		float constexpr steerScale = 12.0f;
 		m_rotation = Eigen::AngleAxisf(m_wheelAngle * speedRatio * steerScale * dt, upAxis) * m_rotation;
 
 		// wheel spin
-		float constexpr wheelRadius = 0.68f;
-		m_wheelSpin += (m_speed / wheelRadius) * dt;
+		float constexpr wheelRatio = 0.68f;
+		m_wheelSpin += (m_speed / wheelRatio) * dt;
 		if (m_wheelSpin > PI_F * 2.0f) m_wheelSpin -= PI_F * 2.0f;
 		if (m_wheelSpin < PI_F * -2.0f) m_wheelSpin += PI_F * 2.0f;
 	}
