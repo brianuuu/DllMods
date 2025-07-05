@@ -458,7 +458,13 @@ void GadgetBike::AdvanceDriving(float dt)
 		}
 	};
 
-	if (m_state != State::Driving) return;
+	if (m_state != State::Driving)
+	{
+		fnAccel(m_tiltAngle, 0.0f, c_bikeTiltTurnRate);
+		fnAccel(m_wheelAngle, 0.0f, c_bikeTiltTurnRate);
+		fnAccel(m_speed, 0.0f, c_bikeAccel);
+		return;
+	}
 
 	Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 
@@ -619,7 +625,7 @@ void GadgetBike::AdvancePhysics(float dt)
 	m_spMatrixNodeTransform->NotifyChanged();
 
 	// player animation
-	if (m_playerID)
+	if (m_playerID && m_state == State::Driving)
 	{
 		Direction direction = GetCurrentDirection(m_input);
 		if (m_direction != direction)

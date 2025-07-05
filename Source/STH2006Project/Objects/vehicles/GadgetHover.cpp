@@ -536,6 +536,7 @@ void GadgetHover::AdvanceDriving(float dt)
 	if (m_state != State::Driving)
 	{
 		fnAccel(m_guardAngle, 0.0f, c_hoverGuardTurnRate);
+		fnAccel(m_speed, 0.0f, c_hoverDecel);
 		return;
 	}
 
@@ -896,7 +897,7 @@ void GadgetHover::AdvancePhysics(float dt)
 	}
 
 	// player animation
-	if (m_playerID)
+	if (m_playerID && m_state == State::Driving)
 	{
 		Direction direction = GetCurrentDirection(m_input);
 		if (m_direction != direction)
