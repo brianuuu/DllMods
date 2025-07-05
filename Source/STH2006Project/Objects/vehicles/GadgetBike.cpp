@@ -439,7 +439,7 @@ float const c_bikeMaxSpeed = 40.0f;
 float const c_bikeReverseSpeed = -3.0f;
 float const c_bikeAccel = 8.0f;
 float const c_bikeBrake = 40.0f;
-float const c_bikeDecel = 2.0f;
+float const c_bikeDecel = 4.0f;
 float const c_bikeGunInterval = 0.05f; // f_Missile_Interval
 float const c_bikeGunReloadTime = 3.0f; // f_Missile_RecoveryTime
 
