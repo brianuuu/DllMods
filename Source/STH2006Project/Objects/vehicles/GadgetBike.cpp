@@ -278,6 +278,25 @@ bool GadgetBike::ProcessMessage
 		return true;
 	}
 
+	if (message.IsOfType((char*)0x1680D84)) // MsgApplyImpulse
+	{
+		auto* msg = (MsgApplyImpulse*)&message;
+		hh::math::CVector const dir = msg->m_impulse.normalized();
+		if (dir.dot(hh::math::CVector::UnitY()) <= 0.95f) // not pointing up
+		{
+			hh::math::CVector hDir = dir;
+			hDir.y() = 0.0f;
+			hDir.normalize();
+			float yaw = acos(hDir.z());
+			if (hDir.dot(Eigen::Vector3f::UnitX()) < 0) yaw = -yaw;
+			m_rotation = hh::math::CQuaternion::FromTwoVectors(hDir.head<3>(), dir.head<3>()) * Eigen::AngleAxisf(yaw, Eigen::Vector3f::UnitY());
+		}
+
+		m_speed = msg->m_impulse.dot(m_rotation * hh::math::CVector::UnitZ());
+		m_upSpeed = msg->m_impulse.dot(hh::math::CVector::UnitY());
+		m_isLanded = false;
+	}
+
 	if (message.Is<Sonic::Message::MsgDeactivate>())
 	{
 		if (m_started)
