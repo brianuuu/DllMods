@@ -35,6 +35,8 @@ private:
 	} m_Data;
 
 private:
+	SharedPtrTypeless m_loopSfx;
+	SharedPtrTypeless m_brakeSfx;
 	uint32_t m_brokenID = 0;
 
 	std::mutex m_mutex;

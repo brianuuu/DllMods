@@ -147,7 +147,7 @@ bool GadgetBike::SetAddColliders
 	// proxy collision
 	Hedgehog::Base::THolder<Sonic::CWorld> holder(m_pMember->m_pWorld.get());
 	hk2010_2_0::hkpBoxShape* proxyShape = new hk2010_2_0::hkpBoxShape(0.7f, 0.1f, 1.9f);
-	m_spProxy = boost::make_shared<Sonic::CCharacterProxy>(this, holder, proxyShape, hh::math::CVector::UnitY() * 1.3f, hh::math::CQuaternion::Identity(), *(int*)0x1E0AFAC);
+	m_spProxy = boost::make_shared<Sonic::CCharacterProxy>(this, holder, proxyShape, hh::math::CVector::UnitY() * 1.5f, hh::math::CQuaternion::Identity(), *(int*)0x1E0AFAC);
 
 	return true;
 }
@@ -396,7 +396,9 @@ void GadgetBike::BeginPlayerGetOff(bool isAlive)
 
 	S06HUD_API::SetGadgetMaxCount(-1);
 
-	// TODO: sfx
+	// TODO: boost dash
+	m_loopSfx.reset();
+	m_brakeSfx.reset();
 	ToggleBrakeLights(false);
 	//m_doubleTapTime = 0.0f;
 
@@ -413,8 +415,9 @@ void GadgetBike::BeginDriving()
 	m_state = State::Driving;
 	m_direction = Direction::None;
 
-	// TODO: sfx
 	SharedPtrTypeless sfx;
+	Common::ObjectPlaySound(this, 200612016, sfx);
+	Common::ObjectPlaySound(this, 200612017, m_loopSfx);
 
 	// load gun
 	if (m_Data.m_HasGun)
@@ -441,7 +444,8 @@ float const c_bikeTiltTurnRate = c_bikeTiltMaxAngle / 0.1f;
 float const c_bikeWheelMaxAngle = 20.0f * DEG_TO_RAD;
 float const c_bikeWheelTurnRate = c_bikeWheelMaxAngle / 0.1f;
 float const c_bikeMaxSpeed = 40.0f;
-float const c_bikeReverseSpeed = -3.0f;
+float const c_bikeReverseSpeed = -5.0f;
+float const c_bikeMinBrakeSpeed = 5.0f;
 float const c_bikeAccel = 8.0f;
 float const c_bikeBrake = 40.0f;
 float const c_bikeDecel = 4.0f;
@@ -512,6 +516,7 @@ void GadgetBike::AdvanceDriving(float dt)
 	// TODO: boost dash
 
 	// acceleration
+	bool shouldStopBrakeSfx = (m_speed <= c_bikeMinBrakeSpeed);
 	if (m_isLanded)
 	{
 		if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_A))
@@ -519,19 +524,33 @@ void GadgetBike::AdvanceDriving(float dt)
 			// forward
 			fnAccel(m_speed, c_bikeMaxSpeed, m_speed < 0.0f ? c_bikeBrake : c_bikeAccel);
 			ToggleBrakeLights(false);
+			shouldStopBrakeSfx = true;
 		}
 		else if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_X))
 		{
 			// brake, reverse
 			fnAccel(m_speed, c_bikeReverseSpeed, m_speed > 0.0f ? c_bikeBrake : c_bikeAccel);
 			ToggleBrakeLights(true);
+
+			// brake sfx
+			if (m_speed > c_bikeMinBrakeSpeed && !m_brakeSfx)
+			{
+				Common::ObjectPlaySound(this, 200612020, m_brakeSfx);
+			}
 		}
 		else
 		{
 			// natural stop
 			fnAccel(m_speed, 0.0f, c_bikeAccel);
 			ToggleBrakeLights(false);
+			shouldStopBrakeSfx = true;
 		}
+	}
+
+	// stop brake sfx
+	if (m_brakeSfx && shouldStopBrakeSfx)
+	{
+		m_brakeSfx.reset();
 	}
 
 	// vulcan
@@ -663,9 +682,9 @@ void GadgetBike::AdvancePhysics(float dt)
 		// check landing
 		if (m_upSpeed < 0.0f && Common::fRaycast(m_spMatrixNodeTransform->m_Transform.m_Position, newPosition, outPos, outNormal, *(int*)0x1E0AFAC))
 		{
-			// TODO: sfx, pfx
-			//SharedPtrTypeless sfx;
-			//Common::ObjectPlaySound(this, 200612012, sfx);
+			// TODO: pfx
+			SharedPtrTypeless sfx;
+			Common::ObjectPlaySound(this, 200612022, sfx);
 
 			newPosition = outPos;
 			m_upSpeed = 0.0f;
@@ -721,6 +740,19 @@ void GadgetBike::AdvancePhysics(float dt)
 			m_direction = direction;
 			SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl(GetAnimationName().c_str()));
 		}
+	}
+
+	// sfx pitch
+	if (m_loopSfx)
+	{
+		hh::math::CVector* pSoundHandle = (hh::math::CVector*)m_loopSfx.get();
+		pSoundHandle[2] = newPosition;
+
+		float value = 0.5f + (m_speed + abs(m_upSpeed)) * 0.5f / c_bikeMaxSpeed;
+		Common::ClampFloat(value, 0.0f, 1.0f);
+
+		FUNCTION_PTR(void*, __thiscall, SetAisac, 0x763D50, void* This, hh::base::CSharedString const& name, float value);
+		SetAisac(m_loopSfx.get(), "gadget_speed", value);
 	}
 }
 
