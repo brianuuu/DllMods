@@ -430,10 +430,7 @@ void GadgetBike::CleanUp()
 	m_loopSfx.reset();
 	m_brakeSfx.reset();
 	ToggleBrakeLights(false);
-	//m_doubleTapTime = 0.0f;
-
-	// out of control
-	Common::SetPlayerOutOfControl(0.1f);
+	m_doubleTapTime = 0.0f;
 
 	// player collision
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
@@ -481,6 +478,10 @@ float const c_bikeDecel = 4.0f;
 float const c_bikeGunInterval = 0.05f; // f_Missile_Interval
 float const c_bikeGunReloadTime = 3.0f; // f_Missile_RecoveryTime
 float const c_bikeGravity = 10.0f;
+float const c_bikeDoubleTapTime = 0.2f;
+float const c_bikeBoostDashTimeout = 1.0f;
+float const c_bikeBoostDashDuration = 0.5f;
+float const c_bikeBoostDashAccel = 40.0f;
 
 void GadgetBike::AdvanceDriving(float dt)
 {
@@ -502,6 +503,7 @@ void GadgetBike::AdvanceDriving(float dt)
 		fnAccel(m_tiltAngle, 0.0f, c_bikeTiltTurnRate);
 		fnAccel(m_wheelAngle, 0.0f, c_bikeTiltTurnRate);
 		fnAccel(m_speed, 0.0f, c_bikeAccel);
+		m_boostDashTime = max(0.0f, m_boostDashTime - dt);
 		return;
 	}
 
@@ -530,7 +532,7 @@ void GadgetBike::AdvanceDriving(float dt)
 	}
 
 	// rotation
-	if (m_input.x() != 0.0f)
+	if (m_isLanded && m_input.x() != 0.0f)
 	{
 		fnAccel(m_tiltAngle, -m_input.x() * c_bikeTiltMaxAngle, c_bikeTiltTurnRate);
 		fnAccel(m_wheelAngle, m_isLanded ? m_input.x() * c_bikeWheelMaxAngle : 0.0f, c_bikeWheelTurnRate);
@@ -541,14 +543,20 @@ void GadgetBike::AdvanceDriving(float dt)
 		fnAccel(m_wheelAngle, 0.0f, c_bikeTiltTurnRate);
 	}
 
-	// TODO: brake sfx
 	// TODO: boost dash
 
 	// acceleration
 	bool shouldStopBrakeSfx = (m_speed <= c_bikeMinBrakeSpeed);
 	if (m_isLanded)
 	{
-		if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_A))
+		if (m_boostDashTime > 0.0f)
+		{
+			// boost dash
+			fnAccel(m_speed, c_bikeMaxSpeed, c_bikeBoostDashAccel);
+			ToggleBrakeLights(false);
+			shouldStopBrakeSfx = true;
+		}
+		else if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_A))
 		{
 			// forward
 			fnAccel(m_speed, c_bikeMaxSpeed, m_speed < 0.0f ? c_bikeBrake : c_bikeAccel);
@@ -580,6 +588,25 @@ void GadgetBike::AdvanceDriving(float dt)
 	if (m_brakeSfx && shouldStopBrakeSfx)
 	{
 		m_brakeSfx.reset();
+	}
+
+	// boost dash
+	m_doubleTapTime = max(-c_bikeBoostDashTimeout, m_doubleTapTime - dt);
+	m_boostDashTime = max(0.0f, m_boostDashTime - dt);
+	if (m_playerID && m_isLanded && m_boostDashTime == 0.0f && padState->IsTapped(Sonic::EKeyState::eKeyState_A))
+	{
+		if (m_doubleTapTime > 0.0f)
+		{
+			SharedPtrTypeless sfx;
+			Common::ObjectPlaySound(this, 200612019, sfx);
+
+			m_doubleTapTime = 0.0f;
+			m_boostDashTime = c_bikeBoostDashDuration;
+		}
+		else if (m_doubleTapTime <= c_bikeBoostDashTimeout)
+		{
+			m_doubleTapTime = c_bikeDoubleTapTime;
+		}
 	}
 
 	// vulcan
@@ -647,6 +674,7 @@ void GadgetBike::AdvanceGuns(float dt)
 void GadgetBike::AdvancePhysics(float dt)
 {
 	hh::math::CVector const upAxis = hh::math::CVector::UnitY();
+	m_speed = min(c_bikeMaxSpeed, m_speed);
 
 	if (m_speed != 0.0f)
 	{

@@ -53,6 +53,8 @@ private:
 	float m_hp = 100.0f;
 	float m_speed = 0.0f;
 	float m_upSpeed = 0.0f;
+	float m_doubleTapTime = -10.0f;
+	float m_boostDashTime = 0.0f;
 	float m_reloadTimer = 0.0f;
 	float m_bulletTimer = 0.0f;
 	uint8_t m_bullets = 100u;
