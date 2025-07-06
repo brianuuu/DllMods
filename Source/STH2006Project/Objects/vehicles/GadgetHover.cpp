@@ -318,7 +318,8 @@ bool GadgetHover::ProcessMessage
 	if (message.Is<Sonic::Message::MsgExitedExternalControl>())
 	{
 		m_playerID = 0;
-		S06HUD_API::SetGadgetMaxCount(-1);
+		UnloadGun();
+		CleanUp();
 		return true;
 	}
 
@@ -411,9 +412,6 @@ void GadgetHover::BeginPlayerGetOff(bool isAlive)
 {
 	if (!m_playerID) return;
 
-	m_direction = Direction::None;
-	m_state = State::Idle;
-
 	SendMessageImm(m_playerID, Sonic::Message::MsgFinishExternalControl(Sonic::Message::MsgFinishExternalControl::EChangeState::FALL));
 
 	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
@@ -433,18 +431,35 @@ void GadgetHover::BeginPlayerGetOff(bool isAlive)
 		FUNCTION_PTR(void*, __thiscall, ChangeAnimationCustomPlayback, 0xE74BF0, void* context, Hedgehog::Base::CSharedString const& name, hh::math::CVector const& change);
 		ChangeAnimationCustomPlayback(context, "JumpBall", hh::math::CVector::Zero());
 
-		// unload gun
-		SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
-		SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
-
-		SharedPtrTypeless sfx;
-		Common::ObjectPlaySound(this, 200612013, sfx);
+		UnloadGun();
 	}
 	else
 	{
 		Common::SetPlayerVelocity(velocity);
 	}
 
+	// out of control
+	Common::SetPlayerOutOfControl(0.1f);
+
+	CleanUp();
+}
+
+void GadgetHover::UnloadGun()
+{
+	if (!m_spGunR->IsReady()) return;
+
+	// unload gun
+	SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+	SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+
+	SharedPtrTypeless sfx;
+	Common::ObjectPlaySound(this, 200612013, sfx);
+}
+
+void GadgetHover::CleanUp()
+{
+	m_state = State::Idle;
+	m_direction = Direction::None;
 	S06HUD_API::SetGadgetMaxCount(-1);
 
 	m_loopSfx.reset();
@@ -452,9 +467,6 @@ void GadgetHover::BeginPlayerGetOff(bool isAlive)
 	m_guardLights = false;
 	ToggleBrakeLights(false);
 	m_doubleTapTime = 0.0f;
-
-	// out of control
-	Common::SetPlayerOutOfControl(0.1f);
 
 	// player collision
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
