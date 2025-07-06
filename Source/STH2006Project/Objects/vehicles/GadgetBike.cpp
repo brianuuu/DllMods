@@ -144,6 +144,11 @@ bool GadgetBike::SetAddColliders
 	AddEventCollision("FakePlayer", playerEventTrigger, *(int*)0x1E0AF90, true, m_spMatrixNodeTransform); // TypePlayer
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
 
+	// proxy collision
+	Hedgehog::Base::THolder<Sonic::CWorld> holder(m_pMember->m_pWorld.get());
+	hk2010_2_0::hkpBoxShape* proxyShape = new hk2010_2_0::hkpBoxShape(1.0f, 0.1f, 2.6f);
+	m_spProxy = boost::make_shared<Sonic::CCharacterProxy>(this, holder, proxyShape, hh::math::CVector::UnitY() * 1.3f, hh::math::CQuaternion::Identity(), *(int*)0x1E0AFAC);
+
 	return true;
 }
 
@@ -442,6 +447,7 @@ float const c_bikeBrake = 40.0f;
 float const c_bikeDecel = 4.0f;
 float const c_bikeGunInterval = 0.05f; // f_Missile_Interval
 float const c_bikeGunReloadTime = 3.0f; // f_Missile_RecoveryTime
+float const c_bikeGravity = 10.0f;
 
 void GadgetBike::AdvanceDriving(float dt)
 {
@@ -502,26 +508,30 @@ void GadgetBike::AdvanceDriving(float dt)
 		fnAccel(m_wheelAngle, 0.0f, c_bikeTiltTurnRate);
 	}
 
-	// TODO:
+	// TODO: brake sfx
+	// TODO: boost dash
 
 	// acceleration
-	if (m_playerID && m_isLanded && padState->IsDown(Sonic::EKeyState::eKeyState_A))
+	if (m_isLanded)
 	{
-		// forward
-		fnAccel(m_speed, c_bikeMaxSpeed, m_speed < 0.0f ? c_bikeBrake : c_bikeAccel);
-		ToggleBrakeLights(false);
-	}
-	else if (m_playerID && m_isLanded && padState->IsDown(Sonic::EKeyState::eKeyState_X))
-	{
-		// brake, reverse
-		fnAccel(m_speed, c_bikeReverseSpeed, m_speed > 0.0f ? c_bikeBrake : c_bikeAccel);
-		ToggleBrakeLights(true);
-	}
-	else
-	{
-		// natural stop
-		fnAccel(m_speed, 0.0f, c_bikeAccel);
-		ToggleBrakeLights(false);
+		if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_A))
+		{
+			// forward
+			fnAccel(m_speed, c_bikeMaxSpeed, m_speed < 0.0f ? c_bikeBrake : c_bikeAccel);
+			ToggleBrakeLights(false);
+		}
+		else if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_X))
+		{
+			// brake, reverse
+			fnAccel(m_speed, c_bikeReverseSpeed, m_speed > 0.0f ? c_bikeBrake : c_bikeAccel);
+			ToggleBrakeLights(true);
+		}
+		else
+		{
+			// natural stop
+			fnAccel(m_speed, 0.0f, c_bikeAccel);
+			ToggleBrakeLights(false);
+		}
 	}
 
 	// vulcan
@@ -619,8 +629,85 @@ void GadgetBike::AdvancePhysics(float dt)
 		m_spNodeWheelF->NotifyChanged();
 	}
 
-	hh::math::CVector const forwardAxis = m_rotation * hh::math::CVector::UnitZ();
-	hh::math::CVector const newPosition = m_spMatrixNodeTransform->m_Transform.m_Position + forwardAxis * m_speed * dt;
+	hh::math::CVector forwardAxis = m_rotation * hh::math::CVector::UnitZ();
+	if (!m_isLanded)
+	{
+		// not grounded, let gravity handle y-axis
+		forwardAxis.y() = 0.0f;
+		forwardAxis.normalize();
+	}
+
+	// proxy collision
+	hh::math::CVector newPosition = m_spMatrixNodeTransform->m_Transform.m_Position;
+	if (m_speed != 0.0f)
+	{
+		m_spProxy->m_Position = m_spMatrixNodeTransform->m_Transform.m_Position;
+		m_spProxy->SetRotation(m_rotation);
+		m_spProxy->m_UpVector = m_rotation * hh::math::CVector::UnitY();
+		m_spProxy->m_Velocity = forwardAxis * m_speed;
+		Common::fCCharacterProxyIntegrate(m_spProxy.get(), dt);
+		newPosition = m_spProxy->m_Position;
+		m_speed = m_spProxy->m_Velocity.dot(forwardAxis);
+	}
+
+	// floor detection
+	hh::math::CVector outPos = hh::math::CVector::Zero();
+	hh::math::CVector outNormal = hh::math::CVector::UnitY();
+
+	// hovering
+	if (!m_isLanded)
+	{
+		m_upSpeed -= c_bikeGravity * dt;
+		newPosition += hh::math::CVector::UnitY() * m_upSpeed * dt;
+
+		// check landing
+		if (m_upSpeed < 0.0f && Common::fRaycast(m_spMatrixNodeTransform->m_Transform.m_Position, newPosition, outPos, outNormal, *(int*)0x1E0AFAC))
+		{
+			// TODO: sfx, pfx
+			//SharedPtrTypeless sfx;
+			//Common::ObjectPlaySound(this, 200612012, sfx);
+
+			newPosition = outPos;
+			m_upSpeed = 0.0f;
+			m_isLanded = true;
+		}
+
+		// check ceiling
+		hh::math::CVector const top = hh::math::CVector::UnitY() * 1.5f;
+		if (m_upSpeed > 0.0f && Common::fRaycast(m_spMatrixNodeTransform->m_Transform.m_Position + top, newPosition + top, outPos, outNormal, *(int*)0x1E0AFAC))
+		{
+			newPosition = outPos - top;
+			m_upSpeed = 0.0f;
+		}
+	}
+	else
+	{
+		// check leaving terrain
+		hh::math::CVector const testStart = m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector(0.0f, 0.5f, 0.0f);
+		hh::math::CVector const testEnd = m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector(0.0f, -0.1f, 0.0f);
+		if (Common::fRaycast(testStart, testEnd, outPos, outNormal, *(int*)0x1E0AFAC))
+		{
+			newPosition.y() = outPos.y();
+
+			// pitch
+			float constexpr pitchRate = 10.0f;
+			hh::math::CVector const upAxis = m_rotation * hh::math::CVector::UnitY();
+			hh::math::CQuaternion const targetPitch = hh::math::CQuaternion::FromTwoVectors(upAxis.head<3>(), outNormal.head<3>());
+			m_rotation = hh::math::CQuaternion::Identity().slerp(dt * pitchRate, targetPitch) * m_rotation;
+		}
+		else
+		{
+			m_isLanded = false;
+
+			// left ground, separate up/forward component
+			hh::math::CVector forwardHorizontal = forwardAxis;
+			forwardHorizontal.y() = 0.0f;
+			forwardHorizontal.normalize();
+			m_speed = forwardHorizontal.dot(forwardAxis * m_speed);
+			m_upSpeed = hh::math::CVector::UnitY().dot(forwardAxis * m_speed);
+		}
+	}
+
 	hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(m_tiltAngle, forwardAxis) * m_rotation;
 	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(newRotation, newPosition);
 	m_spMatrixNodeTransform->NotifyChanged();

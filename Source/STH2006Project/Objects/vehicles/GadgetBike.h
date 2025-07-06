@@ -50,6 +50,7 @@ private:
 
 	float m_hp = 100.0f;
 	float m_speed = 0.0f;
+	float m_upSpeed = 0.0f;
 	float m_reloadTimer = 0.0f;
 	float m_bulletTimer = 0.0f;
 	uint8_t m_bullets = 100u;
@@ -80,6 +81,8 @@ private:
 
 	boost::shared_ptr<GadgetGun> m_spGunL;
 	boost::shared_ptr<GadgetGun> m_spGunR;
+
+	boost::shared_ptr<Sonic::CCharacterProxy> m_spProxy;
 
 private:
 	void InitializeEditParam(Sonic::CEditParam& in_rEditParam) override;
