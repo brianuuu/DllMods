@@ -146,7 +146,7 @@ bool GadgetBike::SetAddColliders
 
 	// proxy collision
 	Hedgehog::Base::THolder<Sonic::CWorld> holder(m_pMember->m_pWorld.get());
-	hk2010_2_0::hkpBoxShape* proxyShape = new hk2010_2_0::hkpBoxShape(1.0f, 0.1f, 2.6f);
+	hk2010_2_0::hkpBoxShape* proxyShape = new hk2010_2_0::hkpBoxShape(0.7f, 0.1f, 1.9f);
 	m_spProxy = boost::make_shared<Sonic::CCharacterProxy>(this, holder, proxyShape, hh::math::CVector::UnitY() * 1.3f, hh::math::CQuaternion::Identity(), *(int*)0x1E0AFAC);
 
 	return true;
