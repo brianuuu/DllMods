@@ -37,6 +37,7 @@ public:
 	// API
 	void SetIsRight() { m_isRight = true; }
 	bool IsReady() const;
+	bool IsStarted() const;
 	bool CanUnload() const;
 	void UpdateTransform();
 	void FireBullet();

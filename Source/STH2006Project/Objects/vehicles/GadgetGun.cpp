@@ -120,6 +120,11 @@ bool GadgetGun::IsReady() const
 	return (currentState == "Load" && Common::IsAnimationFinished(this)) || currentState == "Fire";
 }
 
+bool GadgetGun::IsStarted() const
+{
+	return m_started;
+}
+
 bool GadgetGun::CanUnload() const
 {
 	hh::base::CSharedString const currentState = GetCurrentState()->GetStateName();
