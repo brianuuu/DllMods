@@ -776,7 +776,7 @@ void GadgetBike::TakeDamage(float amount)
 	std::lock_guard guard(m_mutex);
 
 	SharedPtrTypeless sfx;
-	Common::ObjectPlaySound(this, 200612004, sfx);
+	Common::ObjectPlaySound(this, 200612021, sfx);
 
 	m_hp -= amount;
 	if (m_hp <= 50.0f && !m_brokenID)
