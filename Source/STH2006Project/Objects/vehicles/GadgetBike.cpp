@@ -142,7 +142,9 @@ bool GadgetBike::SetAddColliders
 	// fake player collision
 	hk2010_2_0::hkpCylinderShape* playerEventTrigger = new hk2010_2_0::hkpCylinderShape(hh::math::CVector(0.0f, 0.0f, -0.3f), hh::math::CVector(0.0f, 1.2f, -0.3f), 0.5f);
 	AddEventCollision("FakePlayer", playerEventTrigger, *(int*)0x1E0AF90, true, m_spMatrixNodeTransform); // TypePlayer
+	AddEventCollision("FakePlayerItem", playerEventTrigger, *(int*)0x1E0AF8C, true, m_spMatrixNodeTransform); // TypePlayerItem
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayerItem", false);
 
 	// proxy collision
 	Hedgehog::Base::THolder<Sonic::CWorld> holder(m_pMember->m_pWorld.get());
@@ -437,6 +439,7 @@ void GadgetBike::CleanUp()
 
 	// player collision
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayerItem", false);
 }
 
 void GadgetBike::BeginDriving()
@@ -466,6 +469,7 @@ void GadgetBike::BeginDriving()
 
 	// player collision
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", true);
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayerItem", true);
 }
 
 float const c_bikeTiltMaxAngle = 15.0f * DEG_TO_RAD;

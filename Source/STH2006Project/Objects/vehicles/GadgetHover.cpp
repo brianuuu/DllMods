@@ -200,7 +200,9 @@ bool GadgetHover::SetAddColliders
 	// fake player collision
 	hk2010_2_0::hkpCylinderShape* playerEventTrigger = new hk2010_2_0::hkpCylinderShape(hh::math::CVector(0.0f, 0.85f, -0.63f), hh::math::CVector(0.0f, 1.85f, -0.63f), 0.5f);
 	AddEventCollision("FakePlayer", playerEventTrigger, *(int*)0x1E0AF90, true, m_spMatrixNodeTransform); // TypePlayer
+	AddEventCollision("FakePlayerItem", playerEventTrigger, *(int*)0x1E0AF8C, true, m_spMatrixNodeTransform); // TypePlayerItem
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayerItem", false);
 
 	// land collision
 	uint32_t const typeTerrain = *(uint32_t*)0x1E5E754;
@@ -470,6 +472,7 @@ void GadgetHover::CleanUp()
 
 	// player collision
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayerItem", false);
 
 	// pfx
 	if (m_suspensionID)
@@ -503,6 +506,7 @@ void GadgetHover::BeginDriving()
 
 	// player collision
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", true);
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayerItem", true);
 
 	// pfx
 	m_pGlitterPlayer->PlayOneshot(m_spMatrixNodeTransform, "ef_hover_start", 1.0f, 1);
