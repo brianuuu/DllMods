@@ -583,6 +583,11 @@ void GadgetBike::AdvanceDriving(float dt)
 			shouldStopBrakeSfx = true;
 		}
 	}
+	else
+	{
+		ToggleBrakeLights(false);
+		shouldStopBrakeSfx = true;
+	}
 
 	// stop brake sfx
 	if (m_brakeSfx && shouldStopBrakeSfx)
