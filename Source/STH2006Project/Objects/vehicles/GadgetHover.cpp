@@ -901,10 +901,16 @@ void GadgetHover::AdvancePhysics(float dt)
 	m_spMatrixNodeTransform->m_Transform.SetPosition(newPosition);
 	m_spMatrixNodeTransform->NotifyChanged();
 
-	// update loop sfx position
+	// update loop/brake sfx position
 	if (m_loopSfx)
 	{
 		hh::math::CVector* pSoundHandle = (hh::math::CVector*)m_loopSfx.get();
+		pSoundHandle[2] = newPosition;
+	}
+
+	if (m_brakeSfx)
+	{
+		hh::math::CVector* pSoundHandle = (hh::math::CVector*)m_brakeSfx.get();
 		pSoundHandle[2] = newPosition;
 	}
 

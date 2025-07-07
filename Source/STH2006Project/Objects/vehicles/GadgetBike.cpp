@@ -811,6 +811,12 @@ void GadgetBike::AdvancePhysics(float dt)
 		FUNCTION_PTR(void*, __thiscall, SetAisac, 0x763D50, void* This, hh::base::CSharedString const& name, float value);
 		SetAisac(m_loopSfx.get(), "gadget_speed", value);
 	}
+
+	if (m_brakeSfx)
+	{
+		hh::math::CVector* pSoundHandle = (hh::math::CVector*)m_brakeSfx.get();
+		pSoundHandle[2] = newPosition;
+	}
 }
 
 void GadgetBike::ToggleBrakeLights(bool on)
