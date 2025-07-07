@@ -821,6 +821,7 @@ void GadgetHover::AdvancePhysics(float dt)
 	// floor detection
 	hh::math::CVector outPos = hh::math::CVector::Zero();
 	hh::math::CVector outNormal = hh::math::CVector::UnitY();
+	hh::math::CVector const testStart = m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector(0.0f, 0.5f, 0.0f);
 
 	// hovering
 	if (!m_isLanded)
@@ -838,7 +839,7 @@ void GadgetHover::AdvancePhysics(float dt)
 		newPosition += hh::math::CVector::UnitY() * m_upSpeed * dt;
 		
 		// check landing
-		if (m_upSpeed < 0.0f && Common::fRaycast(m_spMatrixNodeTransform->m_Transform.m_Position, newPosition, outPos, outNormal, m_landCollisionID))
+		if (m_upSpeed < 0.0f && Common::fRaycast(testStart, newPosition, outPos, outNormal, m_landCollisionID))
 		{
 			SharedPtrTypeless sfx;
 			Common::ObjectPlaySound(this, 200612012, sfx);
@@ -861,7 +862,7 @@ void GadgetHover::AdvancePhysics(float dt)
 
 		// check ceiling
 		hh::math::CVector const top = hh::math::CVector::UnitY() * 2.1f;
-		if (m_upSpeed > 0.0f && Common::fRaycast(m_spMatrixNodeTransform->m_Transform.m_Position + top, newPosition + top, outPos, outNormal, m_landCollisionID))
+		if (m_upSpeed > 0.0f && Common::fRaycast(testStart + top, newPosition + top, outPos, outNormal, m_landCollisionID))
 		{
 			newPosition = outPos - top;
 			m_jumpAccelTime = 0.0f;
@@ -871,8 +872,7 @@ void GadgetHover::AdvancePhysics(float dt)
 	else
 	{
 		// check leaving terrain
-		hh::math::CVector const testStart = m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector(0.0f, 1.0f, 0.0f);
-		hh::math::CVector const testEnd = m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector(0.0f, -0.1f, 0.0f);
+		hh::math::CVector const testEnd = m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector(0.0f, -0.25f, 0.0f);
 		if (Common::fRaycast(testStart, testEnd, outPos, outNormal, m_landCollisionID))
 		{
 			newPosition.y() = outPos.y();
