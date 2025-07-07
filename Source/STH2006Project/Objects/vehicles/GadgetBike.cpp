@@ -295,6 +295,9 @@ bool GadgetBike::ProcessMessage
 
 		m_speed = msg->m_impulse.dot(m_rotation * hh::math::CVector::UnitZ());
 		m_upSpeed = msg->m_impulse.dot(hh::math::CVector::UnitY());
+		m_outOfControl = msg->m_outOfControl;
+		m_tiltAngle = 0.0f;
+		m_wheelAngle = 0.0f;
 		m_isLanded = false;
 	}
 
@@ -498,6 +501,7 @@ void GadgetBike::AdvanceDriving(float dt)
 		}
 	};
 
+	m_outOfControl = max(0.0f, m_outOfControl - dt);
 	if (m_state != State::Driving)
 	{
 		fnAccel(m_tiltAngle, 0.0f, c_bikeTiltTurnRate);
@@ -556,14 +560,14 @@ void GadgetBike::AdvanceDriving(float dt)
 			ToggleBrakeLights(false);
 			shouldStopBrakeSfx = true;
 		}
-		else if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_A))
+		else if (m_playerID && m_outOfControl == 0.0f && padState->IsDown(Sonic::EKeyState::eKeyState_A))
 		{
 			// forward
 			fnAccel(m_speed, c_bikeMaxSpeed, m_speed < 0.0f ? c_bikeBrake : c_bikeAccel);
 			ToggleBrakeLights(false);
 			shouldStopBrakeSfx = true;
 		}
-		else if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_X))
+		else if (m_playerID && m_outOfControl == 0.0f && padState->IsDown(Sonic::EKeyState::eKeyState_X))
 		{
 			// brake, reverse
 			fnAccel(m_speed, c_bikeReverseSpeed, m_speed > 0.0f ? c_bikeBrake : c_bikeAccel);
@@ -598,7 +602,7 @@ void GadgetBike::AdvanceDriving(float dt)
 	// boost dash
 	m_doubleTapTime = max(-c_bikeBoostDashTimeout, m_doubleTapTime - dt);
 	m_boostDashTime = max(0.0f, m_boostDashTime - dt);
-	if (m_playerID && m_isLanded && m_boostDashTime == 0.0f && padState->IsTapped(Sonic::EKeyState::eKeyState_A))
+	if (m_playerID && m_isLanded && m_outOfControl == 0.0f && m_boostDashTime == 0.0f && padState->IsTapped(Sonic::EKeyState::eKeyState_A))
 	{
 		if (m_doubleTapTime > 0.0f)
 		{
@@ -880,12 +884,12 @@ GadgetBike::Direction GadgetBike::GetCurrentDirection(hh::math::CVector2 input) 
 		return Direction::Back;
 	}
 
-	if (input.x() > 0)
+	if (input.x() > 0 && m_outOfControl == 0.0f)
 	{
 		return Direction::Left;
 	}
 
-	if (input.x() < 0)
+	if (input.x() < 0 && m_outOfControl == 0.0f)
 	{
 		return Direction::Right;
 	}
