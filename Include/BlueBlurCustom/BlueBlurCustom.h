@@ -26,6 +26,7 @@
 #include <Sonic/Message/MsgStageClear.h>
 #include <Sonic/Message/MsgStartExternalControl.h>
 #include <Sonic/Message/MsgStartHangOn.h>
+#include <Sonic/Message/MsgTakeObject.h>
 
 #include <Sonic/CCharacterProxy.h>
 #include <Sonic/CGlitterPlayer.h>
