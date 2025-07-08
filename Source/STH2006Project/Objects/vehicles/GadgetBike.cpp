@@ -46,8 +46,10 @@ bool GadgetBike::SetAddRenderables
 	// base
 	char const* modelName = "Gadget_Bike";
 	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData(modelName, 0);
+	m_spNodeModel = boost::make_shared<Sonic::CMatrixNodeTransform>();
+	m_spNodeModel->SetParent(m_spMatrixNodeTransform.get());
 	m_spModelBase = boost::make_shared<hh::mr::CSingleElement>(spModelBaseData);
-	m_spModelBase->BindMatrixNode(m_spMatrixNodeTransform);
+	m_spModelBase->BindMatrixNode(m_spNodeModel);
 	Sonic::CGameObject::AddRenderable("Object", m_spModelBase, m_pMember->m_CastShadow);
 
 	// wheels
@@ -119,7 +121,7 @@ bool GadgetBike::SetAddColliders
 {
 	// Rigid body
 	char const* rigidBodyName = "Gadget_Bike";
-	AddRigidBody(m_spRigidBody, rigidBodyName, rigidBodyName, *(int*)0x1E0AFF4, m_spMatrixNodeTransform, in_spDatabase);
+	AddRigidBody(m_spRigidBody, rigidBodyName, rigidBodyName, *(int*)0x1E0AFF4, m_spNodeModel, in_spDatabase);
 
 	// damage to object
 	uint32_t const typeEnemy = *(uint32_t*)0x1E5E7E8;
@@ -129,20 +131,20 @@ bool GadgetBike::SetAddColliders
 	m_spNodeCockpit = boost::make_shared<Sonic::CMatrixNodeTransform>();
 	m_spNodeCockpit->m_Transform.SetPosition(hh::math::CVector(0.0f, 0.6f, -0.1f));
 	m_spNodeCockpit->NotifyChanged();
-	m_spNodeCockpit->SetParent(m_spMatrixNodeTransform.get());
+	m_spNodeCockpit->SetParent(m_spNodeModel.get());
 	hk2010_2_0::hkpBoxShape* cockpitEventTrigger = new hk2010_2_0::hkpBoxShape(1.0f, 1.2f, 2.4f);
 	AddEventCollision("Attack", cockpitEventTrigger, damageID, true, m_spNodeCockpit);
 
 	// player event collision
 	m_spNodeEventCollision = boost::make_shared<Sonic::CMatrixNodeTransform>();
-	m_spNodeEventCollision->SetParent(m_spMatrixNodeTransform.get());
+	m_spNodeEventCollision->SetParent(m_spNodeModel.get());
 	hk2010_2_0::hkpCapsuleShape* shapeEventTrigger = new hk2010_2_0::hkpCapsuleShape(hh::math::CVector(0.0f, 0.5f, 1.0f), hh::math::CVector(0.0f, 0.5f, -1.0f), 2.0f);
 	AddEventCollision("Player", shapeEventTrigger, *(int*)0x1E0AFD8, true, m_spNodeEventCollision); // ColID_PlayerEvent
 
 	// fake player collision
 	hk2010_2_0::hkpCylinderShape* playerEventTrigger = new hk2010_2_0::hkpCylinderShape(hh::math::CVector(0.0f, 0.0f, -0.3f), hh::math::CVector(0.0f, 1.2f, -0.3f), 0.5f);
-	AddEventCollision("FakePlayer", playerEventTrigger, *(int*)0x1E0AF90, true, m_spMatrixNodeTransform); // TypePlayer
-	AddEventCollision("FakePlayerItem", playerEventTrigger, *(int*)0x1E0AF8C, true, m_spMatrixNodeTransform); // TypePlayerItem
+	AddEventCollision("FakePlayer", playerEventTrigger, *(int*)0x1E0AF90, true, m_spNodeModel); // TypePlayer
+	AddEventCollision("FakePlayerItem", playerEventTrigger, *(int*)0x1E0AF8C, true, m_spNodeModel); // TypePlayerItem
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayerItem", false);
 
@@ -489,6 +491,8 @@ float const c_bikeDoubleTapTime = 0.2f;
 float const c_bikeBoostDashTimeout = 1.0f;
 float const c_bikeBoostDashDuration = 0.5f;
 float const c_bikeBoostDashAccel = 40.0f;
+float const c_bikeBoostDashMaxPitch = 20.0f * DEG_TO_RAD;
+float const c_bikeBoostDashPitchTime = 0.15f;
 
 void GadgetBike::AdvanceDriving(float dt)
 {
@@ -511,7 +515,7 @@ void GadgetBike::AdvanceDriving(float dt)
 		fnAccel(m_tiltAngle, 0.0f, c_bikeTiltTurnRate);
 		fnAccel(m_wheelAngle, 0.0f, c_bikeTiltTurnRate);
 		fnAccel(m_speed, 0.0f, c_bikeAccel);
-		m_boostDashTime = max(0.0f, m_boostDashTime - dt);
+		m_boostDashTime = max(-c_bikeBoostDashTimeout, m_boostDashTime - dt);
 		return;
 	}
 
@@ -550,8 +554,6 @@ void GadgetBike::AdvanceDriving(float dt)
 		fnAccel(m_tiltAngle, 0.0f, c_bikeTiltTurnRate);
 		fnAccel(m_wheelAngle, 0.0f, c_bikeTiltTurnRate);
 	}
-
-	// TODO: boost dash
 
 	// acceleration
 	bool shouldStopBrakeSfx = (m_speed <= c_bikeMinBrakeSpeed);
@@ -604,19 +606,22 @@ void GadgetBike::AdvanceDriving(float dt)
 	}
 
 	// boost dash
-	m_doubleTapTime = max(-c_bikeBoostDashTimeout, m_doubleTapTime - dt);
-	m_boostDashTime = max(0.0f, m_boostDashTime - dt);
-	if (m_playerID && m_isLanded && m_outOfControl == 0.0f && m_boostDashTime == 0.0f && padState->IsTapped(Sonic::EKeyState::eKeyState_A))
+	m_doubleTapTime = max(0.0f, m_doubleTapTime - dt);
+	m_boostDashTime = max(-c_bikeBoostDashTimeout, m_boostDashTime - dt);
+	if (m_playerID && m_isLanded && m_outOfControl == 0.0f && m_boostDashTime <= -c_bikeBoostDashTimeout && padState->IsTapped(Sonic::EKeyState::eKeyState_A))
 	{
 		if (m_doubleTapTime > 0.0f)
 		{
 			SharedPtrTypeless sfx;
 			Common::ObjectPlaySound(this, 200612019, sfx);
 
+			m_pGlitterPlayer->PlayOneshot(m_spModelBase->GetNode("pBoost_L"), "ef_bike_boost", 1.0f, 1);
+			m_pGlitterPlayer->PlayOneshot(m_spModelBase->GetNode("pBoost_R"), "ef_bike_boost", 1.0f, 1);
+
 			m_doubleTapTime = 0.0f;
 			m_boostDashTime = c_bikeBoostDashDuration;
 		}
-		else if (m_doubleTapTime <= c_bikeBoostDashTimeout)
+		else
 		{
 			m_doubleTapTime = c_bikeDoubleTapTime;
 		}
@@ -753,7 +758,6 @@ void GadgetBike::AdvancePhysics(float dt)
 		// check landing
 		if (m_upSpeed < 0.0f && Common::fRaycast(testStart, newPosition, outPos, outNormal, *(int*)0x1E0AFAC))
 		{
-			// TODO: pfx
 			SharedPtrTypeless sfx;
 			Common::ObjectPlaySound(this, 200612022, sfx);
 
@@ -800,6 +804,33 @@ void GadgetBike::AdvancePhysics(float dt)
 	hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(m_tiltAngle, forwardAxis) * m_rotation;
 	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(newRotation, newPosition);
 	m_spMatrixNodeTransform->NotifyChanged();
+
+	// pitch adjustment
+	{
+		hh::math::CVector const rightAxis = hh::math::CVector::UnitX();
+		if (m_boostDashTime > 0.0f)
+		{
+			float const boostDashTimeNorm = c_bikeBoostDashDuration - m_boostDashTime;
+			if (boostDashTimeNorm < c_bikeBoostDashPitchTime)
+			{
+				m_pitchAngle = c_bikeBoostDashMaxPitch * boostDashTimeNorm / c_bikeBoostDashPitchTime;
+			}
+			else
+			{
+				m_pitchAngle = c_bikeBoostDashMaxPitch * (1.0f - (boostDashTimeNorm - c_bikeBoostDashPitchTime) / (c_bikeBoostDashDuration - c_bikeBoostDashPitchTime));
+			}
+		}
+		else
+		{
+			m_pitchAngle = 0.0f;
+		}
+
+		float constexpr wheelOffset = 0.85f;
+		hh::math::CVector const adjustPosition = wheelOffset * tan(abs(m_pitchAngle)) * hh::math::CVector::UnitY();
+		hh::math::CQuaternion const adjustRotation = Eigen::AngleAxisf(m_pitchAngle, -rightAxis) * hh::math::CQuaternion::Identity();
+		m_spNodeModel->m_Transform.SetRotationAndPosition(adjustRotation, adjustPosition);
+		m_spNodeModel->NotifyChanged();
+	}
 
 	// player animation
 	if (m_playerID && m_state == State::Driving)

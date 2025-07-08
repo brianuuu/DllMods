@@ -49,6 +49,7 @@ private:
 	float m_wheelAngle = 0.0f;
 	float m_wheelSpin = 0.0f;
 	float m_tiltAngle = 0.0f;
+	float m_pitchAngle = 0.0f;
 
 	float m_hp = 100.0f;
 	float m_speed = 0.0f;
@@ -72,6 +73,7 @@ private:
 
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModelBase;
 	boost::shared_ptr<Sonic::CRigidBody> m_spRigidBody;
+	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeModel;
 
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModelWheelF;
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModelWheelB;
