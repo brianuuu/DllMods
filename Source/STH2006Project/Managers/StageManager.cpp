@@ -670,6 +670,9 @@ void StageManager::applyPatches()
     // Enemy projectile damage all rigid body not just aimed target
     WRITE_NOP(0xB6B40F, 2);
 
+    // Gunner ignore slip damage
+    WRITE_MEMORY(0xBAA40F, uint8_t, 0xEB);
+
     //---------------------------------------------------
     // Bombbox Explosion
     //---------------------------------------------------
