@@ -493,6 +493,8 @@ float const c_bikeBoostDashDuration = 0.5f;
 float const c_bikeBoostDashAccel = 40.0f;
 float const c_bikeBoostDashMaxPitch = 20.0f * DEG_TO_RAD;
 float const c_bikeBoostDashPitchTime = 0.15f;
+float const c_bikeBrakeMaxPitch = -5.0f * DEG_TO_RAD;
+float const c_bikeBrakePitchRate = abs(c_bikeBrakeMaxPitch) / 0.1f;
 
 void GadgetBike::AdvanceDriving(float dt)
 {
@@ -807,8 +809,25 @@ void GadgetBike::AdvancePhysics(float dt)
 
 	// pitch adjustment
 	{
+		auto fnAccel = [&dt](float& value, float target, float accel)
+		{
+			if (value > target)
+			{
+				value = max(target, value - accel * dt);
+			}
+			else if (value < target)
+			{
+				value = min(target, value + accel * dt);
+			}
+		};
+
 		hh::math::CVector const rightAxis = hh::math::CVector::UnitX();
-		if (m_boostDashTime > 0.0f)
+
+		if (m_brakeSfx.get())
+		{
+			fnAccel(m_pitchAngle, c_bikeBrakeMaxPitch, c_bikeBrakePitchRate);
+		}
+		else if (m_boostDashTime > 0.0f)
 		{
 			float const boostDashTimeNorm = c_bikeBoostDashDuration - m_boostDashTime;
 			if (boostDashTimeNorm < c_bikeBoostDashPitchTime)
@@ -820,15 +839,38 @@ void GadgetBike::AdvancePhysics(float dt)
 				m_pitchAngle = c_bikeBoostDashMaxPitch * (1.0f - (boostDashTimeNorm - c_bikeBoostDashPitchTime) / (c_bikeBoostDashDuration - c_bikeBoostDashPitchTime));
 			}
 		}
+		else if (m_pitchAngle < 0.0f)
+		{
+			fnAccel(m_pitchAngle, 0.0f, c_bikeBrakePitchRate);
+		}
 		else
 		{
 			m_pitchAngle = 0.0f;
 		}
 
 		float constexpr wheelOffset = 0.85f;
-		hh::math::CVector const adjustPosition = wheelOffset * tan(abs(m_pitchAngle)) * hh::math::CVector::UnitY();
+		float pitchUpOffset = wheelOffset * tan(abs(m_pitchAngle));
+		if (m_pitchAngle < 0.0f)
+		{
+			float constexpr brakeUpScale = 0.5f;
+			float const wheelUpOffset = (1.0f - brakeUpScale) * pitchUpOffset * cos(abs(m_pitchAngle));
+			m_spNodeWheelB->m_Transform.SetPosition((wheelOffset * -2.0f * tan(abs(m_pitchAngle)) + wheelUpOffset) * hh::math::CVector::UnitY());
+			m_spNodeWheelF->m_Transform.SetPosition(wheelUpOffset * hh::math::CVector::UnitY());
+			m_spNodeWheelB->NotifyChanged();
+			m_spNodeWheelF->NotifyChanged();
+
+			pitchUpOffset *= brakeUpScale;
+		}
+		else
+		{
+			m_spNodeWheelB->m_Transform.SetPosition(hh::math::CVector::Zero());
+			m_spNodeWheelF->m_Transform.SetPosition(hh::math::CVector::Zero());
+			m_spNodeWheelB->NotifyChanged();
+			m_spNodeWheelF->NotifyChanged();
+		}
+
 		hh::math::CQuaternion const adjustRotation = Eigen::AngleAxisf(m_pitchAngle, -rightAxis) * hh::math::CQuaternion::Identity();
-		m_spNodeModel->m_Transform.SetRotationAndPosition(adjustRotation, adjustPosition);
+		m_spNodeModel->m_Transform.SetRotationAndPosition(adjustRotation, pitchUpOffset * hh::math::CVector::UnitY());
 		m_spNodeModel->NotifyChanged();
 	}
 
