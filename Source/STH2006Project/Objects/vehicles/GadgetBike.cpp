@@ -546,10 +546,10 @@ void GadgetBike::AdvanceDriving(float dt)
 	}
 
 	// rotation
-	if (m_isLanded && m_input.x() != 0.0f)
+	if (m_outOfControl == 0.0f && m_input.x() != 0.0f)
 	{
-		fnAccel(m_tiltAngle, -m_input.x() * c_bikeTiltMaxAngle, c_bikeTiltTurnRate);
-		fnAccel(m_wheelAngle, m_isLanded ? m_input.x() * c_bikeWheelMaxAngle : 0.0f, c_bikeWheelTurnRate);
+		fnAccel(m_tiltAngle, m_isLanded ? -m_input.x() * c_bikeTiltMaxAngle : 0.0f, c_bikeTiltTurnRate);
+		fnAccel(m_wheelAngle, m_input.x() * c_bikeWheelMaxAngle, c_bikeWheelTurnRate);
 	}
 	else
 	{
@@ -701,7 +701,7 @@ void GadgetBike::AdvancePhysics(float dt)
 		// vehicle yaw
 		float const speedRatio = m_speed / c_bikeMaxSpeed;
 		float constexpr steerScale = 12.0f;
-		m_rotation = Eigen::AngleAxisf(m_wheelAngle * speedRatio * steerScale * dt, upAxis) * m_rotation;
+		m_rotation = Eigen::AngleAxisf((m_isLanded ? m_wheelAngle : 0.0f) * speedRatio * steerScale * dt, upAxis) * m_rotation;
 
 		// wheel spin
 		float constexpr wheelRatio = 0.68f;
@@ -751,7 +751,7 @@ void GadgetBike::AdvancePhysics(float dt)
 	hh::math::CVector outNormal = hh::math::CVector::UnitY();
 	hh::math::CVector const testStart = m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector(0.0f, 0.5f, 0.0f);
 
-	// hovering
+	// in-air
 	if (!m_isLanded)
 	{
 		m_upSpeed -= c_bikeGravity * dt;
