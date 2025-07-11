@@ -519,6 +519,30 @@ void __declspec(naked) StageManager_CEnemyEggRobo_TrackBeam()
     }
 }
 
+bool __fastcall StageManager_CEnemyShotPoint_IgnoreEnemyImpl(Hedgehog::Universe::CMessageActor* messageActor)
+{
+    uint32_t enemyType = 0u;
+    messageActor->SendMessageSelfImm(Sonic::Message::MsgGetEnemyType(&enemyType));
+    return enemyType > 0u;
+}
+
+void __declspec(naked) StageManager_CEnemyShotPoint_IgnoreEnemy()
+{
+    static uint32_t successAddress = 0xB6B411;
+    static uint32_t returnAddress = 0xB6B485;
+    __asm
+    {
+        call    StageManager_CEnemyShotPoint_IgnoreEnemyImpl
+
+        test    al, al
+        jnz     jump
+        jmp     [successAddress]
+
+        jump:
+        jmp     [returnAddress]
+    }
+}
+
 //---------------------------------------------------
 // Bombbox Explosion
 //---------------------------------------------------
@@ -668,7 +692,7 @@ void StageManager::applyPatches()
     WRITE_JUMP(0x601E54, (void*)0x601E7E); 
 
     // Enemy projectile damage all rigid body not just aimed target
-    WRITE_NOP(0xB6B40F, 2);
+    WRITE_JUMP(0xB6B408, (void*)StageManager_CEnemyShotPoint_IgnoreEnemy);
 
     // Gunner ignore slip damage
     WRITE_MEMORY(0xBAA40F, uint8_t, 0xEB);
