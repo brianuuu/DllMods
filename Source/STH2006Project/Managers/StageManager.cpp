@@ -625,12 +625,15 @@ void StageManager::applyPatches()
     INSTALL_HOOK(StageManager_MsgNotifyObjectEvent);
 
     //---------------------------------------------------
-    // Result music
+    // Music
     //---------------------------------------------------
     // Use custom SNG19_JNG, adjust round clear length
     INSTALL_HOOK(StageManager_SNG19_JNG_1);
     INSTALL_HOOK(StageManager_SNG19_JNG_2);
     INSTALL_HOOK(StageManager_CStateGoalFadeIn);
+
+    // Fix Mephiles BGM not playing first time
+    WRITE_MEMORY(0xCFDCD5, uint8_t, 0xEB);
 
     //---------------------------------------------------
     // Perfect Chaos
