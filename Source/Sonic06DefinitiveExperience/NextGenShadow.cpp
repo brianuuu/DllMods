@@ -145,19 +145,19 @@ void NextGenShadow::SetJetEffectVisible(bool visible, hh::mr::CSingleElement* pM
     {
         {
             auto attachBone = pModel->GetNode("RightFoot");
-            Common::fCGlitterCreate(*PLAYER_CONTEXT, isSuper ? superJetRightBack : jetRightBack, &attachBone, "ef_bo_sha_yh2_jet_back", 1);
+            Common::fCGlitterCreate(*PLAYER_CONTEXT, isSuper ? superJetRightBack : jetRightBack, &attachBone, "ef_bo_sha_sth_jet_back", 1);
         }
         {
             auto attachBone = pModel->GetNode("RightToeBase");
-            Common::fCGlitterCreate(*PLAYER_CONTEXT, isSuper ? superJetRightFront : jetRightFront, &attachBone, "ef_bo_sha_yh2_jet_front", 1);
+            Common::fCGlitterCreate(*PLAYER_CONTEXT, isSuper ? superJetRightFront : jetRightFront, &attachBone, "ef_bo_sha_sth_jet_front", 1);
         }
         {
             auto attachBone = pModel->GetNode("LeftFoot");
-            Common::fCGlitterCreate(*PLAYER_CONTEXT, isSuper ? superJetLeftBack : jetLeftBack, &attachBone, "ef_bo_sha_yh2_jet_back", 1);
+            Common::fCGlitterCreate(*PLAYER_CONTEXT, isSuper ? superJetLeftBack : jetLeftBack, &attachBone, "ef_bo_sha_sth_jet_back", 1);
         }
         {
             auto attachBone = pModel->GetNode("LeftToeBase");
-            Common::fCGlitterCreate(*PLAYER_CONTEXT, isSuper ? superJetLeftFront : jetLeftFront, &attachBone, "ef_bo_sha_yh2_jet_front", 1);
+            Common::fCGlitterCreate(*PLAYER_CONTEXT, isSuper ? superJetLeftFront : jetLeftFront, &attachBone, "ef_bo_sha_sth_jet_front", 1);
         }
     }
     else if (isSuper ? superJetRightFront : jetRightFront)
@@ -1007,18 +1007,18 @@ public:
         {
             m_IsSuper = true;
             m_IsDamage = true;
-            m_pfxSpearID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_ssh_yh2_spear", 1.0f);
-            m_pfxTailID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_ssh_yh2_spear_tail", 1.0f);
+            m_pfxSpearID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_ssh_sth_spear", 1.0f);
+            m_pfxTailID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_ssh_sth_spear_tail", 1.0f);
         }
         else if (m_IsDamage)
         {
-            m_pfxSpearID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_sha_yh2_lance", 1.0f);
-            m_pfxTailID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_sha_yh2_lance_tail", 1.0f);
+            m_pfxSpearID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_sha_sth_lance", 1.0f);
+            m_pfxTailID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_sha_sth_lance_tail", 1.0f);
         }
         else
         {
-            m_pfxSpearID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_sha_yh2_spear", 1.0f);
-            m_pfxTailID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_sha_yh2_spear_tail", 1.0f);
+            m_pfxSpearID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_sha_sth_spear", 1.0f);
+            m_pfxTailID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_sha_sth_spear_tail", 1.0f);
         }
 
         uint32_t enemyType = 0u;
@@ -1157,7 +1157,7 @@ public:
             cannotDamage = *(bool*)(senderActor + 0x239);
         }
 
-        m_pGlitterPlayer->PlayOneshot(m_spMatrixNodeTransform, m_IsDamage ? "ef_bo_sha_yh2_lance_vanish" : "ef_bo_sha_yh2_spear_vanish", 1.0f, 1);
+        m_pGlitterPlayer->PlayOneshot(m_spMatrixNodeTransform, m_IsDamage ? "ef_bo_sha_sth_lance_vanish" : "ef_bo_sha_sth_spear_vanish", 1.0f, 1);
         bool hasEnemyDamage = false;
         if (m_IsDamage && !cannotDamage)
         {
@@ -1603,7 +1603,7 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
         Common::SonicContextPlayVoice(voiceHandle, 3002030, 10);
 
         auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("RightHandMiddle1");
-        Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle_TrickAttack, &attachBone, NextGenShadow::m_chaosBoostLevel >= 2 ? "ef_bo_sha_yh2_lance_attack" : "ef_bo_sha_yh2_spear_charge", 1);
+        Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle_TrickAttack, &attachBone, NextGenShadow::m_chaosBoostLevel >= 2 ? "ef_bo_sha_sth_lance_attack" : "ef_bo_sha_sth_spear_charge", 1);
         
         if (Common::IsPlayerSuper())
         {
