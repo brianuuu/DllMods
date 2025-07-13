@@ -322,6 +322,7 @@ void PlayChaosSnap()
 }
 
 float chaosSnapHoldDuration = 0.0f;
+bool hasAddedTruckAttackCollision = false;
 HOOK(int, __fastcall, NextGenShadow_CSonicStateHomingAttackBegin, 0x1232040, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
@@ -342,6 +343,12 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateHomingAttackBegin, 0x1232040, hh:
         WRITE_MEMORY(0x1232056, char*, AnimationSetPatcher::ChaosAttackWait);
 
         PlayChaosSnap();
+    }
+
+    if (NextGenShadow::m_chaosBoostLevel > 0)
+    {
+        Common::SonicContextSetCollision(SonicCollision::TypeGunTruckAttack, true);
+        hasAddedTruckAttackCollision = true;
     }
 
     return originalNextGenShadow_CSonicStateHomingAttackBegin(This);
@@ -484,6 +491,12 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateHomingAttackEnd, 0x1231F80, hh::
         NextGenShadow::m_chaosSnapActivated = false;
         NextGenShadow::m_chaosAttackCount = -1;
         hasChaosSnapTeleported = false;
+    }
+
+    if (hasAddedTruckAttackCollision)
+    {
+        Common::SonicContextSetCollision(SonicCollision::TypeGunTruckAttack, false);
+        hasAddedTruckAttackCollision = false;
     }
 
     return originalNextGenShadow_CSonicStateHomingAttackEnd(This);
