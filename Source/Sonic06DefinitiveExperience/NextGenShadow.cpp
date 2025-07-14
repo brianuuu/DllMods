@@ -508,6 +508,7 @@ void PlayNextChaosAttack()
     static SharedPtrTypeless soundHandleSfx;
     static SharedPtrTypeless soundHandleVfx;
 
+    Common::SetPlayerOutOfControl(0.2f);
     Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosAttack[NextGenShadow::m_chaosAttackCount]);
     Common::SonicContextPlaySound(soundHandleSfx, 80041028, 1);
     Common::SonicContextPlayVoice(soundHandleVfx, NextGenShadow::m_chaosAttackCount < 4 ? 3002032 : 3002031, 11 + NextGenShadow::m_chaosAttackCount);
