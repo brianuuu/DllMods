@@ -148,6 +148,7 @@ HOOK(int*, __fastcall, ScoreManager_GameplayManagerInit, 0xD00F70, uint32_t This
 	(
 		stageID <= SMT_pla200 ||	// All main stages
 		stageID == SMT_cnz100 ||	// Casino Night (unused but that's original code)
+		stageID == SMT_bsd ||		// Mephiles
 		stageID == SMT_bsl ||		// Silver
 		stageID == SMT_bpc			// Iblis
 	)		
