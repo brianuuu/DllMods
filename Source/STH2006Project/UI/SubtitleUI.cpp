@@ -60,7 +60,7 @@ float SubtitleUI::addSubtitle(mst::TextEntry const& entry, std::vector<float> co
                         float const duration = Common::GetSoundCueDuration(newSubtitle.m_cueID);
                         if (duration > 0.0f)
                         {
-                            newSubtitle.m_duration = duration + 0.5f;
+                            newSubtitle.m_duration = duration + 0.9f;
                         }
                     }
 
@@ -75,12 +75,6 @@ float SubtitleUI::addSubtitle(mst::TextEntry const& entry, std::vector<float> co
                 tagIndex++;
                 subtitle.erase(0, 1);
             }
-        }
-
-        // Last subtitle last a little longer
-        if (i == entry.m_subtitles.size() - 1)
-        {
-            newSubtitle.m_duration += 1.0f;
         }
 
         totalDuration += newSubtitle.m_duration;
