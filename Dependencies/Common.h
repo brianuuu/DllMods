@@ -1589,6 +1589,26 @@ inline void StopBGM(char const* cueName, float fadeOutTime)
 	StopAudioFromCueName(*(void**)0x1E0BE5C, name, fadeOutTime);
 }
 
+static void PlayEvent
+(
+	Sonic::CEventManager* pEventManager,
+	hh::base::CSharedString const& eventName,
+	hh::math::CMatrix44 const& matrix,
+	uint32_t flag
+)
+{
+	// m_pMember->m_pGameDocument->m_pMember->m_spEventManager
+	static void* const pPlayEvent = (void*)0xB276E0;
+	__asm
+	{
+		mov		edi, pEventManager
+		push	flag
+		push	matrix
+		push	eventName
+		call	[pPlayEvent]
+	}
+}
+
 inline void* GetPlayer()
 {
 	if (!*PLAYER_CONTEXT) return 0;
