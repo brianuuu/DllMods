@@ -1,5 +1,7 @@
 #include "NextGenObjects.h"
 
+#include "boss/Mephiles.h"
+
 #include "cmn/BallSwitch.h"
 #include "cmn/Cage.h"
 #include "cmn/Guillotine.h"
@@ -94,6 +96,9 @@ void NextGenObjects::applyPatches()
     //---------------------------------------------------
     // 06 itembox
     Itembox::applyPatches();
+
+    // boss
+    Mephiles::registerObject();
 
     // cmn
     BallSwitch::registerObject();
