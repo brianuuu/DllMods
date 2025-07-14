@@ -502,7 +502,7 @@ HOOK(void, __fastcall, CustomHUD_CHudSonicStageInit, 0x109A8D0, Sonic::CGameObje
     }
 
     // boss health bar
-    if (Common::IsCurrentStageBoss() && (Common::GetCurrentStageID() & 0xFF) != SMT_bsd)
+    if (Common::IsCurrentStageBoss() && (Configuration::m_usingSTH2006Project || (Common::GetCurrentStageID() & 0xFF) != SMT_bsd))
     {
         m_sceneBossBG = m_projectPlayScreen->CreateScene("boss_gauge");
         m_sceneBossBar = m_projectPlayScreen->CreateScene("boss_gauge_anime");
@@ -1472,6 +1472,10 @@ void CustomHUD::applyPatches()
     WRITE_JUMP(0x109B8FB, (void*)0x109BA9D); // boost gauge init
     WRITE_JUMP(0x109BC8E, (void*)0x109BDF2); // boost button init
     WRITE_JUMP(0x109C1DC, CustomHUD_GetScoreEnabled); // score init
+    if (Configuration::m_usingSTH2006Project)
+    {
+        WRITE_JUMP(0x109AC45, (void*)0x109AD28); // shadow boss init
+    }
     //WRITE_JUMP(0x109BEF6, (void*)0x109C05A); // countdown init
 
     // Final Boss
