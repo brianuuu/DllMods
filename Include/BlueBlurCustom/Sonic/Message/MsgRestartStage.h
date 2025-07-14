@@ -9,11 +9,11 @@ namespace Sonic::Message
     public:
         HH_FND_MSG_MAKE_TYPE(0x1681FA0);
 
-        uint32_t m_Type; // 0: player restart, 1: death, 2: ???
+        uint32_t m_Flag; // 0: player restart, 1: death, 2: ???
 
-        MsgRestartStage(uint32_t in_Type) : m_Type(in_Type) {}
+        MsgRestartStage(uint32_t in_Flag) : m_Flag(in_Flag) {}
     };
 
-    BB_ASSERT_OFFSETOF(MsgRestartStage, m_Type, 0x10);
+    BB_ASSERT_OFFSETOF(MsgRestartStage, m_Flag, 0x10);
     BB_ASSERT_SIZEOF(MsgRestartStage, 0x14);
 }
