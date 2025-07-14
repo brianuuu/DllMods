@@ -14,6 +14,7 @@ public:
 	static float m_startCountdown;
 	static void startNowLoading(float countdown = 0.0f, bool ignoreOthers = false);
 	static void stopNowLoading(float fadeInTime = 0.4f, bool forceStop = false);
+	static bool IsEnabled() { return m_drawEnabled; }
 
 	// ImGui
 	static uint32_t m_stagePrevious;
