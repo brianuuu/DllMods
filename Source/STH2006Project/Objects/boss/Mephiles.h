@@ -72,4 +72,5 @@ private:
 	// Utils
 	bool CanLock() const;
 	bool CanDamage() const;
+	void CreateShield(uint32_t otherActor) const;
 };

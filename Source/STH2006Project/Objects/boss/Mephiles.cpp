@@ -1,6 +1,7 @@
 #include "Mephiles.h"
 
 #include "Managers/MstManager.h"
+#include "Objects/enemy/EnemyShield.h"
 #include "UI/LoadingUI.h"
 #include "UI/SubtitleUI.h"
 
@@ -161,16 +162,16 @@ bool Mephiles::ProcessMessage
 			// put player at fixed distance from Mephiles
 			hh::math::CVector otherPos = m_spMatrixNodeTransform->m_Transform.m_Position;
 			SendMessageImm(message.m_SenderActorID, Sonic::Message::MsgGetPosition(otherPos));
-			otherPos = m_spMatrixNodeTransform->m_Transform.m_Position + (otherPos - m_spMatrixNodeTransform->m_Transform.m_Position).normalized() * 1.5f;
+			otherPos = m_spMatrixNodeTransform->m_Transform.m_Position + (otherPos - m_spMatrixNodeTransform->m_Transform.m_Position).normalized() * (S06DE_API::GetChaosBoostLevel() > 0 ? 2.0f : 1.5f);
 			SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(otherPos, true));
 
 			if (CanDamage())
 			{
-				
+				// TODO:
 			}
 			else
 			{
-				// TODO: shield effect
+				CreateShield(message.m_SenderActorID);
 			}
 			return true;
 		}
@@ -179,11 +180,11 @@ bool Mephiles::ProcessMessage
 		{
 			if (CanDamage())
 			{
-
+				// TODO:
 			}
 			else
 			{
-				// TODO: shield effect
+				CreateShield(message.m_SenderActorID);
 			}
 			return true;
 		}
@@ -319,4 +320,45 @@ bool Mephiles::CanLock() const
 bool Mephiles::CanDamage() const
 {
 	return false;
+}
+
+void Mephiles::CreateShield(uint32_t otherActor) const
+{
+	hh::mr::CTransform startTrans{};
+	if (!otherActor || !SendMessageImm(otherActor, Sonic::Message::MsgGetPosition(startTrans.m_Position)))
+	{
+		return;
+	}
+
+	bool const isPlayer = SendMessageImm(otherActor, Sonic::Message::MsgGetPlayerType());
+	hh::math::CVector const bodyCenter = m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector::UnitY() * 0.5f;
+
+	hh::math::CVector dir = hh::math::CVector::UnitZ();
+	if (isPlayer)
+	{
+		// player compare with root position
+		dir = (startTrans.m_Position - m_spMatrixNodeTransform->m_Transform.m_Position).normalized();
+	}
+	else
+	{
+		// normal objects compare with body center
+		dir = (startTrans.m_Position - bodyCenter).normalized();
+	}
+	
+	if (dir.dot(hh::math::CVector::UnitY()) <= 0.95f) // not pointing up
+	{
+		hh::math::CVector hDir = dir;
+		hDir.y() = 0.0f;
+		hDir.normalize();
+		float yaw = acos(hDir.z());
+		if (hDir.dot(Eigen::Vector3f::UnitX()) < 0) yaw = -yaw;
+		startTrans.m_Rotation = hh::math::CQuaternion::FromTwoVectors(hDir.head<3>(), dir.head<3>()) * Eigen::AngleAxisf(yaw, Eigen::Vector3f::UnitY());
+	}
+	else
+	{
+		startTrans.m_Rotation = hh::math::CQuaternion::FromTwoVectors(hh::math::CVector::UnitZ(), dir.head<3>());
+	}
+
+	startTrans.m_Position = bodyCenter + dir * 0.75f;
+	m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<EnemyShield>(startTrans, true));
 }

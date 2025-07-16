@@ -79,6 +79,7 @@
     <ClCompile Include="Objects\vehicles\GadgetBike.cpp" />
     <ClCompile Include="Objects\vehicles\GadgetGun.cpp" />
     <ClCompile Include="Objects\boss\Mephiles.cpp" />
+    <ClCompile Include="Objects\enemy\EnemyShield.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -129,6 +130,7 @@
     <ClInclude Include="Objects\vehicles\GadgetBike.h" />
     <ClInclude Include="Objects\vehicles\GadgetGun.h" />
     <ClInclude Include="Objects\boss\Mephiles.h" />
+    <ClInclude Include="Objects\enemy\EnemyShield.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">
