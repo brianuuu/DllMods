@@ -89,4 +89,15 @@ private:
 
 	void SetHidden(bool hidden);
 	void FollowPlayer();
+
+private:
+	// Mephiles shadow manager
+	struct ShadowManager
+	{
+		int m_numKilledUnit = 0;
+		bool m_spawnAttack = false;
+
+		void DoCommand(bool isAttack, int count, float radius);
+		void Advance(float dt);
+	} m_shadowManager;
 };

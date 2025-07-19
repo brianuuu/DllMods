@@ -279,8 +279,11 @@ void Mephiles::StateAppearAdvance(float dt)
 	{
 	case 0:
 	{
-		// TODO: spawn shadows
-		m_stateStage++;
+		if (!LoadingUI::IsEnabled() && m_stateTime >= 1.5f)
+		{
+			ChangeState(HideCommand);
+			m_stateStage++;
+		}
 		break;
 	}
 	case 1:
@@ -288,6 +291,7 @@ void Mephiles::StateAppearAdvance(float dt)
 		// wait for shadow spawn to finish
 		if (GetCurrentState()->GetStateName() == HideLoop)
 		{
+			m_shadowManager.DoCommand(false, 200, 15.0f);
 			m_stateTime = 0.0f;
 			m_stateStage++;
 		}
@@ -342,6 +346,7 @@ void Mephiles::StateHideAdvance(float dt)
 
 void Mephiles::StateEjectBegin()
 {
+	ChangeState(Suffer);
 	SetHidden(false);
 }
 
@@ -449,4 +454,17 @@ void Mephiles::FollowPlayer()
 	pos.y() = m_Data.m_GroundHeight;
 	m_spMatrixNodeTransform->m_Transform.SetPosition(pos);
 	m_spMatrixNodeTransform->NotifyChanged();
+}
+
+//---------------------------------------------------
+// Shadow Manager
+//---------------------------------------------------
+void Mephiles::ShadowManager::DoCommand(bool isAttack, int count, float radius)
+{
+
+}
+
+void Mephiles::ShadowManager::Advance(float dt)
+{
+
 }
