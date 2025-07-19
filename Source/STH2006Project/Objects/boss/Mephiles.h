@@ -50,6 +50,8 @@ private:
 	bool m_playedInitVO = false;
 	bool m_hasEjected = false;
 
+	std::set<std::string> m_playedVO;
+
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
 	boost::shared_ptr<hh::anim::CAnimationPose> m_spAnimPose;
 
@@ -86,6 +88,7 @@ private:
 	bool CanLock() const;
 	bool CanDamage() const;
 	void CreateShield(uint32_t otherActor) const;
+	void PlaySingleVO(std::string const& name, std::string const& id);
 
 	void SetHidden(bool hidden);
 	void FollowPlayer();

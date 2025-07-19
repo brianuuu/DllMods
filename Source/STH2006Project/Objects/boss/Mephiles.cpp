@@ -316,9 +316,9 @@ void Mephiles::StateAppearAdvance(float dt)
 		{
 			switch (m_encounterCount)
 			{
-			case 0: SubtitleUI::addSubtitle("msg_hint", "hint_bos04_e00_sd"); break;
-			case 1: SubtitleUI::addSubtitle("msg_hint_xenon", "hint_bos04_a08_sd"); break;
-			case 2: SubtitleUI::addSubtitle("msg_hint", "hint_bos04_a02_sd"); break;
+			case 0: PlaySingleVO("msg_hint", "hint_bos04_e00_sd"); break;
+			case 1: PlaySingleVO("msg_hint_xenon", "hint_bos04_a08_sd"); break;
+			case 2: PlaySingleVO("msg_hint", "hint_bos04_a02_sd"); break;
 			}
 		}
 		m_encounterCount++;
@@ -402,6 +402,14 @@ void Mephiles::CreateShield(uint32_t otherActor) const
 
 	startTrans.m_Position = bodyCenter + dir * 0.75f;
 	m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<EnemyShield>(startTrans, true));
+}
+
+void Mephiles::PlaySingleVO(std::string const& name, std::string const& id)
+{
+	if (m_playedVO.count(id) || S06DE_API::GetModelType() != S06DE_API::ModelType::Shadow) return;
+	m_playedVO.insert(id);
+
+	SubtitleUI::addSubtitle(name, id);
 }
 
 void Mephiles::SetHidden(bool hidden)
