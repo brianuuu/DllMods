@@ -441,6 +441,11 @@ void Mephiles::StateEjectBegin()
 {
 	ChangeState(Suffer);
 	SetHidden(false);
+
+	// copy player's transform
+	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	m_spMatrixNodeTransform->m_Transform = context->m_spMatrixNode->m_Transform;
+	m_spMatrixNodeTransform->NotifyChanged();
 }
 
 //---------------------------------------------------
