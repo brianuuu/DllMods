@@ -279,7 +279,7 @@ void Mephiles::StateAppearAdvance(float dt)
 	{
 	case 0:
 	{
-		if (!LoadingUI::IsEnabled() && m_stateTime >= 1.5f)
+		if (!LoadingUI::IsEnabled())
 		{
 			ChangeState(HideCommand);
 			m_stateStage++;
@@ -291,7 +291,7 @@ void Mephiles::StateAppearAdvance(float dt)
 		// wait for shadow spawn to finish
 		if (GetCurrentState()->GetStateName() == HideLoop)
 		{
-			m_shadowManager.DoCommand(false, 200, 15.0f);
+			m_shadowManager.SpawnEncirclement(200, 15.0f);
 			m_stateTime = 0.0f;
 			m_stateStage++;
 		}
@@ -299,7 +299,6 @@ void Mephiles::StateAppearAdvance(float dt)
 	}
 	case 2:
 	{
-		// WaitFixed(1.5)
 		if (m_stateTime >= 1.5f)
 		{
 			m_stateNext = State::Hide;
@@ -337,6 +336,100 @@ void Mephiles::StateHideBegin()
 
 void Mephiles::StateHideAdvance(float dt)
 {
+	switch (m_stateStage)
+	{
+	case 0:
+	{
+		if (m_stateTime >= 1.5f)
+		{
+			if (m_shadowManager.m_numKilledUnit >= 90)
+			{
+				PlaySingleVO("msg_hint", "hint_bos04_e03_mf");
+			}
+			else if (m_shadowManager.m_numKilledUnit >= 60)
+			{
+				PlaySingleVO("msg_hint", "hint_bos04_a00_sd");
+			}
+			else if (m_shadowManager.m_numKilledUnit >= 30)
+			{
+				PlaySingleVO("msg_hint", "hint_bos04_e02_mf");
+			}
+
+			ChangeState(HideCommand);
+			m_stateStage++;
+		}
+		break;
+	}
+	case 1:
+	case 3:
+	{
+		if (GetCurrentState()->GetStateName() == HideLoop)
+		{
+			m_stateTime = 0.0f;
+			if (m_shadowManager.m_numUnit < 100 || m_stateStage == 3)
+			{
+				// too few shadows
+				m_shadowManager.SpawnEncirclement(50, (m_stateStage == 3) ? 25.0f : 20.0f);
+				m_stateStage++;
+			}
+			else
+			{
+				float constexpr MinAppearRadius = 5.0f;
+				float constexpr MaxAppearRadius = 7.5f;
+				float const radius = RAND_FLOAT(MinAppearRadius, MaxAppearRadius);
+				if (m_shadowManager.m_numKilledUnit >= 90)
+				{
+					m_shadowManager.SpawnSpring(50, radius, 1.0f, 2.0f);
+				}
+				else if (m_shadowManager.m_numKilledUnit >= 60)
+				{
+					m_shadowManager.SpawnSpring(40, radius, 1.5f, 1.5f);
+				}
+				else if (m_shadowManager.m_numKilledUnit >= 30)
+				{
+					m_shadowManager.SpawnSpring(30, radius, 2.0f, 1.0f);
+				}
+				else
+				{
+					m_shadowManager.SpawnSpring(20, radius, 2.5f, 0.5f);
+				}
+				m_stateStage = 5;
+			}
+		}
+		break;
+	}
+	case 2:
+	case 4:
+	{
+		if (m_stateTime >= 1.5f)
+		{
+			if (m_stateStage == 4)
+			{
+				// restart state
+				m_stateTime = 0.0f;
+				m_stateStage = 0;
+			}
+			else
+			{
+				// spawn more encirclement shadows
+				ChangeState(HideCommand);
+				m_stateStage++;
+			}
+		}
+		break;
+	}
+	case 5:
+	{
+		if (m_stateTime >= 8.0f)
+		{
+			// restart state
+			m_stateTime = 0.0f;
+			m_stateStage = 0;
+		}
+		break;
+	}
+	}
+
 	FollowPlayer();
 }
 
@@ -467,9 +560,13 @@ void Mephiles::FollowPlayer()
 //---------------------------------------------------
 // Shadow Manager
 //---------------------------------------------------
-void Mephiles::ShadowManager::DoCommand(bool isAttack, int count, float radius)
+void Mephiles::ShadowManager::SpawnEncirclement(int count, float radius)
 {
 
+}
+
+void Mephiles::ShadowManager::SpawnSpring(int count, float radius, float attackStartTime, float maxDelay)
+{
 }
 
 void Mephiles::ShadowManager::Advance(float dt)

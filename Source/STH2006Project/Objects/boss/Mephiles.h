@@ -97,10 +97,11 @@ private:
 	// Mephiles shadow manager
 	struct ShadowManager
 	{
+		int m_numUnit = 0;
 		int m_numKilledUnit = 0;
-		bool m_spawnAttack = false;
 
-		void DoCommand(bool isAttack, int count, float radius);
+		void SpawnEncirclement(int count, float radius);
+		void SpawnSpring(int count, float radius, float attackStartTime, float maxDelay);
 		void Advance(float dt);
 	} m_shadowManager;
 };
