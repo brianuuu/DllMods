@@ -410,7 +410,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
             else
             {
                 hh::math::CVector currentPosition = context->m_spMatrixNode->m_Transform.m_Position;
-                currentPosition.y() -= 0.5f;
+                currentPosition.y() += 0.5f;
 
                 // set velocity for MsgDamage reference
                 hh::math::CVector direction = (context->m_HomingAttackPosition - currentPosition).normalized();
@@ -418,7 +418,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
                 Common::SonicContextUpdateRotationToVelocity(context, &context->m_Velocity, true);
 
                 // teleport
-                hh::math::CVector targetPosition = context->m_HomingAttackPosition - direction * 1.0f;
+                hh::math::CVector targetPosition = context->m_HomingAttackPosition - hh::math::CVector::UnitY() * 0.5f - direction * 2.0f;
                 Common::SetPlayerPosition(targetPosition);
             }
         }
