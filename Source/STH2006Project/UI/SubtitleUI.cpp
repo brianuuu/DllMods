@@ -2,6 +2,7 @@
 
 #include "Configuration.h"
 #include "Managers/MissionManager.h"
+#include "Managers/MstManager.h"
 #include "System/Application.h"
 #include "UI/UIContext.h"
 
@@ -19,6 +20,11 @@ HOOK(int, __fastcall, SubtitleUI_MsgRestartStage, 0xE76810, uint32_t* This, void
 void SubtitleUI::applyPatches()
 {
     INSTALL_HOOK(SubtitleUI_MsgRestartStage);
+}
+
+float SubtitleUI::addSubtitle(std::string const& name, std::string const& id)
+{
+    return addSubtitle(MstManager::GetSubtitle(name, id));
 }
 
 float SubtitleUI::addSubtitle(mst::TextEntry const& entry, std::vector<float> const& durationOverrides)

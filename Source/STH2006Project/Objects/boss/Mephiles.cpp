@@ -137,14 +137,12 @@ void Mephiles::SetUpdateParallel
 		m_playedInitVO = true;
 		if (m_encounterCount < 3 && S06DE_API::GetModelType() == S06DE_API::ModelType::Shadow)
 		{
-			mst::TextEntry entry{};
 			switch (m_encounterCount)
 			{
-			case 0: entry = MstManager::GetSubtitle("msg_hint", "hint_bos04_e00_sd"); break;
-			case 1: entry = MstManager::GetSubtitle("msg_hint_xenon", "hint_bos04_a08_sd"); break;
-			case 2: entry = MstManager::GetSubtitle("msg_hint", "hint_bos04_a02_sd"); break;
+			case 0: SubtitleUI::addSubtitle("msg_hint", "hint_bos04_e00_sd"); break;
+			case 1: SubtitleUI::addSubtitle("msg_hint_xenon", "hint_bos04_a08_sd"); break;
+			case 2: SubtitleUI::addSubtitle("msg_hint", "hint_bos04_a02_sd"); break;
 			}
-			SubtitleUI::addSubtitle(entry);
 		}
 		m_encounterCount++;
 	}
@@ -282,8 +280,7 @@ void Mephiles::StateHideAdvance(float dt)
 {
 	if (S06DE_API::GetChaosBoostLevel() > 0)
 	{
-		mst::TextEntry const entry = MstManager::GetSubtitle("msg_hint", m_hasEjected ? "hint_bos04_e12_mf" : "hint_bos04_e06_mf");
-		SubtitleUI::addSubtitle(entry);
+		SubtitleUI::addSubtitle("msg_hint", m_hasEjected ? "hint_bos04_e12_mf" : "hint_bos04_e06_mf");
 
 		m_stateNext = State::Ejected;
 		m_hasEjected = true;

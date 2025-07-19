@@ -120,6 +120,7 @@ public:
 	static bool isPlayingCaption() { return !m_captionData.m_captions.empty(); }
 
 	static void addCaption(std::vector<std::string> const& captions, std::string const& speaker = "", int acceptDialogSize = -1, int rejectDialogSize = -1);
+	static float addSubtitle(std::string const& name, std::string const& id);
 	static float addSubtitle(mst::TextEntry const& entry, std::vector<float> const& durationOverrides = {});
 	static SubtitleButtonType getButtonTypeFromTag(std::string const& tag);
 
