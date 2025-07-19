@@ -344,7 +344,7 @@ void Mephiles::CreateShield(uint32_t otherActor) const
 	}
 
 	bool const isPlayer = SendMessageImm(otherActor, Sonic::Message::MsgGetPlayerType());
-	hh::math::CVector const bodyCenter = m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector::UnitY() * 0.5f;
+	hh::math::CVector const bodyCenter = m_spModel->GetNode("Hips")->GetWorldMatrix().translation();
 
 	hh::math::CVector dir = hh::math::CVector::UnitZ();
 	if (isPlayer)
