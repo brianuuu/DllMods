@@ -31,7 +31,11 @@ private:
 		Eject,
 	};
 
+	// animation states
 	static char const* HideLoop;
+	static char const* HideCommand;
+	static char const* Suffer;
+	static char const* Wait;
 
 private:
 	State m_state = State::Appear;

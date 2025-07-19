@@ -38,6 +38,9 @@ void Mephiles::InitializeEditParam
 }
 
 char const* Mephiles::HideLoop = "HideLoop";
+char const* Mephiles::HideCommand = "HideCommand";
+char const* Mephiles::Suffer = "Suffer";
+char const* Mephiles::Wait = "Wait";
 
 bool Mephiles::SetAddRenderables
 (
@@ -58,13 +61,33 @@ bool Mephiles::SetAddRenderables
 	m_spAnimPose = boost::make_shared<Hedgehog::Animation::CAnimationPose>(in_spDatabase, modelName);
 	std::vector<hh::anim::SMotionInfo> entries = std::vector<hh::anim::SMotionInfo>(0, { "","" });
 	entries.push_back(hh::anim::SMotionInfo(HideLoop, "en_shwait_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_Loop));
+	entries.push_back(hh::anim::SMotionInfo(HideCommand, "en_shcommand_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
+	entries.push_back(hh::anim::SMotionInfo(Suffer, "en_suffer_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
+	entries.push_back(hh::anim::SMotionInfo(Wait, "en_wait_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_Loop));
 	m_spAnimPose->AddMotionInfo(&entries.front(), entries.size());
 	m_spAnimPose->CreateAnimationCache();
 	m_spModel->BindPose(m_spAnimPose);
 
+	auto fnAddAnimationState = [this](hh::base::CSharedString name, hh::base::CSharedString target = "")
+	{
+		auto state = AddAnimationState(name);
+		if (!target.empty())
+		{
+			state->m_TransitionState = target;
+			state->m_Field8C = -1.0f;
+			state->m_Field90 = 1;
+		}
+	};
+
 	// states
 	SetContext(this);
-	AddAnimationState(HideLoop);
+	fnAddAnimationState(HideLoop);
+	fnAddAnimationState(HideCommand, HideLoop);
+	fnAddAnimationState(Wait);
+	fnAddAnimationState(Suffer, Wait);
+	SetAnimationBlend(HideLoop, HideCommand, 0.5f);
+	SetAnimationBlend(HideCommand, HideLoop, 0.5f);
+	SetAnimationBlend(Suffer, Wait, 0.5f);
 	ChangeState(HideLoop);
 
 	SetCullingRange(0.0f);
