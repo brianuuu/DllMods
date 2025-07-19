@@ -26,17 +26,23 @@ private:
 
 	enum class State
 	{
-		Init,
+		Appear,
 		Hide,
-		Ejected,
+		Eject,
 	};
 
+	static char const* HideLoop;
+
 private:
-	State m_state = State::Init;
-	State m_stateNext = State::Hide;
+	State m_state = State::Appear;
+	State m_stateNext = State::Appear;
+	int m_stateStage = 0;
+	float m_stateTime = 0.0f;
+
 	hh::math::CQuaternion m_hideRotation = hh::math::CQuaternion::Identity();
 
 	int m_HP = 10;
+	bool m_isHidden = false;
 	bool m_playedInitVO = false;
 	bool m_hasEjected = false;
 
@@ -61,16 +67,22 @@ public:
 private:
 	void HandleStateChange();
 
-	// State::Init
-	void StateInitEnd();
+	// State::Appear
+	void StateAppearBegin();
+	void StateAppearAdvance(float dt);
 
 	// State::Hide
 	void StateHideBegin();
 	void StateHideAdvance(float dt);
-	void StateHideEnd();
+
+	// State::Eject
+	void StateEjectBegin();
 
 	// Utils
 	bool CanLock() const;
 	bool CanDamage() const;
 	void CreateShield(uint32_t otherActor) const;
+
+	void SetHidden(bool hidden);
+	void FollowPlayer();
 };

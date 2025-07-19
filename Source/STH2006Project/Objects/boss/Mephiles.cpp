@@ -37,6 +37,8 @@ void Mephiles::InitializeEditParam
 	in_rEditParam.CreateParamBase(Sonic::CParamPosition::Create(&m_Data.m_SunDirection), "SunDirection");
 }
 
+char const* Mephiles::HideLoop = "HideLoop";
+
 bool Mephiles::SetAddRenderables
 (
 	Sonic::CGameDocument* in_pGameDocument, 
@@ -55,15 +57,15 @@ bool Mephiles::SetAddRenderables
 	// animations
 	m_spAnimPose = boost::make_shared<Hedgehog::Animation::CAnimationPose>(in_spDatabase, modelName);
 	std::vector<hh::anim::SMotionInfo> entries = std::vector<hh::anim::SMotionInfo>(0, { "","" });
-	entries.push_back(hh::anim::SMotionInfo("Loop", "en_shwait_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_Loop));
+	entries.push_back(hh::anim::SMotionInfo(HideLoop, "en_shwait_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_Loop));
 	m_spAnimPose->AddMotionInfo(&entries.front(), entries.size());
 	m_spAnimPose->CreateAnimationCache();
 	m_spModel->BindPose(m_spAnimPose);
 
 	// states
 	SetContext(this);
-	AddAnimationState("Loop");
-	ChangeState("Loop");
+	AddAnimationState(HideLoop);
+	ChangeState(HideLoop);
 
 	SetCullingRange(0.0f);
 
@@ -111,6 +113,8 @@ void Mephiles::AddCallback
 		faceDirection.normalize();
 		m_hideRotation = hh::math::CQuaternion::FromTwoVectors(hh::math::CVector::UnitZ(), faceDirection.head<3>());
 	}
+
+	StateAppearBegin();
 }
 
 void Mephiles::SetUpdateParallel
@@ -120,9 +124,11 @@ void Mephiles::SetUpdateParallel
 {
 	switch (m_state)
 	{
+	case State::Appear: StateAppearAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::Hide: StateHideAdvance(in_rUpdateInfo.DeltaTime); break;
 	}
 
+	m_stateTime += in_rUpdateInfo.DeltaTime;
 	if (m_stateNext != m_state)
 	{
 		HandleStateChange();
@@ -130,22 +136,6 @@ void Mephiles::SetUpdateParallel
 
 	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
 	Update(in_rUpdateInfo);
-
-	// initial VO
-	if (!m_playedInitVO && !LoadingUI::IsEnabled())
-	{
-		m_playedInitVO = true;
-		if (m_encounterCount < 3 && S06DE_API::GetModelType() == S06DE_API::ModelType::Shadow)
-		{
-			switch (m_encounterCount)
-			{
-			case 0: SubtitleUI::addSubtitle("msg_hint", "hint_bos04_e00_sd"); break;
-			case 1: SubtitleUI::addSubtitle("msg_hint_xenon", "hint_bos04_a08_sd"); break;
-			case 2: SubtitleUI::addSubtitle("msg_hint", "hint_bos04_a02_sd"); break;
-			}
-		}
-		m_encounterCount++;
-	}
 }
 
 bool Mephiles::ProcessMessage
@@ -233,28 +223,81 @@ void Mephiles::HandleStateChange()
 	// end current state
 	switch (m_state)
 	{
-	case State::Init: StateInitEnd(); break;
-	case State::Hide: StateHideEnd(); break;
 	}
 
 	// start next state
 	switch (m_stateNext)
 	{
 	case State::Hide: StateHideBegin(); break;
+	case State::Eject: StateEjectBegin(); break;
 	}
 
 	m_state = m_stateNext;
+	m_stateStage = 0;
+	m_stateTime = 0.0f;
 }
 
 //---------------------------------------------------
-// State::Init
+// State::Appear
 //---------------------------------------------------
-void Mephiles::StateInitEnd()
+void Mephiles::StateAppearBegin()
 {
+	SetHidden(true);
+
 	// Remove shadow from player
 	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	auto& bundle = m_pMember->m_pWorld->m_pMember->m_BundlePairMap;
 	bundle.at("SMO")->m_pBundle->RemoveRenderable(context->m_pPlayer->m_spCharacterModel);
+}
+
+void Mephiles::StateAppearAdvance(float dt)
+{
+	switch (m_stateStage)
+	{
+	case 0:
+	{
+		// TODO: spawn shadows
+		m_stateStage++;
+		break;
+	}
+	case 1:
+	{
+		// wait for shadow spawn to finish
+		if (GetCurrentState()->GetStateName() == HideLoop)
+		{
+			m_stateTime = 0.0f;
+			m_stateStage++;
+		}
+		break;
+	}
+	case 2:
+	{
+		// WaitFixed(1.5)
+		if (m_stateTime >= 1.5f)
+		{
+			m_stateNext = State::Hide;
+		}
+		break;
+	}
+	}
+
+	// initial VO
+	if (!m_playedInitVO && !LoadingUI::IsEnabled())
+	{
+		m_playedInitVO = true;
+		if (m_encounterCount < 3 && S06DE_API::GetModelType() == S06DE_API::ModelType::Shadow)
+		{
+			switch (m_encounterCount)
+			{
+			case 0: SubtitleUI::addSubtitle("msg_hint", "hint_bos04_e00_sd"); break;
+			case 1: SubtitleUI::addSubtitle("msg_hint_xenon", "hint_bos04_a08_sd"); break;
+			case 2: SubtitleUI::addSubtitle("msg_hint", "hint_bos04_a02_sd"); break;
+			}
+		}
+		m_encounterCount++;
+	}
+
+	FollowPlayer();
 }
 
 //---------------------------------------------------
@@ -262,48 +305,21 @@ void Mephiles::StateInitEnd()
 //---------------------------------------------------
 void Mephiles::StateHideBegin()
 {
-	// remove model but keep shadow map
-	auto& bundle = m_pMember->m_pWorld->m_pMember->m_BundlePairMap;
-	bundle.at("Object")->m_pBundle->RemoveRenderable(m_spModel);
-	m_spAnimPose->m_Scale = 3.0f;
-
-	// face towards Sun
-	m_spMatrixNodeTransform->m_Transform.SetRotation(m_hideRotation);
-	m_spMatrixNodeTransform->NotifyChanged();
-
-	// disable collision
-	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Body", false);
-	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Damage", false);
+	SetHidden(true);
 }
 
 void Mephiles::StateHideAdvance(float dt)
 {
-	if (S06DE_API::GetChaosBoostLevel() > 0)
-	{
-		SubtitleUI::addSubtitle("msg_hint", m_hasEjected ? "hint_bos04_e12_mf" : "hint_bos04_e06_mf");
-
-		m_stateNext = State::Ejected;
-		m_hasEjected = true;
-		return;
-	}
-
-	// follow player's horizontal position
-	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-	hh::math::CVector pos = context->m_spMatrixNode->m_Transform.m_Position;
-	pos.y() = m_Data.m_GroundHeight;
-	m_spMatrixNodeTransform->m_Transform.SetPosition(pos);
-	m_spMatrixNodeTransform->NotifyChanged();
+	FollowPlayer();
 }
 
-void Mephiles::StateHideEnd()
-{
-	// add model rendering back
-	Sonic::CGameObject::AddRenderable("Object", m_spModel, false);
-	m_spAnimPose->m_Scale = 1.0f;
+//---------------------------------------------------
+// State::Eject
+//---------------------------------------------------
 
-	// re-enable collision
-	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Body", true);
-	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Damage", true);
+void Mephiles::StateEjectBegin()
+{
+	SetHidden(false);
 }
 
 //---------------------------------------------------
@@ -358,4 +374,56 @@ void Mephiles::CreateShield(uint32_t otherActor) const
 
 	startTrans.m_Position = bodyCenter + dir * 0.75f;
 	m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<EnemyShield>(startTrans, true));
+}
+
+void Mephiles::SetHidden(bool hidden)
+{
+	if (hidden && !m_isHidden)
+	{
+		// remove model but keep shadow map
+		auto& bundle = m_pMember->m_pWorld->m_pMember->m_BundlePairMap;
+		bundle.at("Object")->m_pBundle->RemoveRenderable(m_spModel);
+		m_spAnimPose->m_Scale = 3.0f;
+
+		// face towards Sun
+		m_spMatrixNodeTransform->m_Transform.SetRotation(m_hideRotation);
+		m_spMatrixNodeTransform->NotifyChanged();
+
+		// disable collision
+		Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Body", false);
+		Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Damage", false);
+
+		m_isHidden = true;
+	}
+	else if (!hidden && m_isHidden)
+	{
+		// add model rendering back
+		Sonic::CGameObject::AddRenderable("Object", m_spModel, false);
+		m_spAnimPose->m_Scale = 1.0f;
+
+		// re-enable collision
+		Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Body", true);
+		Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Damage", true);
+
+		m_isHidden = false;
+	}
+}
+
+void Mephiles::FollowPlayer()
+{
+	if (S06DE_API::GetChaosBoostLevel() > 0)
+	{
+		SubtitleUI::addSubtitle("msg_hint", m_hasEjected ? "hint_bos04_e12_mf" : "hint_bos04_e06_mf");
+
+		m_stateNext = State::Eject;
+		m_hasEjected = true;
+		return;
+	}
+
+	// follow player's horizontal position
+	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	hh::math::CVector pos = context->m_spMatrixNode->m_Transform.m_Position;
+	pos.y() = m_Data.m_GroundHeight;
+	m_spMatrixNodeTransform->m_Transform.SetPosition(pos);
+	m_spMatrixNodeTransform->NotifyChanged();
 }
