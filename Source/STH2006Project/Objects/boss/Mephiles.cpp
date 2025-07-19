@@ -171,9 +171,10 @@ bool Mephiles::ProcessMessage
 		if (message.Is<Sonic::Message::MsgDamage>())
 		{
 			// put player at fixed distance from Mephiles
-			hh::math::CVector otherPos = m_spMatrixNodeTransform->m_Transform.m_Position;
+			hh::math::CVector const bodyBase = m_spModel->GetNode("Hips")->GetWorldMatrix().translation() - hh::math::CVector::UnitY() * 0.5f;
+			hh::math::CVector otherPos = bodyBase;
 			SendMessageImm(message.m_SenderActorID, Sonic::Message::MsgGetPosition(otherPos));
-			otherPos = m_spMatrixNodeTransform->m_Transform.m_Position + (otherPos - m_spMatrixNodeTransform->m_Transform.m_Position).normalized() * (S06DE_API::GetChaosBoostLevel() > 0 ? 2.0f : 1.5f);
+			otherPos = bodyBase + (otherPos - bodyBase).normalized() * 1.2f;
 			SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(otherPos, true));
 
 			if (CanDamage())
@@ -208,7 +209,7 @@ bool Mephiles::ProcessMessage
 				SendMessage(msg.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
 					(
 						*(uint32_t*)0x1E0BE34, // DamageID_NoAttack
-						m_spMatrixNodeTransform->m_Transform.m_Position,
+						m_spModel->GetNode("Hips")->GetWorldMatrix().translation(),
 						hh::math::CVector::Zero()
 					)
 				);
@@ -498,7 +499,7 @@ void Mephiles::CreateShield(uint32_t otherActor) const
 		startTrans.m_Rotation = hh::math::CQuaternion::FromTwoVectors(hh::math::CVector::UnitZ(), dir.head<3>());
 	}
 
-	startTrans.m_Position = bodyCenter + dir * 0.75f;
+	startTrans.m_Position = bodyCenter + dir * 0.7f;
 	m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<EnemyShield>(startTrans, true));
 }
 
