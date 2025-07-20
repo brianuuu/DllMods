@@ -968,7 +968,6 @@ private:
     bool m_IsDamage = false;
     bool m_IsSuper = false;
     bool m_IsEnemy = false;
-    bool m_MarkAsDeath = false;
 
     boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
 
@@ -1057,7 +1056,17 @@ public:
 
     void KillCallback() override
     {
-        RemoveEffect();
+        if (m_pfxSpearID)
+        {
+            m_pGlitterPlayer->StopByID(m_pfxSpearID, true);
+            m_pfxSpearID = 0u;
+        }
+
+        if (m_pfxTailID)
+        {
+            m_pGlitterPlayer->StopByID(m_pfxTailID, false);
+            m_pfxTailID = 0u;
+        }
     }
 
     bool ProcessMessage
@@ -1090,49 +1099,46 @@ public:
         const Hedgehog::Universe::SUpdateInfo& updateInfo
     ) override
     {
-        if (!m_MarkAsDeath)
+        hh::math::CVector newDirection = hh::math::CVector::Zero();
+        if (m_TargetID)
         {
-            hh::math::CVector newDirection = hh::math::CVector::Zero();
-            if (m_TargetID)
+            // get current target position
+            hh::math::CVector targetPosition = hh::math::CVector::Zero();
+            SendMessageImm(m_TargetID, boost::make_shared<Sonic::Message::MsgGetPosition>(&targetPosition));
+            if (!targetPosition.isZero())
             {
-                // get current target position
-                hh::math::CVector targetPosition = hh::math::CVector::Zero();
-                SendMessageImm(m_TargetID, boost::make_shared<Sonic::Message::MsgGetPosition>(&targetPosition));
-                if (!targetPosition.isZero())
-                {
-                    SendMessageImm(m_TargetID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
-                    newDirection = (targetPosition - m_Position).normalized();
+                SendMessageImm(m_TargetID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
+                newDirection = (targetPosition - m_Position).normalized();
 
-                    // getting close enough to target, hit anyway if it's not enemy
-                    if (!m_IsEnemy && (targetPosition - m_Position).norm() <= m_Speed * updateInfo.DeltaTime)
-                    {
-                        HitTarget(m_TargetID);
-                        return;
-                    }
+                // getting close enough to target, hit anyway if it's not enemy
+                if (!m_IsEnemy && (targetPosition - m_Position).norm() <= m_Speed * updateInfo.DeltaTime)
+                {
+                    HitTarget(m_TargetID);
+                    return;
                 }
             }
-
-            if (!newDirection.isZero())
-            {
-                hh::math::CVector oldDirection = m_Velocity.normalized();
-                float dot = oldDirection.dot(newDirection);
-                Common::ClampFloat(dot, -1.0f, 1.0f);
-
-                float const angle = acos(dot);
-                float const maxAngle = updateInfo.DeltaTime * (m_IsSuper ? cShadow_chaosSpearSuperTurnRate : cShadow_chaosSpearTurnRate);
-                if (angle > maxAngle)
-                {
-                    hh::math::CVector cross = oldDirection.cross(newDirection).normalized();
-                    Eigen::AngleAxisf rot(maxAngle, cross);
-                    newDirection = rot * oldDirection;
-                }
-
-                m_Velocity = newDirection * m_Speed;
-            }
-
-            m_Position += m_Velocity * updateInfo.DeltaTime;
-            UpdateTransform();
         }
+
+        if (!newDirection.isZero())
+        {
+            hh::math::CVector oldDirection = m_Velocity.normalized();
+            float dot = oldDirection.dot(newDirection);
+            Common::ClampFloat(dot, -1.0f, 1.0f);
+
+            float const angle = acos(dot);
+            float const maxAngle = updateInfo.DeltaTime * (m_IsSuper ? cShadow_chaosSpearSuperTurnRate : cShadow_chaosSpearTurnRate);
+            if (angle > maxAngle)
+            {
+                hh::math::CVector cross = oldDirection.cross(newDirection).normalized();
+                Eigen::AngleAxisf rot(maxAngle, cross);
+                newDirection = rot * oldDirection;
+            }
+
+            m_Velocity = newDirection * m_Speed;
+        }
+
+        m_Position += m_Velocity * updateInfo.DeltaTime;
+        UpdateTransform();
 
         // time out
         m_LifeTime += updateInfo.DeltaTime;
@@ -1193,23 +1199,7 @@ public:
             );
         }
 
-        RemoveEffect();
-        m_MarkAsDeath = true;
-    }
-
-    void RemoveEffect()
-    {
-        if (m_pfxSpearID)
-        {
-            m_pGlitterPlayer->StopByID(m_pfxSpearID, true);
-            m_pfxSpearID = 0u;
-        }
-
-        if (m_pfxTailID)
-        {
-            m_pGlitterPlayer->StopByID(m_pfxTailID, false);
-            m_pfxTailID = 0u;
-        }
+        Kill();
     }
 };
 
