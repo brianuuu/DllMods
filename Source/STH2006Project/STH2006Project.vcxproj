@@ -252,6 +252,7 @@
     </ClCompile>
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DllMain.cpp" />
+    <ClCompile Include="Objects\boss\MephilesShadow.cpp" />
     <ClCompile Include="Objects\enemy\EnemyShield.cpp" />
     <ClCompile Include="Objects\boss\Mephiles.cpp" />
     <ClCompile Include="Objects\vehicles\GadgetGun.cpp" />
@@ -312,6 +313,7 @@
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="DllMain.h" />
+    <ClInclude Include="Objects\boss\MephilesShadow.h" />
     <ClInclude Include="Objects\enemy\EnemyShield.h" />
     <ClInclude Include="Objects\boss\Mephiles.h" />
     <ClInclude Include="Objects\vehicles\GadgetGun.h" />

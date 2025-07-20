@@ -3,6 +3,7 @@
 ///	Year: 2025
 ///	Description: Mephiles boss from 06
 /*----------------------------------------------------------*/
+#include "Objects/boss/MephilesShadow.h"
 
 #pragma once
 class Mephiles : public Sonic::CObjectBase, public Sonic::CSetObjectListener
@@ -85,6 +86,7 @@ private:
 	void StateEjectBegin();
 
 	// Utils
+	hh::math::CVector GetBodyPosition() const;
 	bool CanLock() const;
 	bool CanDamage() const;
 	void CreateShield(uint32_t otherActor) const;
@@ -94,14 +96,30 @@ private:
 	void FollowPlayer();
 
 private:
-	// Mephiles shadow manager
-	struct ShadowManager
-	{
-		int m_numUnit = 0;
-		int m_numKilledUnit = 0;
+	// Mephiles shadow
+	std::vector<boost::shared_ptr<MephilesShadow>> m_shadows;
+	int m_numKilledUnit = 0;
 
-		void SpawnEncirclement(int count, float radius);
-		void SpawnSpring(int count, float radius, float attackStartTime, float maxDelay);
-		void Advance(float dt);
-	} m_shadowManager;
+	// spawn param
+	int m_maxSpawnCount = 0;
+	int m_spawnCount = 0;
+	float m_spawnTimer = 0.0f;
+	float m_spawnRadius = 5.0f;
+	MephilesShadow::Type m_spawnType = MephilesShadow::Type::Encirclement;
+
+	// parameters
+	float c_DodgeSpeed = 0.5f;
+	float c_ApproachSpeed = 6.0f;
+	float c_EscapeSpeed = 6.0f;
+	float c_MinEncirclementRadius = 8.0f;
+	float c_MaxEncirclementRadius = 16.0f;
+	float c_TargetLostDistance = 20.0f;
+	float const c_MinEncirclementHeight = 0.75f;
+	float const c_MaxEncirclementHeight = 3.5f;
+
+	void SpawnEncirclement(int count, float radius);
+	void SpawnSpring(int count, float radius, float attackStartTime, float maxDelay);
+	void AdvanceSpawnShadow(float dt);
+
+	hh::math::CVector GetShadowSpawnPosition() const;
 };

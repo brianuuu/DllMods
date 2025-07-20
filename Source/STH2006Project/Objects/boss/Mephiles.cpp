@@ -159,6 +159,8 @@ void Mephiles::SetUpdateParallel
 
 	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
 	Update(in_rUpdateInfo);
+
+	AdvanceSpawnShadow(in_rUpdateInfo.DeltaTime);
 }
 
 bool Mephiles::ProcessMessage
@@ -171,7 +173,7 @@ bool Mephiles::ProcessMessage
 		if (message.Is<Sonic::Message::MsgDamage>())
 		{
 			// put player at fixed distance from Mephiles
-			hh::math::CVector const bodyBase = m_spModel->GetNode("Hips")->GetWorldMatrix().translation() - hh::math::CVector::UnitY() * 0.5f;
+			hh::math::CVector const bodyBase = GetBodyPosition() - hh::math::CVector::UnitY() * 0.5f;
 			hh::math::CVector otherPos = bodyBase;
 			SendMessageImm(message.m_SenderActorID, Sonic::Message::MsgGetPosition(otherPos));
 			otherPos = bodyBase + (otherPos - bodyBase).normalized() * 1.2f;
@@ -209,7 +211,7 @@ bool Mephiles::ProcessMessage
 				SendMessage(msg.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
 					(
 						*(uint32_t*)0x1E0BE34, // DamageID_NoAttack
-						m_spModel->GetNode("Hips")->GetWorldMatrix().translation(),
+						GetBodyPosition(),
 						hh::math::CVector::Zero()
 					)
 				);
@@ -234,7 +236,7 @@ bool Mephiles::ProcessMessage
 		if (message.Is<Sonic::Message::MsgGetHomingAttackPosition>() && CanLock())
 		{
 			auto& msg = static_cast<Sonic::Message::MsgGetHomingAttackPosition&>(message);
-			*msg.m_pPosition = m_spModel->GetNode("Hips")->GetWorldMatrix().translation();
+			*msg.m_pPosition = GetBodyPosition();
 			return true;
 		}
 	}
@@ -292,7 +294,7 @@ void Mephiles::StateAppearAdvance(float dt)
 		// wait for shadow spawn to finish
 		if (GetCurrentState()->GetStateName() == HideLoop)
 		{
-			m_shadowManager.SpawnEncirclement(200, 15.0f);
+			SpawnEncirclement(200, 15.0f);
 			m_stateTime = 0.0f;
 			m_stateStage++;
 		}
@@ -343,15 +345,15 @@ void Mephiles::StateHideAdvance(float dt)
 	{
 		if (m_stateTime >= 1.5f)
 		{
-			if (m_shadowManager.m_numKilledUnit >= 90)
+			if (m_numKilledUnit >= 90)
 			{
 				PlaySingleVO("msg_hint", "hint_bos04_e03_mf");
 			}
-			else if (m_shadowManager.m_numKilledUnit >= 60)
+			else if (m_numKilledUnit >= 60)
 			{
 				PlaySingleVO("msg_hint", "hint_bos04_a00_sd");
 			}
-			else if (m_shadowManager.m_numKilledUnit >= 30)
+			else if (m_numKilledUnit >= 30)
 			{
 				PlaySingleVO("msg_hint", "hint_bos04_e02_mf");
 			}
@@ -367,10 +369,10 @@ void Mephiles::StateHideAdvance(float dt)
 		if (GetCurrentState()->GetStateName() == HideLoop)
 		{
 			m_stateTime = 0.0f;
-			if (m_shadowManager.m_numUnit < 100 || m_stateStage == 3)
+			if (m_shadows.size() < 100 || m_stateStage == 3)
 			{
 				// too few shadows
-				m_shadowManager.SpawnEncirclement(50, (m_stateStage == 3) ? 25.0f : 20.0f);
+				SpawnEncirclement(50, (m_stateStage == 3) ? 25.0f : 20.0f);
 				m_stateStage++;
 			}
 			else
@@ -378,21 +380,21 @@ void Mephiles::StateHideAdvance(float dt)
 				float constexpr MinAppearRadius = 5.0f;
 				float constexpr MaxAppearRadius = 7.5f;
 				float const radius = RAND_FLOAT(MinAppearRadius, MaxAppearRadius);
-				if (m_shadowManager.m_numKilledUnit >= 90)
+				if (m_numKilledUnit >= 90)
 				{
-					m_shadowManager.SpawnSpring(50, radius, 1.0f, 2.0f);
+					SpawnSpring(50, radius, 1.0f, 2.0f);
 				}
-				else if (m_shadowManager.m_numKilledUnit >= 60)
+				else if (m_numKilledUnit >= 60)
 				{
-					m_shadowManager.SpawnSpring(40, radius, 1.5f, 1.5f);
+					SpawnSpring(40, radius, 1.5f, 1.5f);
 				}
-				else if (m_shadowManager.m_numKilledUnit >= 30)
+				else if (m_numKilledUnit >= 30)
 				{
-					m_shadowManager.SpawnSpring(30, radius, 2.0f, 1.0f);
+					SpawnSpring(30, radius, 2.0f, 1.0f);
 				}
 				else
 				{
-					m_shadowManager.SpawnSpring(20, radius, 2.5f, 0.5f);
+					SpawnSpring(20, radius, 2.5f, 0.5f);
 				}
 				m_stateStage = 5;
 			}
@@ -437,7 +439,6 @@ void Mephiles::StateHideAdvance(float dt)
 //---------------------------------------------------
 // State::Eject
 //---------------------------------------------------
-
 void Mephiles::StateEjectBegin()
 {
 	ChangeState(Suffer);
@@ -452,6 +453,11 @@ void Mephiles::StateEjectBegin()
 //---------------------------------------------------
 // Utils
 //---------------------------------------------------
+hh::math::CVector Mephiles::GetBodyPosition() const
+{
+	return m_spModel->GetNode("Hips")->GetWorldMatrix().translation();
+}
+
 bool Mephiles::CanLock() const
 {
 	return m_state != State::Hide;
@@ -471,7 +477,7 @@ void Mephiles::CreateShield(uint32_t otherActor) const
 	}
 
 	bool const isPlayer = SendMessageImm(otherActor, Sonic::Message::MsgGetPlayerType());
-	hh::math::CVector const bodyCenter = m_spModel->GetNode("Hips")->GetWorldMatrix().translation();
+	hh::math::CVector const bodyCenter = GetBodyPosition();
 
 	hh::math::CVector dir = hh::math::CVector::UnitZ();
 	if (isPlayer)
@@ -564,18 +570,59 @@ void Mephiles::FollowPlayer()
 }
 
 //---------------------------------------------------
-// Shadow Manager
+// Shadow Management
 //---------------------------------------------------
-void Mephiles::ShadowManager::SpawnEncirclement(int count, float radius)
+void Mephiles::SpawnEncirclement(int count, float radius)
 {
-
+	m_maxSpawnCount = count;
+	m_spawnCount = 0;
+	m_spawnTimer = 0.0f;
+	m_spawnRadius = radius;
+	m_spawnType = MephilesShadow::Type::Encirclement;
 }
 
-void Mephiles::ShadowManager::SpawnSpring(int count, float radius, float attackStartTime, float maxDelay)
+void Mephiles::SpawnSpring(int count, float radius, float attackStartTime, float maxDelay)
 {
 }
 
-void Mephiles::ShadowManager::Advance(float dt)
+void Mephiles::AdvanceSpawnShadow(float dt)
 {
+	if (m_spawnCount >= m_maxSpawnCount) return;
 
+	float constexpr spawnRate = 1.0f / 120.0f;
+	m_spawnTimer += dt;
+	if (m_spawnTimer >= spawnRate)
+	{
+		// TODO: max units
+		while (m_spawnCount < m_maxSpawnCount && m_spawnTimer >= spawnRate)
+		{
+			auto spShadow = boost::make_shared<MephilesShadow>(m_ActorID, m_spawnType, GetShadowSpawnPosition());
+			m_pMember->m_pGameDocument->AddGameObject(spShadow);
+			m_shadows.push_back(spShadow);
+			
+			m_spawnCount++;
+			m_spawnTimer -= spawnRate;
+		}
+	}
+}
+
+hh::math::CVector Mephiles::GetShadowSpawnPosition() const
+{
+	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	hh::math::CVector const playerPos = context->m_spMatrixNode->m_Transform.m_Position;
+
+	switch (m_spawnType)
+	{
+	case MephilesShadow::Type::Encirclement:
+	{
+		float const radius = m_spawnRadius + RAND_FLOAT(0.0f, 15.0f);
+		float const randAngle = RAND_FLOAT(0.0f, 2.0f * PI_F);
+		hh::math::CVector const direction = Eigen::AngleAxisf(randAngle, Eigen::Vector3f::UnitY()) * hh::math::CVector::UnitZ();
+		hh::math::CVector spawnPos = playerPos + direction * radius;
+		spawnPos.y() = m_Data.m_GroundHeight + RAND_FLOAT(c_MinEncirclementHeight, c_MaxEncirclementHeight);
+		return spawnPos;
+	}
+	}
+
+	return hh::math::CVector::Zero();
 }
