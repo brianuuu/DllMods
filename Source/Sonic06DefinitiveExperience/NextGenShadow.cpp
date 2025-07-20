@@ -1530,17 +1530,14 @@ bool NextGenShadow::AirActionCheck()
 
 void NextGenShadow::AddTargetData(uint32_t actorID, float dist, uint32_t priority)
 {
-    if (m_targetData.size() < (Common::IsPlayerSuper() ? cShadow_chaosSpearSuperMaxCount : cShadow_chaosSpearMaxCount))
+    for (TargetData const& data : m_targetData)
     {
-        for (TargetData const& data : m_targetData)
+        if (data.m_actorID == actorID)
         {
-            if (data.m_actorID == actorID)
-            {
-                return;
-            }
+            return;
         }
-        m_targetData.push_back(TargetData{ actorID, dist, priority });
     }
+    m_targetData.push_back(TargetData{ actorID, dist, priority });
 }
 
 HOOK(bool, __fastcall, NextGenShadow_AirAction, 0xDFFE30, Sonic::Player::CPlayerSpeedContext* context, void* Edx, int a2)
