@@ -1187,6 +1187,7 @@ public:
             (
                 actorID, boost::make_shared<Sonic::Message::MsgNotifyShockWave>
                 (
+                    m_spMatrixNodeTransform->m_Transform.m_Position,
                     cShadow_chaosSpearShockDuration
                 )
             );
