@@ -185,20 +185,28 @@ bool Mephiles::ProcessMessage
 			}
 			else
 			{
-				CreateShield(message.m_SenderActorID);
+				if (SendMessageImm(message.m_SenderActorID, Sonic::Message::MsgGetPlayerType()))
+				{
+					CreateShield(msg.m_DamagePosition + hh::math::CVector::UnitY() * 0.5f);
+				}
+				else
+				{
+					CreateShield(msg.m_DamagePosition);
+				}
 			}
 			return true;
 		}
 		
 		if (message.Is<Sonic::Message::MsgNotifyShockWave>())
 		{
+			auto& msg = static_cast<Sonic::Message::MsgNotifyShockWave&>(message);
 			if (CanDamage())
 			{
 				// TODO:
 			}
 			else
 			{
-				CreateShield(message.m_SenderActorID);
+				CreateShield(msg.m_Position);
 			}
 			return true;
 		}
@@ -468,21 +476,11 @@ bool Mephiles::CanDamage() const
 	return false;
 }
 
-void Mephiles::CreateShield(uint32_t otherActor) const
+void Mephiles::CreateShield(hh::math::CVector const& otherPos) const
 {
 	hh::mr::CTransform startTrans{};
-	if (!otherActor || !SendMessageImm(otherActor, Sonic::Message::MsgGetPosition(startTrans.m_Position)))
-	{
-		return;
-	}
-
-	if (SendMessageImm(otherActor, Sonic::Message::MsgGetPlayerType()))
-	{
-		startTrans.m_Position += hh::math::CVector::UnitY() * 0.5f;
-	}
-
 	hh::math::CVector const bodyCenter = GetBodyPosition();
-	hh::math::CVector const dir = (startTrans.m_Position - bodyCenter).normalized();
+	hh::math::CVector const dir = (otherPos - bodyCenter).normalized();
 	if (dir.dot(hh::math::CVector::UnitY()) <= 0.95f) // not pointing up
 	{
 		hh::math::CVector hDir = dir;

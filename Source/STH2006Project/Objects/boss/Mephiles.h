@@ -89,7 +89,7 @@ private:
 	hh::math::CVector GetBodyPosition() const;
 	bool CanLock() const;
 	bool CanDamage() const;
-	void CreateShield(uint32_t otherActor) const;
+	void CreateShield(hh::math::CVector const& otherPos) const;
 	void PlaySingleVO(std::string const& name, std::string const& id);
 
 	void SetHidden(bool hidden);

@@ -694,7 +694,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
                         context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgDamage>
                         (
                             *(uint32_t*)0x1E0BE34, // DamageID_NoAttack
-                            targetPosition,
+                            context->m_spMatrixNode->m_Transform.m_Position,
                             applyVelocity
                         )
                     );
