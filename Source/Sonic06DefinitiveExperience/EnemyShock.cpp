@@ -58,7 +58,7 @@ public:
     {
         if (m_pfxID)
         {
-            m_pGlitterPlayer->StopByID(m_pfxID, true);
+            m_pGlitterPlayer->StopByID(m_pfxID, false);
             m_pfxID = 0u;
         }
     }
