@@ -1181,7 +1181,7 @@ public:
                 (
                     *(uint32_t*)0x1E0BE34, // DamageID_NoAttack
                     m_Position,
-                    hh::math::CVector::Identity()
+                    hh::math::CVector::Zero()
                 )
             );
         }
