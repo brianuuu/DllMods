@@ -16,6 +16,7 @@ public:
 private:
     LIB_FUNCTION(ModelType, "Sonic06DefinitiveExperience.dll", API_GetModelType);
     LIB_FUNCTION(bool, "Sonic06DefinitiveExperience.dll", API_IsUsingCharacterMoveset);
+    LIB_FUNCTION(void, "Sonic06DefinitiveExperience.dll", API_SetChaosEnergyRewardOverride, float amount);
     LIB_FUNCTION(int, "Sonic06DefinitiveExperience.dll", API_GetChaosBoostLevel);
 
 public:
@@ -33,6 +34,11 @@ public:
     static bool IsUsingCharacterMoveset()
 	{
 		BOOL_EXPORT(API_IsUsingCharacterMoveset);
+	}
+	
+    static void SetChaosEnergyRewardOverride(float amount = 0.0f)
+	{
+		VOID_EXPORT(API_SetChaosEnergyRewardOverride, amount);
 	}
 	
     static int GetChaosBoostLevel()

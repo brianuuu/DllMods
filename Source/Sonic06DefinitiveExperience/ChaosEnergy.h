@@ -14,5 +14,6 @@ public:
 	static uint32_t __fastcall getEnemyChaosEnergyTypeImpl(uint32_t* pEnemy, uint32_t amount);
 
 	static void __fastcall playChaosEnergyPfx(bool isLightcore);
+	static void setChaosEnergyRewardOverride(float amount = 0.0f);
 };
 

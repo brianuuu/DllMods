@@ -2,7 +2,7 @@
 #include "Configuration.h"
 #include "NextGenShadow.h"
 
-float const c_chaosEnergyReward = 5.0f;
+float c_chaosEnergyReward = 5.0f;
 
 HOOK(void, __fastcall, ChaosEnergy_MsgGetHudPosition, 0x1096790, void* This, void* Edx, MsgGetHudPosition* message)
 {
@@ -242,4 +242,9 @@ void __fastcall ChaosEnergy::playChaosEnergyPfx(bool isLightcore)
 
 	// For character that use maturity gauge
 	NextGenShadow::AddChaosMaturity(c_chaosEnergyReward * 2.0f);
+}
+
+void ChaosEnergy::setChaosEnergyRewardOverride(float amount)
+{
+	c_chaosEnergyReward = (amount > 0.0f) ? amount : 5.0f;
 }
