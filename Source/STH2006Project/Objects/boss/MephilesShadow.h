@@ -16,6 +16,13 @@ public:
 		Attack
 	};
 
+	enum class State
+	{
+		Idle,
+		Blown,
+		Shock,
+	};
+
 private:
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
 	boost::shared_ptr<hh::anim::CAnimationPose> m_spAnimPose;
@@ -23,6 +30,11 @@ private:
 
 	uint32_t m_owner = 0;
 	Type m_type = Type::Encirclement;
+	hh::math::CVector m_velocity = hh::math::CVector::Zero();
+
+	State m_state = State::Idle;
+	State m_stateNext = State::Idle;
+	float m_stateTime = 0.0f;
 
 	// animation states
 	static char const* Loop;
@@ -41,8 +53,20 @@ public:
 	Hedgehog::Math::CVector GetVelocityForAnimationChange() override { return hh::math::CVector::Ones(); }
 
 private:
+	void HandleStateChange();
+
+	// State::Idle
+	void StateIdleAdvance(float dt);
+
+	// State::Blown
+	void StateBlownBegin(float dt);
+	void StateBlownAdvance(float dt);
+
+	// Utils
 	hh::math::CVector GetBodyPosition() const;
 	bool CanDamagePlayer() const;
+
 	void FacePlayer();
+	void TakeDamage(uint32_t otherActor);
 };
 

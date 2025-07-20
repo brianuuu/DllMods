@@ -94,8 +94,8 @@ bool MephilesShadow::ProcessMessage
 
 		if (message.Is<Sonic::Message::MsgDamage>())
 		{
+			TakeDamage(message.m_SenderActorID);
 			SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(GetBodyPosition(), true));
-			// TODO:
 			return true;
 		}
 
@@ -151,12 +151,60 @@ void MephilesShadow::UpdateParallel
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
 )
 {
-	FacePlayer();
+	switch (m_state)
+	{
+	case State::Idle: StateIdleAdvance(in_rUpdateInfo.DeltaTime); break;
+	}
+
+	m_stateTime += in_rUpdateInfo.DeltaTime;
+	if (m_stateNext != m_state)
+	{
+		HandleStateChange();
+	}
 
 	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
 	Update(in_rUpdateInfo);
 }
 
+void MephilesShadow::HandleStateChange()
+{
+	// end current state
+	switch (m_state)
+	{
+	case State::Idle: break;
+	}
+
+	// start next state
+	switch (m_stateNext)
+	{
+	}
+
+	m_state = m_stateNext;
+	m_stateTime = 0.0f;
+}
+
+//---------------------------------------------------
+// State::Idle
+//---------------------------------------------------
+void MephilesShadow::StateIdleAdvance(float dt)
+{
+	FacePlayer();
+}
+
+//---------------------------------------------------
+// State::Blown
+//---------------------------------------------------
+void MephilesShadow::StateBlownBegin(float dt)
+{
+}
+
+void MephilesShadow::StateBlownAdvance(float dt)
+{
+}
+
+//---------------------------------------------------
+// Utils
+//---------------------------------------------------
 hh::math::CVector MephilesShadow::GetBodyPosition() const
 {
 	return m_spModel->GetNode("Spine")->GetWorldMatrix().translation();
@@ -164,8 +212,7 @@ hh::math::CVector MephilesShadow::GetBodyPosition() const
 
 bool MephilesShadow::CanDamagePlayer() const
 {
-	// TODO:
-	return true;
+	return m_type == Type::Encirclement;
 }
 
 void MephilesShadow::FacePlayer()
@@ -179,4 +226,16 @@ void MephilesShadow::FacePlayer()
 	hh::math::CQuaternion const rotation = hh::math::CQuaternion::FromTwoVectors(hh::math::CVector::UnitZ(), dir.head<3>());
 	m_spMatrixNodeTransform->m_Transform.SetRotation(rotation);
 	m_spMatrixNodeTransform->NotifyChanged();
+}
+
+void MephilesShadow::TakeDamage(uint32_t otherActor)
+{
+	hh::math::CVector otherPos = hh::math::CVector::Zero();
+	SendMessageImm(otherActor, Sonic::Message::MsgGetPosition(otherPos));
+
+	// TODO: velocity
+
+	// TODO: notify owner
+
+	m_stateNext = State::Blown;
 }
