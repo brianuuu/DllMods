@@ -172,11 +172,11 @@ bool Mephiles::ProcessMessage
 	{
 		if (message.Is<Sonic::Message::MsgDamage>())
 		{
+			auto& msg = static_cast<Sonic::Message::MsgDamage&>(message);
+
 			// put player at fixed distance from Mephiles
 			hh::math::CVector const bodyBase = GetBodyPosition() - hh::math::CVector::UnitY() * 0.5f;
-			hh::math::CVector otherPos = bodyBase;
-			SendMessageImm(message.m_SenderActorID, Sonic::Message::MsgGetPosition(otherPos));
-			otherPos = bodyBase + (otherPos - bodyBase).normalized() * 1.2f;
+			hh::math::CVector const otherPos = bodyBase + (msg.m_DamagePosition - bodyBase).normalized() * 1.2f;
 			SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(otherPos, true));
 
 			if (CanDamage())
@@ -476,21 +476,13 @@ void Mephiles::CreateShield(uint32_t otherActor) const
 		return;
 	}
 
-	bool const isPlayer = SendMessageImm(otherActor, Sonic::Message::MsgGetPlayerType());
-	hh::math::CVector const bodyCenter = GetBodyPosition();
+	if (SendMessageImm(otherActor, Sonic::Message::MsgGetPlayerType()))
+	{
+		startTrans.m_Position += hh::math::CVector::UnitY() * 0.5f;
+	}
 
-	hh::math::CVector dir = hh::math::CVector::UnitZ();
-	if (isPlayer)
-	{
-		// player compare with root position
-		dir = (startTrans.m_Position - m_spMatrixNodeTransform->m_Transform.m_Position).normalized();
-	}
-	else
-	{
-		// normal objects compare with body center
-		dir = (startTrans.m_Position - bodyCenter).normalized();
-	}
-	
+	hh::math::CVector const bodyCenter = GetBodyPosition();
+	hh::math::CVector const dir = (startTrans.m_Position - bodyCenter).normalized();
 	if (dir.dot(hh::math::CVector::UnitY()) <= 0.95f) // not pointing up
 	{
 		hh::math::CVector hDir = dir;
