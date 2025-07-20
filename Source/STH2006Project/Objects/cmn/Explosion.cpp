@@ -86,7 +86,7 @@ bool Explosion::ProcessMessage(Hedgehog::Universe::Message& message, bool flag)
         }
 	}
 
-	return Sonic::CGameObject3D::ProcessMessage(message, flag);
+	return Sonic::CObjectBase::ProcessMessage(message, flag);
 }
 
 void Explosion::UpdateParallel

@@ -113,7 +113,7 @@ bool GadgetMissile::ProcessMessage(Hedgehog::Universe::Message& message, bool fl
 		}
 	}
 
-	return Sonic::CGameObject3D::ProcessMessage(message, flag);
+	return Sonic::CObjectBase::ProcessMessage(message, flag);
 }
 
 void GadgetMissile::UpdateParallel

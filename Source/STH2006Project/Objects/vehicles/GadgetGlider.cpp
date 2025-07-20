@@ -68,7 +68,7 @@ bool GadgetGliderGun::ProcessMessage
 		}
 	}
 
-	return Sonic::CGameObject3D::ProcessMessage(message, flag);
+	return Sonic::CObjectBase::ProcessMessage(message, flag);
 }
 
 float const c_gliderReloadTime = 1.0f;

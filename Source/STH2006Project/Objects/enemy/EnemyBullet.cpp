@@ -95,7 +95,7 @@ bool EnemyBullet::ProcessMessage
 		}
 	}
 
-	return Sonic::CGameObject3D::ProcessMessage(message, flag);
+	return Sonic::CObjectBase::ProcessMessage(message, flag);
 }
 
 void EnemyBullet::UpdateParallel
