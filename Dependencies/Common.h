@@ -2171,14 +2171,13 @@ inline void PlaySoundStatic(SharedPtrTypeless& soundHandle, uint32_t cueID)
     }
 }
 
-inline void SpawnBoostParticle(uint32_t** This, Eigen::Vector3f const& pos, int amount)
+inline void SpawnBoostParticle(uint32_t** This, hh::math::CVector const& pos, int amount)
 {
 	if (amount <= 0) return;
 
 	struct BoostParticleData
 	{
-		Eigen::Vector3f m_pos;
-		float m_unknown0xC = 1.0f;
+		hh::math::CVector m_pos;
 		int m_amount = 0;
 		float m_unknown0x14 = 1.0f;
 		float m_unknown0x18 = 0.0f;

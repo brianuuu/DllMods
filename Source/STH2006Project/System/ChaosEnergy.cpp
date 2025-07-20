@@ -30,7 +30,7 @@ HOOK(void, __stdcall, ChaosEnergy_PhysicsReward, 0xEA49B0, uint32_t This, int a2
 			if (fakeEnemyType)
 			{
 				float* pos = (float*)((*(uint32_t*)(This + 0xB8)) + 0x70);
-				Common::SpawnBoostParticle((uint32_t**)This, Eigen::Vector3f(pos[0], pos[1], pos[2]), fakeEnemyType);
+				Common::SpawnBoostParticle((uint32_t**)This, hh::math::CVector(pos[0], pos[1], pos[2]), fakeEnemyType);
 			}
 		}
 	}
