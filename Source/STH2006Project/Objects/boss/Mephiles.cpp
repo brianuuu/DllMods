@@ -238,6 +238,21 @@ bool Mephiles::ProcessMessage
 			return true;
 		}
 
+		if (message.Is<Sonic::Message::MsgNotifyObjectEvent>())
+		{
+			auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
+			switch (msg.m_Event)
+			{
+			case 0:
+			{
+				m_numKilledUnit++; 
+				m_shadows.erase(message.m_SenderActorID);
+				break;
+			}
+			}
+			return true;
+		}
+
 		if (message.Is<Sonic::Message::MsgGetEnemyType>())
 		{
 			auto& msg = static_cast<Sonic::Message::MsgGetEnemyType&>(message);
@@ -599,7 +614,7 @@ void Mephiles::AdvanceSpawnShadow(float dt)
 		{
 			auto spShadow = boost::make_shared<MephilesShadow>(m_ActorID, m_spawnType, GetShadowSpawnPosition());
 			m_pMember->m_pGameDocument->AddGameObject(spShadow);
-			m_shadows.push_back(spShadow);
+			m_shadows[spShadow->m_ActorID] = spShadow;
 			
 			m_spawnCount++;
 			m_spawnTimer -= spawnRate;

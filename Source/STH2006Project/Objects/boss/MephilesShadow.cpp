@@ -94,14 +94,40 @@ bool MephilesShadow::ProcessMessage
 
 		if (message.Is<Sonic::Message::MsgDamage>())
 		{
-			TakeDamage(message.m_SenderActorID);
+			auto& msg = static_cast<Sonic::Message::MsgDamage&>(message);
 			SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(GetBodyPosition(), true));
+
+			// TODO: sfx
+			SharedPtrTypeless soundHandle;
+			//Common::ObjectPlaySound(this, 5001007, soundHandle);
+
+			float constexpr c_BlownSpeed = 12.0f;
+			if (msg.m_Velocity.isZero())
+			{
+				m_velocity = hh::math::CVector::Zero();
+				hh::math::CVector otherPos = hh::math::CVector::Zero();
+				if (SendMessageImm(message.m_SenderActorID, Sonic::Message::MsgGetPosition(otherPos)))
+				{
+					m_velocity = (GetBodyPosition() - otherPos).normalized() * c_BlownSpeed;
+				}
+			}
+			else
+			{
+				m_velocity = msg.m_Velocity.normalized() * c_BlownSpeed;
+			}
+
+			m_stateNext = State::Blown;
 			return true;
 		}
 
 		if (message.Is<Sonic::Message::MsgNotifyShockWave>())
 		{
-			// TODO:
+			// TODO: sfx
+			SharedPtrTypeless soundHandle;
+			//Common::ObjectPlaySound(this, 5001007, soundHandle);
+
+			m_stateTime = 0.0f;
+			m_stateNext = State::Shock;
 			return true;
 		}
 
@@ -154,6 +180,8 @@ void MephilesShadow::UpdateParallel
 	switch (m_state)
 	{
 	case State::Idle: StateIdleAdvance(in_rUpdateInfo.DeltaTime); break;
+	case State::Shock: StateShockAdvance(in_rUpdateInfo.DeltaTime); break;
+	case State::Blown: StateBlownAdvance(in_rUpdateInfo.DeltaTime); break;
 	}
 
 	m_stateTime += in_rUpdateInfo.DeltaTime;
@@ -162,8 +190,11 @@ void MephilesShadow::UpdateParallel
 		HandleStateChange();
 	}
 
-	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
-	Update(in_rUpdateInfo);
+	if (m_state != State::Shock)
+	{
+		m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
+		Update(in_rUpdateInfo);
+	}
 }
 
 void MephilesShadow::HandleStateChange()
@@ -171,12 +202,14 @@ void MephilesShadow::HandleStateChange()
 	// end current state
 	switch (m_state)
 	{
-	case State::Idle: break;
+	case State::Shock: StateShockEnd(); break;
 	}
 
 	// start next state
 	switch (m_stateNext)
 	{
+	case State::Shock: StateShockBegin(); break;
+	case State::Blown: StateBlownBegin(); break;
 	}
 
 	m_state = m_stateNext;
@@ -194,12 +227,55 @@ void MephilesShadow::StateIdleAdvance(float dt)
 //---------------------------------------------------
 // State::Blown
 //---------------------------------------------------
-void MephilesShadow::StateBlownBegin(float dt)
+void MephilesShadow::StateBlownBegin()
 {
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Body", false);
 }
 
 void MephilesShadow::StateBlownAdvance(float dt)
 {
+	hh::math::CVector const newPosition = m_spMatrixNodeTransform->m_Transform.m_Position + m_velocity * dt;
+	m_spMatrixNodeTransform->m_Transform.SetPosition(newPosition);
+	m_spMatrixNodeTransform->NotifyChanged();
+
+	// TODO: notify owner
+	float constexpr c_BlownTime = 0.25f;
+	if (m_stateTime >= c_BlownTime || m_velocity.isZero())
+	{
+		// TODO: sfx
+		Common::SpawnBoostParticle((uint32_t**)this, m_spMatrixNodeTransform->m_Transform.m_Position, 0x10001);
+		SendMessageImm(m_owner, Sonic::Message::MsgNotifyObjectEvent(0));
+		Kill();
+	}
+}
+
+//---------------------------------------------------
+// State::Shock
+//---------------------------------------------------
+void MephilesShadow::StateShockBegin()
+{
+	// TODO: sfx
+	//Common::ObjectPlaySound(this, 2002097, m_shockSfx);
+	m_shockID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spModel->GetNode("Spine"), "ef_ch_sns_yh1_damage_shock2", 1.0f);
+}
+
+void MephilesShadow::StateShockAdvance(float dt)
+{
+	float constexpr c_ParalysisTime = 5.0f;
+	if (m_stateTime >= c_ParalysisTime)
+	{
+		m_stateNext = State::Idle;
+	}
+}
+
+void MephilesShadow::StateShockEnd()
+{
+	m_shockSfx.reset();
+	if (m_shockID)
+	{
+		m_pGlitterPlayer->StopByID(m_shockID, false);
+		m_shockID = 0;
+	}
 }
 
 //---------------------------------------------------
@@ -226,16 +302,4 @@ void MephilesShadow::FacePlayer()
 	hh::math::CQuaternion const rotation = hh::math::CQuaternion::FromTwoVectors(hh::math::CVector::UnitZ(), dir.head<3>());
 	m_spMatrixNodeTransform->m_Transform.SetRotation(rotation);
 	m_spMatrixNodeTransform->NotifyChanged();
-}
-
-void MephilesShadow::TakeDamage(uint32_t otherActor)
-{
-	hh::math::CVector otherPos = hh::math::CVector::Zero();
-	SendMessageImm(otherActor, Sonic::Message::MsgGetPosition(otherPos));
-
-	// TODO: velocity
-
-	// TODO: notify owner
-
-	m_stateNext = State::Blown;
 }

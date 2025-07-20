@@ -59,14 +59,20 @@ private:
 	void StateIdleAdvance(float dt);
 
 	// State::Blown
-	void StateBlownBegin(float dt);
+	void StateBlownBegin();
 	void StateBlownAdvance(float dt);
+
+	// State::Shock
+	SharedPtrTypeless m_shockSfx;
+	uint32_t m_shockID = 0u;
+	void StateShockBegin();
+	void StateShockAdvance(float dt);
+	void StateShockEnd();
 
 	// Utils
 	hh::math::CVector GetBodyPosition() const;
 	bool CanDamagePlayer() const;
 
 	void FacePlayer();
-	void TakeDamage(uint32_t otherActor);
 };
 

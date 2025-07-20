@@ -55,7 +55,6 @@ private:
 
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
 	boost::shared_ptr<hh::anim::CAnimationPose> m_spAnimPose;
-
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeBody;
 
 public:
@@ -63,6 +62,7 @@ public:
 	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	bool SetAddColliders(const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	void AddCallback(const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
+	void KillCallback() override;
 	void SetUpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo) override;
 	bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;
 
@@ -97,7 +97,7 @@ private:
 
 private:
 	// Mephiles shadow
-	std::vector<boost::shared_ptr<MephilesShadow>> m_shadows;
+	std::map<uint32_t, boost::shared_ptr<MephilesShadow>> m_shadows;
 	int m_numKilledUnit = 0;
 
 	// spawn param
