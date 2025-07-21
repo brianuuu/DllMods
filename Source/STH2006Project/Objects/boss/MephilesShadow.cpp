@@ -95,7 +95,7 @@ bool MephilesShadow::ProcessMessage
 		if (message.Is<Sonic::Message::MsgDamage>())
 		{
 			auto& msg = static_cast<Sonic::Message::MsgDamage&>(message);
-			SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(GetBodyPosition(), true));
+			SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(msg.m_DamagePosition, true));
 
 			// TODO: sfx
 			SharedPtrTypeless soundHandle;
@@ -104,12 +104,7 @@ bool MephilesShadow::ProcessMessage
 			float constexpr c_BlownSpeed = 12.0f;
 			if (msg.m_Velocity.isZero())
 			{
-				m_velocity = hh::math::CVector::Zero();
-				hh::math::CVector otherPos = hh::math::CVector::Zero();
-				if (SendMessageImm(message.m_SenderActorID, Sonic::Message::MsgGetPosition(otherPos)))
-				{
-					m_velocity = (GetBodyPosition() - otherPos).normalized() * c_BlownSpeed;
-				}
+				m_velocity = (GetBodyPosition() - msg.m_DamagePosition).normalized() * c_BlownSpeed;
 			}
 			else
 			{
@@ -238,7 +233,6 @@ void MephilesShadow::StateBlownAdvance(float dt)
 	m_spMatrixNodeTransform->m_Transform.SetPosition(newPosition);
 	m_spMatrixNodeTransform->NotifyChanged();
 
-	// TODO: notify owner
 	float constexpr c_BlownTime = 0.25f;
 	if (m_stateTime >= c_BlownTime || m_velocity.isZero())
 	{
