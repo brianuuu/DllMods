@@ -1434,7 +1434,7 @@ public:
                 bool isObjectPhysics = *(uint32_t*)senderMessageActor == 0x16CF58C;
 
                 hh::math::CVector targetPosition = hh::math::CVector::Identity();
-                if (enemyType > 0)
+                if (enemyType == 1)
                 {
                     // try to get center position from lock-on for enemy
                     SendMessageImm(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
