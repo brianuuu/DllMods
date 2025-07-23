@@ -108,16 +108,6 @@ private:
 	float m_spawnRadius = 5.0f;
 	MephilesShadow::Type m_spawnType = MephilesShadow::Type::Encirclement;
 
-	// parameters
-	float c_DodgeSpeed = 0.5f;
-	float c_ApproachSpeed = 6.0f;
-	float c_EscapeSpeed = 6.0f;
-	float c_MinEncirclementRadius = 8.0f;
-	float c_MaxEncirclementRadius = 16.0f;
-	float c_TargetLostDistance = 20.0f;
-	float const c_MinEncirclementHeight = 0.75f;
-	float const c_MaxEncirclementHeight = 3.5f;
-
 	void SpawnEncirclement(int count, float radius);
 	void SpawnSpring(int count, float radius, float attackStartTime, float maxDelay);
 	void AdvanceSpawnShadow(float dt);

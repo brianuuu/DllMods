@@ -640,7 +640,7 @@ hh::math::CVector Mephiles::GetShadowSpawnPosition() const
 		float const randAngle = RAND_FLOAT(0.0f, 2.0f * PI_F);
 		hh::math::CVector const direction = Eigen::AngleAxisf(randAngle, Eigen::Vector3f::UnitY()) * hh::math::CVector::UnitZ();
 		hh::math::CVector spawnPos = playerPos + direction * radius;
-		spawnPos.y() = m_Data.m_GroundHeight + RAND_FLOAT(c_MinEncirclementHeight, c_MaxEncirclementHeight);
+		spawnPos.y() = m_Data.m_GroundHeight + RAND_FLOAT(MephilesShadow::c_MinEncirclementHeight, MephilesShadow::c_MaxEncirclementHeight);
 		return spawnPos;
 	}
 	}
