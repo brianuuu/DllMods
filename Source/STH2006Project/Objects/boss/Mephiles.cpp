@@ -162,6 +162,7 @@ void Mephiles::SetUpdateParallel
 	case State::Hide: StateHideAdvance(in_rUpdateInfo.DeltaTime); break;
 	}
 
+	m_damagedThisFrame = false;
 	m_stateTime += in_rUpdateInfo.DeltaTime;
 	if (m_stateNext != m_state)
 	{
@@ -190,19 +191,23 @@ bool Mephiles::ProcessMessage
 			hh::math::CVector const otherPos = bodyBase + (msg.m_DamagePosition - bodyBase).normalized() * 1.2f;
 			SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(otherPos, true));
 
-			if (CanDamage())
+			if (!m_damagedThisFrame)
 			{
-				// TODO:
-			}
-			else
-			{
-				if (SendMessageImm(message.m_SenderActorID, Sonic::Message::MsgGetPlayerType()))
+				m_damagedThisFrame = true;
+				if (CanDamage())
 				{
-					CreateShield(msg.m_DamagePosition + hh::math::CVector::UnitY() * 0.5f);
+					// TODO:
 				}
 				else
 				{
-					CreateShield(msg.m_DamagePosition);
+					if (SendMessageImm(message.m_SenderActorID, Sonic::Message::MsgGetPlayerType()))
+					{
+						CreateShield(msg.m_DamagePosition + hh::math::CVector::UnitY() * 0.5f);
+					}
+					else
+					{
+						CreateShield(msg.m_DamagePosition);
+					}
 				}
 			}
 			return true;

@@ -50,6 +50,7 @@ private:
 	bool m_isHidden = false;
 	bool m_playedInitVO = false;
 	bool m_hasEjected = false;
+	bool m_damagedThisFrame = false;
 
 	std::set<std::string> m_playedVO;
 
