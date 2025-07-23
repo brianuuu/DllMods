@@ -74,7 +74,8 @@ void EnemyShield::AddCallback
 {
 	Sonic::CObjectBase::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
 
-	// TODO: sfx
+	SharedPtrTypeless soundHandle;
+	Common::ObjectPlaySound(this, 200614002, soundHandle);
 }
 
 bool EnemyShield::ProcessMessage
