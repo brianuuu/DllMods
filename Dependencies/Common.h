@@ -8,7 +8,7 @@
 #define DEBUG_VECTOR2(vec2) printf("%.2f, %.2f\n",vec2.x(),vec2.y());
 #define DEBUG_VECTOR3(vec3) printf("%.2f, %.2f, %.2f\n",vec3.x(),vec3.y(),vec3.z());
 #define DEBUG_VECTOR4(vec4) printf("%.2f, %.2f, %.2f, %.2f\n",vec4.x(),vec4.y(),vec4.z(),vec4.w());
-#define RAND_FLOAT(LO, HI) (LO) + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(HI-(LO))));
+#define RAND_FLOAT(LO, HI) (LO) + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(HI-(LO))))
 
 typedef void CSonicContext;
 CSonicContext** const PLAYER_CONTEXT = (CSonicContext**)0x1E5E2F0;
