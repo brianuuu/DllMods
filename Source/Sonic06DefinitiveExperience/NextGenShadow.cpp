@@ -1434,18 +1434,18 @@ public:
                 bool isObjectPhysics = *(uint32_t*)senderMessageActor == 0x16CF58C;
 
                 hh::math::CVector targetPosition = hh::math::CVector::Identity();
-                if (enemyType == 1)
+                if (isObjectPhysics)
+                {
+                    // get dynamic position for object physics
+                    Common::fObjectPhysicsDynamicPosition(senderActor, targetPosition);
+                }
+                else if (enemyType == 1)
                 {
                     // try to get center position from lock-on for enemy
                     SendMessageImm(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
 
                     // ignore HP
                     *(uint8_t*)((uint32_t)senderActor + 0x16F) = 0u;
-                }
-                else if (isObjectPhysics)
-                {
-                    // get dynamic position for object physics
-                    Common::fObjectPhysicsDynamicPosition(senderActor, targetPosition);
                 }
                 else
                 {

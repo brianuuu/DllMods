@@ -49,7 +49,7 @@ HOOK(bool, __fastcall, ChaosEnergy_CObjectPhysicsProcessMessage, 0xEA5370, hh::f
 		int fakeEnemyType = ChaosEnergy::getFakeEnemyType(name);
 		if (fakeEnemyType)
 		{
-			*msg.m_pType = 1;
+			*msg.m_pType = 2;
 		}
 
 		return true;
