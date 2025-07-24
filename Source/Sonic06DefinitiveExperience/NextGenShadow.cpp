@@ -1174,8 +1174,7 @@ public:
                 actorID, boost::make_shared<Sonic::Message::MsgDamage>
                 (
                     *(uint32_t*)0x1E0BE34, // DamageID_NoAttack
-                    m_Position,
-                    hh::math::CVector::Zero()
+                    m_Position, m_Velocity
                 )
             );
         }
