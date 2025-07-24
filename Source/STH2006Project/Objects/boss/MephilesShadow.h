@@ -21,6 +21,8 @@ public:
 		Idle,
 		Blown,
 		Shock,
+		SpringWait,
+		SpringAttack,
 		Dead
 	};
 
@@ -47,7 +49,7 @@ private:
 	static char const* Dead;
 
 public:
-	MephilesShadow(uint32_t owner, Type type, float radius, hh::math::CVector const& startPos);
+	MephilesShadow(uint32_t owner, Type type, float radius, float startAngle, hh::math::CVector const& startPos);
 
 	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	bool SetAddColliders(const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
@@ -59,12 +61,15 @@ public:
 	Hedgehog::Math::CVector GetVelocityForAnimationSpeed() override { return hh::math::CVector::Ones(); }
 	Hedgehog::Math::CVector GetVelocityForAnimationChange() override { return hh::math::CVector::Ones(); }
 
+	void SetInitialStateSpring(float attackStartTime, float attackMaxDelay);
+
 private:
 	void HandleStateChange();
 
 	// State::Idle
 	bool m_targetLost = false;
 	std::vector<uint32_t> m_escapeEnemies;
+	void StateIdleBegin();
 	void StateIdleAdvance(float dt);
 	void StateIdleEnd();
 
@@ -80,12 +85,20 @@ private:
 	void StateShockAdvance(float dt);
 	void StateShockEnd();
 
+	// State::SpringWait
+	float m_attackStartTime = 0.0f;
+	void StateSpringWaitAdvance(float dt);
+
+	// State::SpringAttack
+	void StateSpringAttackBegin();
+	void StateSpringAttackAdvance(float dt);
+
 	// Utils
 	hh::math::CVector GetBodyPosition() const;
 	bool CanDamagePlayer() const;
 
 	void UpdatePosition(float dt);
-	void FaceDirection(hh::math::CVector const& dir);
+	void FaceDirection(hh::math::CVector dir);
 	hh::math::CVector GetPlayerDirection(float* distance = nullptr) const;
 
 public:
@@ -98,5 +111,9 @@ public:
 	static float const c_DeltaSpeed;
 	static float const c_MinEncirclementHeight;
 	static float const c_MaxEncirclementHeight;
+	static float const c_MinSpringAppearHeight;
+	static float const c_MaxSpringAppearHeight;
+	static float const c_CircularFlightSpeed;
+	static float const c_SpringSpeed;
 };
 

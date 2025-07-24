@@ -156,6 +156,11 @@ void Mephiles::SetUpdateParallel
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
 )
 {
+	if (m_stateNext != m_state)
+	{
+		HandleStateChange();
+	}
+
 	switch (m_state)
 	{
 	case State::Appear: StateAppearAdvance(in_rUpdateInfo.DeltaTime); break;
@@ -164,10 +169,6 @@ void Mephiles::SetUpdateParallel
 
 	m_damagedThisFrame = false;
 	m_stateTime += in_rUpdateInfo.DeltaTime;
-	if (m_stateNext != m_state)
-	{
-		HandleStateChange();
-	}
 
 	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
 	Update(in_rUpdateInfo);
@@ -602,8 +603,15 @@ void Mephiles::SpawnEncirclement(int count, float radius)
 	m_spawnType = MephilesShadow::Type::Encirclement;
 }
 
-void Mephiles::SpawnSpring(int count, float radius, float attackStartTime, float maxDelay)
+void Mephiles::SpawnSpring(int count, float radius, float attackStartTime, float attackMaxDelay)
 {
+	m_maxSpawnCount = count;
+	m_spawnCount = 0;
+	m_spawnTimer = 0.0f;
+	m_spawnRadius = radius;
+	m_attackStartTime = attackStartTime;
+	m_attackMaxDelay = attackMaxDelay;
+	m_spawnType = MephilesShadow::Type::Spring;
 }
 
 void Mephiles::AdvanceSpawnShadow(float dt)
@@ -617,9 +625,29 @@ void Mephiles::AdvanceSpawnShadow(float dt)
 		// TODO: max units
 		while (m_spawnCount < m_maxSpawnCount && m_spawnTimer >= spawnRate)
 		{
-			auto spShadow = boost::make_shared<MephilesShadow>(m_ActorID, m_spawnType, m_spawnRadius, GetShadowSpawnPosition());
+			float angle = 0.0f;
+			switch (m_spawnType)
+			{
+			case MephilesShadow::Type::Encirclement: 
+			{
+				angle = RAND_FLOAT(0.0f, 2.0f * PI_F); 
+				break;
+			}
+			case MephilesShadow::Type::Spring:
+			{
+				angle = 0.01f + 2.0f * PI_F * (float)m_spawnCount / (float)m_maxSpawnCount;
+				break;
+			}
+			}
+
+			auto spShadow = boost::make_shared<MephilesShadow>(m_ActorID, m_spawnType, m_spawnRadius, angle, GetShadowSpawnPosition());
 			m_pMember->m_pGameDocument->AddGameObject(spShadow);
 			m_shadows[spShadow->m_ActorID] = spShadow;
+
+			if (m_spawnType == MephilesShadow::Type::Spring)
+			{
+				spShadow->SetInitialStateSpring(m_attackStartTime, m_attackMaxDelay);
+			}
 			
 			m_spawnCount++;
 			m_spawnTimer -= spawnRate;
@@ -635,6 +663,7 @@ hh::math::CVector Mephiles::GetShadowSpawnPosition() const
 	switch (m_spawnType)
 	{
 	case MephilesShadow::Type::Encirclement:
+	case MephilesShadow::Type::Spring:
 	{
 		hh::math::CVector spawnPos = playerPos;
 		spawnPos.y() = m_Data.m_GroundHeight;

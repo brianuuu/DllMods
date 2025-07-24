@@ -10,6 +10,10 @@ float const MephilesShadow::c_TargetLostDistance = 30.0f;
 float const MephilesShadow::c_DeltaSpeed = 12.0f;
 float const MephilesShadow::c_MinEncirclementHeight = 0.75f;
 float const MephilesShadow::c_MaxEncirclementHeight = 3.5f;
+float const MephilesShadow::c_MinSpringAppearHeight = 1.0f;
+float const MephilesShadow::c_MaxSpringAppearHeight = 2.5f;
+float const MephilesShadow::c_CircularFlightSpeed = 0.5f * DEG_TO_RAD;
+float const MephilesShadow::c_SpringSpeed = 5.0f;
 
 char const* MephilesShadow::Loop = "Loop";
 char const* MephilesShadow::BodyAttack = "BodyAttack";
@@ -22,24 +26,30 @@ MephilesShadow::MephilesShadow
 	uint32_t owner, 
 	Type type,
 	float radius,
+	float startAngle,
 	hh::math::CVector const& startPos
 )
 	: m_owner(owner)
 	, m_type(type)
 {
-	m_startPos = startPos;
 	hh::math::CVector adjustedPos = startPos;
+
+	m_startPos = startPos;
+	m_startPos.y() += RAND_FLOAT(c_MinEncirclementHeight, c_MaxEncirclementHeight);
 
 	switch (type)
 	{
 	case Type::Encirclement:
 	{
-		radius = RAND_FLOAT(radius, c_TargetLostDistance);
-		m_startPos.y() += RAND_FLOAT(c_MinEncirclementHeight, c_MaxEncirclementHeight);
-
-		float const randAngle = RAND_FLOAT(0.0f, 2.0f * PI_F);
-		hh::math::CVector const direction = Eigen::AngleAxisf(randAngle, Eigen::Vector3f::UnitY()) * hh::math::CVector::UnitZ();
-		adjustedPos = m_startPos + direction * radius;
+		hh::math::CVector const direction = Eigen::AngleAxisf(startAngle, Eigen::Vector3f::UnitY()) * hh::math::CVector::UnitZ();
+		adjustedPos = m_startPos + direction * (RAND_FLOAT(radius, c_TargetLostDistance));
+		break;
+	}
+	case Type::Spring:
+	{
+		hh::math::CVector const direction = Eigen::AngleAxisf(startAngle, Eigen::Vector3f::UnitY()) * hh::math::CVector::UnitZ();
+		adjustedPos += direction * radius;
+		adjustedPos.y() += RAND_FLOAT(c_MinSpringAppearHeight, c_MaxSpringAppearHeight);
 		break;
 	}
 	}
@@ -93,6 +103,7 @@ bool MephilesShadow::SetAddRenderables
 	fnAddAnimationState(CatchMiss);
 	fnAddAnimationState(Dead);
 	SetAnimationBlend(BodyAttack, Loop, 0.5f);
+	SetAnimationBlend(Catch, Loop, 0.5f);
 	SetAnimationBlend(CatchMiss, Loop, 0.5f);
 	ChangeState(Loop);
 
@@ -233,24 +244,33 @@ void MephilesShadow::UpdateParallel
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
 )
 {
+	if (m_stateNext != m_state)
+	{
+		HandleStateChange();
+	}
+
 	switch (m_state)
 	{
 	case State::Idle: StateIdleAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::Shock: StateShockAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::Blown: StateBlownAdvance(in_rUpdateInfo.DeltaTime); break;
+	case State::SpringWait: StateSpringWaitAdvance(in_rUpdateInfo.DeltaTime); break;
+	case State::SpringAttack: StateSpringAttackAdvance(in_rUpdateInfo.DeltaTime); break;
 	}
 
 	m_stateTime += in_rUpdateInfo.DeltaTime;
-	if (m_stateNext != m_state)
-	{
-		HandleStateChange();
-	}
 
 	if (m_state != State::Shock)
 	{
 		m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
 		Update(in_rUpdateInfo);
 	}
+}
+
+void MephilesShadow::SetInitialStateSpring(float attackStartTime, float attackMaxDelay)
+{
+	m_stateNext = State::SpringWait;
+	m_attackStartTime = attackStartTime + RAND_FLOAT(0.0f, attackMaxDelay);
 }
 
 void MephilesShadow::HandleStateChange()
@@ -265,8 +285,10 @@ void MephilesShadow::HandleStateChange()
 	// start next state
 	switch (m_stateNext)
 	{
+	case State::Idle: StateIdleBegin(); break;
 	case State::Shock: StateShockBegin(); break;
 	case State::Blown: StateBlownBegin(); break;
+	case State::SpringAttack: StateSpringAttackBegin(); break;
 	}
 
 	m_state = m_stateNext;
@@ -276,6 +298,12 @@ void MephilesShadow::HandleStateChange()
 //---------------------------------------------------
 // State::Idle
 //---------------------------------------------------
+void MephilesShadow::StateIdleBegin()
+{
+	m_type = Type::Encirclement;
+	ChangeState(Loop);
+}
+
 void MephilesShadow::StateIdleAdvance(float dt)
 {
 	// helper function
@@ -292,7 +320,7 @@ void MephilesShadow::StateIdleAdvance(float dt)
 	};
 
 	float distance = 0.0f;
-	hh::math::CVector const dir = GetPlayerDirection(&distance);
+	m_direction = GetPlayerDirection(&distance);
 
 	if (!m_targetLost && distance > c_TargetLostDistance)
 	{
@@ -302,13 +330,11 @@ void MephilesShadow::StateIdleAdvance(float dt)
 
 	if (m_targetLost && distance > c_MaxEncirclementRadius)
 	{
-		m_direction = dir;
 		fnAccel(m_speed, c_ApproachSpeed, c_DeltaSpeed);
 	}
 	else if (distance < c_MinEncirclementRadius)
 	{
-		m_direction = -dir;
-		fnAccel(m_speed, c_EscapeSpeed, c_DeltaSpeed);
+		fnAccel(m_speed, -c_EscapeSpeed, c_DeltaSpeed);
 	}
 	else
 	{
@@ -321,14 +347,14 @@ void MephilesShadow::StateIdleAdvance(float dt)
 		hh::math::CVector otherPos = hh::math::CVector::Zero();
 		SendMessageImm(m_escapeEnemies.front(), Sonic::Message::MsgGetPosition(otherPos));
 		hh::math::CVector const escapeDir = m_spMatrixNodeTransform->m_Transform.m_Position - otherPos;
-		hh::math::CVector const dirLeft = Eigen::AngleAxisf(PI_F * 0.5f, Eigen::Vector3f::UnitY()) * dir;
+		hh::math::CVector const dirLeft = Eigen::AngleAxisf(PI_F * 0.5f, Eigen::Vector3f::UnitY()) * m_direction;
 		hh::math::CVector const newPosition = m_spMatrixNodeTransform->m_Transform.m_Position + (escapeDir.dot(dirLeft) > 0.0f ? dirLeft : -dirLeft) * c_DodgeSpeed * dt;
 		m_spMatrixNodeTransform->m_Transform.SetPosition(newPosition);
 		m_spMatrixNodeTransform->NotifyChanged();
 	}
 
 	UpdatePosition(dt);
-	FaceDirection(dir);
+	FaceDirection(m_direction);
 }
 
 void MephilesShadow::StateIdleEnd()
@@ -354,6 +380,9 @@ void MephilesShadow::StateBlownBegin()
 	// terrain/enemy detection
 	hk2010_2_0::hkpSphereShape* damageShape = new hk2010_2_0::hkpSphereShape(0.3f);
 	AddEventCollision("Terrain", damageShape, *(int*)0x1E0AFA4, true, m_spNodeBody); // TypeTerrain + TypeWater
+
+	// face opposite of blown direction
+	FaceDirection(-m_direction);
 }
 
 void MephilesShadow::StateBlownAdvance(float dt)
@@ -379,6 +408,8 @@ void MephilesShadow::StateBlownEnd()
 //---------------------------------------------------
 void MephilesShadow::StateShockBegin()
 {
+	m_type = Type::Encirclement;
+
 	Common::ObjectPlaySound(this, 200614003, m_shockSfx);
 	m_shockID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spModel->GetNode("Spine"), "ef_ch_sns_yh1_damage_shock2", 1.0f);
 }
@@ -403,6 +434,43 @@ void MephilesShadow::StateShockEnd()
 }
 
 //---------------------------------------------------
+// State::SpringWait
+//---------------------------------------------------
+void MephilesShadow::StateSpringWaitAdvance(float dt)
+{
+	hh::math::CVector const displacement = m_spMatrixNodeTransform->m_Transform.m_Position - m_startPos;
+	hh::math::CVector const newPosition = m_startPos + Eigen::AngleAxisf(c_CircularFlightSpeed, Eigen::Vector3f::UnitY()) * displacement;
+	m_spMatrixNodeTransform->m_Transform.SetPosition(newPosition);
+	m_spMatrixNodeTransform->NotifyChanged();
+	FaceDirection(GetPlayerDirection());
+
+	if (m_stateTime >= m_attackStartTime)
+	{
+		m_stateNext = State::SpringAttack;
+	}
+}
+
+//---------------------------------------------------
+// State::SpringAttack
+//---------------------------------------------------
+void MephilesShadow::StateSpringAttackBegin()
+{
+	ChangeState(Catch);
+
+	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	hh::math::CVector const playerPos = context->m_spMatrixNode->m_Transform.m_Position;
+	m_direction = (playerPos - m_spMatrixNodeTransform->m_Transform.m_Position).normalized();
+	m_speed = c_SpringSpeed;
+
+	FaceDirection(m_direction);
+}
+
+void MephilesShadow::StateSpringAttackAdvance(float dt)
+{
+	UpdatePosition(dt);
+}
+
+//---------------------------------------------------
 // Utils
 //---------------------------------------------------
 hh::math::CVector MephilesShadow::GetBodyPosition() const
@@ -418,21 +486,31 @@ bool MephilesShadow::CanDamagePlayer() const
 void MephilesShadow::UpdatePosition(float dt)
 {
 	hh::math::CVector newPosition = m_spMatrixNodeTransform->m_Transform.m_Position + m_direction * m_speed * dt;
-	if (newPosition.y() < m_startPos.y())
+
+	if (m_type == Type::Encirclement)
 	{
-		newPosition.y() = min(m_startPos.y(), newPosition.y() + c_DodgeSpeed * dt);
-	}
-	else if(newPosition.y() > m_startPos.y())
-	{
-		newPosition.y() = max(m_startPos.y(), newPosition.y() - c_DodgeSpeed * dt);
+		if (newPosition.y() < m_startPos.y())
+		{
+			newPosition.y() = min(m_startPos.y(), newPosition.y() + c_DodgeSpeed * dt);
+		}
+		else if (newPosition.y() > m_startPos.y())
+		{
+			newPosition.y() = max(m_startPos.y(), newPosition.y() - c_DodgeSpeed * dt);
+		}
 	}
 
 	m_spMatrixNodeTransform->m_Transform.SetPosition(newPosition);
 	m_spMatrixNodeTransform->NotifyChanged();
 }
 
-void MephilesShadow::FaceDirection(hh::math::CVector const& dir)
+void MephilesShadow::FaceDirection(hh::math::CVector dir)
 {
+	if (dir.y() != 0.0f)
+	{
+		dir.y() = 0.0f;
+		dir.normalize();
+	}
+
 	hh::math::CQuaternion const rotation = hh::math::CQuaternion::FromTwoVectors(hh::math::CVector::UnitZ(), dir.head<3>());
 	m_spMatrixNodeTransform->m_Transform.SetRotation(rotation);
 	m_spMatrixNodeTransform->NotifyChanged();

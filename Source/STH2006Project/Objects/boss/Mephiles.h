@@ -106,10 +106,12 @@ private:
 	int m_spawnCount = 0;
 	float m_spawnTimer = 0.0f;
 	float m_spawnRadius = 5.0f;
+	float m_attackStartTime = 0.0f;
+	float m_attackMaxDelay = 0.0f;
 	MephilesShadow::Type m_spawnType = MephilesShadow::Type::Encirclement;
 
 	void SpawnEncirclement(int count, float radius);
-	void SpawnSpring(int count, float radius, float attackStartTime, float maxDelay);
+	void SpawnSpring(int count, float radius, float attackStartTime, float attackMaxDelay);
 	void AdvanceSpawnShadow(float dt);
 
 	hh::math::CVector GetShadowSpawnPosition() const;
