@@ -21,13 +21,30 @@ MephilesShadow::MephilesShadow
 (
 	uint32_t owner, 
 	Type type,
+	float radius,
 	hh::math::CVector const& startPos
 )
 	: m_owner(owner)
 	, m_type(type)
 {
-	m_startY = startPos.y();
-	m_spMatrixNodeTransform->m_Transform.SetPosition(startPos);
+	m_startPos = startPos;
+	hh::math::CVector adjustedPos = startPos;
+
+	switch (type)
+	{
+	case Type::Encirclement:
+	{
+		radius = RAND_FLOAT(radius, c_TargetLostDistance);
+		m_startPos.y() += RAND_FLOAT(c_MinEncirclementHeight, c_MaxEncirclementHeight);
+
+		float const randAngle = RAND_FLOAT(0.0f, 2.0f * PI_F);
+		hh::math::CVector const direction = Eigen::AngleAxisf(randAngle, Eigen::Vector3f::UnitY()) * hh::math::CVector::UnitZ();
+		adjustedPos = m_startPos + direction * radius;
+		break;
+	}
+	}
+
+	m_spMatrixNodeTransform->m_Transform.SetPosition(adjustedPos);
 	FaceDirection(GetPlayerDirection());
 }
 
@@ -401,13 +418,13 @@ bool MephilesShadow::CanDamagePlayer() const
 void MephilesShadow::UpdatePosition(float dt)
 {
 	hh::math::CVector newPosition = m_spMatrixNodeTransform->m_Transform.m_Position + m_direction * m_speed * dt;
-	if (newPosition.y() < m_startY)
+	if (newPosition.y() < m_startPos.y())
 	{
-		newPosition.y() = min(m_startY, newPosition.y() + c_DodgeSpeed * dt);
+		newPosition.y() = min(m_startPos.y(), newPosition.y() + c_DodgeSpeed * dt);
 	}
-	else if(newPosition.y() > m_startY)
+	else if(newPosition.y() > m_startPos.y())
 	{
-		newPosition.y() = max(m_startY, newPosition.y() - c_DodgeSpeed * dt);
+		newPosition.y() = max(m_startPos.y(), newPosition.y() - c_DodgeSpeed * dt);
 	}
 
 	m_spMatrixNodeTransform->m_Transform.SetPosition(newPosition);

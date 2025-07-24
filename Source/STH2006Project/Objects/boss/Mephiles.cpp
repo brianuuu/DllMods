@@ -617,7 +617,7 @@ void Mephiles::AdvanceSpawnShadow(float dt)
 		// TODO: max units
 		while (m_spawnCount < m_maxSpawnCount && m_spawnTimer >= spawnRate)
 		{
-			auto spShadow = boost::make_shared<MephilesShadow>(m_ActorID, m_spawnType, GetShadowSpawnPosition());
+			auto spShadow = boost::make_shared<MephilesShadow>(m_ActorID, m_spawnType, m_spawnRadius, GetShadowSpawnPosition());
 			m_pMember->m_pGameDocument->AddGameObject(spShadow);
 			m_shadows[spShadow->m_ActorID] = spShadow;
 			
@@ -636,11 +636,8 @@ hh::math::CVector Mephiles::GetShadowSpawnPosition() const
 	{
 	case MephilesShadow::Type::Encirclement:
 	{
-		float const radius = m_spawnRadius + RAND_FLOAT(0.0f, 15.0f);
-		float const randAngle = RAND_FLOAT(0.0f, 2.0f * PI_F);
-		hh::math::CVector const direction = Eigen::AngleAxisf(randAngle, Eigen::Vector3f::UnitY()) * hh::math::CVector::UnitZ();
-		hh::math::CVector spawnPos = playerPos + direction * radius;
-		spawnPos.y() = m_Data.m_GroundHeight + RAND_FLOAT(MephilesShadow::c_MinEncirclementHeight, MephilesShadow::c_MaxEncirclementHeight);
+		hh::math::CVector spawnPos = playerPos;
+		spawnPos.y() = m_Data.m_GroundHeight;
 		return spawnPos;
 	}
 	}

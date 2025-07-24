@@ -33,11 +33,11 @@ private:
 	Type m_type = Type::Encirclement;
 	float m_speed = 0.0f;
 	hh::math::CVector m_direction = hh::math::CVector::Zero();
+	hh::math::CVector m_startPos = hh::math::CVector::Zero();
 
 	State m_state = State::Idle;
 	State m_stateNext = State::Idle;
 	float m_stateTime = 0.0f;
-	float m_startY = 0.0f;
 
 	// animation states
 	static char const* Loop;
@@ -47,7 +47,7 @@ private:
 	static char const* Dead;
 
 public:
-	MephilesShadow(uint32_t owner, Type type, hh::math::CVector const& startPos);
+	MephilesShadow(uint32_t owner, Type type, float radius, hh::math::CVector const& startPos);
 
 	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	bool SetAddColliders(const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
