@@ -409,6 +409,7 @@ void MephilesShadow::StateBlownEnd()
 void MephilesShadow::StateShockBegin()
 {
 	m_type = Type::Encirclement;
+	m_speed = 0.0f;
 
 	Common::ObjectPlaySound(this, 200614003, m_shockSfx);
 	m_shockID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spModel->GetNode("Spine"), "ef_ch_sns_yh1_damage_shock2", 1.0f);
