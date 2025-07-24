@@ -1068,14 +1068,13 @@ public:
     {
         if (flag)
         {
-            if (std::strstr(message.GetType(), "MsgRestartStage") != nullptr
-             || std::strstr(message.GetType(), "MsgStageClear") != nullptr)
+            if (message.Is<Sonic::Message::MsgRestartStage>() || message.Is<Sonic::Message::MsgStageClear>())
             {
                 Kill();
                 return true;
             }
 
-            if (std::strstr(message.GetType(), "MsgHitEventCollision") != nullptr)
+            if (message.Is<Sonic::Message::MsgHitEventCollision>())
             {
                 HitTarget(message.m_SenderActorID);
                 return true;
@@ -1156,6 +1155,8 @@ public:
 
     void HitTarget(uint32_t actorID)
     {
+        if (m_MarkAsDeath) return;
+
         auto* senderMessageActor = m_pMessageManager->GetMessageActor(actorID);
         uint32_t senderActor = (uint32_t)senderMessageActor - 0x28;
         bool cannotDamage = false;
@@ -1194,6 +1195,9 @@ public:
 
         RemoveEffect();
         m_MarkAsDeath = true;
+
+        Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Damage", false);
+        Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Terrain", false);
     }
 
     void RemoveEffect()
