@@ -14,6 +14,9 @@ float const MephilesShadow::c_MinSpringAppearHeight = 1.0f;
 float const MephilesShadow::c_MaxSpringAppearHeight = 2.5f;
 float const MephilesShadow::c_CircularFlightSpeed = 0.5f * DEG_TO_RAD;
 float const MephilesShadow::c_SpringSpeed = 5.0f;
+float const MephilesShadow::c_SpringG = -9.8f;
+float const MephilesShadow::c_SpringErrorRadius = 2.0f;
+float const MephilesShadow::c_SpringFailedTime = 0.25f;
 
 char const* MephilesShadow::Loop = "Loop";
 char const* MephilesShadow::BodyAttack = "BodyAttack";
@@ -127,7 +130,7 @@ bool MephilesShadow::SetAddColliders
 
 	// damage body
 	hk2010_2_0::hkpSphereShape* damageShape = new hk2010_2_0::hkpSphereShape(0.4f);
-	AddEventCollision("Damage", damageShape, *(int*)0x1E0AFD8, true, m_spNodeBody); // ColID_PlayerEvent
+	AddEventCollision("Player", damageShape, *(int*)0x1E0AFD8, true, m_spNodeBody); // ColID_PlayerEvent
 
 	// enemy evasion
 	hk2010_2_0::hkpSphereShape* evasionShape = new hk2010_2_0::hkpSphereShape(1.0f);
@@ -153,8 +156,9 @@ bool MephilesShadow::ProcessMessage
 		if (message.Is<Sonic::Message::MsgDamage>())
 		{
 			auto& msg = static_cast<Sonic::Message::MsgDamage&>(message);
-			SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(msg.m_DamagePosition, true));
+			SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(msg.m_DamagePosition, true, true));
 
+			// calculate blown direction
 			float constexpr c_BlownSpeed = 12.0f;
 			m_speed = c_BlownSpeed;
 			if (msg.m_Velocity.isZero())
@@ -165,6 +169,13 @@ bool MephilesShadow::ProcessMessage
 			{
 				m_direction = msg.m_Velocity.normalized();
 			}
+
+			// play hit pfx here, otherwise it can only play from player, not shock waves
+			auto attackEffectNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
+			attackEffectNode->SetParent(Sonic::CApplicationDocument::GetInstance()->m_pMember->m_spMatrixNodeRoot.get());
+			attackEffectNode->m_Transform.SetPosition(GetBodyPosition());
+			attackEffectNode->NotifyChanged();
+			m_pGlitterPlayer->PlayOneshot(attackEffectNode, "ef_mephiles_attack_hit", 1.0f, 1);
 
 			m_stateNext = State::Blown;
 			return true;
@@ -183,15 +194,22 @@ bool MephilesShadow::ProcessMessage
 		if (message.Is<Sonic::Message::MsgHitEventCollision>())
 		{
 			auto& msg = static_cast<Sonic::Message::MsgHitEventCollision&>(message);
-			if (CanDamagePlayer() && msg.m_Symbol == "Damage")
+			if (msg.m_Symbol == "Player")
 			{
-				SendMessage(msg.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
-					(
-						*(uint32_t*)0x1E0BE34, // DamageID_NoAttack
-						GetBodyPosition(),
-						hh::math::CVector::Zero()
-					)
-				);
+				if (m_state == State::SpringAttack)
+				{
+					// TODO: attach to player
+				}
+				else if (CanDamagePlayer())
+				{
+					SendMessage(msg.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
+						(
+							*(uint32_t*)0x1E0BE34, // DamageID_NoAttack
+							GetBodyPosition(),
+							hh::math::CVector::Zero()
+						)
+					);
+				}
 			}
 			else if (msg.m_Symbol == "Terrain") // only in State::Blown
 			{
@@ -256,6 +274,7 @@ void MephilesShadow::UpdateParallel
 	case State::Blown: StateBlownAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::SpringWait: StateSpringWaitAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::SpringAttack: StateSpringAttackAdvance(in_rUpdateInfo.DeltaTime); break;
+	case State::SpringMiss: StateSpringMissAdvance(in_rUpdateInfo.DeltaTime); break;
 	}
 
 	m_stateTime += in_rUpdateInfo.DeltaTime;
@@ -289,6 +308,7 @@ void MephilesShadow::HandleStateChange()
 	case State::Shock: StateShockBegin(); break;
 	case State::Blown: StateBlownBegin(); break;
 	case State::SpringAttack: StateSpringAttackBegin(); break;
+	case State::SpringMiss: StateSpringMissBegin(); break;
 	}
 
 	m_state = m_stateNext;
@@ -375,7 +395,7 @@ void MephilesShadow::StateBlownBegin()
 
 	ChangeState(Dead);
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Body", false);
-	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Damage", false);
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Player", false);
 
 	// terrain/enemy detection
 	hk2010_2_0::hkpSphereShape* damageShape = new hk2010_2_0::hkpSphereShape(0.3f);
@@ -460,15 +480,57 @@ void MephilesShadow::StateSpringAttackBegin()
 
 	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	hh::math::CVector const playerPos = context->m_spMatrixNode->m_Transform.m_Position;
-	m_direction = (playerPos - m_spMatrixNodeTransform->m_Transform.m_Position).normalized();
-	m_speed = c_SpringSpeed;
+	float const randAngle = RAND_FLOAT(0.0f, 2.0f * PI_F);
+	float const randError = RAND_FLOAT(0.0f, c_SpringErrorRadius);
+	m_attackTarget = playerPos + Eigen::AngleAxisf(randAngle, Eigen::Vector3f::UnitY()) * hh::math::CVector::UnitZ() * randError;
+	
+	hh::math::CVector dir = m_attackTarget - m_spMatrixNodeTransform->m_Transform.m_Position;
+	dir.y() = 0.0f;
 
+	float const timeToPlayer = dir.norm() / c_SpringSpeed; // horizontal only
+	float const yDist = m_attackTarget.y() - m_spMatrixNodeTransform->m_Transform.m_Position.y();
+	float const ySpeed = (yDist - 0.5f * c_SpringG * timeToPlayer * timeToPlayer) / timeToPlayer;
+
+	m_direction = dir.normalized();
+	m_speed = ySpeed; // for y-direction only
 	FaceDirection(m_direction);
 }
 
 void MephilesShadow::StateSpringAttackAdvance(float dt)
 {
-	UpdatePosition(dt);
+	hh::math::CVector const oldPos = m_spMatrixNodeTransform->m_Transform.m_Position;
+	hh::math::CVector newPos = oldPos + m_direction * c_SpringSpeed * dt + hh::math::CVector::UnitY() * m_speed * dt;
+
+	// TODO: terrain raycast, lava
+	hh::math::CVector outPos = hh::math::CVector::Zero();
+	hh::math::CVector outNormal = hh::math::CVector::UnitY();
+	if (Common::fRaycast(oldPos, newPos, outPos, outNormal, *(int*)0x1E0AFAC))
+	{
+		newPos = outPos;
+		m_stateNext = State::SpringMiss;
+	}
+
+	// update gravity
+	m_speed += c_SpringG * dt;
+
+	m_spMatrixNodeTransform->m_Transform.SetPosition(newPos);
+	m_spMatrixNodeTransform->NotifyChanged();
+}
+
+//---------------------------------------------------
+// State::SpringMiss
+//---------------------------------------------------
+void MephilesShadow::StateSpringMissBegin()
+{
+	ChangeState(CatchMiss);
+}
+
+void MephilesShadow::StateSpringMissAdvance(float dt)
+{
+	if (m_stateTime >= c_SpringFailedTime)
+	{
+		m_stateNext = State::Idle;
+	}
 }
 
 //---------------------------------------------------

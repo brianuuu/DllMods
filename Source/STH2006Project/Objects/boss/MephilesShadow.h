@@ -23,6 +23,7 @@ public:
 		Shock,
 		SpringWait,
 		SpringAttack,
+		SpringMiss,
 		Dead
 	};
 
@@ -87,11 +88,16 @@ private:
 
 	// State::SpringWait
 	float m_attackStartTime = 0.0f;
+	hh::math::CVector m_attackTarget = hh::math::CVector::Zero();
 	void StateSpringWaitAdvance(float dt);
 
 	// State::SpringAttack
 	void StateSpringAttackBegin();
 	void StateSpringAttackAdvance(float dt);
+
+	// State::SpringMiss
+	void StateSpringMissBegin();
+	void StateSpringMissAdvance(float dt);
 
 	// Utils
 	hh::math::CVector GetBodyPosition() const;
@@ -115,5 +121,8 @@ public:
 	static float const c_MaxSpringAppearHeight;
 	static float const c_CircularFlightSpeed;
 	static float const c_SpringSpeed;
+	static float const c_SpringG;
+	static float const c_SpringErrorRadius;
+	static float const c_SpringFailedTime;
 };
 
