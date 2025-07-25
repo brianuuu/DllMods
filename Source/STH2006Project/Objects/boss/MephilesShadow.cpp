@@ -132,9 +132,12 @@ bool MephilesShadow::SetAddColliders
 	hk2010_2_0::hkpSphereShape* damageShape = new hk2010_2_0::hkpSphereShape(0.4f);
 	AddEventCollision("Player", damageShape, *(int*)0x1E0AFD8, true, m_spNodeBody); // ColID_PlayerEvent
 
-	// enemy evasion
-	hk2010_2_0::hkpSphereShape* evasionShape = new hk2010_2_0::hkpSphereShape(1.0f);
-	AddEventCollision("Enemy", evasionShape, *(int*)0x1E0AF54, true, m_spNodeBody); // ColID_TypeEnemy
+	// proxy collision
+	uint32_t const typeKeepOffEnemy = *(uint32_t*)0x1E5E804;
+	uint32_t const proxyCollisionID = Common::MakeCollisionID((1llu << typeKeepOffEnemy), (1llu << typeKeepOffEnemy));
+	Hedgehog::Base::THolder<Sonic::CWorld> holder(m_pMember->m_pWorld.get());
+	hk2010_2_0::hkpSphereShape* proxyShape = new hk2010_2_0::hkpSphereShape(0.6f);
+	m_spProxy = boost::make_shared<Sonic::CCharacterProxy>(this, holder, proxyShape, hh::math::CVector::UnitY() * 0.5f, hh::math::CQuaternion::Identity(), proxyCollisionID);
 
 	return true;
 }
@@ -215,19 +218,20 @@ bool MephilesShadow::ProcessMessage
 			{
 				m_stateNext = State::Dead;
 			}
-			else if (msg.m_Symbol == "Enemy" && message.m_SenderActorID != m_ActorID)
-			{
-				m_escapeEnemies.push_back(message.m_SenderActorID);
-			}
 			return true;
 		}
 
-		if (message.Is<Sonic::Message::MsgLeaveEventCollision>())
+		if (message.Is<Sonic::Message::MsgNotifyObjectEvent>())
 		{
-			auto& msg = static_cast<Sonic::Message::MsgLeaveEventCollision&>(message);
-			if (msg.m_Symbol == "Enemy" && message.m_SenderActorID != m_ActorID)
+			auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
+			switch (msg.m_Event)
 			{
-				m_escapeEnemies.erase(std::find(m_escapeEnemies.begin(), m_escapeEnemies.end(), message.m_SenderActorID));
+			case 0:
+			{
+				m_pGlitterPlayer->PlayOneshot(m_spModel->GetNode("Spine"), "ef_mephiles_dead", 1.0f, 1);
+				Kill();
+				break;
+			}
 			}
 			return true;
 		}
@@ -278,6 +282,7 @@ void MephilesShadow::UpdateParallel
 	}
 
 	m_stateTime += in_rUpdateInfo.DeltaTime;
+	m_enableDamageTimer = max(0.0f, m_enableDamageTimer - in_rUpdateInfo.DeltaTime);
 
 	if (m_state != State::Shock)
 	{
@@ -361,20 +366,35 @@ void MephilesShadow::StateIdleAdvance(float dt)
 		fnAccel(m_speed, 0.0f, c_DeltaSpeed);
 	}
 
-	if (!m_escapeEnemies.empty())
+	FaceDirection(m_direction);
+
+	// update position
+	m_spProxy->m_Position = m_spMatrixNodeTransform->m_Transform.m_Position;
+	m_spProxy->m_UpVector = hh::math::CVector::UnitY();
+	m_spProxy->m_Velocity = m_direction * m_speed;
+
+	if (m_spMatrixNodeTransform->m_Transform.m_Position.y() + c_DodgeSpeed * dt + 0.1f < m_startPos.y())
 	{
-		// escape other shadows by moving perpendiular to player direction
-		hh::math::CVector otherPos = hh::math::CVector::Zero();
-		SendMessageImm(m_escapeEnemies.front(), Sonic::Message::MsgGetPosition(otherPos));
-		hh::math::CVector const escapeDir = m_spMatrixNodeTransform->m_Transform.m_Position - otherPos;
-		hh::math::CVector const dirLeft = Eigen::AngleAxisf(PI_F * 0.5f, Eigen::Vector3f::UnitY()) * m_direction;
-		hh::math::CVector const newPosition = m_spMatrixNodeTransform->m_Transform.m_Position + (escapeDir.dot(dirLeft) > 0.0f ? dirLeft : -dirLeft) * c_DodgeSpeed * dt;
-		m_spMatrixNodeTransform->m_Transform.SetPosition(newPosition);
-		m_spMatrixNodeTransform->NotifyChanged();
+		m_spProxy->m_Velocity.y() += c_DodgeSpeed;
+	}
+	else if (m_spMatrixNodeTransform->m_Transform.m_Position.y() - c_DodgeSpeed * dt - 0.1f > m_startPos.y())
+	{
+		m_spProxy->m_Velocity.y() -= c_DodgeSpeed;
 	}
 
-	UpdatePosition(dt);
-	FaceDirection(m_direction);
+	Common::fCCharacterProxyIntegrate(m_spProxy.get(), dt);
+	hh::math::CVector newPosition = m_spProxy->m_Position;
+
+	// raycast terrain
+	hh::math::CVector outPos = hh::math::CVector::Zero();
+	hh::math::CVector outNormal = hh::math::CVector::UnitY();
+	if (Common::fRaycast(newPosition + hh::math::CVector::UnitY(), newPosition, outPos, outNormal, *(int*)0x1E0AFAC))
+	{
+		newPosition.y() = outPos.y();
+	}
+
+	m_spMatrixNodeTransform->m_Transform.SetPosition(newPosition);
+	m_spMatrixNodeTransform->NotifyChanged();
 }
 
 void MephilesShadow::StateIdleEnd()
@@ -407,7 +427,9 @@ void MephilesShadow::StateBlownBegin()
 
 void MephilesShadow::StateBlownAdvance(float dt)
 {
-	UpdatePosition(dt);
+	hh::math::CVector const newPosition = m_spMatrixNodeTransform->m_Transform.m_Position + m_direction * m_speed * dt;
+	m_spMatrixNodeTransform->m_Transform.SetPosition(newPosition);
+	m_spMatrixNodeTransform->NotifyChanged();
 
 	float constexpr c_BlownTime = 0.25f;
 	if (m_stateTime >= c_BlownTime || m_speed == 0.0f)
@@ -418,8 +440,11 @@ void MephilesShadow::StateBlownAdvance(float dt)
 
 void MephilesShadow::StateBlownEnd()
 {
-	// TODO: sfx, pfx
+	SharedPtrTypeless soundHandle;
+	Common::ObjectPlaySound(this, 200615001, soundHandle);
+
 	Common::SpawnBoostParticle((uint32_t**)this, m_spMatrixNodeTransform->m_Transform.m_Position, 0x10001);
+	m_pGlitterPlayer->PlayOneshot(m_spModel->GetNode("Spine"), "ef_mephiles_dead", 1.0f, 1);
 	Kill();
 }
 
@@ -453,7 +478,6 @@ void MephilesShadow::StateShockEnd()
 		m_shockID = 0;
 	}
 }
-
 //---------------------------------------------------
 // State::SpringWait
 //---------------------------------------------------
@@ -529,6 +553,7 @@ void MephilesShadow::StateSpringMissAdvance(float dt)
 {
 	if (m_stateTime >= c_SpringFailedTime)
 	{
+		m_enableDamageTimer = 0.5f;
 		m_stateNext = State::Idle;
 	}
 }
@@ -543,27 +568,7 @@ hh::math::CVector MephilesShadow::GetBodyPosition() const
 
 bool MephilesShadow::CanDamagePlayer() const
 {
-	return m_type == Type::Encirclement;
-}
-
-void MephilesShadow::UpdatePosition(float dt)
-{
-	hh::math::CVector newPosition = m_spMatrixNodeTransform->m_Transform.m_Position + m_direction * m_speed * dt;
-
-	if (m_type == Type::Encirclement)
-	{
-		if (newPosition.y() < m_startPos.y())
-		{
-			newPosition.y() = min(m_startPos.y(), newPosition.y() + c_DodgeSpeed * dt);
-		}
-		else if (newPosition.y() > m_startPos.y())
-		{
-			newPosition.y() = max(m_startPos.y(), newPosition.y() - c_DodgeSpeed * dt);
-		}
-	}
-
-	m_spMatrixNodeTransform->m_Transform.SetPosition(newPosition);
-	m_spMatrixNodeTransform->NotifyChanged();
+	return m_type == Type::Encirclement && m_enableDamageTimer <= 0.0f;
 }
 
 void MephilesShadow::FaceDirection(hh::math::CVector dir)

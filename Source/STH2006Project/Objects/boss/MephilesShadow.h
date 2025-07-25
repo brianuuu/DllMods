@@ -31,6 +31,7 @@ private:
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
 	boost::shared_ptr<hh::anim::CAnimationPose> m_spAnimPose;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeBody;
+	boost::shared_ptr<Sonic::CCharacterProxy> m_spProxy;
 
 	uint32_t m_owner = 0;
 	Type m_type = Type::Encirclement;
@@ -69,7 +70,7 @@ private:
 
 	// State::Idle
 	bool m_targetLost = false;
-	std::vector<uint32_t> m_escapeEnemies;
+	float m_enableDamageTimer = 0.0f;
 	void StateIdleBegin();
 	void StateIdleAdvance(float dt);
 	void StateIdleEnd();
@@ -103,7 +104,6 @@ private:
 	hh::math::CVector GetBodyPosition() const;
 	bool CanDamagePlayer() const;
 
-	void UpdatePosition(float dt);
 	void FaceDirection(hh::math::CVector dir);
 	hh::math::CVector GetPlayerDirection(float* distance = nullptr) const;
 
