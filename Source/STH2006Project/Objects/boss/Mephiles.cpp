@@ -334,6 +334,9 @@ void Mephiles::StateAppearAdvance(float dt)
 		// wait for shadow spawn to finish
 		if (GetCurrentState()->GetStateName() == HideLoop)
 		{
+			SharedPtrTypeless soundHandle;
+			Common::ObjectPlaySound(this, 200615000, soundHandle);
+
 			SpawnEncirclement(200, 15.0f);
 			m_stateTime = 0.0f;
 			m_stateStage++;
@@ -408,6 +411,9 @@ void Mephiles::StateHideAdvance(float dt)
 	{
 		if (GetCurrentState()->GetStateName() == HideLoop)
 		{
+			SharedPtrTypeless soundHandle;
+			Common::ObjectPlaySound(this, 200615000, soundHandle);
+
 			m_stateTime = 0.0f;
 			if (m_shadows.size() < 100 || m_stateStage == 3)
 			{
@@ -622,9 +628,22 @@ void Mephiles::AdvanceSpawnShadow(float dt)
 	m_spawnTimer += dt;
 	if (m_spawnTimer >= spawnRate)
 	{
-		// TODO: max units
 		while (m_spawnCount < m_maxSpawnCount && m_spawnTimer >= spawnRate)
 		{
+			// max unit cap
+			int constexpr MaxUnits = 256;
+			if (m_shadows.size() > MaxUnits)
+			{
+				auto iter = m_shadows.begin();
+				std::advance(iter, rand() % m_shadows.size());
+
+				auto const& spShadowToRemove = iter->second;
+				SendMessageImm(spShadowToRemove->m_ActorID, Sonic::Message::MsgNotifyObjectEvent(0));
+
+				m_numKilledUnit++; // 06 counts removed units as killed
+				m_shadows.erase(iter);
+			}
+
 			float angle = 0.0f;
 			switch (m_spawnType)
 			{
