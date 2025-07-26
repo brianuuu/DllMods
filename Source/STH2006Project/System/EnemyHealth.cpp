@@ -16,7 +16,7 @@ HOOK(int32_t*, __fastcall, EnemyHealth_CSonicStateHomingAttackAfterBegin, 0x1118
 HOOK(void, __fastcall, EnemyHealth_CSonicStateHomingAttackAfterAdvance, 0x1118600, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
-    if (EnemyHealth::m_noDamage && context->m_Velocity.y() <= 0.0f)
+    if (EnemyHealth::m_noDamage && context->m_Velocity.y() <= 15.0f) // HomingAttackAfterUpVelocity = 18
     {
         context->StateFlag(eStateFlag_NoDamage)--;
         EnemyHealth::m_noDamage = false;
