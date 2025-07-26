@@ -142,6 +142,18 @@ bool MephilesShadow::SetAddColliders
 	return true;
 }
 
+void MephilesShadow::AddCallback
+(
+	const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, 
+	Sonic::CGameDocument* in_pGameDocument, 
+	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
+)
+{
+	Sonic::CObjectBase::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
+
+	m_pGlitterPlayer->PlayOneshot(m_spModel->GetNode("Spine"), "ef_mephiles_appear", 1.0f, 1);
+}
+
 bool MephilesShadow::ProcessMessage
 (
 	Hedgehog::Universe::Message& message, 
@@ -304,6 +316,8 @@ void MephilesShadow::HandleStateChange()
 	{
 	case State::Shock: StateShockEnd(); break;
 	case State::Blown: StateBlownEnd(); break;
+	case State::SpringWait: StateSpringWaitEnd(); break;
+	case State::SpringAttack: StateSpringAttackEnd(); break;
 	}
 
 	// start next state
@@ -312,6 +326,7 @@ void MephilesShadow::HandleStateChange()
 	case State::Idle: StateIdleBegin(); break;
 	case State::Shock: StateShockBegin(); break;
 	case State::Blown: StateBlownBegin(); break;
+	case State::SpringWait: StateSpringWaitBegin(); break;
 	case State::SpringAttack: StateSpringAttackBegin(); break;
 	case State::SpringMiss: StateSpringMissBegin(); break;
 	}
@@ -478,9 +493,15 @@ void MephilesShadow::StateShockEnd()
 		m_shockID = 0;
 	}
 }
+
 //---------------------------------------------------
 // State::SpringWait
 //---------------------------------------------------
+void MephilesShadow::StateSpringWaitBegin()
+{
+	m_attackID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spModel->GetNode("Spine"), "ef_mephiles_attack", 1.0f);
+}
+
 void MephilesShadow::StateSpringWaitAdvance(float dt)
 {
 	hh::math::CVector const displacement = m_spMatrixNodeTransform->m_Transform.m_Position - m_startPos;
@@ -492,6 +513,15 @@ void MephilesShadow::StateSpringWaitAdvance(float dt)
 	if (m_stateTime >= m_attackStartTime)
 	{
 		m_stateNext = State::SpringAttack;
+	}
+}
+
+void MephilesShadow::StateSpringWaitEnd()
+{
+	if (m_stateNext != State::SpringAttack && m_attackID)
+	{
+		m_pGlitterPlayer->StopByID(m_attackID, false);
+		m_attackID = 0;
 	}
 }
 
@@ -518,6 +548,8 @@ void MephilesShadow::StateSpringAttackBegin()
 	m_direction = dir.normalized();
 	m_speed = ySpeed; // for y-direction only
 	FaceDirection(m_direction);
+
+	m_pGlitterPlayer->PlayOneshot(m_spMatrixNodeTransform, "ef_mephiles_spring", 1.0f, 1);
 }
 
 void MephilesShadow::StateSpringAttackAdvance(float dt)
@@ -539,6 +571,15 @@ void MephilesShadow::StateSpringAttackAdvance(float dt)
 
 	m_spMatrixNodeTransform->m_Transform.SetPosition(newPos);
 	m_spMatrixNodeTransform->NotifyChanged();
+}
+
+void MephilesShadow::StateSpringAttackEnd()
+{
+	if (m_attackID)
+	{
+		m_pGlitterPlayer->StopByID(m_attackID, false);
+		m_attackID = 0;
+	}
 }
 
 //---------------------------------------------------

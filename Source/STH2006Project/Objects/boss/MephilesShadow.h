@@ -55,6 +55,7 @@ public:
 
 	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	bool SetAddColliders(const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
+	void AddCallback(const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;
 	void UpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo) override;
 
@@ -88,13 +89,17 @@ private:
 	void StateShockEnd();
 
 	// State::SpringWait
+	uint32_t m_attackID = 0u;
 	float m_attackStartTime = 0.0f;
 	hh::math::CVector m_attackTarget = hh::math::CVector::Zero();
+	void StateSpringWaitBegin();
 	void StateSpringWaitAdvance(float dt);
+	void StateSpringWaitEnd();
 
 	// State::SpringAttack
 	void StateSpringAttackBegin();
 	void StateSpringAttackAdvance(float dt);
+	void StateSpringAttackEnd();
 
 	// State::SpringMiss
 	void StateSpringMissBegin();
