@@ -134,7 +134,8 @@ bool MephilesShadow::SetAddColliders
 
 	// proxy collision
 	uint32_t const typeKeepOffEnemy = *(uint32_t*)0x1E5E804;
-	uint32_t const proxyCollisionID = Common::MakeCollisionID((1llu << typeKeepOffEnemy), (1llu << typeKeepOffEnemy));
+	uint32_t const typeTerrain = *(uint32_t*)0x1E5E754;
+	uint32_t const proxyCollisionID = Common::MakeCollisionID((1llu << typeKeepOffEnemy), (1llu << typeKeepOffEnemy) | (1llu << typeTerrain));
 	Hedgehog::Base::THolder<Sonic::CWorld> holder(m_pMember->m_pWorld.get());
 	hk2010_2_0::hkpSphereShape* proxyShape = new hk2010_2_0::hkpSphereShape(0.6f);
 	m_spProxy = boost::make_shared<Sonic::CCharacterProxy>(this, holder, proxyShape, hh::math::CVector::UnitY() * 0.5f, hh::math::CQuaternion::Identity(), proxyCollisionID);
