@@ -261,7 +261,7 @@ bool Mephiles::ProcessMessage
 			case 1:
 			{
 				int constexpr c_MaxHoldUnits = 5;
-				if (m_shadowsAttached.size() < c_MaxHoldUnits)
+				if (m_shadowsAttached.size() < c_MaxHoldUnits && !m_shadowsAttached.count(message.m_SenderActorID))
 				{
 					// notify can attach to player
 					auto& spShadow = m_shadows[message.m_SenderActorID];
@@ -275,6 +275,7 @@ bool Mephiles::ProcessMessage
 						// play countdown sfx/pfx on player
 						float constexpr c_HoldExplosionWaitTime = 2.0f;
 						m_attachCountdown = c_HoldExplosionWaitTime;
+						m_attachSfx.reset();
 						Common::SonicContextPlaySound(m_attachSfx, 200615022, 0);
 
 						// notify playing pfx

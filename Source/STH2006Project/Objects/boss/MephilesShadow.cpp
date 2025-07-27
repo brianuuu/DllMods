@@ -226,7 +226,7 @@ bool MephilesShadow::ProcessMessage
 				if (m_state == State::SpringAttack)
 				{
 					// ask owner if this can attach to player
-					SendMessageImm(m_owner, Sonic::Message::MsgNotifyObjectEvent(1));
+					SendMessage(m_owner, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(1));
 				}
 				else if (CanDamagePlayer())
 				{
@@ -461,7 +461,7 @@ void MephilesShadow::StateIdleEnd()
 void MephilesShadow::StateBlownBegin()
 {
 	// notify owner it's about to die
-	SendMessageImm(m_owner, Sonic::Message::MsgNotifyObjectEvent(0));
+	SendMessage(m_owner, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(0));
 
 	if (!m_disableDamageSfx)
 	{
