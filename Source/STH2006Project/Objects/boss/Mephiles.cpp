@@ -173,7 +173,8 @@ void Mephiles::SetUpdateParallel
 	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
 	Update(in_rUpdateInfo);
 
-	AdvanceSpawnShadow(in_rUpdateInfo.DeltaTime);
+	AdvanceShadowSpawn(in_rUpdateInfo.DeltaTime);
+	AdvanceShadowExplode(in_rUpdateInfo.DeltaTime);
 }
 
 bool Mephiles::ProcessMessage
@@ -251,8 +252,38 @@ bool Mephiles::ProcessMessage
 			{
 			case 0:
 			{
+				// a shadow has died
 				m_numKilledUnit++; 
 				m_shadows.erase(message.m_SenderActorID);
+				m_shadowsAttached.erase(message.m_SenderActorID);
+				break;
+			}
+			case 1:
+			{
+				int constexpr c_MaxHoldUnits = 5;
+				if (m_shadowsAttached.size() < c_MaxHoldUnits)
+				{
+					// notify can attach to player
+					auto& spShadow = m_shadows[message.m_SenderActorID];
+					m_shadowsAttached[message.m_SenderActorID] = spShadow;
+					m_shadows.erase(message.m_SenderActorID);
+					SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(1));
+				
+					// countdown to explode
+					if (m_shadowsAttached.size() == c_MaxHoldUnits)
+					{
+						// play countdown sfx/pfx on player
+						float constexpr c_HoldExplosionWaitTime = 2.0f;
+						m_attachCountdown = c_HoldExplosionWaitTime;
+						Common::SonicContextPlaySound(m_attachSfx, 200615022, 0);
+
+						// notify playing pfx
+						for (auto& iter : m_shadowsAttached)
+						{
+							SendMessage(iter.first, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(2));
+						}
+					}
+				}
 				break;
 			}
 			}
@@ -586,6 +617,7 @@ void Mephiles::FollowPlayer()
 
 		m_stateNext = State::Eject;
 		m_hasEjected = true;
+		m_attachCountdown = 0.0f;
 		return;
 	}
 
@@ -620,7 +652,7 @@ void Mephiles::SpawnSpring(int count, float radius, float attackStartTime, float
 	m_spawnType = MephilesShadow::Type::Spring;
 }
 
-void Mephiles::AdvanceSpawnShadow(float dt)
+void Mephiles::AdvanceShadowSpawn(float dt)
 {
 	if (m_spawnCount >= m_maxSpawnCount) return;
 
@@ -634,6 +666,7 @@ void Mephiles::AdvanceSpawnShadow(float dt)
 			int constexpr MaxUnits = 256;
 			if (m_shadows.size() > MaxUnits)
 			{
+				// TODO: this can delete those currently spawning
 				auto iter = m_shadows.begin();
 				std::advance(iter, rand() % m_shadows.size());
 
@@ -671,6 +704,49 @@ void Mephiles::AdvanceSpawnShadow(float dt)
 			m_spawnCount++;
 			m_spawnTimer -= spawnRate;
 		}
+	}
+}
+
+void Mephiles::AdvanceShadowExplode(float dt)
+{
+	if (m_attachCountdown > 0.0f && !m_shadowsAttached.empty())
+	{
+		m_attachCountdown -= dt;
+		if (m_attachCountdown <= 0.0f)
+		{
+			// play explosion sfx on player
+			SharedPtrTypeless handle;
+			Common::SonicContextPlaySound(handle, 200614014, 0);
+			m_attachSfx.reset();
+
+			// damage player
+			auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+			SendMessage(context->m_pPlayer->m_ActorID, boost::make_shared<Sonic::Message::MsgDamage>
+				(
+					*(uint32_t*)0x1E0BE34, // DamageID_NoAttack
+					context->m_spMatrixNode->m_Transform.m_Position,
+					hh::math::CVector::Zero()
+				)
+			);
+
+			// kill shadows without effects
+			for (auto& iter : m_shadowsAttached)
+			{
+				SendMessage(iter.first, boost::make_shared<Sonic::Message::MsgKill>());
+			}
+			m_shadowsAttached.clear();
+
+			// pfx
+			auto attackEffectNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
+			attackEffectNode->SetParent(Sonic::CApplicationDocument::GetInstance()->m_pMember->m_spMatrixNodeRoot.get());
+			attackEffectNode->m_Transform.SetPosition(context->m_spMatrixNode->m_Transform.m_Position + hh::math::CVector::UnitY() * 0.5f);
+			attackEffectNode->NotifyChanged();
+			m_pGlitterPlayer->PlayOneshot(attackEffectNode, "ef_spherebomb_s", 1.0f, 1);
+		}
+	}
+	else if (m_attachSfx)
+	{
+		m_attachSfx.reset();
 	}
 }
 

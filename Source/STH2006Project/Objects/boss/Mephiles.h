@@ -99,7 +99,10 @@ private:
 private:
 	// Mephiles shadow
 	std::map<uint32_t, boost::shared_ptr<MephilesShadow>> m_shadows;
+	std::map<uint32_t, boost::shared_ptr<MephilesShadow>> m_shadowsAttached;
 	int m_numKilledUnit = 0;
+	float m_attachCountdown = 0.0f;
+	SharedPtrTypeless m_attachSfx;
 
 	// spawn param
 	int m_maxSpawnCount = 0;
@@ -112,7 +115,8 @@ private:
 
 	void SpawnEncirclement(int count, float radius);
 	void SpawnSpring(int count, float radius, float attackStartTime, float attackMaxDelay);
-	void AdvanceSpawnShadow(float dt);
+	void AdvanceShadowSpawn(float dt);
+	void AdvanceShadowExplode(float dt);
 
 	hh::math::CVector GetShadowSpawnPosition() const;
 };

@@ -17,6 +17,7 @@ float const MephilesShadow::c_SpringSpeed = 5.0f;
 float const MephilesShadow::c_SpringG = -9.8f;
 float const MephilesShadow::c_SpringErrorRadius = 2.0f;
 float const MephilesShadow::c_SpringFailedTime = 0.25f;
+float const MephilesShadow::c_BlownSpeed = 12.0f;;
 
 char const* MephilesShadow::Loop = "Loop";
 char const* MephilesShadow::BodyAttack = "BodyAttack";
@@ -56,9 +57,20 @@ MephilesShadow::MephilesShadow
 		break;
 	}
 	}
+	m_spNodeModel = boost::make_shared<Sonic::CMatrixNodeTransform>();
+	m_spNodeModel->SetParent(m_spMatrixNodeTransform.get());
 
 	m_spMatrixNodeTransform->m_Transform.SetPosition(adjustedPos);
 	FaceDirection(GetPlayerDirection());
+}
+
+void MephilesShadow::SetAddUpdateUnit
+(
+	Sonic::CGameDocument* in_pGameDocument
+)
+{
+	in_pGameDocument->AddUpdateUnit("0", this);
+	in_pGameDocument->AddUpdateUnit("1", this);
 }
 
 bool MephilesShadow::SetAddRenderables
@@ -72,7 +84,7 @@ bool MephilesShadow::SetAddRenderables
 	hh::mr::CMirageDatabaseWrapper wrapper(in_spDatabase.get());
 	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData(modelName, 0);
 	m_spModel = boost::make_shared<hh::mr::CSingleElement>(spModelBaseData);
-	m_spModel->BindMatrixNode(m_spMatrixNodeTransform);
+	m_spModel->BindMatrixNode(m_spNodeModel);
 	Sonic::CGameObject::AddRenderable("Object", m_spModel, false);
 
 	// animations
@@ -175,7 +187,6 @@ bool MephilesShadow::ProcessMessage
 			SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(msg.m_DamagePosition, true, true));
 
 			// calculate blown direction
-			float constexpr c_BlownSpeed = 12.0f;
 			m_speed = c_BlownSpeed;
 			if (msg.m_Velocity.isZero())
 			{
@@ -214,7 +225,8 @@ bool MephilesShadow::ProcessMessage
 			{
 				if (m_state == State::SpringAttack)
 				{
-					// TODO: attach to player
+					// ask owner if this can attach to player
+					SendMessageImm(m_owner, Sonic::Message::MsgNotifyObjectEvent(1));
 				}
 				else if (CanDamagePlayer())
 				{
@@ -241,8 +253,21 @@ bool MephilesShadow::ProcessMessage
 			{
 			case 0:
 			{
+				// should be killed (with effect)
 				m_pGlitterPlayer->PlayOneshot(m_spModel->GetNode("Spine"), "ef_mephiles_dead", 1.0f, 1);
 				Kill();
+				break;
+			}
+			case 1:
+			{
+				// allowed to attach to player
+				m_stateNext = State::SpringAttach;
+				break;
+			}
+			case 2:
+			{
+				// play suicide effect
+				m_suicideID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spModel->GetNode("Spine"), "ef_mephiles_suicide", 1.0f);
 				break;
 			}
 			}
@@ -279,6 +304,17 @@ void MephilesShadow::UpdateParallel
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
 )
 {
+	// Non-time dependent update
+	if (in_rUpdateInfo.Category == "1")
+	{
+		switch (m_state)
+		{
+		case State::SpringAttach: StateSpringAttachAdvance(in_rUpdateInfo.DeltaTime); break;
+		}
+		return;
+	}
+
+	// Time dependent update
 	if (m_stateNext != m_state)
 	{
 		HandleStateChange();
@@ -330,6 +366,7 @@ void MephilesShadow::HandleStateChange()
 	case State::SpringWait: StateSpringWaitBegin(); break;
 	case State::SpringAttack: StateSpringAttackBegin(); break;
 	case State::SpringMiss: StateSpringMissBegin(); break;
+	case State::SpringAttach: StateSpringAttachBegin(); break;
 	}
 
 	m_state = m_stateNext;
@@ -426,8 +463,11 @@ void MephilesShadow::StateBlownBegin()
 	// notify owner it's about to die
 	SendMessageImm(m_owner, Sonic::Message::MsgNotifyObjectEvent(0));
 
-	SharedPtrTypeless soundHandle;
-	Common::ObjectPlaySound(this, 200614000, soundHandle);
+	if (!m_disableDamageSfx)
+	{
+		SharedPtrTypeless soundHandle;
+		Common::ObjectPlaySound(this, 200614000, soundHandle);
+	}
 
 	ChangeState(Dead);
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Body", false);
@@ -439,6 +479,13 @@ void MephilesShadow::StateBlownBegin()
 
 	// face opposite of blown direction
 	FaceDirection(-m_direction);
+
+	// get blown when about to explode, remove effect
+	if (m_suicideID)
+	{
+		m_pGlitterPlayer->StopByID(m_suicideID, true);
+		m_suicideID = 0;
+	}
 }
 
 void MephilesShadow::StateBlownAdvance(float dt)
@@ -456,8 +503,11 @@ void MephilesShadow::StateBlownAdvance(float dt)
 
 void MephilesShadow::StateBlownEnd()
 {
-	SharedPtrTypeless soundHandle;
-	Common::ObjectPlaySound(this, 200615001, soundHandle);
+	if (!m_disableDamageSfx)
+	{
+		SharedPtrTypeless soundHandle;
+		Common::ObjectPlaySound(this, 200615001, soundHandle);
+	}
 
 	Common::SpawnBoostParticle((uint32_t**)this, m_spMatrixNodeTransform->m_Transform.m_Position, 0x10001);
 	m_pGlitterPlayer->PlayOneshot(m_spModel->GetNode("Spine"), "ef_mephiles_dead", 1.0f, 1);
@@ -601,6 +651,45 @@ void MephilesShadow::StateSpringMissAdvance(float dt)
 }
 
 //---------------------------------------------------
+// State::SpringAttach
+//---------------------------------------------------
+void MephilesShadow::StateSpringAttachBegin()
+{
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Body", false);
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Player", false);
+
+	float constexpr c_HoldSpace = 0.2f;
+	hh::math::CVector const offset = m_spNodeModel->m_Transform.m_Rotation * hh::math::CVector::UnitZ() * c_HoldSpace;
+	m_spNodeModel->m_Transform.SetPosition(-offset);
+	m_spNodeModel->NotifyChanged();
+}
+
+void MephilesShadow::StateSpringAttachAdvance(float dt)
+{
+	if (S06DE_API::GetChaosBoostLevel() > 0)
+	{
+		// shift offset position back to root, move up a little to prevent colliding with terrain
+		hh::math::CVector const actualPosition = m_spNodeModel->GetWorldMatrix().translation();
+		m_spNodeModel->m_Transform.SetPosition(hh::math::CVector::Zero());
+		m_spNodeModel->NotifyChanged();
+		m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(hh::math::CQuaternion::Identity(), actualPosition + hh::math::CVector::UnitY() * 0.2f);
+		m_spMatrixNodeTransform->NotifyChanged();
+
+		m_disableDamageSfx = true;
+		m_speed = c_BlownSpeed;
+		m_direction = -GetPlayerDirection();
+		m_stateNext = State::Blown;
+		return;
+	}
+
+	// attach to player, after player has updated position
+	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	hh::mr::CTransform const playerTrans = context->m_spMatrixNode->m_Transform;
+	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(playerTrans.m_Rotation, playerTrans.m_Position);
+	m_spMatrixNodeTransform->NotifyChanged();
+}
+
+//---------------------------------------------------
 // Utils
 //---------------------------------------------------
 hh::math::CVector MephilesShadow::GetBodyPosition() const
@@ -622,8 +711,8 @@ void MephilesShadow::FaceDirection(hh::math::CVector dir)
 	}
 
 	hh::math::CQuaternion const rotation = hh::math::CQuaternion::FromTwoVectors(hh::math::CVector::UnitZ(), dir.head<3>());
-	m_spMatrixNodeTransform->m_Transform.SetRotation(rotation);
-	m_spMatrixNodeTransform->NotifyChanged();
+	m_spNodeModel->m_Transform.SetRotation(rotation);
+	m_spNodeModel->NotifyChanged();
 }
 
 hh::math::CVector MephilesShadow::GetPlayerDirection(float* distance) const

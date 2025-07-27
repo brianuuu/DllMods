@@ -24,12 +24,14 @@ public:
 		SpringWait,
 		SpringAttack,
 		SpringMiss,
+		SpringAttach,
 		Dead
 	};
 
 private:
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
 	boost::shared_ptr<hh::anim::CAnimationPose> m_spAnimPose;
+	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeModel;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeBody;
 	boost::shared_ptr<Sonic::CCharacterProxy> m_spProxy;
 
@@ -53,6 +55,7 @@ private:
 public:
 	MephilesShadow(uint32_t owner, Type type, float radius, float startAngle, hh::math::CVector const& startPos);
 
+	void SetAddUpdateUnit(Sonic::CGameDocument* in_pGameDocument) override;
 	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	bool SetAddColliders(const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	void AddCallback(const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
@@ -105,6 +108,12 @@ private:
 	void StateSpringMissBegin();
 	void StateSpringMissAdvance(float dt);
 
+	// State::SpringAttach
+	uint32_t m_suicideID = 0u;
+	bool m_disableDamageSfx = false;
+	void StateSpringAttachBegin();
+	void StateSpringAttachAdvance(float dt);
+
 	// Utils
 	hh::math::CVector GetBodyPosition() const;
 	bool CanDamagePlayer() const;
@@ -129,5 +138,6 @@ public:
 	static float const c_SpringG;
 	static float const c_SpringErrorRadius;
 	static float const c_SpringFailedTime;
+	static float const c_BlownSpeed;
 };
 
