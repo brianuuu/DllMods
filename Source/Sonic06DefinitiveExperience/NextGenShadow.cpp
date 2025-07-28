@@ -672,6 +672,11 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
                     StateManager::ChangeState(StateAction::HomingAttack, *PLAYER_CONTEXT);
                 }
             }
+            else if (isChaosSnapSearch && quitHoldSameTarget && !isSameTarget)
+            {
+                // was holding same target, but pressed A on new target, teleport
+                StateManager::ChangeState(StateAction::HomingAttack, *PLAYER_CONTEXT);
+            }
             else if (useNextAttack)
             {
                 PlayNextChaosAttack();
