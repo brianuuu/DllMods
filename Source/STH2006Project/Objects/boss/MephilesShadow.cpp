@@ -61,7 +61,7 @@ MephilesShadow::MephilesShadow
 	m_spNodeModel->SetParent(m_spMatrixNodeTransform.get());
 
 	m_spMatrixNodeTransform->m_Transform.SetPosition(adjustedPos);
-	FaceDirection(GetPlayerDirection());
+	FaceDirection(GetPlayerDirection(true));
 }
 
 void MephilesShadow::SetAddUpdateUnit
@@ -187,7 +187,6 @@ bool MephilesShadow::ProcessMessage
 			SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(msg.m_DamagePosition, true, true));
 
 			// calculate blown direction
-			m_speed = c_BlownSpeed;
 			if (msg.m_Velocity.isZero())
 			{
 				m_direction = (GetBodyPosition() - msg.m_DamagePosition).normalized();
@@ -197,13 +196,7 @@ bool MephilesShadow::ProcessMessage
 				m_direction = msg.m_Velocity.normalized();
 			}
 
-			// play hit pfx here, otherwise it can only play from player, not shock waves
-			auto attackEffectNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
-			attackEffectNode->SetParent(Sonic::CApplicationDocument::GetInstance()->m_pMember->m_spMatrixNodeRoot.get());
-			attackEffectNode->m_Transform.SetPosition(GetBodyPosition());
-			attackEffectNode->NotifyChanged();
-			m_pGlitterPlayer->PlayOneshot(attackEffectNode, "ef_mephiles_attack_hit", 1.0f, 1);
-
+			PlayHitEffect();
 			m_stateNext = State::Blown;
 			return true;
 		}
@@ -225,8 +218,18 @@ bool MephilesShadow::ProcessMessage
 			{
 				if (m_state == State::SpringAttack)
 				{
-					// ask owner if this can attach to player
-					SendMessage(m_owner, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(1));
+					if (S06DE_API::GetChaosBoostLevel() > 0)
+					{
+						// blown if chaos boost is active
+						PlayHitEffect();
+						m_direction = -GetPlayerDirection(true);
+						m_stateNext = State::Blown;
+					}
+					else
+					{
+						// ask owner if this can attach to player
+						SendMessage(m_owner, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(1));
+					}
 				}
 				else if (CanDamagePlayer())
 				{
@@ -398,7 +401,7 @@ void MephilesShadow::StateIdleAdvance(float dt)
 	};
 
 	float distance = 0.0f;
-	m_direction = GetPlayerDirection(&distance);
+	m_direction = GetPlayerDirection(true, &distance);
 
 	if (!m_targetLost && distance > c_TargetLostDistance)
 	{
@@ -479,6 +482,7 @@ void MephilesShadow::StateBlownBegin()
 
 	// face opposite of blown direction
 	FaceDirection(-m_direction);
+	m_speed = c_BlownSpeed;
 
 	// get blown when about to explode, remove effect
 	if (m_suicideID)
@@ -559,7 +563,7 @@ void MephilesShadow::StateSpringWaitAdvance(float dt)
 	hh::math::CVector const newPosition = m_startPos + Eigen::AngleAxisf(c_CircularFlightSpeed, Eigen::Vector3f::UnitY()) * displacement;
 	m_spMatrixNodeTransform->m_Transform.SetPosition(newPosition);
 	m_spMatrixNodeTransform->NotifyChanged();
-	FaceDirection(GetPlayerDirection());
+	FaceDirection(GetPlayerDirection(true));
 
 	if (m_stateTime >= m_attackStartTime)
 	{
@@ -683,8 +687,7 @@ void MephilesShadow::StateSpringAttachAdvance(float dt)
 		m_spMatrixNodeTransform->NotifyChanged();
 
 		m_disableDamageSfx = true;
-		m_speed = c_BlownSpeed;
-		m_direction = -GetPlayerDirection();
+		m_direction = -GetPlayerDirection(false);
 		m_stateNext = State::Blown;
 		return;
 	}
@@ -709,6 +712,16 @@ bool MephilesShadow::CanDamagePlayer() const
 	return m_type == Type::Encirclement && m_enableDamageTimer <= 0.0f;
 }
 
+void MephilesShadow::PlayHitEffect()
+{
+	// play hit pfx here, otherwise it can only play from player, not shock waves
+	auto attackEffectNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
+	attackEffectNode->SetParent(Sonic::CApplicationDocument::GetInstance()->m_pMember->m_spMatrixNodeRoot.get());
+	attackEffectNode->m_Transform.SetPosition(GetBodyPosition());
+	attackEffectNode->NotifyChanged();
+	m_pGlitterPlayer->PlayOneshot(attackEffectNode, "ef_mephiles_attack_hit", 1.0f, 1);
+}
+
 void MephilesShadow::FaceDirection(hh::math::CVector dir)
 {
 	if (dir.y() != 0.0f)
@@ -722,13 +735,13 @@ void MephilesShadow::FaceDirection(hh::math::CVector dir)
 	m_spNodeModel->NotifyChanged();
 }
 
-hh::math::CVector MephilesShadow::GetPlayerDirection(float* distance) const
+hh::math::CVector MephilesShadow::GetPlayerDirection(bool zeroY, float* distance) const
 {
 	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	hh::math::CVector const playerPos = context->m_spMatrixNode->m_Transform.m_Position;
 	hh::math::CVector dir = playerPos - m_spMatrixNodeTransform->m_Transform.m_Position;
 	if (distance) *distance = dir.norm();
-	dir.y() = 0.0f;
+	if (zeroY) dir.y() = 0.0f;
 	dir.normalize();
 	return dir;
 }

@@ -117,9 +117,10 @@ private:
 	// Utils
 	hh::math::CVector GetBodyPosition() const;
 	bool CanDamagePlayer() const;
+	void PlayHitEffect();
 
 	void FaceDirection(hh::math::CVector dir);
-	hh::math::CVector GetPlayerDirection(float* distance = nullptr) const;
+	hh::math::CVector GetPlayerDirection(bool zeroY, float* distance = nullptr) const;
 
 public:
 	static float const c_DodgeSpeed;
