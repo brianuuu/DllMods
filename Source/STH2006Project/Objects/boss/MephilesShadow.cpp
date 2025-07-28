@@ -655,6 +655,13 @@ void MephilesShadow::StateSpringMissAdvance(float dt)
 //---------------------------------------------------
 void MephilesShadow::StateSpringAttachBegin()
 {
+	// due to message delay, it's possible the previous state was SpringMiss and changed animation
+	if (GetCurrentState()->GetStateName() != Catch)
+	{
+		ChangeState(Catch);
+		m_spAnimPose->Update(0.5f);
+	}
+
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Body", false);
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Player", false);
 
