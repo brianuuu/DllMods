@@ -724,7 +724,7 @@ void Mephiles::AdvanceShadowExplode(float dt)
 			auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 			SendMessage(context->m_pPlayer->m_ActorID, boost::make_shared<Sonic::Message::MsgDamage>
 				(
-					*(uint32_t*)0x1E0BE34, // DamageID_NoAttack
+					*(uint32_t*)0x1E0BE28, // DamageID_SonicHeavy
 					context->m_spMatrixNode->m_Transform.m_Position,
 					hh::math::CVector::Zero()
 				)
