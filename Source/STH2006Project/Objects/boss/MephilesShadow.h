@@ -118,6 +118,7 @@ private:
 	hh::math::CVector GetBodyPosition() const;
 	bool CanDamagePlayer() const;
 	void PlayHitEffect();
+	void GetKilled(bool spawnParticle, bool spawnBoostEnergy, bool playSfx);
 
 	void FaceDirection(hh::math::CVector dir);
 	hh::math::CVector GetPlayerDirection(bool zeroY, float* distance = nullptr) const;

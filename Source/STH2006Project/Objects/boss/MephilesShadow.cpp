@@ -256,9 +256,8 @@ bool MephilesShadow::ProcessMessage
 			{
 			case 0:
 			{
-				// should be killed (with effect)
-				m_pGlitterPlayer->PlayOneshot(m_spModel->GetNode("Spine"), "ef_mephiles_dead", 1.0f, 1);
-				Kill();
+				// owner asked it to be killed (with effect)
+				GetKilled(true, false, false);
 				break;
 			}
 			case 1:
@@ -439,17 +438,7 @@ void MephilesShadow::StateIdleAdvance(float dt)
 	}
 
 	Common::fCCharacterProxyIntegrate(m_spProxy.get(), dt);
-	hh::math::CVector newPosition = m_spProxy->m_Position;
-
-	// raycast terrain
-	hh::math::CVector outPos = hh::math::CVector::Zero();
-	hh::math::CVector outNormal = hh::math::CVector::UnitY();
-	if (Common::fRaycast(newPosition + hh::math::CVector::UnitY(), newPosition, outPos, outNormal, *(int*)0x1E0AFAC))
-	{
-		newPosition.y() = outPos.y();
-	}
-
-	m_spMatrixNodeTransform->m_Transform.SetPosition(newPosition);
+	m_spMatrixNodeTransform->m_Transform.SetPosition(m_spProxy->m_Position);
 	m_spMatrixNodeTransform->NotifyChanged();
 }
 
@@ -507,15 +496,7 @@ void MephilesShadow::StateBlownAdvance(float dt)
 
 void MephilesShadow::StateBlownEnd()
 {
-	if (!m_disableDamageSfx)
-	{
-		SharedPtrTypeless soundHandle;
-		Common::ObjectPlaySound(this, 200615001, soundHandle);
-	}
-
-	Common::SpawnBoostParticle((uint32_t**)this, m_spMatrixNodeTransform->m_Transform.m_Position, 0x10001);
-	m_pGlitterPlayer->PlayOneshot(m_spModel->GetNode("Spine"), "ef_mephiles_dead", 1.0f, 1);
-	Kill();
+	GetKilled(true, true, !m_disableDamageSfx);
 }
 
 //---------------------------------------------------
@@ -612,13 +593,25 @@ void MephilesShadow::StateSpringAttackAdvance(float dt)
 	hh::math::CVector const oldPos = m_spMatrixNodeTransform->m_Transform.m_Position;
 	hh::math::CVector newPos = oldPos + m_direction * c_SpringSpeed * dt + hh::math::CVector::UnitY() * m_speed * dt;
 
-	// TODO: terrain raycast, lava
-	hh::math::CVector outPos = hh::math::CVector::Zero();
-	hh::math::CVector outNormal = hh::math::CVector::UnitY();
-	if (Common::fRaycast(oldPos, newPos, outPos, outNormal, *(int*)0x1E0AFAC))
+	// raycast terrain
+	RayCastQuery rayCastQuery;
+	if (Common::fRayCastQuery(*(int*)0x1E0AFAC, rayCastQuery, oldPos, newPos))
 	{
-		newPos = outPos;
-		m_stateNext = State::SpringMiss;
+		newPos = rayCastQuery.position;
+
+		int terrainType = -1;
+		if (rayCastQuery.rigidBody && Common::fRigidBodyGetIntProperty(rayCastQuery.rigidBody, 8196, terrainType) && terrainType == 19)
+		{
+			// hit lava, die immediately
+			GetKilled(true, true, true);
+
+			// notify owner it's dying
+			SendMessage(m_owner, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(0));
+		}
+		else
+		{
+			m_stateNext = State::SpringMiss;
+		}
 	}
 
 	// update gravity
@@ -720,6 +713,27 @@ void MephilesShadow::PlayHitEffect()
 	attackEffectNode->m_Transform.SetPosition(GetBodyPosition());
 	attackEffectNode->NotifyChanged();
 	m_pGlitterPlayer->PlayOneshot(attackEffectNode, "ef_mephiles_attack_hit", 1.0f, 1);
+}
+
+void MephilesShadow::GetKilled(bool spawnParticle, bool spawnBoostEnergy, bool playSfx)
+{
+	if (spawnParticle)
+	{
+		m_pGlitterPlayer->PlayOneshot(m_spModel->GetNode("Spine"), "ef_mephiles_dead", 1.0f, 1);
+	}
+
+	if (spawnBoostEnergy)
+	{
+		Common::SpawnBoostParticle((uint32_t**)this, m_spMatrixNodeTransform->m_Transform.m_Position, 0x10001);
+	}
+
+	if (playSfx)
+	{
+		SharedPtrTypeless soundHandle;
+		Common::ObjectPlaySound(this, 200615001, soundHandle);
+	}
+
+	Kill();
 }
 
 void MephilesShadow::FaceDirection(hh::math::CVector dir)
