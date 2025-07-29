@@ -45,6 +45,16 @@ enum SonicCollision : uint32_t
 	TypeRagdollEnemyAttack	= 0x1E61BA4,
 };
 
+struct RayCastQuery
+{
+	Eigen::Vector3f normal;
+	Eigen::Vector3f position;
+	Sonic::CRigidBody* rigidBody;
+	float field1C;
+	size_t field20;
+	bool valid;
+};
+
 struct MatrixNodeSingleElementNode
 {
 	INSERT_PADDING(0x60);
@@ -1180,6 +1190,32 @@ static bool fRaycast
 	}
 }
 
+static bool fRayCastQuery
+(
+	const size_t collisionType, 
+	RayCastQuery& query, 
+	const hh::math::CVector& begin, 
+	const hh::math::CVector& end
+)
+{
+	static void* const pFunc = (void*)0x10BE270;
+
+	__asm
+	{
+		mov		edx, collisionType
+		mov		ecx, end
+		mov		ebx, 0x1E5E2F0
+		mov		ebx, [ebx]
+		mov		eax, [ebx + 5ECh]
+		mov		edi, [eax]
+		mov		esi, query
+		mov		eax, begin
+		push	eax
+		call	[pFunc]
+	}
+}
+
+
 static void* fGetScreenPosition
 (
 	Eigen::Vector4f const& pos3D,
@@ -2000,6 +2036,23 @@ static void CopyCCsdProject
 		push	rcptr
 		mov		eax, pCsdProject
 		call	[pCopyCCsdProject]
+	}
+}
+
+static bool fRigidBodyGetIntProperty
+(
+	Sonic::CRigidBody* pRigidBody,
+	uint32_t attribute,
+	int& result
+)
+{
+	static void* const pfRigidBodyGetIntProperty = (void*)0x10DDD70;
+	__asm
+	{
+		push	result
+		mov		edi, attribute
+		mov		esi, pRigidBody
+		call	[pfRigidBodyGetIntProperty]
 	}
 }
 
