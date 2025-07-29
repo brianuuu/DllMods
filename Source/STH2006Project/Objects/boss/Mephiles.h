@@ -111,6 +111,7 @@ private:
 	float m_spawnRadius = 5.0f;
 	float m_attackStartTime = 0.0f;
 	float m_attackMaxDelay = 0.0f;
+	std::set<uint32_t> m_spawnedActors;
 	MephilesShadow::Type m_spawnType = MephilesShadow::Type::Encirclement;
 
 	void SpawnEncirclement(int count, float radius);

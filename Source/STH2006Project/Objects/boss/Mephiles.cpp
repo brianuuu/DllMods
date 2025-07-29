@@ -639,6 +639,7 @@ void Mephiles::SpawnEncirclement(int count, float radius)
 	m_spawnCount = 0;
 	m_spawnTimer = 0.0f;
 	m_spawnRadius = radius;
+	m_spawnedActors.clear();
 	m_spawnType = MephilesShadow::Type::Encirclement;
 }
 
@@ -648,6 +649,7 @@ void Mephiles::SpawnSpring(int count, float radius, float attackStartTime, float
 	m_spawnCount = 0;
 	m_spawnTimer = 0.0f;
 	m_spawnRadius = radius;
+	m_spawnedActors.clear();
 	m_attackStartTime = attackStartTime;
 	m_attackMaxDelay = attackMaxDelay;
 	m_spawnType = MephilesShadow::Type::Spring;
@@ -667,9 +669,13 @@ void Mephiles::AdvanceShadowSpawn(float dt)
 			int constexpr MaxUnits = 256;
 			if (m_shadows.size() > MaxUnits)
 			{
-				// TODO: this can delete those currently spawning
+				// prevent deleting actors just spawned
 				auto iter = m_shadows.begin();
-				std::advance(iter, rand() % m_shadows.size());
+				do
+				{
+					iter = m_shadows.begin();
+					std::advance(iter, rand() % m_shadows.size());
+				} while (m_spawnedActors.count(iter->first));
 
 				auto const& spShadowToRemove = iter->second;
 				SendMessageImm(spShadowToRemove->m_ActorID, Sonic::Message::MsgNotifyObjectEvent(0));
@@ -696,6 +702,7 @@ void Mephiles::AdvanceShadowSpawn(float dt)
 			auto spShadow = boost::make_shared<MephilesShadow>(m_ActorID, m_spawnType, m_spawnRadius, angle, GetShadowSpawnPosition());
 			m_pMember->m_pGameDocument->AddGameObject(spShadow);
 			m_shadows[spShadow->m_ActorID] = spShadow;
+			m_spawnedActors.insert(spShadow->m_ActorID);
 
 			if (m_spawnType == MephilesShadow::Type::Spring)
 			{
