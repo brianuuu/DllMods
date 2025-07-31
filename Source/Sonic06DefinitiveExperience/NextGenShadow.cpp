@@ -41,7 +41,7 @@ int NextGenShadow::m_tripleKickCount = -1;
 bool NextGenShadow::m_tripleKickBuffered = false;
 bool NextGenShadow::m_tripleKickShockWaveSpawned = false;
 float const cShadow_tripleKickShockWaveSpawn = 0.2f;
-float const cShadow_tripleKickShockWaveDuration = 0.5f;
+float const cShadow_tripleKickShockWaveDuration = 0.3f;
 float const cShadow_tripleKickShockWaveHeight = 1.0f;
 float const cShadow_tripleKickShockWaveRadius = 4.0f;
 
