@@ -637,6 +637,19 @@ void Mephiles::SetHidden(bool hidden)
 		Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Body", false);
 		Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Damage", false);
 
+		// smoke effects
+		if (m_handLID)
+		{
+			m_pGlitterPlayer->StopByID(m_handLID, true);
+			m_pGlitterPlayer->StopByID(m_handRID, true);
+			m_pGlitterPlayer->StopByID(m_footLID, true);
+			m_pGlitterPlayer->StopByID(m_footRID, true);
+			m_handLID = 0;
+			m_handRID = 0;
+			m_footLID = 0;
+			m_footRID = 0;
+		}
+
 		m_isHidden = true;
 	}
 	else if (!hidden && m_isHidden)
@@ -648,6 +661,12 @@ void Mephiles::SetHidden(bool hidden)
 		// re-enable collision
 		Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Body", true);
 		Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Damage", true);
+
+		// smoke effects
+		m_handLID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spModel->GetNode("LeftHand"), "ef_mephiles_smoke", 1.0f);
+		m_handRID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spModel->GetNode("RightHand"), "ef_mephiles_smoke", 1.0f);
+		m_footLID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spModel->GetNode("LeftFoot"), "ef_mephiles_smoke", 1.0f);
+		m_footRID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spModel->GetNode("RightFoot"), "ef_mephiles_smoke", 1.0f);
 
 		m_isHidden = false;
 	}

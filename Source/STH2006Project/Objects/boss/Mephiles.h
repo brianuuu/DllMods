@@ -58,6 +58,10 @@ private:
 	bool m_hasEjected = false;
 	bool m_damagedThisFrame = false;
 	uint32_t m_cameraActorID = 0;
+	uint32_t m_handLID = 0;
+	uint32_t m_handRID = 0;
+	uint32_t m_footLID = 0;
+	uint32_t m_footRID = 0;
 
 	std::set<std::string> m_playedVO;
 
