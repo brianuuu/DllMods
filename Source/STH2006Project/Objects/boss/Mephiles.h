@@ -14,6 +14,8 @@ public:
 	static void registerObject();
 	static void applyPatches();
 
+	virtual ~Mephiles() override;
+
 	// for initial voice line
 	static int m_encounterCount;
 
@@ -23,6 +25,10 @@ private:
 		int m_MaxHP = 10;
 		float m_GroundHeight = 0.0f;
 		hh::math::CVector m_SunDirection = hh::math::CVector::UnitZ();
+		Sonic::CParamTargetList* m_PositionList = nullptr;
+		uint32_t m_CameraEject = 0;
+		uint32_t m_CameraEjectAir = 0;
+		uint32_t m_CameraLock = 0;
 	} m_Data;
 
 	enum class State
@@ -51,6 +57,7 @@ private:
 	bool m_playedInitVO = false;
 	bool m_hasEjected = false;
 	bool m_damagedThisFrame = false;
+	uint32_t m_cameraActorID = 0;
 
 	std::set<std::string> m_playedVO;
 
@@ -85,6 +92,7 @@ private:
 
 	// State::Eject
 	void StateEjectBegin();
+	void StateEjectAdvance(float dt);
 
 	// Utils
 	hh::math::CVector GetBodyPosition() const;

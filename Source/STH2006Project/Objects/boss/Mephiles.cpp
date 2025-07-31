@@ -27,6 +27,14 @@ void Mephiles::applyPatches()
 	INSTALL_HOOK(Mephiles_MsgRestartStage);
 }
 
+Mephiles::~Mephiles()
+{
+	if (m_Data.m_PositionList)
+	{
+		m_Data.m_PositionList->Release();
+	}
+}
+
 void Mephiles::InitializeEditParam
 (
 	Sonic::CEditParam& in_rEditParam
@@ -35,6 +43,18 @@ void Mephiles::InitializeEditParam
 	in_rEditParam.CreateParamInt(&m_Data.m_MaxHP, "MaxHP");
 	in_rEditParam.CreateParamFloat(&m_Data.m_GroundHeight, "GroundHeight");
 	in_rEditParam.CreateParamBase(Sonic::CParamPosition::Create(&m_Data.m_SunDirection), "SunDirection");
+
+	char const* positionList = "PositionList";
+	m_Data.m_PositionList = Sonic::CParamTargetList::Create(positionList);
+	if (m_Data.m_PositionList)
+	{
+		m_Data.m_PositionList->AddRef();
+	}
+	in_rEditParam.CreateParamBase(m_Data.m_PositionList, positionList);
+
+	in_rEditParam.CreateParamBase(Sonic::CParamTarget::Create(&m_Data.m_CameraEject), "CameraEject");
+	in_rEditParam.CreateParamBase(Sonic::CParamTarget::Create(&m_Data.m_CameraEjectAir), "CameraEjectAir");
+	in_rEditParam.CreateParamBase(Sonic::CParamTarget::Create(&m_Data.m_CameraLock), "CameraLock");
 }
 
 char const* Mephiles::HideLoop = "HideLoop";
@@ -165,6 +185,7 @@ void Mephiles::SetUpdateParallel
 	{
 	case State::Appear: StateAppearAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::Hide: StateHideAdvance(in_rUpdateInfo.DeltaTime); break;
+	case State::Eject: StateEjectAdvance(in_rUpdateInfo.DeltaTime); break;
 	}
 
 	m_damagedThisFrame = false;
@@ -526,6 +547,28 @@ void Mephiles::StateEjectBegin()
 	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	m_spMatrixNodeTransform->m_Transform = context->m_spMatrixNode->m_Transform;
 	m_spMatrixNodeTransform->NotifyChanged();
+
+	// enable camera
+	uint32_t const cameraEject = context->m_Grounded ? m_Data.m_CameraEject : m_Data.m_CameraEjectAir;
+	if (!m_cameraActorID && cameraEject)
+	{
+		m_cameraActorID = cameraEject;
+
+		hh::math::CVector const offset = hh::math::CVector(-4.0f, 1.5f, 1.8f);
+		hh::math::CVector const position = context->m_spMatrixNode->m_Transform.m_Position + context->m_spMatrixNode->m_Transform.m_Rotation * offset;
+		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgSetPosition>(position));
+		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+	}
+}
+
+void Mephiles::StateEjectAdvance(float dt)
+{
+	// disable camera
+	if (m_cameraActorID && m_stateTime >= 1.0f)
+	{
+		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+		m_cameraActorID = 0;
+	}
 }
 
 //---------------------------------------------------
