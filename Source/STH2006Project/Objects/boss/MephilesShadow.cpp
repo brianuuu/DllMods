@@ -662,9 +662,13 @@ void MephilesShadow::StateSpringAttachBegin()
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Body", false);
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Player", false);
 
+	// set rotation relative to player's rotation
+	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	hh::math::CQuaternion const newRotation = context->m_spMatrixNode->m_Transform.m_Rotation.conjugate() * m_spNodeModel->m_Transform.m_Rotation;
+
 	float constexpr c_HoldSpace = 0.2f;
-	hh::math::CVector const offset = m_spNodeModel->m_Transform.m_Rotation * hh::math::CVector::UnitZ() * c_HoldSpace;
-	m_spNodeModel->m_Transform.SetPosition(-offset);
+	hh::math::CVector const offset = newRotation * hh::math::CVector::UnitZ() * c_HoldSpace;
+	m_spNodeModel->m_Transform.SetRotationAndPosition(newRotation, -offset);
 	m_spNodeModel->NotifyChanged();
 }
 
