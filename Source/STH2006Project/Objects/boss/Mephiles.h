@@ -42,8 +42,13 @@ private:
 	// animation states
 	static char const* HideLoop;
 	static char const* HideCommand;
-	static char const* Suffer;
-	static char const* Wait;
+	static char const* Command;
+	static char const* Grin; // hide
+	static char const* Shock; // damage
+	static char const* Smile; // sphere attack
+	static char const* Suffer; // eject
+	static char const* Tired; // paralyze
+	static char const* Wait; // idle
 
 private:
 	State m_state = State::Appear;

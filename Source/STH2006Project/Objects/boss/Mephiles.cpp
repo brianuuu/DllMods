@@ -59,7 +59,12 @@ void Mephiles::InitializeEditParam
 
 char const* Mephiles::HideLoop = "HideLoop";
 char const* Mephiles::HideCommand = "HideCommand";
+char const* Mephiles::Command = "Command";
+char const* Mephiles::Grin = "Grin";
+char const* Mephiles::Shock = "Shock";
+char const* Mephiles::Smile = "Smile";
 char const* Mephiles::Suffer = "Suffer";
+char const* Mephiles::Tired = "Tired";
 char const* Mephiles::Wait = "Wait";
 
 bool Mephiles::SetAddRenderables
@@ -82,7 +87,12 @@ bool Mephiles::SetAddRenderables
 	std::vector<hh::anim::SMotionInfo> entries = std::vector<hh::anim::SMotionInfo>(0, { "","" });
 	entries.push_back(hh::anim::SMotionInfo(HideLoop, "en_shwait_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_Loop));
 	entries.push_back(hh::anim::SMotionInfo(HideCommand, "en_shcommand_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
+	entries.push_back(hh::anim::SMotionInfo(Command, "en_command_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
+	entries.push_back(hh::anim::SMotionInfo(Grin, "en_grin_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
+	entries.push_back(hh::anim::SMotionInfo(Shock, "en_shock_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
+	entries.push_back(hh::anim::SMotionInfo(Smile, "en_smile_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_Loop));
 	entries.push_back(hh::anim::SMotionInfo(Suffer, "en_suffer_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
+	entries.push_back(hh::anim::SMotionInfo(Tired, "en_tired_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_Loop));
 	entries.push_back(hh::anim::SMotionInfo(Wait, "en_wait_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_Loop));
 	m_spAnimPose->AddMotionInfo(&entries.front(), entries.size());
 	m_spAnimPose->CreateAnimationCache();
@@ -103,11 +113,21 @@ bool Mephiles::SetAddRenderables
 	SetContext(this);
 	fnAddAnimationState(HideLoop);
 	fnAddAnimationState(HideCommand, HideLoop);
+	fnAddAnimationState(Command, Wait);
+	fnAddAnimationState(Grin, HideLoop);
 	fnAddAnimationState(Wait);
+	fnAddAnimationState(Shock, Wait);
+	fnAddAnimationState(Smile);
 	fnAddAnimationState(Suffer, Wait);
+	fnAddAnimationState(Tired);
 	SetAnimationBlend(HideLoop, HideCommand, 0.5f);
 	SetAnimationBlend(HideCommand, HideLoop, 0.5f);
+	SetAnimationBlend(Command, Wait, 0.5f);
+	SetAnimationBlend(Grin, HideLoop, 0.5f);
+	SetAnimationBlend(Shock, Wait, 0.5f);
+	SetAnimationBlend(Smile, Wait, 0.5f);
 	SetAnimationBlend(Suffer, Wait, 0.5f);
+	SetAnimationBlend(Tired, Wait, 0.5f);
 	ChangeState(HideLoop);
 
 	SetCullingRange(0.0f);
