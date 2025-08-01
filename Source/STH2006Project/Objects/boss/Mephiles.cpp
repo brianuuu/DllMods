@@ -186,6 +186,7 @@ void Mephiles::SetUpdateParallel
 	case State::Appear: StateAppearAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::Hide: StateHideAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::Eject: StateEjectAdvance(in_rUpdateInfo.DeltaTime); break;
+	case State::Warp: StateWarpAdvance(in_rUpdateInfo.DeltaTime); break;
 	}
 
 	m_damagedThisFrame = false;
@@ -196,6 +197,26 @@ void Mephiles::SetUpdateParallel
 
 	AdvanceShadowSpawn(in_rUpdateInfo.DeltaTime);
 	AdvanceShadowExplode(in_rUpdateInfo.DeltaTime);
+}
+
+void Mephiles::HandleStateChange()
+{
+	// end current state
+	switch (m_state)
+	{
+	}
+
+	// start next state
+	switch (m_stateNext)
+	{
+	case State::Hide: StateHideBegin(); break;
+	case State::Eject: StateEjectBegin(); break;
+	case State::Warp: StateWarpBegin(); break;
+	}
+
+	m_state = m_stateNext;
+	m_stateStage = 0;
+	m_stateTime = 0.0f;
 }
 
 bool Mephiles::ProcessMessage
@@ -335,25 +356,6 @@ bool Mephiles::ProcessMessage
 	}
 
 	return Sonic::CObjectBase::ProcessMessage(message, flag);
-}
-
-void Mephiles::HandleStateChange()
-{
-	// end current state
-	switch (m_state)
-	{
-	}
-
-	// start next state
-	switch (m_stateNext)
-	{
-	case State::Hide: StateHideBegin(); break;
-	case State::Eject: StateEjectBegin(); break;
-	}
-
-	m_state = m_stateNext;
-	m_stateStage = 0;
-	m_stateTime = 0.0f;
 }
 
 //---------------------------------------------------
@@ -569,6 +571,67 @@ void Mephiles::StateEjectAdvance(float dt)
 		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
 		m_cameraActorID = 0;
 	}
+
+	if (GetCurrentState()->GetStateName() == Wait)
+	{
+		m_stateNext = State::Warp;
+	}
+}
+
+//---------------------------------------------------
+// State::Warp
+//---------------------------------------------------
+void Mephiles::StateWarpBegin()
+{
+	if (GetCurrentState()->GetStateName() != Wait)
+	{
+		ChangeState(Wait);
+	}
+
+	SharedPtrTypeless handle;
+	Common::SonicContextPlaySound(handle, 200615006, 0);
+
+	// choose random warp location
+	int size = m_Data.m_PositionList->m_List.size();
+	if (m_warpIndex >= 0) size--;
+	int index = rand() % size;
+	if (m_warpIndex >= 0 && index >= m_warpIndex) index++;
+	m_warpIndex = index;
+
+	// cache wrap pos
+	Common::fSendMessageToSetObject(this, m_Data.m_PositionList->m_List.at(index), boost::make_shared<Sonic::Message::MsgGetPosition>(m_warpPos));
+
+	// trail
+	m_pGlitterPlayer->PlayOneshot(m_spModel->GetNode("Hips"), "ef_mephiles_warp", 1.0f, 1);
+}
+
+void Mephiles::StateWarpAdvance(float dt)
+{
+	float constexpr c_WarpSpeed = 30.0f;
+
+	hh::math::CVector const oldPos = m_spMatrixNodeTransform->m_Transform.m_Position;
+	if (oldPos.isApprox(m_warpPos))
+	{
+		// TODO: next attack
+		return;
+	}
+
+	hh::math::CVector newPos = oldPos;
+	hh::math::CVector direction = m_warpPos - oldPos;
+	if (direction.norm() <= c_WarpSpeed * dt)
+	{
+		newPos = m_warpPos;
+	}
+	else
+	{
+		direction.normalize();
+		newPos += direction * c_WarpSpeed * dt;
+	}
+
+	m_spMatrixNodeTransform->m_Transform.SetPosition(newPos);
+	m_spMatrixNodeTransform->NotifyChanged();
+
+	TurnTowardsPlayer(dt);
 }
 
 //---------------------------------------------------
@@ -692,6 +755,38 @@ void Mephiles::FollowPlayer()
 	m_spMatrixNodeTransform->NotifyChanged();
 }
 
+void Mephiles::TurnTowardsPlayer(float dt)
+{
+	float constexpr c_TurnRate = 180.0f * DEG_TO_RAD;
+
+	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	hh::math::CVector newDirection = context->m_spMatrixNode->m_Transform.m_Position - m_spMatrixNodeTransform->m_Transform.m_Position;
+	if (newDirection.isApprox(hh::math::CVector::Zero()))
+	{
+		return;
+	}
+	
+	newDirection.y() = 0.0f; newDirection.normalize();
+	hh::math::CVector oldDirection = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitZ();
+	oldDirection.y() = 0.0f; oldDirection.normalize();
+
+	float dot = oldDirection.dot(newDirection);
+	Common::ClampFloat(dot, -1.0f, 1.0f);
+
+	float const angle = acos(dot);
+	float const maxAngle = dt * c_TurnRate;
+	if (angle > maxAngle)
+	{
+		hh::math::CVector cross = oldDirection.cross(newDirection).normalized();
+		Eigen::AngleAxisf rot(maxAngle, cross);
+		newDirection = rot * oldDirection;
+	}
+
+	hh::math::CQuaternion rotYaw = hh::math::CQuaternion::FromTwoVectors(hh::math::CVector::UnitZ(), newDirection.head<3>());
+	m_spMatrixNodeTransform->m_Transform.SetRotation(rotYaw);
+	m_spMatrixNodeTransform->NotifyChanged();
+}
+
 //---------------------------------------------------
 // Shadow Management
 //---------------------------------------------------
@@ -811,7 +906,7 @@ void Mephiles::AdvanceShadowExplode(float dt)
 			attackEffectNode->SetParent(Sonic::CApplicationDocument::GetInstance()->m_pMember->m_spMatrixNodeRoot.get());
 			attackEffectNode->m_Transform.SetPosition(context->m_spMatrixNode->m_Transform.m_Position + hh::math::CVector::UnitY() * 0.5f);
 			attackEffectNode->NotifyChanged();
-			m_pGlitterPlayer->PlayOneshot(attackEffectNode, "ef_spherebomb_s", 1.0f, 1);
+			m_pGlitterPlayer->PlayOneshot(attackEffectNode, "ef_mephiles_spherebomb_s", 1.0f, 1);
 		}
 	}
 	else if (m_attachSfx)

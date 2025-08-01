@@ -36,6 +36,7 @@ private:
 		Appear,
 		Hide,
 		Eject,
+		Warp,
 	};
 
 	// animation states
@@ -98,6 +99,12 @@ private:
 	void StateEjectBegin();
 	void StateEjectAdvance(float dt);
 
+	// State::Warp
+	int m_warpIndex = -1;
+	hh::math::CVector m_warpPos = hh::math::CVector::Zero();
+	void StateWarpBegin();
+	void StateWarpAdvance(float dt);
+
 	// Utils
 	hh::math::CVector GetBodyPosition() const;
 	bool CanLock() const;
@@ -107,6 +114,7 @@ private:
 
 	void SetHidden(bool hidden);
 	void FollowPlayer();
+	void TurnTowardsPlayer(float dt);
 
 private:
 	// Mephiles shadow
