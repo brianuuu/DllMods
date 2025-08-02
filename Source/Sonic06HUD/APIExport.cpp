@@ -47,3 +47,8 @@ extern "C" __declspec(dllexport) void API_SetGadgetHP(float hp)
 {
 	CustomHUD::SetGadgetHP(hp);
 }
+
+extern "C" __declspec(dllexport) void API_SetBossHealth(float hp, float maxHP)
+{
+	CustomHUD::SetBossHealth(hp, maxHP);
+}

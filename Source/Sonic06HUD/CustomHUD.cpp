@@ -1296,11 +1296,11 @@ HOOK(bool, __fastcall, CustomHUD_CWindowImplSetCursor, 0x438500, void* This, voi
 //---------------------------------------------------
 // Boss Health
 //---------------------------------------------------
-void CustomHUD_BossSetHealth(float health, float maxHealth)
+void CustomHUD::SetBossHealth(float hp, float maxHP)
 {
     if (m_sceneBossBar)
     {
-        float motionFrame = 100.0f - health * 100.0f / maxHealth;
+        float motionFrame = 100.0f - hp * 100.0f / maxHP;
         Common::ClampFloat(motionFrame, 0.0f, 100.0f);
         m_sceneBossBar->SetMotionFrame(motionFrame);
     }
@@ -1334,7 +1334,7 @@ HOOK(bool, __fastcall, CustomHUD_CRivalMetalSonicProcessMessage, 0xCD2760, hh::f
             printf("[CustomHUD] Metal Sonic max health = %d\n", CustomHUD_MetalSonicMaxHealth);
         }
 
-        CustomHUD_BossSetHealth(health, CustomHUD_MetalSonicMaxHealth);
+        CustomHUD::SetBossHealth(health, CustomHUD_MetalSonicMaxHealth);
     }
 
     return result;
@@ -1354,7 +1354,7 @@ HOOK(bool, __fastcall, CustomHUD_CBossDeathEggProcessMessage, 0xC67350, hh::fnd:
     if (flag)
     {
         int health = ((int*)((uint32_t)This - 0x28))[121];
-        CustomHUD_BossSetHealth(health, CustomHUD_DeathEggMaxHealth);
+        CustomHUD::SetBossHealth(health, CustomHUD_DeathEggMaxHealth);
     }
 
     return result;
@@ -1373,7 +1373,7 @@ HOOK(bool, __fastcall, CustomHUD_CBossPerfectChaosProcessMessage, 0xC122D0, hh::
         // Only handles the first two hits
         if (!finalHitInstance && health > 0)
         {
-            CustomHUD_BossSetHealth(health + 1, 4);
+            CustomHUD::SetBossHealth(health + 1, 4);
         }
     }
 
@@ -1382,13 +1382,13 @@ HOOK(bool, __fastcall, CustomHUD_CBossPerfectChaosProcessMessage, 0xC122D0, hh::
 
 HOOK(bool, __fastcall, CustomHUD_CBossPerfectChaosCStateDamageToFinalAttack, 0x5D1B10, void* This)
 {
-    CustomHUD_BossSetHealth(1, 4);
+    CustomHUD::SetBossHealth(1, 4);
     return originalCustomHUD_CBossPerfectChaosCStateDamageToFinalAttack(This);
 }
 
 HOOK(void, __fastcall, CustomHUD_CBossPerfectChaosCStateDefeated, 0x5D1C70, void* This)
 {
-    CustomHUD_BossSetHealth(0, 4);
+    CustomHUD::SetBossHealth(0, 4);
     originalCustomHUD_CBossPerfectChaosCStateDefeated(This);
 }
 
@@ -1402,7 +1402,7 @@ HOOK(bool, __fastcall, CustomHUD_CBossEggDragoonProcessMessage, 0xC3F500, hh::fn
         int maxHealth = pGameObject[121];
         int headHealth = pGameObject[124];
         int bellyHealth = pGameObject[125];
-        CustomHUD_BossSetHealth(headHealth + bellyHealth, maxHealth);
+        CustomHUD::SetBossHealth(headHealth + bellyHealth, maxHealth);
     }
 
     return result;
@@ -1423,7 +1423,7 @@ HOOK(bool, __fastcall, CustomHUD_CRivalSilverProcessMessage, 0xC8B8F0, hh::fnd::
             printf("[CustomHUD] Silver max health = %d\n", CustomHUD_SilverMaxHealth);
         }
 
-        CustomHUD_BossSetHealth(health, CustomHUD_SilverMaxHealth);
+        CustomHUD::SetBossHealth(health, CustomHUD_SilverMaxHealth);
     }
 
     return result;
@@ -1444,7 +1444,7 @@ HOOK(bool, __fastcall, CustomHUD_CBossTimeEaterProcessMessage, 0xBFF390, hh::fnd
             printf("[CustomHUD] Time Eater max health = %d\n", CustomHUD_TimeEaterMaxHealth);
         }
 
-        CustomHUD_BossSetHealth(health, CustomHUD_TimeEaterMaxHealth);
+        CustomHUD::SetBossHealth(health, CustomHUD_TimeEaterMaxHealth);
     }
 
     return result;

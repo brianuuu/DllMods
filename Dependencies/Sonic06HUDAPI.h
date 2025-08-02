@@ -27,6 +27,7 @@ private:
 	LIB_FUNCTION(void, "Sonic06HUD.dll", API_SetGadgetMaxCount, int count);
 	LIB_FUNCTION(void, "Sonic06HUD.dll", API_SetGadgetCount, int count, int maxCount);
 	LIB_FUNCTION(void, "Sonic06HUD.dll", API_SetGadgetHP, float hp);
+	LIB_FUNCTION(void, "Sonic06HUD.dll", API_SetBossHealth, float hp, float maxHP);
 
 public:
     static S06HUD_API* GetInstance()
@@ -78,5 +79,10 @@ public:
 	static void SetGadgetHP(float hp)
 	{
 		VOID_EXPORT(API_SetGadgetHP, hp);
+	}
+
+	static void SetBossHealth(float hp, float maxHP)
+	{
+		VOID_EXPORT(API_SetBossHealth, hp, maxHP);
 	}
 };

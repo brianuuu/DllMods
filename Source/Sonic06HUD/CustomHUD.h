@@ -63,6 +63,7 @@ public:
 	static void SetGadgetCount(int count, int maxCount);
 	static void SetGadgetHP(float hp);
 	static void UpdateGadgetHPPosition();
+	static void SetBossHealth(float hp, float maxHP);
 	static void PlayInfoHUD(bool intro, bool instantStart);
 
 	// Pause
