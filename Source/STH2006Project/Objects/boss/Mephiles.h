@@ -37,13 +37,17 @@ private:
 		Hide,
 		Eject,
 		Warp,
+		Damage,
+
+		AttackSphereS,
 	};
 
 	// animation states
 	static char const* HideLoop;
 	static char const* HideCommand;
 	static char const* Command;
-	static char const* Grin; // hide
+	static char const* Dive; // hide
+	static char const* Grin; // big sphere attack
 	static char const* Shock; // damage
 	static char const* Smile; // sphere attack
 	static char const* Suffer; // eject
@@ -63,6 +67,7 @@ private:
 	bool m_playedInitVO = false;
 	bool m_hasEjected = false;
 	bool m_damagedThisFrame = false;
+	bool m_playDamageVO = true;
 	uint32_t m_cameraActorID = 0;
 	uint32_t m_handLID = 0;
 	uint32_t m_handRID = 0;
@@ -110,16 +115,32 @@ private:
 	void StateWarpBegin();
 	void StateWarpAdvance(float dt);
 
+	// State::Damage
+	void StateDamageBegin();
+	void StateDamageAdvance(float dt);
+
+	// State::AttackSphereS
+	void StateAttackSphereSBegin();
+	void StateAttackSphereSAdvance(float dt);
+	void FireSphereS();
+
 	// Utils
 	hh::math::CVector GetBodyPosition() const;
 	bool CanLock() const;
 	bool CanDamage() const;
 	void CreateShield(hh::math::CVector const& otherPos) const;
 	void PlaySingleVO(std::string const& name, std::string const& id);
+	float GetHPRatio() const;
 
 	void SetHidden(bool hidden);
 	void FollowPlayer();
 	void TurnTowardsPlayer(float dt);
+	void HandleDisableCameraLock();
+	float GetAttackBeforeDelay() const;
+	float GetAttackAfterDelay() const;
+
+	int m_attackIndex = 0;
+	State ChooseAttackState() const;
 
 private:
 	// Mephiles shadow

@@ -1,6 +1,7 @@
 #include "Mephiles.h"
 
 #include "Managers/MstManager.h"
+#include "Objects/enemy/DarkSphere.h"
 #include "Objects/enemy/EnemyShield.h"
 #include "UI/LoadingUI.h"
 #include "UI/SubtitleUI.h"
@@ -60,6 +61,7 @@ void Mephiles::InitializeEditParam
 char const* Mephiles::HideLoop = "HideLoop";
 char const* Mephiles::HideCommand = "HideCommand";
 char const* Mephiles::Command = "Command";
+char const* Mephiles::Dive = "Dive";
 char const* Mephiles::Grin = "Grin";
 char const* Mephiles::Shock = "Shock";
 char const* Mephiles::Smile = "Smile";
@@ -88,6 +90,7 @@ bool Mephiles::SetAddRenderables
 	entries.push_back(hh::anim::SMotionInfo(HideLoop, "en_shwait_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_Loop));
 	entries.push_back(hh::anim::SMotionInfo(HideCommand, "en_shcommand_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
 	entries.push_back(hh::anim::SMotionInfo(Command, "en_command_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
+	entries.push_back(hh::anim::SMotionInfo(Dive, "en_dive_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
 	entries.push_back(hh::anim::SMotionInfo(Grin, "en_grin_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
 	entries.push_back(hh::anim::SMotionInfo(Shock, "en_shock_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
 	entries.push_back(hh::anim::SMotionInfo(Smile, "en_smile_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_Loop));
@@ -113,18 +116,21 @@ bool Mephiles::SetAddRenderables
 	SetContext(this);
 	fnAddAnimationState(HideLoop);
 	fnAddAnimationState(HideCommand, HideLoop);
-	fnAddAnimationState(Command, Wait);
-	fnAddAnimationState(Grin, HideLoop);
 	fnAddAnimationState(Wait);
+	fnAddAnimationState(Command, Wait);
+	fnAddAnimationState(Dive, HideLoop);
+	fnAddAnimationState(Grin);
 	fnAddAnimationState(Shock, Wait);
 	fnAddAnimationState(Smile);
 	fnAddAnimationState(Suffer, Wait);
 	fnAddAnimationState(Tired);
 	SetAnimationBlend(HideLoop, HideCommand, 0.5f);
 	SetAnimationBlend(HideCommand, HideLoop, 0.5f);
+	SetAnimationBlend(Dive, HideLoop, 0.5f);
 	SetAnimationBlend(Command, Wait, 0.5f);
-	SetAnimationBlend(Grin, HideLoop, 0.5f);
+	SetAnimationBlend(Grin, Wait, 0.5f);
 	SetAnimationBlend(Shock, Wait, 0.5f);
+	SetAnimationBlend(Wait, Smile, 0.5f);
 	SetAnimationBlend(Smile, Wait, 0.5f);
 	SetAnimationBlend(Suffer, Wait, 0.5f);
 	SetAnimationBlend(Tired, Wait, 0.5f);
@@ -177,6 +183,9 @@ void Mephiles::AddCallback
 		m_hideRotation = hh::math::CQuaternion::FromTwoVectors(hh::math::CVector::UnitZ(), faceDirection.head<3>());
 	}
 
+	m_HP = m_Data.m_MaxHP;
+	S06HUD_API::SetBossHealth(m_HP, m_Data.m_MaxHP);
+
 	StateAppearBegin();
 
 	// disable Chaos Drive sfx
@@ -207,6 +216,8 @@ void Mephiles::SetUpdateParallel
 	case State::Hide: StateHideAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::Eject: StateEjectAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::Warp: StateWarpAdvance(in_rUpdateInfo.DeltaTime); break;
+	case State::Damage: StateDamageAdvance(in_rUpdateInfo.DeltaTime); break;
+	case State::AttackSphereS: StateAttackSphereSAdvance(in_rUpdateInfo.DeltaTime); break;
 	}
 
 	m_damagedThisFrame = false;
@@ -232,6 +243,8 @@ void Mephiles::HandleStateChange()
 	case State::Hide: StateHideBegin(); break;
 	case State::Eject: StateEjectBegin(); break;
 	case State::Warp: StateWarpBegin(); break;
+	case State::Damage: StateDamageBegin(); break;
+	case State::AttackSphereS: StateAttackSphereSBegin(); break;
 	}
 
 	m_state = m_stateNext;
@@ -257,14 +270,30 @@ bool Mephiles::ProcessMessage
 
 			if (!m_damagedThisFrame)
 			{
+				bool const isPlayer = SendMessageImm(message.m_SenderActorID, Sonic::Message::MsgGetPlayerType());
+
 				m_damagedThisFrame = true;
 				if (CanDamage())
 				{
-					// TODO:
+					if (m_HP > 0)
+					{
+						if (!isPlayer)
+						{
+							// damage from non-player attacks
+							SharedPtrTypeless soundHandle;
+							Common::ObjectPlaySound(this, 200614000, soundHandle);
+						}
+
+						m_HP--;
+						S06HUD_API::SetBossHealth(m_HP, m_Data.m_MaxHP);
+
+						m_playDamageVO = true;
+						m_stateNext = State::Damage;
+					}
 				}
 				else
 				{
-					if (SendMessageImm(message.m_SenderActorID, Sonic::Message::MsgGetPlayerType()))
+					if (isPlayer)
 					{
 						CreateShield(msg.m_DamagePosition + hh::math::CVector::UnitY() * 0.5f);
 					}
@@ -282,7 +311,11 @@ bool Mephiles::ProcessMessage
 			auto& msg = static_cast<Sonic::Message::MsgNotifyShockWave&>(message);
 			if (CanDamage())
 			{
-				// TODO:
+				SharedPtrTypeless soundHandle;
+				Common::ObjectPlaySound(this, 200614000, soundHandle);
+
+				m_playDamageVO = false;
+				m_stateNext = State::Damage;
 			}
 			else
 			{
@@ -632,7 +665,7 @@ void Mephiles::StateWarpAdvance(float dt)
 	hh::math::CVector const oldPos = m_spMatrixNodeTransform->m_Transform.m_Position;
 	if (oldPos.isApprox(m_warpPos))
 	{
-		// TODO: next attack
+		m_stateNext = ChooseAttackState();
 		return;
 	}
 
@@ -655,6 +688,118 @@ void Mephiles::StateWarpAdvance(float dt)
 }
 
 //---------------------------------------------------
+// State::Damage
+//---------------------------------------------------
+void Mephiles::StateDamageBegin()
+{
+	// TODO: final hit, score
+	ChangeState(Shock);
+
+	// TODO: lock on camera?
+	HandleDisableCameraLock();
+
+	if (m_playDamageVO)
+	{
+		SubtitleUI::addSubtitle("msg_hint", "hint_bos04_e11_mf");
+	}
+}
+
+void Mephiles::StateDamageAdvance(float dt)
+{
+	if (GetCurrentState()->GetStateName() == Wait)
+	{
+		m_stateNext = State::Warp;
+	}
+}
+
+//---------------------------------------------------
+// State::AttackSphereS
+//---------------------------------------------------
+void Mephiles::StateAttackSphereSBegin()
+{
+	if (!m_cameraActorID && m_Data.m_CameraLock)
+	{
+		m_cameraActorID = m_Data.m_CameraLock;
+		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+	}
+}
+
+void Mephiles::StateAttackSphereSAdvance(float dt)
+{
+	float constexpr c_Interval = 1.25f;
+
+	switch (m_stateStage)
+	{
+	case 0:
+	{
+		if (m_stateTime >= GetAttackBeforeDelay())
+		{
+			m_stateTime = 0.0f;
+			m_stateStage++;
+
+			ChangeState(Smile);
+			SubtitleUI::addSubtitle("msg_hint", GetHPRatio() <= 0.5f ? "hint_bos04_e05_mf" : "hint_bos04_e09_mf");
+		
+			FireSphereS();
+		}
+		break;
+	}
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+	{
+		if (m_stateTime >= c_Interval)
+		{
+			m_stateTime = 0.0f;
+			m_stateStage++;
+
+			if (m_stateStage == 5)
+			{
+				ChangeState(Wait);
+			}
+
+			FireSphereS();
+		}
+		break;
+	}
+	case 5:
+	{
+		if (m_cameraActorID && m_stateTime >= 2.0f)
+		{
+			Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+			m_cameraActorID = 0;
+		}
+
+		if (m_stateTime >= GetAttackAfterDelay())
+		{
+			m_stateNext = State::Warp;
+		}
+		break;
+	}
+	}
+
+	if (m_stateTime >= 0.5f || m_stateStage > 0)
+	{
+		HandleDisableCameraLock();
+	}
+	TurnTowardsPlayer(dt);
+}
+
+void Mephiles::FireSphereS()
+{
+	SharedPtrTypeless soundHandle;
+	Common::ObjectPlaySound(this, 200615007, soundHandle);
+
+	float constexpr c_DarkSphereSpeedS = 25.0f;
+	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	m_pMember->m_pGameDocument->AddGameObject
+	(
+		boost::make_shared<DarkSphere>(m_ActorID, context->m_pPlayer->m_ActorID, c_DarkSphereSpeedS, false, GetBodyPosition())
+	);
+}
+
+//---------------------------------------------------
 // Utils
 //---------------------------------------------------
 hh::math::CVector Mephiles::GetBodyPosition() const
@@ -669,6 +814,15 @@ bool Mephiles::CanLock() const
 
 bool Mephiles::CanDamage() const
 {
+	switch (m_state)
+	{
+	case State::Damage:
+	case State::AttackSphereS:
+	{
+		return true;
+	}
+	}
+
 	return false;
 }
 
@@ -701,6 +855,11 @@ void Mephiles::PlaySingleVO(std::string const& name, std::string const& id)
 	m_playedVO.insert(id);
 
 	SubtitleUI::addSubtitle(name, id);
+}
+
+float Mephiles::GetHPRatio() const
+{
+	return (float)m_HP / (float)m_Data.m_MaxHP;
 }
 
 void Mephiles::SetHidden(bool hidden)
@@ -805,6 +964,62 @@ void Mephiles::TurnTowardsPlayer(float dt)
 	hh::math::CQuaternion rotYaw = hh::math::CQuaternion::FromTwoVectors(hh::math::CVector::UnitZ(), newDirection.head<3>());
 	m_spMatrixNodeTransform->m_Transform.SetRotation(rotYaw);
 	m_spMatrixNodeTransform->NotifyChanged();
+}
+
+void Mephiles::HandleDisableCameraLock()
+{
+	if (!m_cameraActorID || m_cameraActorID != m_Data.m_CameraLock) return;
+	float constexpr minDist = 5.0f;
+
+	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	hh::math::CVector const playerPos = context->m_spMatrixNode->m_Transform.m_Position;
+	hh::math::CVector dir = playerPos - m_spMatrixNodeTransform->m_Transform.m_Position;
+	dir.y() = 0.0f;
+	if (dir.norm() < minDist)
+	{
+		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+		m_cameraActorID = 0;
+	}
+}
+
+float Mephiles::GetAttackBeforeDelay() const
+{
+	float const ratio = GetHPRatio();
+	if (ratio <= 1.0f / 3.0f)
+	{
+		return 0.5f;
+	}
+	else if (ratio <= 2.0f / 3.0f)
+	{
+		return 1.0f;
+	}
+	else
+	{
+		return 1.5f;
+	}
+}
+
+float Mephiles::GetAttackAfterDelay() const
+{
+	float const ratio = GetHPRatio();
+	if (ratio <= 1.0f / 3.0f)
+	{
+		return 1.0f;
+	}
+	else if (ratio <= 2.0f / 3.0f)
+	{
+		return 2.0f;
+	}
+	else
+	{
+		return 3.0f;
+	}
+}
+
+Mephiles::State Mephiles::ChooseAttackState() const
+{
+	// TODO:
+	return State::AttackSphereS;
 }
 
 //---------------------------------------------------
