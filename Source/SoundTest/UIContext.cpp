@@ -337,6 +337,7 @@ void UIContext::DrawSoundTest()
         ImGui::Text("Object Test:");
         if (playerExist)
         {
+            auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
             if (ImGui::Button("Spawn Object"))
             {
                 if (m_spSingleton)
@@ -344,7 +345,6 @@ void UIContext::DrawSoundTest()
                     ((CObjSoundTest*)m_spSingleton.get())->Kill();
                 }
 
-                auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
                 hh::math::CVector pos = context->m_spMatrixNode->m_Transform.m_Position;
                 pos.y() += 0.5f;
                 m_spSingleton = boost::make_shared<CObjSoundTest>(pos);
@@ -355,8 +355,12 @@ void UIContext::DrawSoundTest()
             ImGui::InputInt("Cue ID##obj", &cueIDobj);
             if (m_spSingleton)
             {
+                boost::shared_ptr<Sonic::CCamera> const& spCamera = context->m_pPlayer->m_pMember->m_pWorld->GetCamera();
+                ImGui::Text("Distance to Camera: %.5f", (spCamera->m_Position - m_spSingleton->m_spMatrixNodeTransform->m_Transform.m_Position).norm());
+
                 if (ImGui::Button("Play Sound"))
                 {
+                    soundHandleObj.reset();
                     Common::ObjectPlaySound(m_spSingleton.get(), cueIDobj, soundHandleObj);
                 }
 
