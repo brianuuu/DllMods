@@ -127,6 +127,7 @@ bool Mephiles::SetAddRenderables
 	SetAnimationBlend(HideLoop, HideCommand, 0.5f);
 	SetAnimationBlend(HideCommand, HideLoop, 0.5f);
 	SetAnimationBlend(Dive, HideLoop, 0.5f);
+	SetAnimationBlend(Wait, Command, 0.5f);
 	SetAnimationBlend(Command, Wait, 0.5f);
 	SetAnimationBlend(Grin, Wait, 0.5f);
 	SetAnimationBlend(Shock, Wait, 0.5f);
@@ -218,6 +219,7 @@ void Mephiles::SetUpdateParallel
 	case State::Warp: StateWarpAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::Damage: StateDamageAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::AttackSphereS: StateAttackSphereSAdvance(in_rUpdateInfo.DeltaTime); break;
+	case State::AttackCharge: StateAttackChargeAdvance(in_rUpdateInfo.DeltaTime); break;
 	}
 
 	m_damagedThisFrame = false;
@@ -245,6 +247,7 @@ void Mephiles::HandleStateChange()
 	case State::Warp: StateWarpBegin(); break;
 	case State::Damage: StateDamageBegin(); break;
 	case State::AttackSphereS: StateAttackSphereSBegin(); break;
+	case State::AttackCharge: StateAttackChargeBegin(); break;
 	}
 
 	m_state = m_stateNext;
@@ -536,19 +539,19 @@ void Mephiles::StateHideAdvance(float dt)
 				float const radius = RAND_FLOAT(MinAppearRadius, MaxAppearRadius);
 				if (m_numKilledUnit >= 90)
 				{
-					SpawnSpring(50, radius, 1.0f, 2.0f);
+					SpawnCircleWait(50, radius, 1.0f, 2.0f, MephilesShadow::Type::Spring);
 				}
 				else if (m_numKilledUnit >= 60)
 				{
-					SpawnSpring(40, radius, 1.5f, 1.5f);
+					SpawnCircleWait(40, radius, 1.5f, 1.5f, MephilesShadow::Type::Spring);
 				}
 				else if (m_numKilledUnit >= 30)
 				{
-					SpawnSpring(30, radius, 2.0f, 1.0f);
+					SpawnCircleWait(30, radius, 2.0f, 1.0f, MephilesShadow::Type::Spring);
 				}
 				else
 				{
-					SpawnSpring(20, radius, 2.5f, 0.5f);
+					SpawnCircleWait(20, radius, 2.5f, 0.5f, MephilesShadow::Type::Spring);
 				}
 				m_stateStage = 5;
 			}
@@ -696,7 +699,11 @@ void Mephiles::StateDamageBegin()
 	ChangeState(Shock);
 
 	// TODO: lock on camera?
-	HandleDisableCameraLock();
+	if (m_cameraActorID)
+	{
+		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+		m_cameraActorID = 0;
+	}
 
 	if (m_playDamageVO)
 	{
@@ -765,7 +772,7 @@ void Mephiles::StateAttackSphereSAdvance(float dt)
 	}
 	case 5:
 	{
-		if (m_cameraActorID && m_stateTime >= 2.0f)
+		if (m_cameraActorID && m_stateTime >= GetAttackAfterDelay() - 1.0f)
 		{
 			Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
 			m_cameraActorID = 0;
@@ -800,6 +807,71 @@ void Mephiles::FireSphereS()
 }
 
 //---------------------------------------------------
+// State::AttackCharge
+//---------------------------------------------------
+void Mephiles::StateAttackChargeBegin()
+{
+	if (!m_cameraActorID && m_Data.m_CameraLock)
+	{
+		m_cameraActorID = m_Data.m_CameraLock;
+		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+	}
+}
+
+void Mephiles::StateAttackChargeAdvance(float dt)
+{
+	switch (m_stateStage)
+	{
+	case 0:
+	{
+		if (m_stateTime >= GetAttackBeforeDelay())
+		{
+			m_stateTime = 0.0f;
+			m_stateStage++;
+
+			ChangeState(Command);
+			SubtitleUI::addSubtitle("msg_hint", "hint_bos04_e08_mf");
+		}
+		break;
+	}
+	case 1:
+	{
+		if (GetCurrentState()->GetStateName() == Wait)
+		{
+			SharedPtrTypeless soundHandle;
+			Common::ObjectPlaySound(this, 200615000, soundHandle);
+
+			m_stateTime = 0.0f;
+			m_stateStage++;
+
+			SpawnCircleWait(30, 4.0f, GetAttackBeforeDelay() + 0.5f, 2.0f, MephilesShadow::Type::Charge);
+		}
+		break;
+	}
+	case 2:
+	{
+		if (m_cameraActorID && m_stateTime >= 4.0f)
+		{
+			Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+			m_cameraActorID = 0;
+		}
+
+		if (m_stateTime >= GetAttackAfterDelay() + 4.0f)
+		{
+			m_stateNext = State::Warp;
+		}
+		break;
+	}
+	}
+
+	if (m_stateTime >= 0.6f || m_stateStage > 0)
+	{
+		HandleDisableCameraLock();
+	}
+	TurnTowardsPlayer(dt);
+}
+
+//---------------------------------------------------
 // Utils
 //---------------------------------------------------
 hh::math::CVector Mephiles::GetBodyPosition() const
@@ -818,6 +890,7 @@ bool Mephiles::CanDamage() const
 	{
 	case State::Damage:
 	case State::AttackSphereS:
+	case State::AttackCharge:
 	{
 		return true;
 	}
@@ -969,7 +1042,7 @@ void Mephiles::TurnTowardsPlayer(float dt)
 void Mephiles::HandleDisableCameraLock()
 {
 	if (!m_cameraActorID || m_cameraActorID != m_Data.m_CameraLock) return;
-	float constexpr minDist = 5.0f;
+	float constexpr minDist = 3.0f;
 
 	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	hh::math::CVector const playerPos = context->m_spMatrixNode->m_Transform.m_Position;
@@ -1016,10 +1089,18 @@ float Mephiles::GetAttackAfterDelay() const
 	}
 }
 
-Mephiles::State Mephiles::ChooseAttackState() const
+Mephiles::State Mephiles::ChooseAttackState()
 {
 	// TODO:
-	return State::AttackSphereS;
+	m_attackCount++;
+	if (m_attackCount % 2 == 0)
+	{
+		return State::AttackSphereS;
+	}
+	else
+	{
+		return State::AttackCharge;
+	}
 }
 
 //---------------------------------------------------
@@ -1035,7 +1116,7 @@ void Mephiles::SpawnEncirclement(int count, float radius)
 	m_spawnType = MephilesShadow::Type::Encirclement;
 }
 
-void Mephiles::SpawnSpring(int count, float radius, float attackStartTime, float attackMaxDelay)
+void Mephiles::SpawnCircleWait(int count, float radius, float attackStartTime, float attackMaxDelay, MephilesShadow::Type attackType)
 {
 	m_maxSpawnCount = count;
 	m_spawnCount = 0;
@@ -1044,7 +1125,7 @@ void Mephiles::SpawnSpring(int count, float radius, float attackStartTime, float
 	m_spawnedActors.clear();
 	m_attackStartTime = attackStartTime;
 	m_attackMaxDelay = attackMaxDelay;
-	m_spawnType = MephilesShadow::Type::Spring;
+	m_spawnType = attackType;
 }
 
 void Mephiles::AdvanceShadowSpawn(float dt)
@@ -1085,18 +1166,20 @@ void Mephiles::AdvanceShadowSpawn(float dt)
 				break;
 			}
 			case MephilesShadow::Type::Spring:
+			case MephilesShadow::Type::Charge:
 			{
 				angle = 0.01f + 2.0f * PI_F * (float)m_spawnCount / (float)m_maxSpawnCount;
 				break;
 			}
 			}
 
-			auto spShadow = boost::make_shared<MephilesShadow>(m_ActorID, m_spawnType, m_spawnRadius, angle, GetShadowSpawnPosition());
+			auto spShadow = boost::make_shared<MephilesShadow>(m_ActorID, m_spawnType, m_spawnRadius, angle, m_Data.m_GroundHeight, m_spMatrixNodeTransform->m_Transform.m_Position);
 			m_pMember->m_pGameDocument->AddGameObject(spShadow);
 			m_shadows[spShadow->m_ActorID] = spShadow;
 			m_spawnedActors.insert(spShadow->m_ActorID);
 
-			if (m_spawnType == MephilesShadow::Type::Spring)
+			// any spawn other than Encirclement will circle around Mephiles
+			if (m_spawnType != MephilesShadow::Type::Encirclement)
 			{
 				spShadow->SetInitialStateSpring(m_attackStartTime, m_attackMaxDelay);
 			}
@@ -1148,23 +1231,4 @@ void Mephiles::AdvanceShadowExplode(float dt)
 	{
 		m_attachSfx.reset();
 	}
-}
-
-hh::math::CVector Mephiles::GetShadowSpawnPosition() const
-{
-	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-	hh::math::CVector const playerPos = context->m_spMatrixNode->m_Transform.m_Position;
-
-	switch (m_spawnType)
-	{
-	case MephilesShadow::Type::Encirclement:
-	case MephilesShadow::Type::Spring:
-	{
-		hh::math::CVector spawnPos = playerPos;
-		spawnPos.y() = m_Data.m_GroundHeight;
-		return spawnPos;
-	}
-	}
-
-	return hh::math::CVector::Zero();
 }

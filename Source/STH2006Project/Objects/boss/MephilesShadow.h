@@ -13,7 +13,8 @@ public:
 	{
 		Encirclement,
 		Spring,
-		Attack
+		Charge,
+		Laser
 	};
 
 	enum class State
@@ -21,11 +22,13 @@ public:
 		Idle,
 		Blown,
 		Shock,
-		SpringWait,
+		Dead,
+
+		CircleWait,
 		SpringAttack,
 		SpringMiss,
 		SpringAttach,
-		Dead
+		ChargeAttack,
 	};
 
 private:
@@ -37,6 +40,7 @@ private:
 
 	uint32_t m_owner = 0;
 	Type m_type = Type::Encirclement;
+	float m_groundHeight = 0.0f;
 	float m_speed = 0.0f;
 	hh::math::CVector m_direction = hh::math::CVector::Zero();
 	hh::math::CVector m_startPos = hh::math::CVector::Zero();
@@ -53,7 +57,7 @@ private:
 	static char const* Dead;
 
 public:
-	MephilesShadow(uint32_t owner, Type type, float radius, float startAngle, hh::math::CVector const& startPos);
+	MephilesShadow(uint32_t owner, Type type, float radius, float startAngle, float groundHeight, hh::math::CVector const& startPos);
 
 	void SetAddUpdateUnit(Sonic::CGameDocument* in_pGameDocument) override;
 	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
@@ -91,13 +95,14 @@ private:
 	void StateShockAdvance(float dt);
 	void StateShockEnd();
 
-	// State::SpringWait
+	// State::CircleWait
 	uint32_t m_attackID = 0u;
 	float m_attackStartTime = 0.0f;
+	hh::math::CVector m_attackStart = hh::math::CVector::Zero();
 	hh::math::CVector m_attackTarget = hh::math::CVector::Zero();
-	void StateSpringWaitBegin();
-	void StateSpringWaitAdvance(float dt);
-	void StateSpringWaitEnd();
+	void StateCircleWaitBegin();
+	void StateCircleWaitAdvance(float dt);
+	void StateCircleWaitEnd();
 
 	// State::SpringAttack
 	void StateSpringAttackBegin();
@@ -113,6 +118,11 @@ private:
 	bool m_disableDamageSfx = false;
 	void StateSpringAttachBegin();
 	void StateSpringAttachAdvance(float dt);
+
+	// State::ChargeAttack
+	void StateChargeAttackBegin();
+	void StateChargeAttackAdvance(float dt);
+	void StateChargeAttackEnd();
 
 	// Utils
 	hh::math::CVector GetBodyPosition() const;
@@ -140,6 +150,9 @@ public:
 	static float const c_SpringG;
 	static float const c_SpringErrorRadius;
 	static float const c_SpringFailedTime;
+	static float const c_ChargeStartTime;
+	static float const c_ChargeErrorRadius;
+	static float const c_ChargeSpeed;
 	static float const c_BlownSpeed;
 };
 

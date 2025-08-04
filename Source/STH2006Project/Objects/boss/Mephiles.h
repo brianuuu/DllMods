@@ -40,6 +40,7 @@ private:
 		Damage,
 
 		AttackSphereS,
+		AttackCharge,
 	};
 
 	// animation states
@@ -124,6 +125,10 @@ private:
 	void StateAttackSphereSAdvance(float dt);
 	void FireSphereS();
 
+	// State::AttackCharge
+	void StateAttackChargeBegin();
+	void StateAttackChargeAdvance(float dt);
+
 	// Utils
 	hh::math::CVector GetBodyPosition() const;
 	bool CanLock() const;
@@ -139,8 +144,8 @@ private:
 	float GetAttackBeforeDelay() const;
 	float GetAttackAfterDelay() const;
 
-	int m_attackIndex = 0;
-	State ChooseAttackState() const;
+	int m_attackCount = 0;
+	State ChooseAttackState();
 
 private:
 	// Mephiles shadow
@@ -161,9 +166,7 @@ private:
 	MephilesShadow::Type m_spawnType = MephilesShadow::Type::Encirclement;
 
 	void SpawnEncirclement(int count, float radius);
-	void SpawnSpring(int count, float radius, float attackStartTime, float attackMaxDelay);
+	void SpawnCircleWait(int count, float radius, float attackStartTime, float attackMaxDelay, MephilesShadow::Type attackType);
 	void AdvanceShadowSpawn(float dt);
 	void AdvanceShadowExplode(float dt);
-
-	hh::math::CVector GetShadowSpawnPosition() const;
 };
