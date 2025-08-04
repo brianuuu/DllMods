@@ -276,7 +276,7 @@ bool Mephiles::ProcessMessage
 				bool const isPlayer = SendMessageImm(message.m_SenderActorID, Sonic::Message::MsgGetPlayerType());
 
 				m_damagedThisFrame = true;
-				if (CanDamage())
+				if (m_canDamage)
 				{
 					if (m_HP > 0)
 					{
@@ -312,13 +312,16 @@ bool Mephiles::ProcessMessage
 		if (message.Is<Sonic::Message::MsgNotifyShockWave>())
 		{
 			auto& msg = static_cast<Sonic::Message::MsgNotifyShockWave&>(message);
-			if (CanDamage())
+			if (m_canDamage)
 			{
-				SharedPtrTypeless soundHandle;
-				Common::ObjectPlaySound(this, 200614000, soundHandle);
+				if (m_HP > 0)
+				{
+					SharedPtrTypeless soundHandle;
+					Common::ObjectPlaySound(this, 200614000, soundHandle);
 
-				m_playDamageVO = false;
-				m_stateNext = State::Damage;
+					m_playDamageVO = false;
+					m_stateNext = State::Damage;
+				}
 			}
 			else
 			{
@@ -488,6 +491,7 @@ void Mephiles::StateAppearAdvance(float dt)
 //---------------------------------------------------
 void Mephiles::StateHideBegin()
 {
+	m_canDamage = false;
 	SetHidden(true);
 }
 
@@ -598,6 +602,8 @@ void Mephiles::StateHideAdvance(float dt)
 //---------------------------------------------------
 void Mephiles::StateEjectBegin()
 {
+	m_canDamage = false;
+
 	ChangeState(Suffer);
 	SetHidden(false);
 
@@ -639,6 +645,8 @@ void Mephiles::StateEjectAdvance(float dt)
 //---------------------------------------------------
 void Mephiles::StateWarpBegin()
 {
+	m_canDamage = false;
+
 	if (GetCurrentState()->GetStateName() != Wait)
 	{
 		ChangeState(Wait);
@@ -743,6 +751,7 @@ void Mephiles::StateAttackSphereSAdvance(float dt)
 		{
 			m_stateTime = 0.0f;
 			m_stateStage++;
+			m_canDamage = true;
 
 			ChangeState(Smile);
 			SubtitleUI::addSubtitle("msg_hint", GetHPRatio() <= 0.5f ? "hint_bos04_e05_mf" : "hint_bos04_e09_mf");
@@ -843,6 +852,7 @@ void Mephiles::StateAttackChargeAdvance(float dt)
 
 			m_stateTime = 0.0f;
 			m_stateStage++;
+			m_canDamage = true;
 
 			SpawnCircleWait(30, 4.0f, GetAttackBeforeDelay() + 0.5f, 2.0f, MephilesShadow::Type::Charge);
 		}
@@ -882,21 +892,6 @@ hh::math::CVector Mephiles::GetBodyPosition() const
 bool Mephiles::CanLock() const
 {
 	return m_state != State::Hide;
-}
-
-bool Mephiles::CanDamage() const
-{
-	switch (m_state)
-	{
-	case State::Damage:
-	case State::AttackSphereS:
-	case State::AttackCharge:
-	{
-		return true;
-	}
-	}
-
-	return false;
 }
 
 void Mephiles::CreateShield(hh::math::CVector const& otherPos) const

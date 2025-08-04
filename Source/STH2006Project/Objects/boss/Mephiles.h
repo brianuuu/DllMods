@@ -69,6 +69,7 @@ private:
 	bool m_hasEjected = false;
 	bool m_damagedThisFrame = false;
 	bool m_playDamageVO = true;
+	bool m_canDamage = false;
 	uint32_t m_cameraActorID = 0;
 	uint32_t m_handLID = 0;
 	uint32_t m_handRID = 0;
@@ -132,7 +133,6 @@ private:
 	// Utils
 	hh::math::CVector GetBodyPosition() const;
 	bool CanLock() const;
-	bool CanDamage() const;
 	void CreateShield(hh::math::CVector const& otherPos) const;
 	void PlaySingleVO(std::string const& name, std::string const& id);
 	float GetHPRatio() const;
