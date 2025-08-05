@@ -75,6 +75,7 @@ private:
 	uint32_t m_handRID = 0;
 	uint32_t m_footLID = 0;
 	uint32_t m_footRID = 0;
+	uint32_t m_barrierID = 0;
 
 	std::set<std::string> m_playedVO;
 
@@ -134,6 +135,7 @@ private:
 	hh::math::CVector GetBodyPosition() const;
 	bool CanLock() const;
 	void CreateShield(hh::math::CVector const& otherPos) const;
+	void ToggleBarrier(bool enabled);
 	void PlaySingleVO(std::string const& name, std::string const& id);
 	float GetHPRatio() const;
 

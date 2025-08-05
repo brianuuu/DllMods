@@ -159,6 +159,11 @@ bool Mephiles::SetAddColliders
 	hk2010_2_0::hkpSphereShape* damageShape = new hk2010_2_0::hkpSphereShape(0.5f);
 	AddEventCollision("Damage", damageShape, *(int*)0x1E0AFD8, true, m_spNodeBody); // ColID_PlayerEvent
 
+	// barrier
+	hk2010_2_0::hkpSphereShape* barrierShape = new hk2010_2_0::hkpSphereShape(1.0f);
+	AddEventCollision("Barrier", barrierShape, *(int*)0x1E0AFD8, true, m_spNodeBody); // ColID_PlayerEvent
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Barrier", false);
+
 	return true;
 }
 
@@ -276,7 +281,11 @@ bool Mephiles::ProcessMessage
 				bool const isPlayer = SendMessageImm(message.m_SenderActorID, Sonic::Message::MsgGetPlayerType());
 
 				m_damagedThisFrame = true;
-				if (m_canDamage)
+				if (m_barrierID)
+				{
+					// nothing
+				}
+				else if (m_canDamage)
 				{
 					if (m_HP > 0)
 					{
@@ -312,7 +321,11 @@ bool Mephiles::ProcessMessage
 		if (message.Is<Sonic::Message::MsgNotifyShockWave>())
 		{
 			auto& msg = static_cast<Sonic::Message::MsgNotifyShockWave&>(message);
-			if (m_canDamage)
+			if (m_barrierID)
+			{
+				ToggleBarrier(false);
+			}
+			else if (m_canDamage)
 			{
 				if (m_HP > 0)
 				{
@@ -330,6 +343,13 @@ bool Mephiles::ProcessMessage
 			return true;
 		}
 
+		if (flag && message.Is<Sonic::Message::MsgIsReceiveDamage>())
+		{
+			auto& msg = static_cast<Sonic::Message::MsgIsReceiveDamage&>(message);
+			*msg.m_pSuccess = (m_barrierID != 0);
+			return true;
+		}
+
 		if (message.Is<Sonic::Message::MsgHitEventCollision>())
 		{
 			auto& msg = static_cast<Sonic::Message::MsgHitEventCollision&>(message);
@@ -338,6 +358,16 @@ bool Mephiles::ProcessMessage
 				SendMessage(msg.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
 					(
 						*(uint32_t*)0x1E0BE34, // DamageID_NoAttack
+						GetBodyPosition(),
+						hh::math::CVector::Zero()
+					)
+				);
+			}
+			else if (msg.m_Symbol == "Barrier")
+			{
+				SendMessage(msg.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
+					(
+						*(uint32_t*)0x1E0BE28, // DamageID_SonicHeavy
 						GetBodyPosition(),
 						hh::math::CVector::Zero()
 					)
@@ -915,6 +945,22 @@ void Mephiles::CreateShield(hh::math::CVector const& otherPos) const
 
 	startTrans.m_Position = bodyCenter + dir * 0.7f;
 	m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<EnemyShield>(startTrans, true));
+}
+
+void Mephiles::ToggleBarrier(bool enabled)
+{
+	// TODO: sfx
+	if (m_barrierID && !enabled)
+	{
+		m_pGlitterPlayer->StopByID(m_barrierID, false);
+		m_barrierID = 0;
+	}
+	else if (!m_barrierID && enabled)
+	{
+		m_barrierID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spModel->GetNode("Hips"), "ef_mephiles_barrier", 1.0f);
+	}
+
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Barrier", enabled);
 }
 
 void Mephiles::PlaySingleVO(std::string const& name, std::string const& id)
