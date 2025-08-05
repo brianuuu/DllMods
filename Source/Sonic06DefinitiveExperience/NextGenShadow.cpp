@@ -972,7 +972,6 @@ private:
     float m_LifeTime = 0.0f;
     bool m_IsDamage = false;
     bool m_IsSuper = false;
-    bool m_IsEnemy = false;
     bool m_MarkAsDeath = false;
 
     boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
@@ -1039,13 +1038,6 @@ public:
             m_pfxSpearID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_sha_sth_spear", 1.0f);
             m_pfxTailID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_bo_sha_sth_spear_tail", 1.0f);
         }
-
-        uint32_t enemyType = 0u;
-        SendMessageImm(m_TargetID, boost::make_shared<Sonic::Message::MsgGetEnemyType>(&enemyType));
-        if (enemyType)
-        {
-            m_IsEnemy = true;
-        }
     
         // set up collision with enemy
         m_spNodeEventCollision = boost::make_shared<Sonic::CMatrixNodeTransform>();
@@ -1107,8 +1099,11 @@ public:
                     SendMessageImm(m_TargetID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
                     newDirection = (targetPosition - m_Position).normalized();
 
+                    uint32_t enemyType = 0u;
+                    SendMessageImm(m_TargetID, boost::make_shared<Sonic::Message::MsgGetEnemyType>(&enemyType));
+
                     // getting close enough to target, hit anyway if it's not enemy
-                    if (!m_IsEnemy && (targetPosition - m_Position).norm() <= m_Speed * updateInfo.DeltaTime)
+                    if (enemyType == 0 && (targetPosition - m_Position).norm() <= m_Speed * updateInfo.DeltaTime)
                     {
                         HitTarget(m_TargetID);
                         return;
@@ -1162,19 +1157,17 @@ public:
     {
         if (m_MarkAsDeath) return;
 
-        auto* senderMessageActor = m_pMessageManager->GetMessageActor(actorID);
-        uint32_t senderActor = (uint32_t)senderMessageActor - 0x28;
-        bool cannotDamage = false;
-        if (*(uint32_t*)senderActor == 0x16F70BC) // CEnemySpinner
-        {
-            cannotDamage = *(bool*)(senderActor + 0x239);
-        }
+        bool canDamage = true;
+        SendMessageImm(actorID, boost::make_shared<Sonic::Message::MsgIsReceiveDamage>(&canDamage));
+
+        uint32_t enemyType = 0u;
+        SendMessageImm(actorID, boost::make_shared<Sonic::Message::MsgGetEnemyType>(&enemyType));
 
         m_pGlitterPlayer->PlayOneshot(m_spMatrixNodeTransform, m_IsDamage ? "ef_bo_sha_sth_lance_vanish" : "ef_bo_sha_sth_spear_vanish", 1.0f, 1);
         bool hasEnemyDamage = false;
-        if (m_IsDamage && !cannotDamage)
+        if (m_IsDamage && canDamage)
         {
-            hasEnemyDamage = m_IsEnemy;
+            hasEnemyDamage = enemyType > 0;
             SendMessage
             (
                 actorID, boost::make_shared<Sonic::Message::MsgDamage>
@@ -1220,6 +1213,19 @@ public:
         }
     }
 };
+
+HOOK(bool, __fastcall, NextGenShadow_EnemySpinner_ProcessMessage, 0xBBDA30, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
+{ 
+    if (flag && message.Is<Sonic::Message::MsgIsReceiveDamage>())
+    {
+        auto& msg = static_cast<Sonic::Message::MsgIsReceiveDamage&>(message);
+        uint32_t senderActor = (uint32_t)This - 0x28;
+        *msg.m_pSuccess = !*(bool*)(senderActor + 0x239);
+        return true;
+    }
+
+    return originalNextGenShadow_EnemySpinner_ProcessMessage(This, Edx, message, flag);
+}
 
 class CObjChaosLockonCursor : public Sonic::CGameObject
 {
@@ -3176,6 +3182,9 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_CSonicStateTrickAttackAdvance);
     INSTALL_HOOK(NextGenShadow_CSonicStateTrickAttackEnd);
     EnemyShock::applyPatches();
+
+    // Chaos Spear cannot damage discharging Spinner
+    INSTALL_HOOK(NextGenShadow_EnemySpinner_ProcessMessage);
 
     //-------------------------------------------------------
     // Chaos Control
