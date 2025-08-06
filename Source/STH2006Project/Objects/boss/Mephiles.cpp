@@ -346,7 +346,7 @@ bool Mephiles::ProcessMessage
 		if (flag && message.Is<Sonic::Message::MsgIsReceiveDamage>())
 		{
 			auto& msg = static_cast<Sonic::Message::MsgIsReceiveDamage&>(message);
-			*msg.m_pSuccess = (m_barrierID != 0);
+			*msg.m_pSuccess = (m_barrierID == 0);
 			return true;
 		}
 
