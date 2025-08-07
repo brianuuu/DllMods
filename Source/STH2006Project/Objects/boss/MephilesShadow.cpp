@@ -285,6 +285,16 @@ bool MephilesShadow::ProcessMessage
 				m_suicideID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spModel->GetNode("Spine"), "ef_mephiles_suicide", 1.0f);
 				break;
 			}
+			case 3:
+			{
+				m_avoidOwner = true;
+				break;
+			}
+			case 4:
+			{
+				m_avoidOwner = false;
+				break;
+			}
 			}
 			return true;
 		}
@@ -417,6 +427,15 @@ void MephilesShadow::StateIdleAdvance(float dt)
 
 	float distance = 0.0f;
 	m_direction = GetPlayerDirection(true, &distance);
+
+	if (m_avoidOwner)
+	{
+		hh::math::CVector ownerDiff = hh::math::CVector::Zero();
+		SendMessageImm(m_owner, Sonic::Message::MsgGetPosition(&ownerDiff));
+		ownerDiff -= m_spMatrixNodeTransform->m_Transform.m_Position;
+		ownerDiff.y() = 0.0f;
+		distance = min(distance, ownerDiff.norm());
+	}
 
 	if (!m_targetLost && distance > c_TargetLostDistance)
 	{

@@ -78,6 +78,7 @@ private:
 
 	// State::Idle
 	bool m_targetLost = false;
+	bool m_avoidOwner = false;
 	float m_enableDamageTimer = 0.0f;
 	void StateIdleBegin();
 	void StateIdleAdvance(float dt);
