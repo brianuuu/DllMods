@@ -22,11 +22,16 @@
 #include <Sonic/Message/MsgNotifyInput.h>
 #include <Sonic/Message/MsgNotifyObjectEvent.h>
 #include <Sonic/Message/MsgNotifyShockWave.h>
+#include <Sonic/Message/MsgReopenActivity.h>
 #include <Sonic/Message/MsgRestartStage.h>
 #include <Sonic/Message/MsgShakeCamera.h>
 #include <Sonic/Message/MsgStageClear.h>
 #include <Sonic/Message/MsgStartExternalControl.h>
+#include <Sonic/Message/MsgStartFadeIn.h>
+#include <Sonic/Message/MsgStartFadeOut.h>
 #include <Sonic/Message/MsgStartHangOn.h>
+#include <Sonic/Message/MsgStartOutOfControl.h>
+#include <Sonic/Message/MsgStopActivity.h>
 #include <Sonic/Message/MsgTakeObject.h>
 
 #include <Sonic/CCharacterProxy.h>
