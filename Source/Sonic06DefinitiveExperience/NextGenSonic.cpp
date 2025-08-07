@@ -2055,7 +2055,7 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAdvance, 0x1231C6
     if (NextGenSonic::m_whiteGemEnabled)
     {
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-        if (padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger))
+        if (padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && !context->StateFlag(eStateFlag_StopPositionCount))
         {
             originalNextGenSonicGems_HomingUpdate(context);
 
@@ -2268,7 +2268,7 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateSquatKickAdvance, 0x1252810, 
             // Remember position in case we become airborne
             NextGenSonic::m_gemHoldPosition = context->m_spMatrixNode->m_Transform.m_Position;
         }
-        else
+        else if (!context->StateFlag(eStateFlag_StopPositionCount))
         {
             // Force stay in air
             Common::SetPlayerVelocity(Eigen::Vector3f::Zero());

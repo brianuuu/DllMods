@@ -578,7 +578,7 @@ HOOK(int32_t*, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterBegin, 0x11
 HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118600, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
-    if (NextGenShadow::m_chaosAttackCount >= 0)
+    if (NextGenShadow::m_chaosAttackCount >= 0 && !context->StateFlag(eStateFlag_StopPositionCount))
     {
         Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
         Common::SetPlayerPosition(NextGenShadow::m_holdPosition);
@@ -1703,7 +1703,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             return nullptr;
         }
 
-        if (!Configuration::Shadow::m_chaosSpearMomentum)
+        if (!Configuration::Shadow::m_chaosSpearMomentum && !context->StateFlag(eStateFlag_StopPositionCount))
         {
             Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
             Common::SetPlayerPosition(NextGenShadow::m_holdPosition);
