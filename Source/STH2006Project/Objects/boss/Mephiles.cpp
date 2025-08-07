@@ -53,9 +53,9 @@ void Mephiles::InitializeEditParam
 	}
 	in_rEditParam.CreateParamBase(m_Data.m_PositionList, positionList);
 
-	in_rEditParam.CreateParamBase(Sonic::CParamTarget::Create(&m_Data.m_CameraEject), "CameraEject");
-	in_rEditParam.CreateParamBase(Sonic::CParamTarget::Create(&m_Data.m_CameraEjectAir), "CameraEjectAir");
 	in_rEditParam.CreateParamBase(Sonic::CParamTarget::Create(&m_Data.m_CameraLock), "CameraLock");
+	in_rEditParam.CreateParamBase(Sonic::CParamTarget::Create(&m_Data.m_CameraPan), "CameraPan");
+	in_rEditParam.CreateParamBase(Sonic::CParamTarget::Create(&m_Data.m_FocusObject), "FocusObject");
 }
 
 char const* Mephiles::HideLoop = "HideLoop";
@@ -644,26 +644,27 @@ void Mephiles::StateEjectBegin()
 	SetHidden(false);
 
 	// copy player's transform
-	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	m_spMatrixNodeTransform->m_Transform = context->m_spMatrixNode->m_Transform;
 	m_spMatrixNodeTransform->NotifyChanged();
 
 	// enable camera
-	uint32_t const cameraEject = context->m_Grounded ? m_Data.m_CameraEject : m_Data.m_CameraEjectAir;
-	if (!m_cameraActorID && cameraEject)
+	if (!m_cameraActorID && m_Data.m_CameraPan)
 	{
-		m_cameraActorID = cameraEject;
+		m_cameraActorID = m_Data.m_CameraPan;
 
-		hh::math::CVector const offset = hh::math::CVector(-4.0f, 1.5f, 1.8f);
+		hh::math::CVector const offset = hh::math::CVector(-3.5f, 1.2f, 1.8f);
 		hh::math::CVector const position = context->m_spMatrixNode->m_Transform.m_Position + context->m_spMatrixNode->m_Transform.m_Rotation * offset;
 		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgSetPosition>(position));
 		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+		SetFocusCameraPosition(GetBodyPosition());
 	}
 }
 
 void Mephiles::StateEjectAdvance(float dt)
 {
 	// disable camera
+	SetFocusCameraPosition(GetBodyPosition());
 	if (m_cameraActorID && m_stateTime >= 1.0f)
 	{
 		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
@@ -1094,22 +1095,6 @@ void Mephiles::TurnTowardsPlayer(float dt)
 	m_spMatrixNodeTransform->NotifyChanged();
 }
 
-void Mephiles::HandleDisableCameraLock()
-{
-	if (!m_cameraActorID || m_cameraActorID != m_Data.m_CameraLock) return;
-	float constexpr minDist = 3.0f;
-
-	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-	hh::math::CVector const playerPos = context->m_spMatrixNode->m_Transform.m_Position;
-	hh::math::CVector dir = playerPos - m_spMatrixNodeTransform->m_Transform.m_Position;
-	dir.y() = 0.0f;
-	if (dir.norm() < minDist)
-	{
-		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
-		m_cameraActorID = 0;
-	}
-}
-
 float Mephiles::GetAttackBeforeDelay() const
 {
 	float const ratio = GetHPRatio();
@@ -1161,6 +1146,30 @@ Mephiles::State Mephiles::ChooseAttackState()
 	else
 	{
 		return State::AttackCharge;
+	}
+}
+
+//---------------------------------------------------
+// Camera
+//---------------------------------------------------
+void Mephiles::SetFocusCameraPosition(hh::math::CVector const& pos)
+{
+	Common::fSendMessageToSetObject(this, m_Data.m_FocusObject, boost::make_shared<Sonic::Message::MsgSetPosition>(pos));
+}
+
+void Mephiles::HandleDisableCameraLock()
+{
+	if (!m_cameraActorID || m_cameraActorID != m_Data.m_CameraLock) return;
+	float constexpr minDist = 3.0f;
+
+	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	hh::math::CVector const playerPos = context->m_spMatrixNode->m_Transform.m_Position;
+	hh::math::CVector dir = playerPos - m_spMatrixNodeTransform->m_Transform.m_Position;
+	dir.y() = 0.0f;
+	if (dir.norm() < minDist)
+	{
+		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+		m_cameraActorID = 0;
 	}
 }
 

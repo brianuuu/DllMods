@@ -26,9 +26,9 @@ private:
 		float m_GroundHeight = 0.0f;
 		hh::math::CVector m_SunDirection = hh::math::CVector::UnitZ();
 		Sonic::CParamTargetList* m_PositionList = nullptr;
-		uint32_t m_CameraEject = 0;
-		uint32_t m_CameraEjectAir = 0;
 		uint32_t m_CameraLock = 0;
+		uint32_t m_CameraPan = 0;
+		uint32_t m_FocusObject = 0;
 	} m_Data;
 
 	enum class State
@@ -143,12 +143,15 @@ private:
 	void SetHidden(bool hidden);
 	void FollowPlayer();
 	void TurnTowardsPlayer(float dt);
-	void HandleDisableCameraLock();
 	float GetAttackBeforeDelay() const;
 	float GetAttackAfterDelay() const;
 
 	int m_attackCount = 0;
 	State ChooseAttackState();
+
+	// Camera
+	void SetFocusCameraPosition(hh::math::CVector const& pos);
+	void HandleDisableCameraLock();
 
 private:
 	// Mephiles shadow
