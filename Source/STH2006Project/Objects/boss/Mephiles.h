@@ -70,6 +70,7 @@ private:
 	bool m_damagedThisFrame = false;
 	bool m_playDamageVO = true;
 	bool m_canDamage = false;
+	bool m_enterHalfHP = false;
 	uint32_t m_cameraActorID = 0;
 	uint32_t m_handLID = 0;
 	uint32_t m_handRID = 0;

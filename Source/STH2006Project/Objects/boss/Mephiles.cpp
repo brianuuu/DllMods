@@ -287,6 +287,7 @@ bool Mephiles::ProcessMessage
 				}
 				else if (m_canDamage)
 				{
+					float const prop = GetHPRatio();
 					if (m_HP > 0)
 					{
 						if (!isPlayer)
@@ -298,6 +299,11 @@ bool Mephiles::ProcessMessage
 
 						m_HP--;
 						S06HUD_API::SetBossHealth(m_HP, m_Data.m_MaxHP);
+
+						if (prop > 0.5f && GetHPRatio() <= 0.5f)
+						{
+							m_enterHalfHP = true;
+						}
 
 						m_playDamageVO = true;
 						m_stateNext = State::Damage;
@@ -685,15 +691,23 @@ void Mephiles::StateWarpBegin()
 	SharedPtrTypeless handle;
 	Common::SonicContextPlaySound(handle, 200615006, 0);
 
-	// choose random warp location
-	int size = m_Data.m_PositionList->m_List.size();
-	if (m_warpIndex >= 0) size--;
-	int index = rand() % size;
-	if (m_warpIndex >= 0 && index >= m_warpIndex) index++;
-	m_warpIndex = index;
+	if (m_enterHalfHP && m_warpIndex != 0)
+	{
+		// try warping to center
+		m_warpIndex = 0;
+	}
+	else
+	{
+		// choose random warp location
+		int size = m_Data.m_PositionList->m_List.size();
+		if (m_warpIndex >= 0) size--;
+		int index = rand() % size;
+		if (m_warpIndex >= 0 && index >= m_warpIndex) index++;
+		m_warpIndex = index;
+	}
 
 	// cache wrap pos
-	Common::fSendMessageToSetObject(this, m_Data.m_PositionList->m_List.at(index), boost::make_shared<Sonic::Message::MsgGetPosition>(m_warpPos));
+	Common::fSendMessageToSetObject(this, m_Data.m_PositionList->m_List.at(m_warpIndex), boost::make_shared<Sonic::Message::MsgGetPosition>(m_warpPos));
 
 	// trail
 	m_pGlitterPlayer->PlayOneshot(m_spModel->GetNode("Hips"), "ef_mephiles_warp", 1.0f, 1);
@@ -751,7 +765,7 @@ void Mephiles::StateDamageBegin()
 
 void Mephiles::StateDamageAdvance(float dt)
 {
-	if (GetCurrentState()->GetStateName() == Wait)
+	if (GetCurrentState()->GetStateName() == Wait || (m_enterHalfHP && m_stateTime >= 0.2f))
 	{
 		m_stateNext = State::Warp;
 	}
@@ -1132,6 +1146,12 @@ float Mephiles::GetAttackAfterDelay() const
 
 Mephiles::State Mephiles::ChooseAttackState()
 {
+	if (m_enterHalfHP)
+	{
+		m_enterHalfHP = false;
+		// TODO:
+	}
+
 	// TODO:
 	m_attackCount++;
 	if (m_attackCount % 2 == 0)
