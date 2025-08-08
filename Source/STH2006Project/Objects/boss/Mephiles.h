@@ -28,6 +28,7 @@ private:
 		Sonic::CParamTargetList* m_PositionList = nullptr;
 		uint32_t m_CameraLock = 0;
 		uint32_t m_CameraPan = 0;
+		uint32_t m_CameraPanNoEase = 0;
 		uint32_t m_FocusObject = 0;
 	} m_Data;
 
@@ -38,6 +39,7 @@ private:
 		Eject,
 		Warp,
 		Damage,
+		HalfHP,
 
 		AttackSphereS,
 		AttackCharge,
@@ -122,6 +124,13 @@ private:
 	// State::Damage
 	void StateDamageBegin();
 	void StateDamageAdvance(float dt);
+
+	// State::HalfHP
+	bool m_playedHalfHPVO = false;
+	boost::shared_ptr<Sonic::CGameObject> m_darkSphereL;
+	void StateHalfHPBegin();
+	void StateHalfHPAdvance(float dt);
+	void StateHalfHPEnd();
 
 	// State::AttackSphereS
 	void StateAttackSphereSBegin();

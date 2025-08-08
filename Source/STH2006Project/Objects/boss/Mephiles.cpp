@@ -55,6 +55,7 @@ void Mephiles::InitializeEditParam
 
 	in_rEditParam.CreateParamBase(Sonic::CParamTarget::Create(&m_Data.m_CameraLock), "CameraLock");
 	in_rEditParam.CreateParamBase(Sonic::CParamTarget::Create(&m_Data.m_CameraPan), "CameraPan");
+	in_rEditParam.CreateParamBase(Sonic::CParamTarget::Create(&m_Data.m_CameraPanNoEase), "CameraPanNoEase");
 	in_rEditParam.CreateParamBase(Sonic::CParamTarget::Create(&m_Data.m_FocusObject), "FocusObject");
 }
 
@@ -129,6 +130,7 @@ bool Mephiles::SetAddRenderables
 	SetAnimationBlend(Dive, HideLoop, 0.5f);
 	SetAnimationBlend(Wait, Command, 0.5f);
 	SetAnimationBlend(Command, Wait, 0.5f);
+	SetAnimationBlend(Wait, Grin, 0.5f);
 	SetAnimationBlend(Grin, Wait, 0.5f);
 	SetAnimationBlend(Shock, Wait, 0.5f);
 	SetAnimationBlend(Wait, Smile, 0.5f);
@@ -223,6 +225,7 @@ void Mephiles::SetUpdateParallel
 	case State::Eject: StateEjectAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::Warp: StateWarpAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::Damage: StateDamageAdvance(in_rUpdateInfo.DeltaTime); break;
+	case State::HalfHP: StateHalfHPAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::AttackSphereS: StateAttackSphereSAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::AttackCharge: StateAttackChargeAdvance(in_rUpdateInfo.DeltaTime); break;
 	}
@@ -242,6 +245,7 @@ void Mephiles::HandleStateChange()
 	// end current state
 	switch (m_state)
 	{
+	case State::HalfHP: StateHalfHPEnd(); break;
 	case State::AttackSphereS: StateAttackSphereSEnd(); break;
 	case State::AttackCharge: StateAttackChargeEnd(); break;
 	}
@@ -253,6 +257,7 @@ void Mephiles::HandleStateChange()
 	case State::Eject: StateEjectBegin(); break;
 	case State::Warp: StateWarpBegin(); break;
 	case State::Damage: StateDamageBegin(); break;
+	case State::HalfHP: StateHalfHPBegin(); break;
 	case State::AttackSphereS: StateAttackSphereSBegin(); break;
 	case State::AttackCharge: StateAttackChargeBegin(); break;
 	}
@@ -424,6 +429,12 @@ bool Mephiles::ProcessMessage
 						}
 					}
 				}
+				break;
+			}
+			case 2:
+			{
+				// darksphere destroyed
+				m_darkSphereL.reset();
 				break;
 			}
 			}
@@ -775,6 +786,218 @@ void Mephiles::StateDamageAdvance(float dt)
 }
 
 //---------------------------------------------------
+// State::HalfHP
+//---------------------------------------------------
+void Mephiles::StateHalfHPBegin()
+{
+	m_playedHalfHPVO = false;
+
+	// black fade in
+	auto const& spRender = Sonic::CApplicationDocument::GetInstance()->m_pMember->m_spRenderDirectorMTFx;
+	if (spRender)
+	{
+		Hedgehog::Universe::CMessageActor* pRenderObj = (Hedgehog::Universe::CMessageActor*)((uint32_t)spRender.get() + 0x2C);
+		SendMessage(pRenderObj->m_ActorID, boost::make_shared<Sonic::Message::MsgStartFadeOut>(0.0f, 0xFF));
+		SendMessage(pRenderObj->m_ActorID, boost::make_shared<Sonic::Message::MsgStartFadeIn>(0.1f, 0xFF));
+	}
+
+	// teleport to middle
+	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(hh::math::CQuaternion(0.971765f, 0.0f, 0.23595f, 0.0f), hh::math::CVector(0.0f, 4.0f, 0.0f));
+	m_spMatrixNodeTransform->NotifyChanged();
+
+	// teleport player
+	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	SendMessageImm(context->m_pPlayer->m_ActorID, Sonic::Message::MsgStopActivity());
+	SendMessage(context->m_pPlayer->m_ActorID, boost::make_shared<Sonic::Message::MsgSetPosition>(hh::math::CVector(7.2255f, 0.0f, 14.0f)));
+	SendMessage(context->m_pPlayer->m_ActorID, boost::make_shared<Sonic::Message::MsgSetRotation>(hh::math::CQuaternion(0.23595f, 0.0f, -0.971765f, 0.0f)));
+	Common::SetPlayerVelocity(hh::math::CVector::Zero());
+
+	// shadow avoid Mephiles
+	for (auto const& iter : m_shadows)
+	{
+		SendMessage(iter.first, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(3));
+	}
+}
+
+void Mephiles::StateHalfHPAdvance(float dt)
+{
+	switch (m_stateStage)
+	{
+	case 0:
+	{
+		// enable camera (after one frame for bone to update transform)
+		if (!m_cameraActorID && m_Data.m_CameraPanNoEase && m_stateTime > 0.0f)
+		{
+			m_cameraActorID = m_Data.m_CameraPanNoEase;
+			Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgSetPosition>(hh::math::CVector(2.30794f, 5.2f, 2.46624f)));
+			Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+		}
+
+		if (m_stateTime > 0.1f)
+		{
+			m_stateStage++;
+			m_stateTime = 0.0f;
+
+			SubtitleUI::addSubtitle("msg_hint", "hint_bos05_e04_mf");
+		}
+		break;
+	}
+	case 1:
+	{
+		if (m_stateTime >= 0.75f)
+		{
+			m_stateStage++;
+			m_stateTime = 0.0f;
+
+			ChangeState(Command);
+		}
+		break;
+	}
+	case 2:
+	{
+		if (m_stateTime >= 1.0f)
+		{
+			m_stateStage++;
+			m_stateTime = 0.0f;
+
+			ToggleBarrier(true);
+		}
+		break;
+	}
+	case 3:
+	{
+		if (m_stateTime >= 2.0f)
+		{
+			m_stateStage++;
+			m_stateTime = 0.0f;
+
+			ChangeState(Grin);
+
+			float constexpr c_DarkSphereSpeedL = 7.5f;
+			auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+			m_darkSphereL = boost::make_shared<DarkSphere>(m_ActorID, context->m_pPlayer->m_ActorID, c_DarkSphereSpeedL, true, m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector::UnitY() * 3.3f);
+			m_pMember->m_pGameDocument->AddGameObject(m_darkSphereL);
+
+			// zoom out camera
+			if (m_cameraActorID)
+			{
+				Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+				m_cameraActorID = 0;
+			}
+
+			if (m_Data.m_CameraPan)
+			{
+				m_cameraActorID = m_Data.m_CameraPan;
+				Common::fSendMessageToSetObject(this, m_Data.m_CameraPan, boost::make_shared<Sonic::Message::MsgSetPosition>(hh::math::CVector(3.72234f, 3.8f, 3.97765f)));
+				Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+			}
+		}
+		break;
+	}
+	case 4:
+	{
+		// pan camera up
+		float constexpr cameraMoveUpTime = 2.0f;
+		float constexpr cameraMoveUp = 1.0f;
+		SetFocusCameraPosition(GetBodyPosition() + hh::math::CVector(0.0f, cameraMoveUp * min(1.0f, m_stateTime / cameraMoveUpTime), 0.0f));
+
+		if (m_stateTime >= 2.5f)
+		{
+			m_stateStage++;
+			m_stateTime = 0.0f;
+
+			ChangeState(Wait);
+			m_canDamage = true;
+
+			// resume player
+			auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+			SendMessage(context->m_pPlayer->m_ActorID, boost::make_shared<Sonic::Message::MsgReopenActivity>());
+			
+			// disable shadow avoid Mephiles
+			for (auto const& iter : m_shadows)
+			{
+				SendMessage(iter.first, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(4));
+			}
+
+			// throw darksphere
+			SendMessage(m_darkSphereL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+
+			// swap to lock camera
+			if (m_cameraActorID)
+			{
+				Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+				m_cameraActorID = 0;
+			}
+
+			if (m_Data.m_CameraLock)
+			{
+				m_cameraActorID = m_Data.m_CameraLock;
+				Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+			}
+		}
+		break;
+	}
+	case 5:
+	{
+		// wait until darksphere is destroyed
+		if (!m_darkSphereL)
+		{
+			m_stateStage++;
+			m_stateTime = 0.0f;
+
+			if (m_cameraActorID)
+			{
+				Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+				m_cameraActorID = 0;
+			}
+		}
+		break;
+	}
+	case 6:
+	{
+		if (m_stateTime >= GetAttackAfterDelay())
+		{
+			m_stateNext = State::Warp;
+		}
+		break;
+	}
+	}
+
+	if (m_stateStage <= 3)
+	{
+		SetFocusCameraPosition(GetBodyPosition());
+	}
+
+	if (m_stateStage >= 3 && !m_playedHalfHPVO && !SubtitleUI::isPlayingSubtitle())
+	{
+		m_playedHalfHPVO = true;
+		SubtitleUI::addSubtitle("msg_hint", "hint_bos04_e10_mf");
+	}
+
+	if (m_stateStage >= 5)
+	{
+		HandleDisableCameraLock();
+		TurnTowardsPlayer(dt);
+	}
+}
+
+void Mephiles::StateHalfHPEnd()
+{
+	if (m_cameraActorID)
+	{
+		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+		m_cameraActorID = 0;
+	}
+
+	// destroy darksphere if not already (usually from damage)
+	if (m_darkSphereL)
+	{
+		SendMessage(m_darkSphereL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+		m_darkSphereL.reset();
+	}
+}
+
+//---------------------------------------------------
 // State::AttackSphereS
 //---------------------------------------------------
 void Mephiles::StateAttackSphereSBegin()
@@ -984,7 +1207,6 @@ void Mephiles::CreateShield(hh::math::CVector const& otherPos) const
 
 void Mephiles::ToggleBarrier(bool enabled)
 {
-	// TODO: sfx
 	if (m_barrierID && !enabled)
 	{
 		m_pGlitterPlayer->StopByID(m_barrierID, false);
@@ -992,6 +1214,9 @@ void Mephiles::ToggleBarrier(bool enabled)
 	}
 	else if (!m_barrierID && enabled)
 	{
+		SharedPtrTypeless soundHandle;
+		Common::ObjectPlaySound(this, 200615023, soundHandle);
+
 		m_barrierID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spModel->GetNode("Hips"), "ef_mephiles_barrier", 1.0f);
 	}
 
@@ -1154,7 +1379,8 @@ Mephiles::State Mephiles::ChooseAttackState()
 	if (m_enterHalfHP)
 	{
 		m_enterHalfHP = false;
-		// TODO:
+		m_attackCount = 0;
+		return State::HalfHP;
 	}
 
 	// TODO:
