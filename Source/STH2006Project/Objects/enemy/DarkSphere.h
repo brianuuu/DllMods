@@ -18,6 +18,7 @@ private:
 
 	// members
 	uint32_t m_effectID = 0;
+	SharedPtrTypeless m_largeSfx;
 	float m_lifetime = 0.0f;
 	hh::math::CVector m_velocity = hh::math::CVector::Zero();
 

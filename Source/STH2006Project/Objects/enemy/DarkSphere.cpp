@@ -1,13 +1,13 @@
 #include "DarkSphere.h"
 
 float const c_darkSphereRadiusS = 0.6f;
-float const c_darkSphereRadiusL = 0.6f; // TODO:
+float const c_darkSphereRadiusL = 1.2f;
 float const c_darkSphereCenterRadiusS = 0.2f;
-float const c_darkSphereCenterRadiusL = 0.6f; // TODO:
+float const c_darkSphereCenterRadiusL = 0.4f;
 float const c_darkSphereLifetimeS = 5.0f;
-float const c_darkSphereLifetimeL = 5.0f; // TODO:
+float const c_darkSphereLifetimeL = 10.0f;
 float const c_darkSphereTurnRateS = 60.0f * DEG_TO_RAD;
-float const c_darkSphereTurnRateL = 30.0f * DEG_TO_RAD; // TODO:
+float const c_darkSphereTurnRateL = 180.0f * DEG_TO_RAD;
 
 DarkSphere::DarkSphere
 (
@@ -33,7 +33,7 @@ bool DarkSphere::SetAddRenderables
 	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
 )
 {
-	m_effectID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, "ef_mephiles_sphere_s", 1.0f);
+	m_effectID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, m_isLarge ? "ef_mephiles_sphere_l" : "ef_mephiles_sphere_s", 1.0f);
 	return true;
 }
 
@@ -69,6 +69,10 @@ void DarkSphere::AddCallback
 	{
 		SetInitialVelocity();
 	}
+	else
+	{
+		Common::ObjectPlaySound(this, 200615008, m_largeSfx);
+	}
 }
 
 bool DarkSphere::ProcessMessage
@@ -103,6 +107,28 @@ bool DarkSphere::ProcessMessage
 			Explode();
 			return true;
 		}
+
+		if (message.Is<Sonic::Message::MsgNotifyObjectEvent>() && m_isLarge)
+		{
+			auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
+			switch (msg.m_Event)
+			{
+			case 6:
+			{
+				SetInitialVelocity();
+
+				m_largeSfx.reset();
+				Common::ObjectPlaySound(this, 200615009, m_largeSfx);
+				break;
+			}
+			case 7:
+			{
+				Explode();
+				break;
+			}
+			}
+			return true;
+		}
 	}
 
 	return Sonic::CObjectBase::ProcessMessage(message, flag);
@@ -113,6 +139,8 @@ void DarkSphere::UpdateParallel
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
 )
 {
+	if (m_velocity.isZero()) return;
+
 	m_lifetime += in_rUpdateInfo.DeltaTime;
 	if (m_lifetime > (m_isLarge ? c_darkSphereLifetimeL : c_darkSphereLifetimeS))
 	{
@@ -136,8 +164,15 @@ void DarkSphere::UpdateParallel
 	}
 
 	m_velocity = newDirection * m_speed;
-	m_spMatrixNodeTransform->m_Transform.SetPosition(m_spMatrixNodeTransform->m_Transform.m_Position + m_velocity * in_rUpdateInfo.DeltaTime);
+	hh::math::CVector const newPosition = m_spMatrixNodeTransform->m_Transform.m_Position + m_velocity * in_rUpdateInfo.DeltaTime;
+	m_spMatrixNodeTransform->m_Transform.SetPosition(newPosition);
 	m_spMatrixNodeTransform->NotifyChanged();
+
+	if (m_largeSfx)
+	{
+		hh::math::CVector* pSoundHandle = (hh::math::CVector*)m_largeSfx.get();
+		pSoundHandle[2] = newPosition;
+	}
 }
 
 hh::math::CVector DarkSphere::GetTargetPos() const
@@ -163,7 +198,14 @@ void DarkSphere::Explode()
 	SharedPtrTypeless soundHandle;
 	Common::ObjectPlaySound(this, m_isLarge ? 200614015 : 200614014, soundHandle);
 
+	if (m_largeSfx)
+	{
+		m_largeSfx.reset();
+	}
+
 	m_pGlitterPlayer->PlayOneshot(m_spMatrixNodeTransform, m_isLarge ? "ef_mephiles_spherebomb_l" : "ef_mephiles_spherebomb_s", 1.0f, 1);
+
+	SendMessage(m_owner, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(2));
 
 	Kill();
 }
