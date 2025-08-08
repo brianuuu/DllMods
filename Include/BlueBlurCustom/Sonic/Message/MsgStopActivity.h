@@ -9,17 +9,17 @@ namespace Sonic::Message
     public:
         HH_FND_MSG_MAKE_TYPE(0x1681FF0);
 		
-		bool m_KeepVelocity;
+		bool m_NoDamage;
 
         MsgStopActivity
 		(
-			bool in_KeepVelocity = true
+			bool in_NoDamage = true
 		) 
-		: m_KeepVelocity(in_KeepVelocity) 
+		: m_NoDamage(in_NoDamage)
 		{
 		}
     };
 
-    BB_ASSERT_OFFSETOF(MsgStopActivity, m_KeepVelocity, 0x10);
+    BB_ASSERT_OFFSETOF(MsgStopActivity, m_NoDamage, 0x10);
     BB_ASSERT_SIZEOF(MsgStopActivity, 0x14);
 }
