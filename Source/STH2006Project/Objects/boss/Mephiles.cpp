@@ -242,6 +242,8 @@ void Mephiles::HandleStateChange()
 	// end current state
 	switch (m_state)
 	{
+	case State::AttackSphereS: StateAttackSphereSEnd(); break;
+	case State::AttackCharge: StateAttackChargeEnd(); break;
 	}
 
 	// start next state
@@ -847,6 +849,15 @@ void Mephiles::StateAttackSphereSAdvance(float dt)
 	TurnTowardsPlayer(dt);
 }
 
+void Mephiles::StateAttackSphereSEnd()
+{
+	if (m_cameraActorID)
+	{
+		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+		m_cameraActorID = 0;
+	}
+}
+
 void Mephiles::FireSphereS()
 {
 	SharedPtrTypeless soundHandle;
@@ -924,6 +935,15 @@ void Mephiles::StateAttackChargeAdvance(float dt)
 		HandleDisableCameraLock();
 	}
 	TurnTowardsPlayer(dt);
+}
+
+void Mephiles::StateAttackChargeEnd()
+{
+	if (m_cameraActorID)
+	{
+		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+		m_cameraActorID = 0;
+	}
 }
 
 //---------------------------------------------------

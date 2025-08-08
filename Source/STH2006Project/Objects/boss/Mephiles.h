@@ -126,11 +126,13 @@ private:
 	// State::AttackSphereS
 	void StateAttackSphereSBegin();
 	void StateAttackSphereSAdvance(float dt);
+	void StateAttackSphereSEnd();
 	void FireSphereS();
 
 	// State::AttackCharge
 	void StateAttackChargeBegin();
 	void StateAttackChargeAdvance(float dt);
+	void StateAttackChargeEnd();
 
 	// Utils
 	hh::math::CVector GetBodyPosition() const;
