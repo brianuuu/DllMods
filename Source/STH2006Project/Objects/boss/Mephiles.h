@@ -42,6 +42,7 @@ private:
 		HalfHP,
 
 		AttackSphereS,
+		AttackSphereL,
 		AttackCharge,
 	};
 
@@ -73,6 +74,7 @@ private:
 	bool m_playDamageVO = true;
 	bool m_canDamage = false;
 	bool m_enterHalfHP = false;
+	float m_spawnBarrierTimer = 0.0f;
 	uint32_t m_cameraActorID = 0;
 	uint32_t m_handLID = 0;
 	uint32_t m_handRID = 0;
@@ -127,7 +129,6 @@ private:
 
 	// State::HalfHP
 	bool m_playedHalfHPVO = false;
-	boost::shared_ptr<Sonic::CGameObject> m_darkSphereL;
 	void StateHalfHPBegin();
 	void StateHalfHPAdvance(float dt);
 	void StateHalfHPEnd();
@@ -137,6 +138,12 @@ private:
 	void StateAttackSphereSAdvance(float dt);
 	void StateAttackSphereSEnd();
 	void FireSphereS();
+
+	// State::AttackSphereL
+	boost::shared_ptr<Sonic::CGameObject> m_darkSphereL;
+	void StateAttackSphereLBegin();
+	void StateAttackSphereLAdvance(float dt);
+	void StateAttackSphereLEnd();
 
 	// State::AttackCharge
 	void StateAttackChargeBegin();
