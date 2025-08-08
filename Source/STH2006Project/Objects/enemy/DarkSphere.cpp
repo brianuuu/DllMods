@@ -205,7 +205,11 @@ void DarkSphere::Explode()
 
 	m_pGlitterPlayer->PlayOneshot(m_spMatrixNodeTransform, m_isLarge ? "ef_mephiles_spherebomb_l" : "ef_mephiles_spherebomb_s", 1.0f, 1);
 
-	SendMessage(m_owner, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(2));
+	// large need to notify owner it's destroyed
+	if (m_isLarge)
+	{
+		SendMessage(m_owner, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(2));
+	}
 
 	Kill();
 }
