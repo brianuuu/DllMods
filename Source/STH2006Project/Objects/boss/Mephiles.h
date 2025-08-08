@@ -74,6 +74,7 @@ private:
 	bool m_playDamageVO = true;
 	bool m_canDamage = false;
 	bool m_enterHalfHP = false;
+	bool m_enterLastHP = false;
 	float m_spawnBarrierTimer = 0.0f;
 	uint32_t m_cameraActorID = 0;
 	uint32_t m_handLID = 0;

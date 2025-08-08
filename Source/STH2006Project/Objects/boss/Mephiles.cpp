@@ -327,6 +327,12 @@ bool Mephiles::ProcessMessage
 
 						m_playDamageVO = true;
 						m_stateNext = State::Damage;
+
+						if (m_HP == 1)
+						{
+							m_enterLastHP = true;
+							m_playDamageVO = false;
+						}
 					}
 				}
 				else
@@ -792,7 +798,7 @@ void Mephiles::StateDamageBegin()
 
 void Mephiles::StateDamageAdvance(float dt)
 {
-	if (GetCurrentState()->GetStateName() == Wait || (m_enterHalfHP && m_stateTime >= 0.2f))
+	if (GetCurrentState()->GetStateName() == Wait || (m_enterHalfHP && m_stateTime >= 0.2f) || m_enterLastHP)
 	{
 		m_stateNext = State::Warp;
 	}
@@ -1515,7 +1521,12 @@ Mephiles::State Mephiles::ChooseAttackState()
 		return State::HalfHP;
 	}
 
-	// TODO:
+	if (m_enterLastHP)
+	{
+		m_enterLastHP = false;
+		// TODO:
+	}
+
 	m_attackCount++;
 	if (m_attackCount % 2 == 0)
 	{
