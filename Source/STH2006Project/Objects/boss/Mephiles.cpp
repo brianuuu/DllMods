@@ -466,7 +466,10 @@ bool Mephiles::ProcessMessage
 			case 2:
 			{
 				// darksphere destroyed
-				m_darkSphereL.reset();
+				if (m_darkSphereL && m_darkSphereL->m_ActorID == message.m_SenderActorID)
+				{
+					m_darkSphereL.reset();
+				}
 				break;
 			}
 			}
