@@ -27,6 +27,7 @@ private:
 		hh::math::CVector m_SunDirection = hh::math::CVector::UnitZ();
 		Sonic::CParamTargetList* m_PositionList = nullptr;
 		uint32_t m_CameraLock = 0;
+		uint32_t m_CameraLockDive = 0;
 		uint32_t m_CameraPan = 0;
 		uint32_t m_CameraPanNoEase = 0;
 		uint32_t m_FocusObject = 0;
@@ -37,6 +38,7 @@ private:
 		Appear,
 		Hide,
 		Eject,
+		Dive,
 		Warp,
 		Damage,
 		HalfHP,
@@ -117,6 +119,12 @@ private:
 	// State::Eject
 	void StateEjectBegin();
 	void StateEjectAdvance(float dt);
+
+	// State::Dive
+	float m_diveYaw = 0.0f;
+	hh::math::CVector m_targetPos = hh::math::CVector::Zero();
+	void StateDiveBegin();
+	void StateDiveAdvance(float dt);
 
 	// State::Warp
 	int m_warpIndex = -1;

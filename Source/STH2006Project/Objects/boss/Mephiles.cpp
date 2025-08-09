@@ -54,6 +54,7 @@ void Mephiles::InitializeEditParam
 	in_rEditParam.CreateParamBase(m_Data.m_PositionList, positionList);
 
 	in_rEditParam.CreateParamBase(Sonic::CParamTarget::Create(&m_Data.m_CameraLock), "CameraLock");
+	in_rEditParam.CreateParamBase(Sonic::CParamTarget::Create(&m_Data.m_CameraLockDive), "CameraLockDive");
 	in_rEditParam.CreateParamBase(Sonic::CParamTarget::Create(&m_Data.m_CameraPan), "CameraPan");
 	in_rEditParam.CreateParamBase(Sonic::CParamTarget::Create(&m_Data.m_CameraPanNoEase), "CameraPanNoEase");
 	in_rEditParam.CreateParamBase(Sonic::CParamTarget::Create(&m_Data.m_FocusObject), "FocusObject");
@@ -119,7 +120,7 @@ bool Mephiles::SetAddRenderables
 	fnAddAnimationState(HideCommand, HideLoop);
 	fnAddAnimationState(Wait);
 	fnAddAnimationState(Command, Wait);
-	fnAddAnimationState(Dive, HideLoop);
+	fnAddAnimationState(Dive);
 	fnAddAnimationState(Grin);
 	fnAddAnimationState(Shock, Wait);
 	fnAddAnimationState(Smile);
@@ -128,6 +129,11 @@ bool Mephiles::SetAddRenderables
 	SetAnimationBlend(HideLoop, HideCommand, 0.5f);
 	SetAnimationBlend(HideCommand, HideLoop, 0.5f);
 	SetAnimationBlend(Dive, HideLoop, 0.5f);
+	SetAnimationBlend(Command, Dive, 0.5f);
+	SetAnimationBlend(Grin, Dive, 0.5f);
+	SetAnimationBlend(Shock, Dive, 0.5f);
+	SetAnimationBlend(Smile, Dive, 0.5f);
+	SetAnimationBlend(Wait, Dive, 0.5f);
 	SetAnimationBlend(Wait, Command, 0.5f);
 	SetAnimationBlend(Command, Wait, 0.5f);
 	SetAnimationBlend(Wait, Grin, 0.5f);
@@ -165,6 +171,11 @@ bool Mephiles::SetAddColliders
 	hk2010_2_0::hkpSphereShape* barrierShape = new hk2010_2_0::hkpSphereShape(1.2f);
 	AddEventCollision("Barrier", barrierShape, *(int*)0x1E0AFD8, true, m_spNodeBody); // ColID_PlayerEvent
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Barrier", false);
+
+	// dive shockwave
+	hk2010_2_0::hkpSphereShape* shockShape = new hk2010_2_0::hkpSphereShape(6.0f);
+	AddEventCollision("Shock", shockShape, *(int*)0x1E0AFD8, true, m_spMatrixNodeTransform); // ColID_PlayerEvent
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Shock", false);
 
 	return true;
 }
@@ -223,6 +234,7 @@ void Mephiles::SetUpdateParallel
 	case State::Appear: StateAppearAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::Hide: StateHideAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::Eject: StateEjectAdvance(in_rUpdateInfo.DeltaTime); break;
+	case State::Dive: StateDiveAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::Warp: StateWarpAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::Damage: StateDamageAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::HalfHP: StateHalfHPAdvance(in_rUpdateInfo.DeltaTime); break;
@@ -267,6 +279,7 @@ void Mephiles::HandleStateChange()
 	{
 	case State::Hide: StateHideBegin(); break;
 	case State::Eject: StateEjectBegin(); break;
+	case State::Dive: StateDiveBegin(); break;
 	case State::Warp: StateWarpBegin(); break;
 	case State::Damage: StateDamageBegin(); break;
 	case State::HalfHP: StateHalfHPBegin(); break;
@@ -395,7 +408,7 @@ bool Mephiles::ProcessMessage
 					)
 				);
 			}
-			else if (msg.m_Symbol == "Barrier")
+			else if (msg.m_Symbol == "Barrier" || msg.m_Symbol == "Shock")
 			{
 				SendMessage(msg.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
 					(
@@ -710,6 +723,124 @@ void Mephiles::StateEjectAdvance(float dt)
 }
 
 //---------------------------------------------------
+// State::Dive
+//---------------------------------------------------
+void Mephiles::StateDiveBegin()
+{
+	m_canDamage = false;
+
+	ChangeState(Dive);
+	SubtitleUI::addSubtitle("msg_hint", "hint_bos04_e04_mf");
+
+	if (!m_cameraActorID && m_Data.m_CameraLockDive)
+	{
+		m_cameraActorID = m_Data.m_CameraLockDive;
+		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+	}
+}
+
+void Mephiles::StateDiveAdvance(float dt)
+{
+	switch (m_stateStage)
+	{
+	case 0:
+	{
+		TurnTowardsPlayer(dt);
+		if (Common::IsAnimationFinished(this))
+		{
+			m_stateTime = 0.0f;
+			m_stateStage++;
+
+			auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+			m_targetPos = context->m_spMatrixNode->m_Transform.m_Position;
+			m_targetPos.y() = m_Data.m_GroundHeight;
+			m_warpPos = m_spMatrixNodeTransform->m_Transform.m_Position;
+
+			// check for terrain height
+			hh::math::CVector outPos = hh::math::CVector::Zero();
+			hh::math::CVector outNormal = hh::math::CVector::UnitY();
+			if (Common::fRaycast(m_targetPos + hh::math::CVector::UnitY(), m_targetPos - hh::math::CVector::UnitY() * 2.0f, outPos, outNormal, *(int*)0x1E0AFAC))
+			{
+				m_targetPos.y() = outPos.y();
+			}
+
+			hh::math::CVector dir = m_targetPos - m_warpPos;
+			dir.y() = 0.0f; dir.normalize();
+			m_diveYaw = acos(dir.z());
+			if (dir.dot(Eigen::Vector3f::UnitX()) < 0) m_diveYaw = -m_diveYaw;
+
+			// trail
+			m_pGlitterPlayer->PlayOneshot(m_spModel->GetNode("Hips"), "ef_mephiles_warp", 1.0f, 1);
+		}
+		break;
+	}
+	case 1:
+	{
+		hh::math::CVector const oldPosition = m_spMatrixNodeTransform->m_Transform.m_Position;
+
+		float constexpr c_DiveTime = 1.5f;
+		float const prop = min(m_stateTime / c_DiveTime, 1.0f);
+		hh::math::CVector newPosition = m_warpPos + (m_targetPos - m_warpPos) * prop;
+
+		float constexpr initSpeed = 20.0f;
+		float constexpr accel = initSpeed * -2.0f / c_DiveTime;
+		float const yOffset = initSpeed * m_stateTime + 0.5f * accel * m_stateTime * m_stateTime;
+		newPosition.y() += yOffset;
+
+		float constexpr c_SpinRate = 1080.0f * DEG_TO_RAD;
+		m_diveYaw += c_SpinRate * dt;
+
+		hh::math::CQuaternion const upRotation = hh::math::CQuaternion::FromTwoVectors(hh::math::CVector::UnitY(), (newPosition - oldPosition).normalized().head<3>());
+		hh::math::CQuaternion const yawRotation = Eigen::AngleAxisf(m_diveYaw, hh::math::CVector::UnitY()) * hh::math::CQuaternion::Identity();
+
+		m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(upRotation * yawRotation, newPosition);
+		m_spMatrixNodeTransform->NotifyChanged();
+
+		if (m_stateTime >= c_DiveTime)
+		{
+			m_stateTime = 0.0f;
+			m_stateStage++;
+
+			SharedPtrTypeless handle;
+			Common::SonicContextPlaySound(handle, 200614018, 0);
+
+			ChangeState(HideLoop);
+			ToggleBarrier(false);
+
+			// pfx
+			auto attackEffectNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
+			attackEffectNode->SetParent(Sonic::CApplicationDocument::GetInstance()->m_pMember->m_spMatrixNodeRoot.get());
+			attackEffectNode->m_Transform.SetPosition(m_targetPos);
+			attackEffectNode->NotifyChanged();
+			m_pGlitterPlayer->PlayOneshot(attackEffectNode, "ef_mephiles_dive", 1.0f, 1);
+			Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Shock", true);
+		}
+		break;
+	}
+	case 2:
+	{
+		if (m_stateTime >= 0.5f)
+		{
+			if (m_cameraActorID)
+			{
+				Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+				m_cameraActorID = 0;
+			}
+
+			Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Shock", false);
+			m_stateNext = State::Hide;
+		}
+		break;
+	}
+	}
+
+	if (m_stateTime >= 0.5f || m_stateStage > 0)
+	{
+		HandleDisableCameraLock();
+	}
+}
+
+//---------------------------------------------------
 // State::Warp
 //---------------------------------------------------
 void Mephiles::StateWarpBegin()
@@ -798,7 +929,7 @@ void Mephiles::StateDamageBegin()
 
 void Mephiles::StateDamageAdvance(float dt)
 {
-	if (GetCurrentState()->GetStateName() == Wait || (m_enterHalfHP && m_stateTime >= 0.2f) || m_enterLastHP)
+	if (GetCurrentState()->GetStateName() == Wait || (m_enterHalfHP && m_stateTime >= 0.2f) || m_enterLastHP || S06DE_API::GetChaosBoostLevel() == 0)
 	{
 		m_stateNext = State::Warp;
 	}
@@ -1001,6 +1132,12 @@ void Mephiles::StateHalfHPAdvance(float dt)
 		HandleDisableCameraLock();
 		TurnTowardsPlayer(dt);
 	}
+
+	if (S06DE_API::GetChaosBoostLevel() == 0 && m_stateStage >= 5)
+	{
+		// only after throwing darksphere
+		m_stateNext = State::Dive;
+	}
 }
 
 void Mephiles::StateHalfHPEnd()
@@ -1012,7 +1149,7 @@ void Mephiles::StateHalfHPEnd()
 	}
 
 	// destroy darksphere if not already (usually from damage)
-	if (m_darkSphereL)
+	if (m_darkSphereL && m_stateNext != State::Dive)
 	{
 		SendMessage(m_darkSphereL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
 		m_darkSphereL.reset();
@@ -1097,6 +1234,11 @@ void Mephiles::StateAttackSphereSAdvance(float dt)
 		HandleDisableCameraLock();
 	}
 	TurnTowardsPlayer(dt);
+
+	if (S06DE_API::GetChaosBoostLevel() == 0)
+	{
+		m_stateNext = State::Dive;
+	}
 }
 
 void Mephiles::StateAttackSphereSEnd()
@@ -1209,6 +1351,11 @@ void Mephiles::StateAttackSphereLAdvance(float dt)
 		HandleDisableCameraLock();
 	}
 	TurnTowardsPlayer(dt);
+
+	if (S06DE_API::GetChaosBoostLevel() == 0)
+	{
+		m_stateNext = State::Dive;
+	}
 }
 
 void Mephiles::StateAttackSphereLEnd()
@@ -1220,7 +1367,7 @@ void Mephiles::StateAttackSphereLEnd()
 	}
 
 	// destroy darksphere if not already (usually from damage)
-	if (m_darkSphereL)
+	if (m_darkSphereL && (m_stateNext != State::Dive || m_stateStage <= 1))
 	{
 		SendMessage(m_darkSphereL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
 		m_darkSphereL.reset();
@@ -1296,6 +1443,11 @@ void Mephiles::StateAttackChargeAdvance(float dt)
 		HandleDisableCameraLock();
 	}
 	TurnTowardsPlayer(dt);
+
+	if (S06DE_API::GetChaosBoostLevel() == 0)
+	{
+		m_stateNext = State::Dive;
+	}
 }
 
 void Mephiles::StateAttackChargeEnd()
@@ -1514,6 +1666,11 @@ float Mephiles::GetAttackAfterDelay() const
 
 Mephiles::State Mephiles::ChooseAttackState()
 {
+	if (S06DE_API::GetChaosBoostLevel() == 0)
+	{
+		return State::Dive;
+	}
+	
 	if (m_enterHalfHP)
 	{
 		m_enterHalfHP = false;
@@ -1552,7 +1709,7 @@ void Mephiles::SetFocusCameraPosition(hh::math::CVector const& pos)
 
 void Mephiles::HandleDisableCameraLock()
 {
-	if (!m_cameraActorID || m_cameraActorID != m_Data.m_CameraLock) return;
+	if (!m_cameraActorID || (m_cameraActorID != m_Data.m_CameraLock && m_cameraActorID != m_Data.m_CameraLockDive)) return;
 	float constexpr minDist = 3.0f;
 
 	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
