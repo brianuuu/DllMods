@@ -714,6 +714,7 @@ ResultData* ScoreManager::calculateResultData()
 	case (SMT_bsl | SMT_BossHard):		timeBonusBase = 22000;	break; // Silver Hard Mode
 	case SMT_bpc:						timeBonusBase = 19000;	break; // Iblis
 	case (SMT_bpc | SMT_BossHard):		timeBonusBase = 20000;	break; // Iblis Hard Mode
+	case SMT_bsd:						timeBonusBase = 30000;	break; // Mephiles Phase 1
 	default:	break;
 	}
 
@@ -724,6 +725,8 @@ ResultData* ScoreManager::calculateResultData()
 	case (SMT_bsl | SMT_BossHard):	// Silver Hard Mode
 	case SMT_bpc:					// Iblis
 	case (SMT_bpc | SMT_BossHard):	// Iblis Hard Mode
+	case SMT_bsd:					// Mephiles Phase 1
+	case (SMT_bsd | SMT_BossHard):	// Mephiles Phase 2
 	{
 		scoreTable = ScoreTable{ 30000,27500,25000,5000 };
 		timeBonusRate = 80;
