@@ -19,6 +19,7 @@
 #include <Sonic/Message/MsgIsReceiveDamage.h>
 #include <Sonic/Message/MsgIsWall.h>
 #include <Sonic/Message/MsgLeaveEventCollision.h>
+#include <Sonic/Message/MsgMissionFinish.h>
 #include <Sonic/Message/MsgNotifyInput.h>
 #include <Sonic/Message/MsgNotifyObjectEvent.h>
 #include <Sonic/Message/MsgNotifyShockWave.h>
