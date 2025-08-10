@@ -1025,11 +1025,7 @@ void Mephiles::StateHalfHPAdvance(float dt)
 			m_stateTime = 0.0f;
 
 			ChangeState(Grin);
-
-			float constexpr c_DarkSphereSpeedL = 7.5f;
-			auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-			m_darkSphereL = boost::make_shared<DarkSphere>(m_ActorID, context->m_pPlayer->m_ActorID, c_DarkSphereSpeedL, true, m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector::UnitY() * 3.3f);
-			m_pMember->m_pGameDocument->AddGameObject(m_darkSphereL);
+			FireSphereL();
 
 			// zoom out camera
 			if (m_cameraActorID)
@@ -1289,11 +1285,7 @@ void Mephiles::StateAttackSphereLAdvance(float dt)
 			m_stateTime = 0.0f;
 
 			ChangeState(Grin);
-
-			float constexpr c_DarkSphereSpeedL = 7.5f;
-			auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-			m_darkSphereL = boost::make_shared<DarkSphere>(m_ActorID, context->m_pPlayer->m_ActorID, c_DarkSphereSpeedL, true, m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector::UnitY() * 3.3f);
-			m_pMember->m_pGameDocument->AddGameObject(m_darkSphereL);
+			FireSphereL();
 
 			if (!m_cameraActorID && m_Data.m_CameraLock)
 			{
@@ -1375,6 +1367,14 @@ void Mephiles::StateAttackSphereLEnd()
 		SendMessage(m_darkSphereL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
 		m_darkSphereL.reset();
 	}
+}
+
+void Mephiles::FireSphereL()
+{
+	float constexpr c_DarkSphereSpeedL = 6.0f;
+	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	m_darkSphereL = boost::make_shared<DarkSphere>(m_ActorID, context->m_pPlayer->m_ActorID, c_DarkSphereSpeedL, true, m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector::UnitY() * 3.3f);
+	m_pMember->m_pGameDocument->AddGameObject(m_darkSphereL);
 }
 
 //---------------------------------------------------

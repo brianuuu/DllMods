@@ -153,6 +153,7 @@ private:
 	void StateAttackSphereLBegin();
 	void StateAttackSphereLAdvance(float dt);
 	void StateAttackSphereLEnd();
+	void FireSphereL();
 
 	// State::AttackCharge
 	void StateAttackChargeBegin();
