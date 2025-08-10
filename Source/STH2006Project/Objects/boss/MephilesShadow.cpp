@@ -295,6 +295,11 @@ bool MephilesShadow::ProcessMessage
 				m_avoidOwner = false;
 				break;
 			}
+			case 5:
+			{
+				m_ownerDead = true;
+				break;
+			}
 			}
 			return true;
 		}
@@ -306,14 +311,14 @@ bool MephilesShadow::ProcessMessage
 			return true;
 		}
 
-		if (message.Is<Sonic::Message::MsgGetHomingAttackPriority>())
+		if (message.Is<Sonic::Message::MsgGetHomingAttackPriority>() && !m_ownerDead)
 		{
 			auto& msg = static_cast<Sonic::Message::MsgGetHomingAttackPriority&>(message);
 			*msg.m_pPriority = 10;
 			return true;
 		}
 
-		if (message.Is<Sonic::Message::MsgGetHomingAttackPosition>())
+		if (message.Is<Sonic::Message::MsgGetHomingAttackPosition>() && !m_ownerDead)
 		{
 			auto& msg = static_cast<Sonic::Message::MsgGetHomingAttackPosition&>(message);
 			*msg.m_pPosition = GetBodyPosition();

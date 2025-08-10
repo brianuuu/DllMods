@@ -1630,8 +1630,8 @@ static void PlayEvent
 (
 	Sonic::CEventManager* pEventManager,
 	hh::base::CSharedString const& eventName,
-	hh::math::CMatrix44 const& matrix,
-	uint32_t flag
+	hh::math::CMatrix44 const& matrix = hh::math::CMatrix44::Identity(),
+	uint32_t flag = 0
 )
 {
 	// m_pMember->m_pGameDocument->m_pMember->m_spEventManager

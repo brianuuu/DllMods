@@ -1,6 +1,7 @@
 #include "Mephiles.h"
 
 #include "Managers/MstManager.h"
+#include "Managers/ScoreManager.h"
 #include "Objects/enemy/DarkSphere.h"
 #include "Objects/enemy/EnemyShield.h"
 #include "UI/LoadingUI.h"
@@ -217,6 +218,8 @@ void Mephiles::KillCallback()
 	// re-enable Chaos Drive sfx
 	S06DE_API::SetChaosEnergyRewardOverride();
 	WRITE_MEMORY(0x11245A3, uint8_t, 0xE8, 0x98, 0xA4, 0xC4, 0xFF);
+
+	ToggleSlowTime(false);
 }
 
 void Mephiles::SetUpdateParallel
@@ -238,6 +241,7 @@ void Mephiles::SetUpdateParallel
 	case State::Warp: StateWarpAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::Damage: StateDamageAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::HalfHP: StateHalfHPAdvance(in_rUpdateInfo.DeltaTime); break;
+	case State::Dead: StateDeadAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::AttackSphereS: StateAttackSphereSAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::AttackSphereL: StateAttackSphereLAdvance(in_rUpdateInfo.DeltaTime); break;
 	case State::AttackCharge: StateAttackChargeAdvance(in_rUpdateInfo.DeltaTime); break;
@@ -283,6 +287,7 @@ void Mephiles::HandleStateChange()
 	case State::Warp: StateWarpBegin(); break;
 	case State::Damage: StateDamageBegin(); break;
 	case State::HalfHP: StateHalfHPBegin(); break;
+	case State::Dead: StateDeadBegin(); break;
 	case State::AttackSphereS: StateAttackSphereSBegin(); break;
 	case State::AttackSphereL: StateAttackSphereLBegin(); break;
 	case State::AttackCharge: StateAttackChargeBegin(); break;
@@ -304,14 +309,10 @@ bool Mephiles::ProcessMessage
 		{
 			auto& msg = static_cast<Sonic::Message::MsgDamage&>(message);
 
-			// put player at fixed distance from Mephiles
-			hh::math::CVector const bodyBase = GetBodyPosition() - hh::math::CVector::UnitY() * 0.5f;
-			hh::math::CVector const otherPos = bodyBase + (msg.m_DamagePosition - bodyBase).normalized() * 1.2f;
-			SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(otherPos, true));
-
 			if (!m_damagedThisFrame)
 			{
 				bool const isPlayer = SendMessageImm(message.m_SenderActorID, Sonic::Message::MsgGetPlayerType());
+				float damageDist = 1.2f; // default shielded
 
 				m_damagedThisFrame = true;
 				if (m_barrierID)
@@ -339,13 +340,15 @@ bool Mephiles::ProcessMessage
 						}
 
 						m_playDamageVO = true;
-						m_stateNext = State::Damage;
+						m_stateNext = (m_HP == 0) ? State::Dead : State::Damage;
 
 						if (m_HP == 1)
 						{
 							m_enterLastHP = true;
 							m_playDamageVO = false;
 						}
+
+						damageDist = 0.6f;
 					}
 				}
 				else
@@ -359,6 +362,11 @@ bool Mephiles::ProcessMessage
 						CreateShield(msg.m_DamagePosition);
 					}
 				}
+
+				// put player at fixed distance from Mephiles
+				hh::math::CVector const bodyBase = GetBodyPosition() - hh::math::CVector::UnitY() * 0.5f;
+				hh::math::CVector const otherPos = bodyBase + (msg.m_DamagePosition - bodyBase).normalized() * damageDist;
+				SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(otherPos, true));
 			}
 			return true;
 		}
@@ -914,7 +922,6 @@ void Mephiles::StateWarpAdvance(float dt)
 //---------------------------------------------------
 void Mephiles::StateDamageBegin()
 {
-	// TODO: final hit, score
 	ChangeState(Shock);
 
 	// TODO: lock on camera?
@@ -1152,6 +1159,124 @@ void Mephiles::StateHalfHPEnd()
 	{
 		SendMessage(m_darkSphereL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
 		m_darkSphereL.reset();
+	}
+}
+
+//---------------------------------------------------
+// State::Dead
+//---------------------------------------------------
+float const c_mephilesDeadTimeScale = 0.2f;
+void Mephiles::StateDeadBegin()
+{
+	ChangeState(Shock);
+
+	if (m_cameraActorID)
+	{
+		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
+		m_cameraActorID = 0;
+	}
+
+	ScoreManager::addScore(ScoreType::ST_boss);
+	SubtitleUI::addSubtitle("msg_hint", "hint_bos04_e11_mf");
+
+	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	SendMessage(context->m_pPlayer->m_ActorID, boost::make_shared<Sonic::Message::MsgStartOutOfControl>(9999.0f));
+
+	// notify owner is dead
+	for (auto& iter : m_shadows)
+	{
+		SendMessage(iter.first, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(5));
+	}
+	for (auto& iter : m_shadowsAttached)
+	{
+		SendMessage(iter.first, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(5));
+	}
+
+	ToggleSlowTime(true);
+}
+
+void Mephiles::StateDeadAdvance(float dt)
+{
+	switch (m_stateStage)
+	{
+	case 0:
+	{
+		if (m_stateTime >= c_mephilesDeadTimeScale * 2.0f)
+		{
+			m_stateTime = 0.0f;
+			m_stateStage++;
+
+			// fade out to white
+			auto const& spRender = Sonic::CApplicationDocument::GetInstance()->m_pMember->m_spRenderDirectorMTFx;
+			if (spRender)
+			{
+				Hedgehog::Universe::CMessageActor* pRenderObj = (Hedgehog::Universe::CMessageActor*)((uint32_t)spRender.get() + 0x2C);
+				SendMessage(pRenderObj->m_ActorID, boost::make_shared<Sonic::Message::MsgStartFadeOut>(c_mephilesDeadTimeScale, 0xFFFFFFFF));
+			}
+		}
+		break;
+	}
+	case 1:
+	{
+		if (m_stateTime >= c_mephilesDeadTimeScale)
+		{
+			m_stateTime = 0.0f;
+			m_stateStage++;
+
+			// kill all shadows when screen is white
+			for (auto& iter : m_shadows)
+			{
+				SendMessage(iter.first, boost::make_shared<Sonic::Message::MsgKill>());
+			}
+			for (auto& iter : m_shadowsAttached)
+			{
+				SendMessage(iter.first, boost::make_shared<Sonic::Message::MsgKill>());
+			}
+
+			m_shadows.clear();
+			m_shadowsAttached.clear();
+
+			// teleport player
+			auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+			SendMessageImm(context->m_pPlayer->m_ActorID, Sonic::Message::MsgStopActivity());
+			SendMessage(context->m_pPlayer->m_ActorID, boost::make_shared<Sonic::Message::MsgSetPosition>(hh::math::CVector(0.0f, m_Data.m_GroundHeight, 0.0f)));
+			SendMessage(context->m_pPlayer->m_ActorID, boost::make_shared<Sonic::Message::MsgSetRotation>(hh::math::CQuaternion::Identity()));
+			Common::SetPlayerVelocity(hh::math::CVector::Zero());
+		}
+		break;
+	}
+	case 2:
+	{
+		if (m_stateTime >= c_mephilesDeadTimeScale * 0.2f)
+		{
+			m_stateTime = 0.0f;
+			m_stateStage++;
+
+			Common::PlayStageMusic("Dummy", 0.0f);
+			Common::PlayEvent(m_pMember->m_pGameDocument->m_pMember->m_spEventManager.get(), "ev705");
+
+			ToggleSlowTime(false);
+			LoadingUI::startNowLoading(10.0f);
+		}
+		break;
+	}
+	case 3:
+	{
+		uint32_t pEventManager = (uint32_t)m_pMember->m_pGameDocument->m_pMember->m_spEventManager.get();
+		if (!*(bool*)(pEventManager + 288) && !*(bool*)(pEventManager + 292))
+		{
+			auto const& spMissionManager = m_pMember->m_pGameDocument->m_pGameActParameter->m_spMissionManager;
+			if (spMissionManager)
+			{
+				Hedgehog::Universe::CMessageActor* pMissionManagerObj = (Hedgehog::Universe::CMessageActor*)((uint32_t)spMissionManager.get() + 0x28);
+				SendMessage(pMissionManagerObj->m_ActorID, boost::make_shared<Sonic::Message::MsgMissionFinish>());
+			}
+
+			LoadingUI::startNowLoading();
+			Kill();
+		}
+		break;
+	}
 	}
 }
 
@@ -1472,7 +1597,7 @@ hh::math::CVector Mephiles::GetBodyPosition() const
 
 bool Mephiles::CanLock() const
 {
-	return m_state != State::Hide;
+	return m_state != State::Hide && m_state != State::Dead && m_HP > 0;
 }
 
 void Mephiles::CreateShield(hh::math::CVector const& otherPos) const
@@ -1684,7 +1809,6 @@ Mephiles::State Mephiles::ChooseAttackState()
 	if (m_enterLastHP)
 	{
 		m_enterLastHP = false;
-		// TODO:
 	}
 
 	m_attackCount++;
@@ -1699,6 +1823,23 @@ Mephiles::State Mephiles::ChooseAttackState()
 	else
 	{
 		return State::AttackCharge;
+	}
+}
+
+void Mephiles::ToggleSlowTime(bool enable)
+{
+	auto const spGameplayFlow = (uint32_t)Sonic::CApplicationDocument::GetInstance()->m_pMember->m_pGameplayFlowManager;
+	Hedgehog::Universe::CMessageActor* pGameplayFlowMessageActor = (Hedgehog::Universe::CMessageActor*)(spGameplayFlow + 0x60);
+
+	if (enable && !m_slowedTime)
+	{
+		SendMessage(pGameplayFlowMessageActor->m_ActorID, boost::make_shared<Sonic::Message::MsgChangeGameSpeed>(c_mephilesDeadTimeScale, 0));
+		m_slowedTime = true;
+	}
+	else if (!enable && m_slowedTime)
+	{
+		SendMessage(pGameplayFlowMessageActor->m_ActorID, boost::make_shared<Sonic::Message::MsgChangeGameSpeed>(1.0f, 1));
+		m_slowedTime = false;
 	}
 }
 

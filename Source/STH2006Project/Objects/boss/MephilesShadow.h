@@ -44,6 +44,7 @@ private:
 	float m_speed = 0.0f;
 	hh::math::CVector m_direction = hh::math::CVector::Zero();
 	hh::math::CVector m_startPos = hh::math::CVector::Zero();
+	bool m_ownerDead = false;
 
 	State m_state = State::Idle;
 	State m_stateNext = State::Idle;

@@ -42,6 +42,7 @@ private:
 		Warp,
 		Damage,
 		HalfHP,
+		Dead,
 
 		AttackSphereS,
 		AttackSphereL,
@@ -142,6 +143,10 @@ private:
 	void StateHalfHPAdvance(float dt);
 	void StateHalfHPEnd();
 
+	// State::Dead
+	void StateDeadBegin();
+	void StateDeadAdvance(float dt);
+
 	// State::AttackSphereS
 	void StateAttackSphereSBegin();
 	void StateAttackSphereSAdvance(float dt);
@@ -176,6 +181,9 @@ private:
 
 	int m_attackCount = 0;
 	State ChooseAttackState();
+
+	bool m_slowedTime = false;
+	void ToggleSlowTime(bool enable);
 
 	// Camera
 	void SetFocusCameraPosition(hh::math::CVector const& pos);
