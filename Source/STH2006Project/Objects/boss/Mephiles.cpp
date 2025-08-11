@@ -66,6 +66,7 @@ char const* Mephiles::HideCommand = "HideCommand";
 char const* Mephiles::Command = "Command";
 char const* Mephiles::Dive = "Dive";
 char const* Mephiles::Grin = "Grin";
+char const* Mephiles::GrinLoop = "GrinLoop";
 char const* Mephiles::Shock = "Shock";
 char const* Mephiles::Smile = "Smile";
 char const* Mephiles::Suffer = "Suffer";
@@ -95,6 +96,7 @@ bool Mephiles::SetAddRenderables
 	entries.push_back(hh::anim::SMotionInfo(Command, "en_command_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
 	entries.push_back(hh::anim::SMotionInfo(Dive, "en_dive_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
 	entries.push_back(hh::anim::SMotionInfo(Grin, "en_grin_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
+	entries.push_back(hh::anim::SMotionInfo(GrinLoop, "en_grin_l_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_Loop));
 	entries.push_back(hh::anim::SMotionInfo(Shock, "en_shock_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
 	entries.push_back(hh::anim::SMotionInfo(Smile, "en_smile_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_Loop));
 	entries.push_back(hh::anim::SMotionInfo(Suffer, "en_suffer_fmef_Root", 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
@@ -122,7 +124,8 @@ bool Mephiles::SetAddRenderables
 	fnAddAnimationState(Wait);
 	fnAddAnimationState(Command, Wait);
 	fnAddAnimationState(Dive);
-	fnAddAnimationState(Grin);
+	fnAddAnimationState(GrinLoop);
+	fnAddAnimationState(Grin, GrinLoop);
 	fnAddAnimationState(Shock, Wait);
 	fnAddAnimationState(Smile);
 	fnAddAnimationState(Suffer, Wait);
@@ -131,6 +134,7 @@ bool Mephiles::SetAddRenderables
 	SetAnimationBlend(HideCommand, HideLoop, 0.5f);
 	SetAnimationBlend(Dive, HideLoop, 0.5f);
 	SetAnimationBlend(Command, Dive, 0.5f);
+	SetAnimationBlend(GrinLoop, Dive, 0.5f);
 	SetAnimationBlend(Grin, Dive, 0.5f);
 	SetAnimationBlend(Shock, Dive, 0.5f);
 	SetAnimationBlend(Smile, Dive, 0.5f);
@@ -138,6 +142,7 @@ bool Mephiles::SetAddRenderables
 	SetAnimationBlend(Wait, Command, 0.5f);
 	SetAnimationBlend(Command, Wait, 0.5f);
 	SetAnimationBlend(Wait, Grin, 0.5f);
+	SetAnimationBlend(GrinLoop, Wait, 0.5f);
 	SetAnimationBlend(Grin, Wait, 0.5f);
 	SetAnimationBlend(Shock, Wait, 0.5f);
 	SetAnimationBlend(Wait, Smile, 0.5f);

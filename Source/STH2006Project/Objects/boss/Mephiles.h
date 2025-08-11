@@ -55,6 +55,7 @@ private:
 	static char const* Command;
 	static char const* Dive; // hide
 	static char const* Grin; // big sphere attack
+	static char const* GrinLoop; // big sphere attack
 	static char const* Shock; // damage
 	static char const* Smile; // sphere attack
 	static char const* Suffer; // eject
