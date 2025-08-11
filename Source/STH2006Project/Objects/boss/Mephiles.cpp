@@ -1496,7 +1496,7 @@ void Mephiles::StateAttackSphereLEnd()
 
 void Mephiles::FireSphereL()
 {
-	float constexpr c_DarkSphereSpeedL = 6.0f;
+	float constexpr c_DarkSphereSpeedL = 5.0f;
 	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	m_darkSphereL = boost::make_shared<DarkSphere>(m_ActorID, context->m_pPlayer->m_ActorID, c_DarkSphereSpeedL, true, m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector::UnitY() * 3.3f);
 	m_pMember->m_pGameDocument->AddGameObject(m_darkSphereL);
