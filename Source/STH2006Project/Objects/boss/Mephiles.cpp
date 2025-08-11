@@ -353,7 +353,7 @@ bool Mephiles::ProcessMessage
 							m_playDamageVO = false;
 						}
 
-						damageDist = 0.6f;
+						damageDist = (m_HP == 0) ? 0.4f : 0.6f;
 					}
 				}
 				else
@@ -1198,6 +1198,20 @@ void Mephiles::StateDeadBegin()
 	}
 
 	ToggleSlowTime(true);
+
+	// set cinematic camera
+	hh::math::CVector const playerPos = context->m_spMatrixNode->m_Transform.m_Position;
+	float const playerDist = (playerPos - m_spMatrixNodeTransform->m_Transform.m_Position).norm();
+	if (playerDist <= 1.5f && m_Data.m_CameraPanNoEase)
+	{
+		m_cameraActorID = m_Data.m_CameraPanNoEase;
+
+		hh::math::CVector const offset = hh::math::CVector(-3.0f, 1.2f, -1.2f);
+		hh::math::CVector const position = playerPos + context->m_spMatrixNode->m_Transform.m_Rotation * offset;
+		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgSetPosition>(position));
+		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+		SetFocusCameraPosition(GetBodyPosition());
+	}
 }
 
 void Mephiles::StateDeadAdvance(float dt)
@@ -1206,7 +1220,7 @@ void Mephiles::StateDeadAdvance(float dt)
 	{
 	case 0:
 	{
-		if (m_stateTime >= c_mephilesDeadTimeScale * 2.0f)
+		if (m_stateTime >= c_mephilesDeadTimeScale * 1.5f)
 		{
 			m_stateTime = 0.0f;
 			m_stateStage++;
