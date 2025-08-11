@@ -123,7 +123,6 @@ struct TrialData
 	bool m_disableSilverMedal;
 	bool m_forceNotPlayable;
 	bool m_playable;
-	bool m_hardModePlayable; // boss only
 	std::string m_header;
 	std::string m_stageID;
 
