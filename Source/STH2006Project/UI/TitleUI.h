@@ -195,7 +195,8 @@ public:
 	static void refreshTrialAvailability();
 
 	static void enterModeSelect();
-	static void populateStageData(size_t stage, std::string stageID, bool disableSilverMedal);
+	static void populateStageData(StageData const& stageData);
+	static void populateStageData(TrialData const& trialData);
 	static void cursorStageSelect(int index, bool isMission);
 	static void cursorMission(int index);
 	static void cursorStage(int index);
