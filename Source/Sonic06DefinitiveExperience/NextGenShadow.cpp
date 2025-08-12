@@ -98,6 +98,7 @@ float const cShadow_spindashSpeed = 30.0f;
 Eigen::Vector3f NextGenShadow::m_holdPosition = Eigen::Vector3f::Zero();
 int NextGenShadow::m_chaosAttackCount = -1;
 bool NextGenShadow::m_chaosAttackBuffered = false;
+bool NextGenShadow::m_chaosAttackForced = false;
 float const cShadow_chaosAttackWaitTime = 0.2f;
 
 float NextGenShadow::m_xHeldTimer = 0.0f;
@@ -596,7 +597,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
         if (message.IsAnimation(AnimationSetPatcher::ChaosAttackWait))
         {
             // first attack triggered by pressing A
-            if (NextGenShadow::m_chaosAttackCount == 0 && isPressedA)
+            if (NextGenShadow::m_chaosAttackCount == 0 && (isPressedA || NextGenShadow::m_chaosAttackForced))
             {
                 NextGenShadow::m_chaosAttackBuffered = true;
             }
@@ -715,7 +716,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
             This->m_Time = 0.0f;
             if (NextGenShadow::m_chaosAttackCount < 5 && !NextGenShadow::m_chaosAttackBuffered)
             {
-                NextGenShadow::m_chaosAttackBuffered = isPressedA;
+                NextGenShadow::m_chaosAttackBuffered = isPressedA || NextGenShadow::m_chaosAttackForced;
             }
 
             if (NextGenShadow::m_chaosAttackCount < 5)
@@ -754,6 +755,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterEnd, 0x11182F0)
         NextGenShadow::m_chaosAttackCount = -1;
     }
     NextGenShadow::m_chaosAttackBuffered = false;
+    NextGenShadow::m_chaosAttackForced = false;
     NextGenShadow::m_chaosSnapHoldSameTarget = false;
 
     originalNextGenShadow_CSonicStateHomingAttackAfterEnd();

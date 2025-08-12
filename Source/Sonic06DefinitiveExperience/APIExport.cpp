@@ -22,3 +22,8 @@ extern "C" __declspec(dllexport) int API_GetChaosBoostLevel()
 {
 	return (int)NextGenShadow::m_chaosBoostLevel;
 }
+
+extern "C" __declspec(dllexport) void API_SetChaosAttackForced(bool forced)
+{
+	NextGenShadow::SetChaosAttackForced(forced);
+}

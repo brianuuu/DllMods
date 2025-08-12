@@ -35,9 +35,11 @@ public:
 	static Eigen::Vector3f m_holdPosition;
 	static int m_chaosAttackCount;
 	static bool m_chaosAttackBuffered;
+	static bool m_chaosAttackForced;
 	static bool m_chaosSnapActivated;
 	static bool m_chaosSnapNoDamage;
 	static bool m_chaosSnapHoldSameTarget;
+	static void SetChaosAttackForced(bool forced) { m_chaosAttackForced = forced; }
 
 	// X Action
 	static float m_xHeldTimer;

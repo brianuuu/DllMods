@@ -221,6 +221,7 @@ void Mephiles::AddCallback
 void Mephiles::KillCallback()
 {
 	// re-enable Chaos Drive sfx
+	S06DE_API::SetChaosAttackForced(false);
 	S06DE_API::SetChaosEnergyRewardOverride();
 	WRITE_MEMORY(0x11245A3, uint8_t, 0xE8, 0x98, 0xA4, 0xC4, 0xFF);
 
@@ -1183,6 +1184,7 @@ void Mephiles::StateDeadBegin()
 
 	ScoreManager::addScore(ScoreType::ST_boss);
 	SubtitleUI::addSubtitle("msg_hint", "hint_bos04_e11_mf");
+	S06DE_API::SetChaosAttackForced(true);
 
 	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	SendMessage(context->m_pPlayer->m_ActorID, boost::make_shared<Sonic::Message::MsgStartOutOfControl>(9999.0f));
