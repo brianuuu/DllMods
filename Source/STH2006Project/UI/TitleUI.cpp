@@ -104,6 +104,7 @@ std::map<MenuTextType, std::string> TitleUI::m_menuText;
 bool m_allowStoryMode = true;
 bool m_displayNonCompletedStage = false;
 bool m_allowPlayNonCompletedStage = false;
+bool m_playBossIntro = false;
 bool m_drawActTrial = false;
 float m_drawActTrialAlpha = -1.0f;
 std::vector<size_t> m_actTrialVisibleID;
@@ -950,9 +951,18 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 		{
 			Common::PlaySoundStatic(soundHandle, 1000005);
 
+			uint32_t endState = 2;
+			if (m_playBossIntro)
+			{
+				switch (m_stageData.m_stage)
+				{
+				case SMT_bsd: endState = 3; break;
+				}
+			}
+
 			// Force GetEndState() to be 2 to launch demo menu
-			WRITE_MEMORY(0xD77102, uint32_t, 2);
-			WRITE_MEMORY(0xD7712E, uint32_t, 2);
+			WRITE_MEMORY(0xD77102, uint32_t, endState);
+			WRITE_MEMORY(0xD7712E, uint32_t, endState);
 
 			*outState = 4;
 			m_fadeOutTime = 0.0f;
@@ -1514,6 +1524,15 @@ HOOK(void, __fastcall, TitleUI_CGameplayFlowStage_CStateGoalBegin, 0xCFD550, voi
 	originalTitleUI_CGameplayFlowStage_CStateGoalBegin(This);
 }
 
+HOOK(void, __stdcall, TitleUI_DoShowCesa, 0xD773D0, int* a1, int a2)
+{
+	originalTitleUI_DoShowCesa(a1, a2);
+
+	uint32_t* result = (uint32_t*)(a1[1]);
+	result[0] = Common::GetVoiceLanguageType();
+	result[1] = Common::GetVoiceLanguageType();
+}
+
 void TitleUI::applyPatches()
 {
 	populateTrialData();
@@ -1574,6 +1593,9 @@ void TitleUI::applyPatches()
 	WRITE_JUMP(0x576528, (void*)0x576561); // immediately confirm
 	INSTALL_HOOK(TitleUI_CDemoMenuObjectAdvance);
 
+	// Hack DoShowCesa script to return voice language rather than UI
+	INSTALL_HOOK(TitleUI_DoShowCesa);
+
 	// Menu Text
 	m_menuText[MTT_NewGame] = "New Game: Start a new Story Mode";
 	m_menuText[MTT_NewGameJP] = u8"ニューゲーム：ストーリーの始めからプレイします";
@@ -1613,6 +1635,7 @@ void TitleUI::populateTrialData()
 	m_allowStoryMode = reader.GetBoolean("Settings", "allowStoryMode", true);
 	m_displayNonCompletedStage = reader.GetBoolean("Settings", "displayNonCompletedStage", false);
 	m_allowPlayNonCompletedStage = reader.GetBoolean("Settings", "allowPlayNonCompletedStage", false);
+	m_playBossIntro = reader.GetBoolean("Settings", "playBossIntro", false);
 
 	struct SectionSort
 	{
@@ -2544,7 +2567,7 @@ void TitleUI::drawStageData()
 		ImGui::End();
 
 		m_fadeOutTime += Application::getDeltaTime();
-		if (Common::IsAtLoadingScreen())
+		if (Common::IsAtLoadingScreen() || m_fadeOutTime >= 1.4f)
 		{
 			m_menuState = MenuState::MS_Idle;
 		}
