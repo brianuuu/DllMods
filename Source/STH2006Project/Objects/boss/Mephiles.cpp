@@ -1401,7 +1401,7 @@ void Mephiles::FireSphereS()
 	SharedPtrTypeless soundHandle;
 	Common::ObjectPlaySound(this, 200615007, soundHandle);
 
-	float constexpr c_DarkSphereSpeedS = 25.0f;
+	float constexpr c_DarkSphereSpeedS = 20.0f;
 	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	m_pMember->m_pGameDocument->AddGameObject
 	(
