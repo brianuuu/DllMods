@@ -32,6 +32,7 @@ void GadgetBike::InitializeEditParam
 	Sonic::CEditParam& in_rEditParam
 )
 {
+	in_rEditParam.CreateParamBool(&m_Data.m_CanGetOff, "CanGetOff");
 	in_rEditParam.CreateParamBool(&m_Data.m_HasGun, "HasGun");
 }
 
@@ -219,6 +220,17 @@ bool GadgetBike::ProcessMessage
 			{
 				m_playerID = message.m_SenderActorID;
 				BeginPlayerGetOn();
+			}
+			break;
+		}
+		case 7:
+		{
+			if (m_playerID)
+			{
+				BeginPlayerGetOff(true);
+				m_playerID = 0;
+
+				Explode();
 			}
 			break;
 		}
@@ -539,7 +551,7 @@ void GadgetBike::AdvanceDriving(float dt)
 	}
 
 	// get off
-	if (m_playerID && padState->IsTapped(Sonic::EKeyState::eKeyState_Y))
+	if (m_playerID && m_Data.m_CanGetOff && padState->IsTapped(Sonic::EKeyState::eKeyState_Y))
 	{
 		BeginPlayerGetOff(true);
 		return;

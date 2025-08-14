@@ -54,6 +54,7 @@ public:
 private:
 	struct Data
 	{
+		bool m_CanGetOff = true;
 	} m_Data;
 
 private:
