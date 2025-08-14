@@ -1161,7 +1161,7 @@ void Mephiles::StateHalfHPEnd()
 	}
 
 	// destroy darksphere if not already (usually from damage)
-	if (m_darkSphereL && m_stateNext != State::Dive)
+	if (m_darkSphereL)
 	{
 		SendMessage(m_darkSphereL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
 		m_darkSphereL.reset();
@@ -1509,7 +1509,7 @@ void Mephiles::StateAttackSphereLEnd()
 	}
 
 	// destroy darksphere if not already (usually from damage)
-	if (m_darkSphereL && (m_stateNext != State::Dive || m_stateStage <= 1))
+	if (m_darkSphereL)
 	{
 		SendMessage(m_darkSphereL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
 		m_darkSphereL.reset();
