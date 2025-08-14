@@ -174,7 +174,7 @@ bool Mephiles::SetAddColliders
 	AddEventCollision("Damage", damageShape, *(int*)0x1E0AFD8, true, m_spNodeBody); // ColID_PlayerEvent
 
 	// barrier
-	hk2010_2_0::hkpSphereShape* barrierShape = new hk2010_2_0::hkpSphereShape(1.2f);
+	hk2010_2_0::hkpSphereShape* barrierShape = new hk2010_2_0::hkpSphereShape(1.5f);
 	AddEventCollision("Barrier", barrierShape, *(int*)0x1E0AFD8, true, m_spNodeBody); // ColID_PlayerEvent
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "Barrier", false);
 
