@@ -1326,7 +1326,8 @@ void Mephiles::StateAttackSphereSAdvance(float dt)
 	{
 	case 0:
 	{
-		if (m_stateTime >= GetAttackBeforeDelay())
+		auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+		if ((context->m_Grounded && m_stateTime >= GetAttackBeforeDelay()) || (!context->m_Grounded && m_stateTime >= 1.5f))
 		{
 			m_stateTime = 0.0f;
 			m_stateStage++;
