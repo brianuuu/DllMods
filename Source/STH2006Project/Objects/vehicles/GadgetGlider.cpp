@@ -338,6 +338,14 @@ void GadgetGlider::KillCallback()
 	}
 }
 
+void GadgetGlider::GetObjectTriggerType
+(
+	hh::vector<uint32_t>& in_rTriggerTypeList
+)
+{
+	in_rTriggerTypeList.push_back(1);
+}
+
 float const c_gliderAccel = 10.0f;
 float const c_gliderMaxSpeed = 10.0f;
 float const c_gliderBoostSpeed = 21.0f;
@@ -534,6 +542,7 @@ void GadgetGlider::AdvancePlayerGetOn(float dt)
 		m_spSonicControlNode->m_Transform.SetPosition(hh::math::CVector::Zero());
 		m_spSonicControlNode->NotifyChanged();
 
+		Common::fEventTrigger(this, 1);
 		BeginFlight();
 		return;
 	}

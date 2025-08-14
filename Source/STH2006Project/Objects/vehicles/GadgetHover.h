@@ -124,6 +124,7 @@ private:
 	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	bool SetAddColliders(const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	void KillCallback() override;
+	void GetObjectTriggerType(hh::vector<uint32_t>& in_rTriggerTypeList) override;
 	void SetUpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo) override;
 	bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;
 

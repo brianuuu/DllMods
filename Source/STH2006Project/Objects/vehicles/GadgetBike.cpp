@@ -179,6 +179,14 @@ void GadgetBike::KillCallback()
 	}
 }
 
+void GadgetBike::GetObjectTriggerType
+(
+	hh::vector<uint32_t>& in_rTriggerTypeList
+)
+{
+	in_rTriggerTypeList.push_back(1);
+}
+
 void GadgetBike::SetUpdateParallel
 (
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
@@ -376,6 +384,7 @@ void GadgetBike::AdvancePlayerGetOn(float dt)
 		m_spSonicControlNode->m_Transform.SetPosition(hh::math::CVector::Zero());
 		m_spSonicControlNode->NotifyChanged();
 
+		Common::fEventTrigger(this, 1);
 		BeginDriving();
 		return;
 	}
