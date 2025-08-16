@@ -265,6 +265,7 @@ void Hint::PlayHint()
 			times.push_back(std::stof(timesStr.substr(0, pos)));
 			timesStr.erase(0, pos + 1);
 		}
+		times.push_back(std::stof(timesStr));
 	}
 
 	m_isPlaying = true;
