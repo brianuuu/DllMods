@@ -55,6 +55,7 @@ private:
 	struct Data
 	{
 		bool m_CanGetOff = true;
+		bool m_DeadNoHP = false;
 	} m_Data;
 
 private:

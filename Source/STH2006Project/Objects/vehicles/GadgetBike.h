@@ -32,6 +32,7 @@ private:
 	struct Data
 	{
 		bool m_CanGetOff = true;
+		bool m_DeadNoHP = false;
 		bool m_HasGun = false;
 	} m_Data;
 

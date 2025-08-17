@@ -170,6 +170,7 @@ void GadgetGlider::InitializeEditParam
 	Sonic::CEditParam& in_rEditParam
 )
 {
+	in_rEditParam.CreateParamBool(&m_Data.m_DeadNoHP, "DeadNoHP");
 	in_rEditParam.CreateParamFloat(&m_Data.m_Radius, "Radius");
 	in_rEditParam.CreateParamFloat(&m_Data.m_GetOffOutOfControl, "GetOffOutOfControl");
 
@@ -563,9 +564,15 @@ void GadgetGlider::BeginPlayerGetOff()
 {
 	if (!m_playerID) return;
 
-	SendMessageImm(m_playerID, Sonic::Message::MsgFinishExternalControl(Sonic::Message::MsgFinishExternalControl::EChangeState::FALL));
+	bool const deadNoHP = m_hp <= 0.0f && m_Data.m_DeadNoHP;
+	SendMessageImm(m_playerID, Sonic::Message::MsgFinishExternalControl(deadNoHP ? Sonic::Message::MsgFinishExternalControl::EChangeState::DEAD : Sonic::Message::MsgFinishExternalControl::EChangeState::FALL));
 	Common::SetPlayerVelocity(hh::math::CVector::Zero());
 	S06HUD_API::SetGadgetMaxCount(-1);
+
+	if (deadNoHP)
+	{
+		SendMessage(m_playerID, boost::make_shared<Sonic::Message::MsgSetRotation>(m_spMatrixNodeTransform->m_Transform.m_Rotation));
+	}
 
 	// out of control
 	if (m_Data.m_GetOffOutOfControl > 0.0f)

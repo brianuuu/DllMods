@@ -33,6 +33,7 @@ void GadgetBike::InitializeEditParam
 )
 {
 	in_rEditParam.CreateParamBool(&m_Data.m_CanGetOff, "CanGetOff");
+	in_rEditParam.CreateParamBool(&m_Data.m_DeadNoHP, "DeadNoHP");
 	in_rEditParam.CreateParamBool(&m_Data.m_HasGun, "HasGun");
 }
 
@@ -405,7 +406,8 @@ void GadgetBike::BeginPlayerGetOff(bool isAlive)
 {
 	if (!m_playerID) return;
 
-	SendMessageImm(m_playerID, Sonic::Message::MsgFinishExternalControl(Sonic::Message::MsgFinishExternalControl::EChangeState::FALL));
+	bool const deadNoHP = m_hp <= 0.0f && m_Data.m_DeadNoHP;
+	SendMessageImm(m_playerID, Sonic::Message::MsgFinishExternalControl(deadNoHP ? Sonic::Message::MsgFinishExternalControl::EChangeState::DEAD : Sonic::Message::MsgFinishExternalControl::EChangeState::FALL));
 
 	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	hh::math::CVector velocity = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitZ() * m_speed;
@@ -425,6 +427,10 @@ void GadgetBike::BeginPlayerGetOff(bool isAlive)
 		ChangeAnimationCustomPlayback(context, "JumpBall", hh::math::CVector::Zero());
 
 		UnloadGun();
+	}
+	else if (deadNoHP)
+	{
+		SendMessage(m_playerID, boost::make_shared<Sonic::Message::MsgSetRotation>(m_spMatrixNodeTransform->m_Transform.m_Rotation));
 	}
 	else
 	{

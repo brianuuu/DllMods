@@ -72,6 +72,7 @@ public:
 private:
 	struct Data
 	{
+		bool m_DeadNoHP = false;
 		float m_Radius = 10.0f;
 		float m_GetOffOutOfControl = 0.5f;
 		Sonic::CParamTypeList* m_FollowPath = nullptr;
