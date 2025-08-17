@@ -79,5 +79,8 @@ public:
 		SH_ChaosBlastWait,
 		SH_ChaosBlast,
 	} m_overrideType;
+
+	// APIs
+	static void ToggleStartTeleport(bool enable);
 };
 

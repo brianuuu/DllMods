@@ -3085,6 +3085,19 @@ HOOK(bool, __fastcall, NextGenShadow_CSonicStateStartCrouchingEnd, 0xDEF0A0, hh:
     return originalNextGenShadow_CSonicStateStartCrouchingEnd(This);
 }
 
+void NextGenShadow::ToggleStartTeleport(bool enable)
+{
+    if (!m_startModelHide && enable)
+    {
+        m_startModelHide = true;
+        NextGenShadow::SetChaosBoostModelVisible(false, true);
+    }
+    else if (m_startModelHide && !enable)
+    {
+        PlayStartTeleport();
+    }
+}
+
 //---------------------------------------------------
 // Main Apply Patches
 //---------------------------------------------------

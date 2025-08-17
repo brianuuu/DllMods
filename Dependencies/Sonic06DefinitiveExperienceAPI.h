@@ -17,8 +17,11 @@ private:
     LIB_FUNCTION(ModelType, "Sonic06DefinitiveExperience.dll", API_GetModelType);
     LIB_FUNCTION(bool, "Sonic06DefinitiveExperience.dll", API_IsUsingCharacterMoveset);
     LIB_FUNCTION(void, "Sonic06DefinitiveExperience.dll", API_SetChaosEnergyRewardOverride, float amount);
+
+    // Shadow
     LIB_FUNCTION(int, "Sonic06DefinitiveExperience.dll", API_GetChaosBoostLevel);
     LIB_FUNCTION(void, "Sonic06DefinitiveExperience.dll", API_SetChaosAttackForced, bool forced);
+    LIB_FUNCTION(void, "Sonic06DefinitiveExperience.dll", API_ToggleStartTeleport, bool enable);
 
 public:
     static S06DE_API* GetInstance()
@@ -42,6 +45,9 @@ public:
 		VOID_EXPORT(API_SetChaosEnergyRewardOverride, amount);
 	}
 	
+    //---------------------------------------------------
+    // Shadow
+    //---------------------------------------------------
     static int GetChaosBoostLevel()
 	{
 		INT_EXPORT(API_GetChaosBoostLevel);
@@ -50,5 +56,10 @@ public:
     static void SetChaosAttackForced(bool forced)
 	{
 		VOID_EXPORT(API_SetChaosAttackForced, forced);
+	}
+	
+    static void ToggleStartTeleport(bool enable)
+	{
+		VOID_EXPORT(API_ToggleStartTeleport, enable);
 	}
 };

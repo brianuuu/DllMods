@@ -18,6 +18,9 @@ extern "C" __declspec(dllexport) void API_SetChaosEnergyRewardOverride(float amo
 	ChaosEnergy::setChaosEnergyRewardOverride(amount);
 }
 
+//---------------------------------------------------
+// Shadow
+//---------------------------------------------------
 extern "C" __declspec(dllexport) int API_GetChaosBoostLevel()
 {
 	return (int)NextGenShadow::m_chaosBoostLevel;
@@ -26,4 +29,9 @@ extern "C" __declspec(dllexport) int API_GetChaosBoostLevel()
 extern "C" __declspec(dllexport) void API_SetChaosAttackForced(bool forced)
 {
 	NextGenShadow::SetChaosAttackForced(forced);
+}
+
+extern "C" __declspec(dllexport) void API_ToggleStartTeleport(bool enable)
+{
+	NextGenShadow::ToggleStartTeleport(enable);
 }
