@@ -204,12 +204,6 @@ void Hint::SetUpdateParallel
 			{
 				ChangeState("Wait");
 			}
-			else
-			{
-				// invisible ones kill itself
-				Kill();
-				return;
-			}
 		}
 	}
 
@@ -281,6 +275,11 @@ void Hint::PlayHint()
 		// play pfx
 		auto const attachNode = m_spModel->GetNode("Hintring");
 		m_pGlitterPlayer->PlayOneshot(attachNode, "ef_hint_play", 1.0f, 1);
+	}
+	else
+	{
+		// invisible ones kills immediately
+		Kill();
 	}
 }
 
