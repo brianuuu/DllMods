@@ -96,7 +96,7 @@ bool UpDownReel::SetAddColliders
 	m_spNodeEventCollision->m_Transform.SetPosition(hh::math::CVector(0.0f, 0.3f, 0.0f));
 	m_spNodeEventCollision->NotifyChanged();
 	m_spNodeEventCollision->SetParent(m_spNodeModelHandle.get());
-	hk2010_2_0::hkpSphereShape* shapeEventTrigger = new hk2010_2_0::hkpSphereShape(0.5f);
+	hk2010_2_0::hkpSphereShape* shapeEventTrigger = new hk2010_2_0::hkpSphereShape(0.8f);
 	AddEventCollision("Handle", shapeEventTrigger, *(int*)0x1E0AFD8, true, m_spNodeEventCollision);
 
 	// player
