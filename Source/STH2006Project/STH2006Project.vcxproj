@@ -251,6 +251,7 @@
       </ForcedIncludeFiles>
     </ClCompile>
     <ClCompile Include="Configuration.cpp" />
+    <ClCompile Include="Objects\cmn\CustomEvent.cpp" />
     <ClCompile Include="Objects\enemy\DarkSphere.cpp" />
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="Objects\boss\MephilesShadow.cpp" />
@@ -313,6 +314,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
+    <ClInclude Include="Objects\cmn\CustomEvent.h" />
     <ClInclude Include="Objects\enemy\DarkSphere.h" />
     <ClInclude Include="DllMain.h" />
     <ClInclude Include="Objects\boss\MephilesShadow.h" />
