@@ -418,7 +418,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
                 Common::SonicContextUpdateRotationToVelocity(context, &context->m_Velocity, true);
 
                 // teleport
-                hh::math::CVector targetPosition = context->m_HomingAttackPosition - hh::math::CVector::UnitY() * 0.5f - direction * 2.0f;
+                hh::math::CVector targetPosition = context->m_HomingAttackPosition - hh::math::CVector::UnitY() * 0.5f - direction * 1.5f;
                 Common::SetPlayerPosition(targetPosition);
             }
         }
