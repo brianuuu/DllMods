@@ -43,6 +43,7 @@ bool CustomEvent::ProcessMessage
 	{
 		if (message.Is<Sonic::Message::MsgNotifyObjectEvent>())
 		{
+			auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 			auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
 			switch (msg.m_Event)
 			{
@@ -56,6 +57,19 @@ bool CustomEvent::ProcessMessage
 			{
 				// Shadow start teleport end
 				S06DE_API::ToggleStartTeleport(false);
+				break;
+			}
+			case 2:
+			{
+				// Replace StopPeopleObject start
+				SendMessageImm(context->m_pPlayer->m_ActorID, Sonic::Message::MsgStopActivity());
+				Common::SetPlayerVelocity(hh::math::CVector::Zero());
+				break;
+			}
+			case 3:
+			{
+				// Shadow StopPeopleObject end
+				SendMessage(context->m_pPlayer->m_ActorID, boost::make_shared<Sonic::Message::MsgReopenActivity>());
 				break;
 			}
 			}
