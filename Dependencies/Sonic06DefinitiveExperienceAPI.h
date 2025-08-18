@@ -22,6 +22,9 @@ private:
     LIB_FUNCTION(int, "Sonic06DefinitiveExperience.dll", API_GetChaosBoostLevel);
     LIB_FUNCTION(void, "Sonic06DefinitiveExperience.dll", API_SetChaosAttackForced, bool forced);
     LIB_FUNCTION(void, "Sonic06DefinitiveExperience.dll", API_ToggleStartTeleport, bool enable);
+    LIB_FUNCTION(void, "Sonic06DefinitiveExperience.dll", API_SetChaosBoostCanLevelDown, bool enable);
+    LIB_FUNCTION(void, "Sonic06DefinitiveExperience.dll", API_SetChaosBoostMatchMaxLevel, bool enable);
+    LIB_FUNCTION(void, "Sonic06DefinitiveExperience.dll", API_SetChaosBoostMaxLevel, uint8_t maxLevel);
 
 public:
     static S06DE_API* GetInstance()
@@ -61,5 +64,20 @@ public:
     static void ToggleStartTeleport(bool enable)
 	{
 		VOID_EXPORT(API_ToggleStartTeleport, enable);
+	}
+	
+    static void SetChaosBoostCanLevelDown(bool enable)
+	{
+		VOID_EXPORT(API_SetChaosBoostCanLevelDown, enable);
+	}
+	
+    static void SetChaosBoostMatchMaxLevel(bool enable)
+	{
+		VOID_EXPORT(API_SetChaosBoostMatchMaxLevel, enable);
+	}
+	
+    static void SetChaosBoostMaxLevel(uint8_t maxLevel)
+	{
+		VOID_EXPORT(API_SetChaosBoostMaxLevel, maxLevel);
 	}
 };

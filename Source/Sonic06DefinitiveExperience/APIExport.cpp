@@ -35,3 +35,18 @@ extern "C" __declspec(dllexport) void API_ToggleStartTeleport(bool enable)
 {
 	NextGenShadow::ToggleStartTeleport(enable);
 }
+
+extern "C" __declspec(dllexport) void API_SetChaosBoostCanLevelDown(bool enable)
+{
+	NextGenShadow::SetChaosBoostCanLevelDown(enable);
+}
+
+extern "C" __declspec(dllexport) void API_SetChaosBoostMatchMaxLevel(bool enable)
+{
+	NextGenShadow::SetChaosBoostMatchMaxLevel(enable);
+}
+
+extern "C" __declspec(dllexport) void API_SetChaosBoostMaxLevel(uint8_t maxLevel)
+{
+	NextGenShadow::SetChaosBoostMaxLevel(maxLevel);
+}

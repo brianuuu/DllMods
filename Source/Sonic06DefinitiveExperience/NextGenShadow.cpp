@@ -105,8 +105,11 @@ float NextGenShadow::m_xHeldTimer = 0.0f;
 bool NextGenShadow::m_enableAutoRunAction = true;
 
 // Chaos Boost
+uint8_t NextGenShadow::m_chaosBoostMaxLevel = 3u;
 uint8_t NextGenShadow::m_chaosBoostLevel = 0u;
 float NextGenShadow::m_chaosMaturity = 0.0f;
+bool NextGenShadow::m_chaosBoostCanLevelDown = true;
+bool NextGenShadow::m_chaosBoostMatchMaxLevel = false;
 float const cShadow_chaosBoostStartTime = 1.2f;
 
 NextGenShadow::OverrideType NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_None;
@@ -242,7 +245,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
             float const previousBoost = *currentBoost;
             *currentBoost = max(0.0f, *currentBoost - (NextGenShadow::m_chaosBoostLevel + 1) * *dt);
 
-            if (*currentBoost == 0.0f)
+            if (*currentBoost == 0.0f && NextGenShadow::m_chaosBoostCanLevelDown)
             {
                 NextGenShadow::SetChaosBoostLevel(0, true);
             }
@@ -883,7 +886,7 @@ bool NextGenShadow::CheckChaosBoost()
         return true;
     }
 
-    if (m_chaosBoostLevel < 3)
+    if (m_chaosBoostLevel < m_chaosBoostMaxLevel)
     {
         m_overrideType = OverrideType::SH_ChaosBoost;
         StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
@@ -948,6 +951,7 @@ void NextGenShadow::AddChaosMaturity(float amount)
 {
     if (!Configuration::m_characterMoveset) return;
     if (Configuration::m_model != Configuration::ModelType::Shadow) return;
+    if (m_chaosBoostLevel == m_chaosBoostMaxLevel) return;
 
     float maturity = m_chaosMaturity;
     m_chaosMaturity = max(0.0f, min(100.0f, maturity + amount));
@@ -1663,7 +1667,7 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
         void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
         Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle_TrickAttack, matrixNode, "ef_ch_sh_chaosboost", 1);
 
-        NextGenShadow::SetChaosBoostLevel(NextGenShadow::m_chaosBoostLevel + 1, true);
+        NextGenShadow::SetChaosBoostLevel(NextGenShadow::m_chaosBoostMatchMaxLevel ? NextGenShadow::m_chaosBoostMaxLevel : NextGenShadow::m_chaosBoostLevel + 1, true);
         break;
     }
     case NextGenShadow::OverrideType::SH_ChaosBlastWait:
@@ -3085,6 +3089,9 @@ HOOK(bool, __fastcall, NextGenShadow_CSonicStateStartCrouchingEnd, 0xDEF0A0, hh:
     return originalNextGenShadow_CSonicStateStartCrouchingEnd(This);
 }
 
+//---------------------------------------------------
+// APIs
+//---------------------------------------------------
 void NextGenShadow::ToggleStartTeleport(bool enable)
 {
     if (!m_startModelHide && enable)

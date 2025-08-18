@@ -39,7 +39,6 @@ public:
 	static bool m_chaosSnapActivated;
 	static bool m_chaosSnapNoDamage;
 	static bool m_chaosSnapHoldSameTarget;
-	static void SetChaosAttackForced(bool forced) { m_chaosAttackForced = forced; }
 
 	// X Action
 	static float m_xHeldTimer;
@@ -47,8 +46,11 @@ public:
 	static bool bActionHandlerImpl();
 
 	// Chaos Boost
+	static uint8_t m_chaosBoostMaxLevel;
 	static uint8_t m_chaosBoostLevel;
 	static float m_chaosMaturity;
+	static bool m_chaosBoostCanLevelDown;
+	static bool m_chaosBoostMatchMaxLevel;
 	static bool ShouldPlayJetEffect();
 	static void SetJetEffectVisible(bool visible, hh::mr::CSingleElement* pModel, bool isSuper);
 	static bool IsModelVisible();
@@ -82,5 +84,9 @@ public:
 
 	// APIs
 	static void ToggleStartTeleport(bool enable);
+	static void SetChaosAttackForced(bool forced) { m_chaosAttackForced = forced; }
+	static void SetChaosBoostCanLevelDown(bool enable) { m_chaosBoostCanLevelDown = enable; }
+	static void SetChaosBoostMatchMaxLevel(bool enable) { m_chaosBoostMatchMaxLevel = enable; }
+	static void SetChaosBoostMaxLevel(uint8_t maxLevel) { m_chaosBoostMaxLevel = maxLevel; }
 };
 
