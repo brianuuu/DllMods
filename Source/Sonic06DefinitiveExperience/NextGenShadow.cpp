@@ -951,7 +951,7 @@ void NextGenShadow::AddChaosMaturity(float amount)
 {
     if (!Configuration::m_characterMoveset) return;
     if (Configuration::m_model != Configuration::ModelType::Shadow) return;
-    if (m_chaosBoostLevel == m_chaosBoostMaxLevel) return;
+    if (m_chaosBoostMaxLevel < 3 && m_chaosBoostLevel == m_chaosBoostMaxLevel) return;
 
     float maturity = m_chaosMaturity;
     m_chaosMaturity = max(0.0f, min(100.0f, maturity + amount));
