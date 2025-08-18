@@ -47,6 +47,7 @@ float SubtitleUI::addSubtitle(mst::TextEntry const& entry, std::vector<float> co
         }
         
         // Front tag can be voice
+        m_subtitleSfx.reset();
         if (tagIndex < entry.m_tags.size() && subtitle.front() == '$')
         {
             // is this a sound or a picture?
@@ -73,7 +74,6 @@ float SubtitleUI::addSubtitle(mst::TextEntry const& entry, std::vector<float> co
                     // play first cue
                     if (i == 0)
                     {
-                        m_subtitleSfx.reset();
                         Common::PlaySoundStatic(m_subtitleSfx, newSubtitle.m_cueID);
                     }
                 }
