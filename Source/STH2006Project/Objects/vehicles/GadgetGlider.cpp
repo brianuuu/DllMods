@@ -727,6 +727,9 @@ void GadgetGlider::AdvanceFlight(float dt)
 	}
 	else if (m_state == State::FlightNoControl)
 	{
+		// max speed at no control
+		currentMaxSpeed = c_gliderBoostSpeed;
+
 		// auto steer back to center
 		float targetX = -m_offset.x();
 		Common::ClampFloat(targetX, -c_gliderMaxSteer, c_gliderMaxSteer);
