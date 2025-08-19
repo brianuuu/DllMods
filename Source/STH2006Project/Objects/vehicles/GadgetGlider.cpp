@@ -458,6 +458,7 @@ bool GadgetGlider::ProcessMessage
 				SendMessageImm(msg.m_SenderActorID, Sonic::Message::MsgIsWall(isWall));
 				if (isWall)
 				{
+					m_hp = 0.0f;
 					Explode();
 				}
 				else
