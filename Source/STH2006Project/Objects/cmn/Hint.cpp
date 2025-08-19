@@ -83,6 +83,15 @@ void Hint::InitializeEditParam
 	in_rEditParam.CreateParamBase(Sonic::CParamTarget::Create(&m_Data.m_NextHintID), "NextHintID");
 }
 
+void Hint::SetAddUpdateUnit
+(
+	Sonic::CGameDocument* in_pGameDocument
+)
+{
+	in_pGameDocument->AddUpdateUnit("0", this);
+	in_pGameDocument->AddUpdateUnit("1", this);
+}
+
 bool Hint::SetAddRenderables
 (
 	Sonic::CGameDocument* in_pGameDocument, 
@@ -186,25 +195,30 @@ void Hint::SetUpdateParallel
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
 )
 {
-	if (m_isPlaying)
+	// Non-time dependent update
+	if (in_rUpdateInfo.Category == "1")
 	{
-		m_timer -= in_rUpdateInfo.DeltaTime;
-		if (m_timer <= 0.0f)
+		if (m_isPlaying)
 		{
-			m_isPlaying = false;
-			Common::fEventTrigger(this, 4);
-
-			// trigger next hint
-			if (m_Data.m_NextHintID)
+			m_timer -= in_rUpdateInfo.DeltaTime;
+			if (m_timer <= 0.0f)
 			{
-				Common::fSendMessageToSetObject(this, m_Data.m_NextHintID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
-			}
+				m_isPlaying = false;
+				Common::fEventTrigger(this, 4);
 
-			if (m_Data.m_Type == (int)Type::Default)
-			{
-				ChangeState("Wait");
+				// trigger next hint
+				if (m_Data.m_NextHintID)
+				{
+					Common::fSendMessageToSetObject(this, m_Data.m_NextHintID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+				}
+
+				if (m_Data.m_Type == (int)Type::Default)
+				{
+					ChangeState("Wait");
+				}
 			}
 		}
+		return;
 	}
 
 	if (m_Data.m_Type == (int)Type::Default)
