@@ -7,7 +7,6 @@ uint32_t* RailPhysics::m_pHomingTargetObj = nullptr;
 uint32_t* RailPhysics::m_pHomingTargetCEventCollision = nullptr;
 
 uint32_t m_forceRailCollisionQuery = false;
-std::set<uint32_t*> RailPhysics::m_pPathContainer;
 std::vector<PathData> RailPhysics::m_pathData;
 
 float const cGrind_lockOnRange = 8.0f;
@@ -37,7 +36,6 @@ HOOK(int, __stdcall, RailPhysics_HomingUpdate, 0xE5FF10, int a1)
 
 HOOK(bool, __stdcall, RailPhysics_ParsePathXml, 0x11E3460, uint32_t* This, char* pData, uint32_t size, char a4)
 {
-    RailPhysics::m_pPathContainer.insert(This);
     RailPhysics::parsePathXmlData(pData, size);
     return originalRailPhysics_ParsePathXml(This, pData, size, a4);
 }
@@ -49,26 +47,11 @@ HOOK(uint32_t*, __fastcall, RailPhysics_CHomingTargetDestructor, 0x500280, uint3
         m_hasHomingTargetObj = false;
         RailPhysics::m_pHomingTargetObj = nullptr;
         RailPhysics::m_pHomingTargetCEventCollision = nullptr;
-        printf("[RailPhysics] Homing Target Destructed\n");
+        RailPhysics::m_pathData.clear();
+        //printf("[RailPhysics] Homing Target Destructed\n");
     }
 
     return originalRailPhysics_CHomingTargetDestructor(This, Edx, a2);
-}
-
-HOOK(uint32_t*, __fastcall, RailPhysics_CDatabaseDataDestructor, 0x699380, uint32_t* This)
-{
-    if (!RailPhysics::m_pPathContainer.empty())
-    {
-        if (RailPhysics::m_pPathContainer.find(This) != RailPhysics::m_pPathContainer.end())
-        {
-            // Just clear it all
-            RailPhysics::m_pPathContainer.clear();
-            RailPhysics::m_pathData.clear();
-            printf("[RailPhysics] Path Data Cleared\n");
-        }
-    }
-
-    return originalRailPhysics_CDatabaseDataDestructor(This);
 }
 
 void __declspec(naked) createHomingTargetObj()
@@ -379,9 +362,6 @@ void RailPhysics::applyPatches()
 
         // Get all grind rail path data
         INSTALL_HOOK(RailPhysics_ParsePathXml);
-
-        // For resetting path data
-        INSTALL_HOOK(RailPhysics_CDatabaseDataDestructor);
     }
 }
 

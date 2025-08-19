@@ -54,7 +54,6 @@ public:
 	static void getBoundingSphere(PathData& pathData);
 	static Eigen::Vector3f interpolateSegment(std::vector<KnotData> const& knotDataList, uint32_t index, float t);
 	static tinyxml2::XMLError parsePathXmlData(char const* pData, uint32_t size);
-	static std::set<uint32_t*> m_pPathContainer;
 	static std::vector<PathData> m_pathData;
 };
 
