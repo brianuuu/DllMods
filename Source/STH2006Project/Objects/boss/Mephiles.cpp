@@ -166,7 +166,7 @@ bool Mephiles::SetAddColliders
 	m_spNodeBody->SetParent(bodyCenter.get());
 
 	// rigid body
-	hk2010_2_0::hkpSphereShape* rigidBodyShape = new hk2010_2_0::hkpSphereShape(0.9f);
+	hk2010_2_0::hkpSphereShape* rigidBodyShape = new hk2010_2_0::hkpSphereShape(0.8f);
 	AddEventCollision("Body", rigidBodyShape, *(int*)0x1E0AF24, true, m_spNodeBody); // CollisionTypeEnemyAndLockOn
 
 	// damage body
