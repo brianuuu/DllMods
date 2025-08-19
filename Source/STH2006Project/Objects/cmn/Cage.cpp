@@ -72,25 +72,25 @@ bool Cage::SetAddColliders
 		hh::math::CVector pos;
 		switch (i)
 		{
-		case 0: pos = hh::math::CVector(-1.55f, 1.66f, 0.0f); break;
-		case 1: pos = hh::math::CVector(0.0f, 1.66f, -1.55f); break;
-		case 2: pos = hh::math::CVector(1.55f, 1.66f, 0.0f); break;
-		case 3: pos = hh::math::CVector(0.0f, 1.66f, 1.55f); break;
+		case 0: pos = hh::math::CVector(-1.65f, 1.66f, 0.0f); break;
+		case 1: pos = hh::math::CVector(0.0f, 1.66f, -1.65f); break;
+		case 2: pos = hh::math::CVector(1.65f, 1.66f, 0.0f); break;
+		case 3: pos = hh::math::CVector(0.0f, 1.66f, 1.65f); break;
 		}
 
 		m_spNodeWalls[i] = boost::make_shared<Sonic::CMatrixNodeTransform>();
 		m_spNodeWalls[i]->m_Transform.SetPosition(pos);
 		m_spNodeWalls[i]->NotifyChanged();
 		m_spNodeWalls[i]->SetParent(m_spMatrixNodeTransform.get());
-		hk2010_2_0::hkpBoxShape* pRigidBodyShape = i % 2 == 0 ? new hk2010_2_0::hkpBoxShape(0.4f, 3.0f, 3.5f) : new hk2010_2_0::hkpBoxShape(3.5f, 3.0f, 0.4f);
+		hk2010_2_0::hkpBoxShape* pRigidBodyShape = i % 2 == 0 ? new hk2010_2_0::hkpBoxShape(0.2f, 3.0f, 3.5f) : new hk2010_2_0::hkpBoxShape(3.5f, 3.0f, 0.2f);
 		AddRigidBody(m_spWalls[i], pRigidBodyShape, *(int*)0x1E0AFF0, m_spNodeWalls[i]);
 	}
 
 	m_spNodeWalls[4] = boost::make_shared<Sonic::CMatrixNodeTransform>();
-	m_spNodeWalls[4]->m_Transform.SetPosition(hh::math::CVector(0.0f, 2.96f, 0.0f));
+	m_spNodeWalls[4]->m_Transform.SetPosition(hh::math::CVector(0.0f, 3.06f, 0.0f));
 	m_spNodeWalls[4]->NotifyChanged();
 	m_spNodeWalls[4]->SetParent(m_spMatrixNodeTransform.get());
-	hk2010_2_0::hkpBoxShape* pRigidBodyShape = new hk2010_2_0::hkpBoxShape(2.7f, 0.4f, 2.7f);
+	hk2010_2_0::hkpBoxShape* pRigidBodyShape = new hk2010_2_0::hkpBoxShape(2.7f, 0.2f, 2.7f);
 	AddRigidBody(m_spWalls[4], pRigidBodyShape, *(int*)0x1E0AFF0, m_spNodeWalls[4]);
 
 	// Center event collision
