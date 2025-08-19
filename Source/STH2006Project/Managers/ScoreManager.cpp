@@ -710,6 +710,7 @@ ResultData* ScoreManager::calculateResultData()
 	case SMT_pla200:	timeBonusBase = 23000;	break; // TODO: Aquatic Base
 	case (SMT_ghz100 | SMT_Mission1):	timeBonusBase = 41000;	break; // Wave Ocean: Blaze
 	case (SMT_ghz100 | SMT_Mission2):	timeBonusBase = 26000;	break; // Gems Training Ground
+	case (SMT_pla100 | SMT_Mission2):	timeBonusBase = 20000;	break; // Chaos Training Ground
 	case SMT_bsl:						timeBonusBase = 21000;	break; // Silver
 	case (SMT_bsl | SMT_BossHard):		timeBonusBase = 22000;	break; // Silver Hard Mode
 	case SMT_bpc:						timeBonusBase = 19000;	break; // Iblis
