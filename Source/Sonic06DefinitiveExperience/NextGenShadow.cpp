@@ -697,16 +697,22 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
                     applyVelocity.y() = max(0.0f, applyVelocity.y());
                     applyVelocity = applyVelocity.normalized() * context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_HomingSpeed);
 
-                    // Apply damage to lock-on target
-                    context->m_pPlayer->SendMessage
-                    (
-                        context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgDamage>
+                    bool canDamage = true;
+                    context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgIsReceiveDamage>(&canDamage));
+                    
+                    if (canDamage)
+                    {
+                        // Apply damage to lock-on target
+                        context->m_pPlayer->SendMessage
                         (
-                            *(uint32_t*)0x1E0BE34, // DamageID_NoAttack
-                            context->m_spMatrixNode->m_Transform.m_Position,
-                            applyVelocity
-                        )
-                    );
+                            context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgDamage>
+                            (
+                                *(uint32_t*)0x1E0BE34, // DamageID_NoAttack
+                                context->m_spMatrixNode->m_Transform.m_Position,
+                                applyVelocity
+                            )
+                        );
+                    }
 
                     Common::SonicContextHudHomingAttackOutro(context);
                     context->m_HomingAttackTargetActorID = 0;
