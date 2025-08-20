@@ -110,7 +110,14 @@ void Laser::AddCallback
 {
 	Sonic::CObjectBase::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
 
-	if ((!m_statusLoaded && !m_Data.m_DefaultOn) || !m_isOn)
+	// check default states
+	if (!m_useBank)
+	{
+		m_isOn = m_Data.m_DefaultOn;
+		m_useBank = true;
+	}
+
+	if (!m_isOn)
 	{
 		LaserOff(true);
 	}
@@ -131,7 +138,7 @@ void Laser::AddParameterBank
 )
 {
 	in_rParameterBank->AccessParameterBankBool("IsOn", &m_isOn);
-	m_statusLoaded = true;
+	in_rParameterBank->AccessParameterBankBool("UseBank", &m_useBank);
 }
 
 void Laser::SetUpdateParallel

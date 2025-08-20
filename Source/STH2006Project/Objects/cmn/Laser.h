@@ -26,7 +26,7 @@ private:
 private:
 	SharedPtrTypeless m_loopSfx;
 	bool m_isOn = true;
-	bool m_statusLoaded = false;
+	bool m_useBank = false;
 	float m_timer = 0.0f;
 
 	boost::shared_ptr<Sonic::CRigidBody> m_spRigidBody;
