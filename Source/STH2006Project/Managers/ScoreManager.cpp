@@ -146,11 +146,9 @@ HOOK(int*, __fastcall, ScoreManager_GameplayManagerInit, 0xD00F70, uint32_t This
 	uint8_t stageID = Common::GetCurrentStageID() & 0xFF;
 	if 
 	(
-		stageID <= SMT_pla200 ||	// All main stages
+		stageID <= SMT_pla200 ||	// All main stages and missions
 		stageID == SMT_cnz100 ||	// Casino Night (unused but that's original code)
-		stageID == SMT_bsd ||		// Mephiles
-		stageID == SMT_bsl ||		// Silver
-		stageID == SMT_bpc			// Iblis
+		(stageID >= STH_BossFirst && stageID <= STH_BossLast) // All STH2006 bosses
 	)		
 	{
 		// Enable CScoreManager
@@ -710,12 +708,13 @@ ResultData* ScoreManager::calculateResultData()
 	case SMT_pla200:	timeBonusBase = 23000;	break; // TODO: Aquatic Base
 	case (SMT_ghz100 | SMT_Mission1):	timeBonusBase = 41000;	break; // Wave Ocean: Blaze
 	case (SMT_ghz100 | SMT_Mission2):	timeBonusBase = 26000;	break; // Gems Training Ground
-	case (SMT_pla100 | SMT_Mission2):	timeBonusBase = 20000;	break; // Chaos Training Ground
 	case SMT_bsl:						timeBonusBase = 21000;	break; // Silver
 	case (SMT_bsl | SMT_BossHard):		timeBonusBase = 22000;	break; // Silver Hard Mode
 	case SMT_bpc:						timeBonusBase = 19000;	break; // Iblis
 	case (SMT_bpc | SMT_BossHard):		timeBonusBase = 20000;	break; // Iblis Hard Mode
-	case SMT_bsd:						timeBonusBase = 30000;	break; // Mephiles Phase 1
+
+	case STH_tsd:		timeBonusBase = 20000;	break; // Chaos Training Ground
+	case STH_bmf:		timeBonusBase = 30000;	break; // Mephiles Phase 1
 	default:	break;
 	}
 
@@ -726,8 +725,7 @@ ResultData* ScoreManager::calculateResultData()
 	case (SMT_bsl | SMT_BossHard):	// Silver Hard Mode
 	case SMT_bpc:					// Iblis
 	case (SMT_bpc | SMT_BossHard):	// Iblis Hard Mode
-	case SMT_bsd:					// Mephiles Phase 1
-	case (SMT_bsd | SMT_BossHard):	// Mephiles Phase 2
+	case STH_bmf:					// Mephiles Phase 1
 	{
 		scoreTable = ScoreTable{ 30000,27500,25000,5000 };
 		timeBonusRate = 80;
