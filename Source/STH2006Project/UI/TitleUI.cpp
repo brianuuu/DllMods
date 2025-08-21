@@ -956,7 +956,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			{
 				switch (m_stageData.m_stage)
 				{
-				case SMT_bsd: endState = 3; break;
+				case STH_bmf: endState = 3; break;
 				}
 			}
 
