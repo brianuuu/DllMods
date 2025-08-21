@@ -6,6 +6,11 @@ void CustomEvent::registerObject()
 	BB_INSTALL_SET_OBJECT_MAKE_HOOK(CustomEvent);
 }
 
+CustomEvent::~CustomEvent()
+{
+	Revert();
+}
+
 void CustomEvent::AddCallback
 (
 	const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, 
@@ -34,21 +39,7 @@ void CustomEvent::AddCallback
 
 void CustomEvent::KillCallback()
 {
-	// Handle reverting changed values
-	if (!m_chaosBoostCanLevelDown)
-	{
-		S06DE_API::SetChaosBoostCanLevelDown(true);
-	}
-
-	if (m_chaosBoostMatchMaxLevel)
-	{
-		S06DE_API::SetChaosBoostMatchMaxLevel(false);
-	}
-
-	if (m_chaosBoostMaxLevel < 3)
-	{
-		S06DE_API::SetChaosBoostMaxLevel(3);
-	}
+	Revert();
 }
 
 void CustomEvent::AddParameterBank
@@ -169,4 +160,24 @@ bool CustomEvent::ProcessMessage
 	return Sonic::CObjectBase::ProcessMessage(message, flag);
 }
 
+void CustomEvent::Revert()
+{
+	// Handle reverting changed values
+	if (!m_chaosBoostCanLevelDown)
+	{
+		m_chaosBoostCanLevelDown = true;
+		S06DE_API::SetChaosBoostCanLevelDown(true);
+	}
 
+	if (m_chaosBoostMatchMaxLevel)
+	{
+		m_chaosBoostMatchMaxLevel = false;
+		S06DE_API::SetChaosBoostMatchMaxLevel(false);
+	}
+
+	if (m_chaosBoostMaxLevel < 3)
+	{
+		m_chaosBoostMaxLevel = 3;
+		S06DE_API::SetChaosBoostMaxLevel(3);
+	}
+}

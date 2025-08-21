@@ -11,6 +11,8 @@ public:
 	BB_SET_OBJECT_MAKE("CustomEvent");
 	static void registerObject();
 
+	virtual ~CustomEvent() override;
+
 private:
 	void AddCallback(const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	void KillCallback() override;
@@ -21,5 +23,6 @@ private:
 	bool m_chaosBoostCanLevelDown = true;
 	bool m_chaosBoostMatchMaxLevel = false;
 	uint32_t m_chaosBoostMaxLevel = 3;
+	void Revert();
 };
 
