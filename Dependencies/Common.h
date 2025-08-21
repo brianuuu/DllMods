@@ -975,6 +975,17 @@ enum StageMissionType : uint32_t
 	SMT_Mission5 = 0x500,
 
 	SMT_BossHard = 0x100,
+
+	// STH2006 stages
+	STH_tsd = 0x210,
+
+	STH_bsn = 0x14,
+	STH_bsd = 0x15,
+	STH_bsl = 0x16,
+	STH_bmf = 0x17,
+
+	STH_BossFirst = STH_bsn,
+	STH_BossLast = STH_bmf,
 };
 
 enum LanguageType : uint8_t
