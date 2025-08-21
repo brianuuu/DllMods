@@ -27,6 +27,14 @@ void GadgetBike::applyPatches()
 	INSTALL_HOOK(GadgetBike_GroundedStateChange);
 }
 
+GadgetBike::~GadgetBike()
+{
+	if (canGetOnBikeActorID == m_ActorID)
+	{
+		canGetOnBikeActorID = 0;
+	}
+}
+
 void GadgetBike::InitializeEditParam
 (
 	Sonic::CEditParam& in_rEditParam

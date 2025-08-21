@@ -163,6 +163,11 @@ GadgetGlider::~GadgetGlider()
 	{
 		m_loopSfx.reset();
 	}
+
+	if (canGetOnGliderActorID == m_ActorID)
+	{
+		canGetOnGliderActorID = 0;
+	}
 }
 
 void GadgetGlider::InitializeEditParam

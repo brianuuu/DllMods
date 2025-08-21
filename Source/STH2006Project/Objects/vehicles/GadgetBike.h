@@ -13,6 +13,8 @@ public:
 	static void registerObject();
 	static void applyPatches();
 
+	virtual ~GadgetBike() override;
+
 	enum class Direction
 	{
 		None,

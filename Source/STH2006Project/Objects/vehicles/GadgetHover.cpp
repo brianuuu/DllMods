@@ -71,6 +71,14 @@ void GadgetHover::applyPatches()
 	INSTALL_HOOK(GadgetHover_GroundedStateChange);
 }
 
+GadgetHover::~GadgetHover()
+{
+	if (canGetOnHoverActorID == m_ActorID)
+	{
+		canGetOnHoverActorID = 0;
+	}
+}
+
 void GadgetHover::InitializeEditParam
 (
 	Sonic::CEditParam& in_rEditParam

@@ -36,6 +36,8 @@ public:
 	static void registerObject();
 	static void applyPatches();
 
+	virtual ~GadgetHover() override;
+
 	enum class Direction
 	{
 		None,

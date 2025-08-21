@@ -50,7 +50,7 @@ public:
 	static void registerObject();
 	static void applyPatches();
 
-	~GadgetGlider();
+	virtual ~GadgetGlider() override;
 
 	enum class Direction
 	{
