@@ -15,7 +15,6 @@ public:
 
 private:
 	void AddCallback(const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
-	void KillCallback() override;
 	void AddParameterBank(const Hedgehog::Base::CRefPtr<Sonic::CParameterBank>& in_rParameterBank) override;
 	void SetUpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo) override;
 	bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;
@@ -23,6 +22,5 @@ private:
 	bool m_chaosBoostCanLevelDown = true;
 	bool m_chaosBoostMatchMaxLevel = false;
 	uint32_t m_chaosBoostMaxLevel = 3;
-	void Revert();
 };
 

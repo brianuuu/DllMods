@@ -8,7 +8,21 @@ void CustomEvent::registerObject()
 
 CustomEvent::~CustomEvent()
 {
-	Revert();
+	// Handle reverting changed values
+	if (!m_chaosBoostCanLevelDown)
+	{
+		S06DE_API::SetChaosBoostCanLevelDown(true);
+	}
+
+	if (m_chaosBoostMatchMaxLevel)
+	{
+		S06DE_API::SetChaosBoostMatchMaxLevel(false);
+	}
+
+	if (m_chaosBoostMaxLevel < 3)
+	{
+		S06DE_API::SetChaosBoostMaxLevel(3);
+	}
 }
 
 void CustomEvent::AddCallback
@@ -35,11 +49,6 @@ void CustomEvent::AddCallback
 	{
 		S06DE_API::SetChaosBoostMaxLevel(m_chaosBoostMaxLevel);
 	}
-}
-
-void CustomEvent::KillCallback()
-{
-	Revert();
 }
 
 void CustomEvent::AddParameterBank
@@ -158,26 +167,4 @@ bool CustomEvent::ProcessMessage
 	}
 
 	return Sonic::CObjectBase::ProcessMessage(message, flag);
-}
-
-void CustomEvent::Revert()
-{
-	// Handle reverting changed values
-	if (!m_chaosBoostCanLevelDown)
-	{
-		m_chaosBoostCanLevelDown = true;
-		S06DE_API::SetChaosBoostCanLevelDown(true);
-	}
-
-	if (m_chaosBoostMatchMaxLevel)
-	{
-		m_chaosBoostMatchMaxLevel = false;
-		S06DE_API::SetChaosBoostMatchMaxLevel(false);
-	}
-
-	if (m_chaosBoostMaxLevel < 3)
-	{
-		m_chaosBoostMaxLevel = 3;
-		S06DE_API::SetChaosBoostMaxLevel(3);
-	}
 }

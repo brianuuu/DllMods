@@ -35,6 +35,13 @@ Mephiles::~Mephiles()
 	{
 		m_Data.m_PositionList->Release();
 	}
+
+	// re-enable Chaos Drive sfx
+	S06DE_API::SetChaosAttackForced(false);
+	S06DE_API::SetChaosEnergyRewardOverride();
+	WRITE_MEMORY(0x11245A3, uint8_t, 0xE8, 0x98, 0xA4, 0xC4, 0xFF);
+
+	ToggleSlowTime(false);
 }
 
 void Mephiles::InitializeEditParam
@@ -216,16 +223,6 @@ void Mephiles::AddCallback
 	// disable Chaos Drive sfx
 	S06DE_API::SetChaosEnergyRewardOverride(0.5f);
 	WRITE_JUMP(0x11245A3, (void*)0x11245AF);
-}
-
-void Mephiles::KillCallback()
-{
-	// re-enable Chaos Drive sfx
-	S06DE_API::SetChaosAttackForced(false);
-	S06DE_API::SetChaosEnergyRewardOverride();
-	WRITE_MEMORY(0x11245A3, uint8_t, 0xE8, 0x98, 0xA4, 0xC4, 0xFF);
-
-	ToggleSlowTime(false);
 }
 
 void Mephiles::SetUpdateParallel
