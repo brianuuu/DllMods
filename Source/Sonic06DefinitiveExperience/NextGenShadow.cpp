@@ -875,7 +875,7 @@ bool NextGenShadow::CheckChaosBoost()
         return false;
     }
 
-    if (*Common::GetPlayerBoost() == 0.0f || m_chaosMaturity < 100.0f)
+    if (m_chaosMaturity < 100.0f)
     {
         return false;
     }
