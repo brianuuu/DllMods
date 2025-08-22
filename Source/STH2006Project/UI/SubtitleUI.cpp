@@ -29,6 +29,7 @@ float SubtitleUI::addSubtitle(std::string const& name, std::string const& id)
 
 float SubtitleUI::addSubtitle(mst::TextEntry const& entry, std::vector<float> const& durationOverrides)
 {
+    m_subtitleSfx.reset();
     m_captionData.clear();
     int tagIndex = 0;
     float totalDuration = 0.0f;
@@ -47,7 +48,6 @@ float SubtitleUI::addSubtitle(mst::TextEntry const& entry, std::vector<float> co
         }
         
         // Front tag can be voice
-        m_subtitleSfx.reset();
         if (tagIndex < entry.m_tags.size() && subtitle.front() == '$')
         {
             // is this a sound or a picture?
