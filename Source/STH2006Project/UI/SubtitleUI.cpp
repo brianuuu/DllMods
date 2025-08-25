@@ -247,38 +247,42 @@ void SubtitleUI::draw()
         float posY = 0.6958f;
         float alpha = 1.0f;
 
-        static bool visible = true;
-        ImGui::Begin("Textbox", &visible, UIContext::m_hudFlags);
+        uint32_t const optionFlags = *(uint32_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x18 });
+        if (optionFlags & 0x10)
         {
-            // Fade in and out
-            float frame1 = m_captionData.m_timer * 60.0f;
-            float frame2 = (subtitle.m_duration - m_captionData.m_timer) * 60.0f;
-            if (frame1 < 5.0f && index == 0)
+            static bool visible = true;
+            ImGui::Begin("Textbox", &visible, UIContext::m_hudFlags);
             {
-                posY += 0.03476f * (5.0f - frame1);
-                alpha = 0.2f * frame1;
+                // Fade in and out
+                float frame1 = m_captionData.m_timer * 60.0f;
+                float frame2 = (subtitle.m_duration - m_captionData.m_timer) * 60.0f;
+                if (frame1 < 5.0f && index == 0)
+                {
+                    posY += 0.03476f * (5.0f - frame1);
+                    alpha = 0.2f * frame1;
+                }
+                else if (frame2 < 5.0f && m_captionData.m_subtitles.size() == 1)
+                {
+                    posY += 0.03476f * (5.0f - frame2);
+                    alpha = 0.2f * frame2;
+                }
+
+                ImGui::SetWindowFocus();
+                ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
+                ImGui::Image(m_captionData.m_textbox, ImVec2(sizeX, sizeY), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, alpha * 0.9f));
+                ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * posX, *BACKBUFFER_HEIGHT * posY));
             }
-            else if (frame2 < 5.0f && m_captionData.m_subtitles.size() == 1)
+            ImGui::End();
+
+            ImGui::Begin("Caption", &visible, UIContext::m_hudFlags);
             {
-                posY += 0.03476f * (5.0f - frame2);
-                alpha = 0.2f * frame2;
+                ImGui::SetWindowFocus();
+                ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
+                drawSubtitle(subtitle, alpha);
+                ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.2023f, *BACKBUFFER_HEIGHT * (posY + 0.047f)));
             }
-
-            ImGui::SetWindowFocus();
-            ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
-            ImGui::Image(m_captionData.m_textbox, ImVec2(sizeX, sizeY), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, alpha * 0.9f));
-            ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * posX, *BACKBUFFER_HEIGHT * posY));
+            ImGui::End();
         }
-        ImGui::End();
-
-        ImGui::Begin("Caption", &visible, UIContext::m_hudFlags);
-        {
-            ImGui::SetWindowFocus();
-            ImGui::SetWindowSize(ImVec2(sizeX, sizeY));
-            drawSubtitle(subtitle, alpha);
-            ImGui::SetWindowPos(ImVec2(*BACKBUFFER_WIDTH * 0.2023f, *BACKBUFFER_HEIGHT * (posY + 0.047f)));
-        }
-        ImGui::End();
 
         m_captionData.m_timer += Application::getHudDeltaTime();
         if (m_captionData.m_timer > subtitle.m_duration)

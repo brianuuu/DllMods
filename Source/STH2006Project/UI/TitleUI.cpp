@@ -1619,8 +1619,8 @@ void TitleUI::applyPatches()
 	m_menuText[MTT_OptionAudioJP] = u8"オーディオの設定を変更します";
 	m_menuText[MTT_OptionVO] = "Adjust voice-over language.";
 	m_menuText[MTT_OptionVOJP] = u8"音声言語の設定を変更します";
-	m_menuText[MTT_OptionDialogue] = "Adjust dialogue settings.";
-	m_menuText[MTT_OptionDialogueJP] = u8"専用ボイズの設定を変更します";
+	m_menuText[MTT_OptionDialogue] = "Adjust dialogue and hint settings.";
+	m_menuText[MTT_OptionDialogueJP] = u8"専用ボイズやヒントの設定を変更します";
 	m_menuText[MTT_OptionSubtitle] = "Adjust subtitle settings.";
 	m_menuText[MTT_OptionSubtitleJP] = u8"字幕の設定を変更します";
 	for (auto& iter : m_menuText)

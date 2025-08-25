@@ -170,6 +170,14 @@ void Hint::AddCallback
 		return;
 	}
 
+	// hint disabled in option
+	uint32_t const optionFlags = *(uint32_t*)Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x18 });
+	if ((optionFlags & 0x2) == 0)
+	{
+		Kill();
+		return;
+	}
+
 	// cache .mst file and get subtitle entry
 	auto const& file = m_Data.m_HintFile->m_pMember->m_DefaultValueName;
 	if (!file.empty() && MstManager::RequestMst(file.c_str()))
