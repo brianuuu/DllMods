@@ -40,8 +40,8 @@ void CustomHUD::ToggleScreen
     Sonic::CGameObject* parent
 )
 {
-    // ms_IsRenderGameMainHud
-    if (*(bool*)0x1A430D8)
+    // ms_IsRenderGameMainHud, "Disable HUD in Stages" code not enabled
+    if (*(bool*)0x1A430D8 && *(uint8_t*)0x108AB3F != 0x90)
     {
         CreateScreen(project, object, in_RenderableCategory, updateAtPause, parent);
     }
