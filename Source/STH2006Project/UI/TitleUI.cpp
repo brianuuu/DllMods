@@ -363,9 +363,6 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 		case OptionType::OT_Audio:
 			patternIndex = isJapanese ? 1 : 0;
 			break;
-		case OptionType::OT_UI:
-			patternIndex = isJapanese ? 3 : 2;
-			break;
 		case OptionType::OT_VO:
 			patternIndex = isJapanese ? 5 : 4;
 			break;
@@ -374,6 +371,9 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuBegin, 0x572750, hh::f
 			break;
 		case OptionType::OT_Subtitle:
 			patternIndex = isJapanese ? 9 : 8;
+			break;
+		case OptionType::OT_Control:
+			patternIndex = isJapanese ? 3 : 2;
 			break;
 		}
 
@@ -1096,10 +1096,6 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 				TitleUI::optionAudioSetIndex(0);
 				m_menuState = MenuState::MS_OptionAudio;
 				break;
-			case OptionType::OT_UI:
-				TitleUI::optionOnOffSetIndex(*TitleUI_GetUILanguageType() == LT_Japanese ? 1 : 0);
-				m_menuState = MenuState::MS_OptionUI;
-				break;
 			case OptionType::OT_VO:
 				TitleUI::optionOnOffSetIndex(*TitleUI_GetVoiceLanguageType() == LT_Japanese ? 1 : 0);
 				m_menuState = MenuState::MS_OptionVO;
@@ -1111,6 +1107,10 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 			case OptionType::OT_Subtitle:
 				TitleUI::optionOnOffSetIndex((*TitleUI_GetOptionFlag() & 0x10) == 0 ? 1 : 0);
 				m_menuState = MenuState::MS_OptionSubtitle;
+				break;
+			case OptionType::OT_Control:
+				TitleUI::optionOnOffSetIndex((*TitleUI_GetOptionFlag() & 0x1) == 0 ? 1 : 0);
+				m_menuState = MenuState::MS_OptionControl;
 				break;
 			}
 		}
@@ -1189,61 +1189,27 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 		}
 		break;
 	}
-	case MenuState::MS_OptionUI:
 	case MenuState::MS_OptionVO:
 	{
 		if (scrollUp || scrollDown)
 		{
 			TitleUI::optionOnOffSetIndex(m_optionOnOffIndex == 0 ? 1 : 0);
 			Common::PlaySoundStatic(soundHandle, 1000004);
-
-			if (m_menuState == MenuState::MS_OptionUI)
-			{
-				*TitleUI_GetUILanguageType() = m_optionOnOffIndex == 0 ? LT_English : LT_Japanese;
-
-				// Refresh language
-				TitleUI_PlayButtonMotion(false);
-				for (int i = 0; i < OptionType::OT_COUNT; i++)
-				{
-					int patternIndex = 0;
-					switch (i)
-					{
-					case OptionType::OT_Audio:
-						patternIndex = m_optionOnOffIndex == 0 ? 1 : 0;
-						break;
-					case OptionType::OT_UI:
-						patternIndex = m_optionOnOffIndex == 0 ? 3 : 2;
-						break;
-					case OptionType::OT_VO:
-						patternIndex = m_optionOnOffIndex == 0 ? 5 : 4;
-						break;
-					case OptionType::OT_Dialog:
-						patternIndex = m_optionOnOffIndex == 0 ? 7 : 6;
-						break;
-					case OptionType::OT_Subtitle:
-						patternIndex = m_optionOnOffIndex == 0 ? 9 : 8;
-						break;
-					}
-					m_sceneOptionText[i]->GetNode("text1")->SetPatternIndex(patternIndex);
-				}
-			}
-			else
-			{
-				*TitleUI_GetVoiceLanguageType() = m_optionOnOffIndex == 0 ? LT_English : LT_Japanese;
-			}
+			*TitleUI_GetVoiceLanguageType() = m_optionOnOffIndex == 0 ? LT_English : LT_Japanese;
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
 		{
 			Common::PlaySoundStatic(soundHandle, 1000003);
 			TitleUI_PlayButtonMotion(true);
 
-			TitleUI::optionSetIndex(m_menuState == MenuState::MS_OptionUI ? OptionType::OT_UI : OptionType::OT_VO);
+			TitleUI::optionSetIndex(OptionType::OT_VO);
 			m_menuState = MenuState::MS_Option;
 		}
 		break;
 	}
 	case MenuState::MS_OptionDialog:
 	case MenuState::MS_OptionSubtitle:
+	case MenuState::MS_OptionControl:
 	{
 		if (scrollUp || scrollDown)
 		{
@@ -1261,7 +1227,7 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 					*TitleUI_GetOptionFlag() &= 0xFFFFFFFD;
 				}
 			}
-			else
+			else if (m_menuState == MenuState::MS_OptionSubtitle)
 			{
 				if (m_optionOnOffIndex == 0)
 				{
@@ -1272,13 +1238,24 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 					*TitleUI_GetOptionFlag() &= 0xFFFFFFEF;
 				}
 			}
+			else
+			{
+				if (m_optionOnOffIndex == 0)
+				{
+					*TitleUI_GetOptionFlag() |= 0x1;
+				}
+				else
+				{
+					*TitleUI_GetOptionFlag() &= 0xFFFFFFFE;
+				}
+			}
 		}
 		else if (padState->IsTapped(Sonic::EKeyState::eKeyState_B))
 		{
 			Common::PlaySoundStatic(soundHandle, 1000003);
 			TitleUI_PlayButtonMotion(true);
 
-			TitleUI::optionSetIndex(m_menuState == MenuState::MS_OptionDialog ? OptionType::OT_Dialog : OptionType::OT_Subtitle);
+			TitleUI::optionSetIndex(m_menuState == MenuState::MS_OptionDialog ? OptionType::OT_Dialog : (m_menuState == MenuState::MS_OptionSubtitle ? OptionType::OT_Subtitle : OptionType::OT_Control));
 			m_menuState = MenuState::MS_Option;
 		}
 		break;
@@ -1623,6 +1600,8 @@ void TitleUI::applyPatches()
 	m_menuText[MTT_OptionDialogueJP] = u8"専用ボイズやヒントの設定を変更します";
 	m_menuText[MTT_OptionSubtitle] = "Adjust subtitle settings.";
 	m_menuText[MTT_OptionSubtitleJP] = u8"字幕の設定を変更します";
+	m_menuText[MTT_OptionControl] = "Adjust control tutorial settings.";
+	m_menuText[MTT_OptionControlJP] = u8"アクションナビの設定を変更します";
 	for (auto& iter : m_menuText)
 	{
 		iter.second = std::regex_replace(iter.second, std::regex(" "), "  ");
@@ -1960,10 +1939,10 @@ void TitleUI::optionSetIndex(int index)
 			m_sceneOptionAudioBar1->SetHideFlag(true);
 			m_sceneOptionAudioBar2->SetHideFlag(true);
 			break;
-		case OptionType::OT_UI:
 		case OptionType::OT_VO:
 		case OptionType::OT_Dialog:
 		case OptionType::OT_Subtitle:
+		case OptionType::OT_Control:
 			TitleUI_PlayMotion(m_sceneOptionOnOff, "jimaku_in", false, true);
 			break;
 		}
@@ -1978,22 +1957,15 @@ void TitleUI::optionSetIndex(int index)
 			m_sceneOptionAudioBar1->m_MotionFrame = *TitleUI_GetMusicVolume() / 0.63f * 100.0f;
 			m_sceneOptionAudioBar2->m_MotionFrame = *TitleUI_GetEffectVolume() / 0.63f * 100.0f;
 			break;
-		case OptionType::OT_UI:
 		case OptionType::OT_VO:
 			TitleUI_PlayMotion(m_sceneOptionOnOff, "jimaku_in", false, false);
 			m_sceneOptionOnOff->GetNode("text_on")->SetPatternIndex(1);
 			m_sceneOptionOnOff->GetNode("text_off")->SetPatternIndex(1);
-			if (index == OptionType::OT_UI)
-			{
-				optionOnOffSetIndex(*TitleUI_GetUILanguageType() == LT_Japanese ? 1 : 0);
-			}
-			else
-			{
-				optionOnOffSetIndex(*TitleUI_GetVoiceLanguageType() == LT_Japanese ? 1 : 0);
-			}
+			optionOnOffSetIndex(*TitleUI_GetVoiceLanguageType() == LT_Japanese ? 1 : 0);
 			break;
 		case OptionType::OT_Dialog:
 		case OptionType::OT_Subtitle:
+		case OptionType::OT_Control:
 			TitleUI_PlayMotion(m_sceneOptionOnOff, "jimaku_in", false, false);
 			m_sceneOptionOnOff->GetNode("text_on")->SetPatternIndex(0);
 			m_sceneOptionOnOff->GetNode("text_off")->SetPatternIndex(0);
@@ -2001,9 +1973,13 @@ void TitleUI::optionSetIndex(int index)
 			{
 				optionOnOffSetIndex((*TitleUI_GetOptionFlag() & 0x2) == 0 ? 1 : 0);
 			}
-			else
+			else if(index == OptionType::OT_Subtitle)
 			{
 				optionOnOffSetIndex((*TitleUI_GetOptionFlag() & 0x10) == 0 ? 1 : 0);
+			}
+			else
+			{
+				optionOnOffSetIndex((*TitleUI_GetOptionFlag() & 0x1) == 0 ? 1 : 0);
 			}
 			break;
 		}
@@ -2476,6 +2452,9 @@ void TitleUI::drawStageData()
 			break;
 		case OptionType::OT_Subtitle:
 			menuTextType = MenuTextType::MTT_OptionSubtitle;
+			break;
+		case OptionType::OT_Control:
+			menuTextType = MenuTextType::MTT_OptionControl;
 			break;
 		}
 		break;

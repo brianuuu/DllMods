@@ -22,10 +22,10 @@ enum MenuState : int
 	MS_Option,
 	MS_OptionSaving,
 	MS_OptionAudio,
-	MS_OptionUI,
 	MS_OptionVO,
 	MS_OptionDialog,
 	MS_OptionSubtitle,
+	MS_OptionControl,
 
 	MS_ActWarningYesNo,
 	//MS_TownWarningYesNo,
@@ -77,11 +77,9 @@ enum OptionType : int
 	OT_VO,
 	OT_Dialog,
 	OT_Subtitle,
+	OT_Control,
 
 	OT_COUNT,
-
-	// Disabled
-	OT_UI,
 };
 
 enum MenuTextType : int
@@ -112,6 +110,8 @@ enum MenuTextType : int
 	MTT_OptionDialogueJP,
 	MTT_OptionSubtitle,
 	MTT_OptionSubtitleJP,
+	MTT_OptionControl,
+	MTT_OptionControlJP,
 
 	MTT_COUNT
 };
