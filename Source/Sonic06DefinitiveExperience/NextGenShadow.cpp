@@ -1397,6 +1397,7 @@ private:
     float m_LifeTime = 0.0f;
     Hedgehog::Math::CVector m_Position;
     boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
+    std::set<uint32_t> m_targets;
 
 public:
     CObjChaosBlast
@@ -1457,6 +1458,13 @@ public:
 
             if (std::strstr(message.GetType(), "MsgHitEventCollision") != nullptr)
             {
+                // only send once per actor
+                if (m_targets.count(message.m_SenderActorID))
+                {
+                    return true;
+                }
+                m_targets.insert(message.m_SenderActorID);
+
                 uint32_t enemyType = 0u;
                 SendMessageImm(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgGetEnemyType>(&enemyType));
 
@@ -1470,13 +1478,13 @@ public:
                     // get dynamic position for object physics
                     Common::fObjectPhysicsDynamicPosition(senderActor, targetPosition);
                 }
-                else if (enemyType == 1)
+                else if (enemyType > 0)
                 {
                     // try to get center position from lock-on for enemy
                     SendMessageImm(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
 
-                    // ignore HP
-                    *(uint8_t*)((uint32_t)senderActor + 0x16F) = 0u;
+                    // send event to notify kill 5 HP
+                    SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(420));
                 }
                 else
                 {

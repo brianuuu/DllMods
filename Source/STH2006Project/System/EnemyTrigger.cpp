@@ -33,6 +33,21 @@ void EnemyTrigger_HandleEnemyMsgNotifyObjectEvent(hh::fnd::CMessageActor* This, 
             )
         );
     }
+    else if (msg.m_Event == 420)
+    {
+        // chaos blast, -4 HP, the 5th HP will be handled by MsgDamage
+        uint32_t pCEnemyBase = (uint32_t)This - 0x28;
+        uint8_t* hp = (uint8_t*)(pCEnemyBase + 0x16F);
+
+        if (*hp >= 4)
+        {
+            (*hp) -= 4;
+        }
+        else
+        {
+            (*hp) = 0;
+        }
+    }
 }
 
 bool EnemyTrigger_HandleEnemyMsgDamage(hh::fnd::CMessageActor* This, hh::fnd::Message& message)

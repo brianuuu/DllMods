@@ -334,7 +334,14 @@ bool Mephiles::ProcessMessage
 							Common::ObjectPlaySound(this, 200614000, soundHandle);
 						}
 
-						m_HP--;
+						if (m_nextDamageChaosBlast)
+						{
+							m_HP = max(0, m_HP - 5);
+						}
+						else
+						{
+							m_HP--;
+						}
 						S06HUD_API::SetBossHealth(m_HP, m_Data.m_MaxHP);
 
 						if (prop > 0.5f && GetHPRatio() <= 0.5f)
@@ -371,6 +378,8 @@ bool Mephiles::ProcessMessage
 				hh::math::CVector const otherPos = bodyBase + (msg.m_DamagePosition - bodyBase).normalized() * damageDist;
 				SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(otherPos, true));
 			}
+
+			m_nextDamageChaosBlast = false;
 			return true;
 		}
 		
@@ -481,6 +490,12 @@ bool Mephiles::ProcessMessage
 				{
 					m_darkSphereL.reset();
 				}
+				break;
+			}
+			case 420:
+			{
+				// Chaos Blast
+				m_nextDamageChaosBlast = true;
 				break;
 			}
 			}
