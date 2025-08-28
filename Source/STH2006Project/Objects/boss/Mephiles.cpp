@@ -1306,7 +1306,11 @@ void Mephiles::StateDeadAdvance(float dt)
 			}
 
 			LoadingUI::startNowLoading();
-			Kill();
+
+			// hide underground
+			m_spMatrixNodeTransform->m_Transform.SetPosition(hh::math::CVector(0.0f, -1000.0f, 0.0f));
+			m_spMatrixNodeTransform->NotifyChanged();
+			m_stateStage++;
 		}
 		break;
 	}
