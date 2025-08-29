@@ -153,9 +153,8 @@ bool GadgetBike::SetAddColliders
 
 	// fake player collision
 	hk2010_2_0::hkpCylinderShape* playerEventTrigger = new hk2010_2_0::hkpCylinderShape(hh::math::CVector(0.0f, 0.0f, -0.3f), hh::math::CVector(0.0f, 1.2f, -0.3f), 0.5f);
-	hk2010_2_0::hkpCylinderShape* playerEventTrigger2 = new hk2010_2_0::hkpCylinderShape(hh::math::CVector(0.0f, 0.0f, -0.3f), hh::math::CVector(0.0f, 1.2f, -0.3f), 0.5f);
 	AddEventCollision("FakePlayer", playerEventTrigger, *(int*)0x1E0AF90, true, m_spNodeModel); // TypePlayer
-	AddEventCollision("FakePlayerItem", playerEventTrigger2, *(int*)0x1E0AF8C, true, m_spNodeModel); // TypePlayerItem
+	AddEventCollision("FakePlayerItem", playerEventTrigger, *(int*)0x1E0AF8C, true, m_spNodeModel); // TypePlayerItem
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayerItem", false);
 
