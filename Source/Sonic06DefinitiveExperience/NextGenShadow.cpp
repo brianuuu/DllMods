@@ -3113,6 +3113,11 @@ HOOK(bool, __fastcall, NextGenShadow_CSonicStateStartCrouchingEnd, 0xDEF0A0, hh:
 //---------------------------------------------------
 void NextGenShadow::ToggleStartTeleport(bool enable)
 {
+    if (Configuration::m_model != Configuration::ModelType::Shadow)
+    {
+        return;
+    }
+
     if (!m_startModelHide && enable)
     {
         m_startModelHide = true;
