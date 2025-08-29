@@ -242,6 +242,8 @@ bool Configuration::load(const std::string& rootPath)
         bbWriter::applyModel(str, m_model);
         bb3.addReplace("Sonic.arl", str + ".arl");
         bb3.addReplace("Sonic.ar.00", str + ".ar.00");
+        bb3.addReplace("Sonic.ar.01", str + ".ar.01");
+        bb3.addReplace("Sonic.ar.02", str + ".ar.02");
     }
 
     // Optional codes
