@@ -3136,6 +3136,16 @@ void NextGenShadow::applyPatches()
 {
     // Fix character creation
     WRITE_MEMORY(0xE25998, char*, "RightToeBase"); // Toe_R
+    WRITE_MEMORY(0xE15BE8, char*, "RightToeBase"); // Toe_R
+    WRITE_MEMORY(0xE15D91, char*, "LeftToeBase"); // Toe_L
+
+    // IK legs
+    WRITE_MEMORY(0xE1413D, char*, "LeftToe_End");
+    WRITE_MEMORY(0xE1418B, char*, "LeftToe_End");
+    WRITE_MEMORY(0xE141B3, char*, "LeftToe_End");
+    WRITE_MEMORY(0xE141E7, char*, "RightToe_End");
+    WRITE_MEMORY(0xE1420F, char*, "RightToe_End");
+    WRITE_MEMORY(0xE14237, char*, "RightToe_End");
 
     // Homing trail texture
     WRITE_MEMORY(0xE5FE61, char*, "homing_sd");
