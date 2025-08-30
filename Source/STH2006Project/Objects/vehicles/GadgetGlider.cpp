@@ -672,25 +672,6 @@ void GadgetGlider::AdvanceFlight(float dt)
 	// player input
 	if (m_state == State::Flight)
 	{
-		// fire missiles
-		if (m_playerID)
-		{
-			bool const rLoaded = m_spGunR->IsLoaded();
-			bool const lLoaded = m_spGunL->IsLoaded();
-			S06HUD_API::SetGadgetCount(rLoaded + lLoaded, 2);
-			if (padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger))
-			{
-				if (rLoaded)
-				{
-					SendMessage(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(0));
-				}
-				else if (lLoaded)
-				{
-					SendMessage(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(0));
-				}
-			}
-		}
-
 		// boost max speed
 		if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_A))
 		{
@@ -752,6 +733,25 @@ void GadgetGlider::AdvanceFlight(float dt)
 			{
 				m_direction = direction;
 				SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl(GetAnimationName().c_str()));
+			}
+		}
+	}
+
+	// fire missiles
+	if (m_playerID)
+	{
+		bool const rLoaded = m_spGunR->IsLoaded();
+		bool const lLoaded = m_spGunL->IsLoaded();
+		S06HUD_API::SetGadgetCount(rLoaded + lLoaded, 2);
+		if (m_state == State::Flight && padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger))
+		{
+			if (rLoaded)
+			{
+				SendMessage(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(0));
+			}
+			else if (lLoaded)
+			{
+				SendMessage(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(0));
 			}
 		}
 	}
