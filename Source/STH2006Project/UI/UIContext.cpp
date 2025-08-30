@@ -38,6 +38,7 @@ Backend UIContext::getBackend()
 
 void UIContext::initialize(HWND window, IUnknown* device)
 {
+    // Rebuilds fontDatabase.txt with all characters in .mst files
     //cacheSubtitleCharacters();
 
     INSTALL_HOOK(MsgFadeOutFxp);
