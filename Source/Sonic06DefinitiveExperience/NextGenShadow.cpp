@@ -3140,12 +3140,12 @@ void NextGenShadow::applyPatches()
     WRITE_MEMORY(0xE15D91, char*, "LeftToeBase"); // Toe_L
 
     // IK legs
-    WRITE_MEMORY(0xE1413D, char*, "LeftToe_End");
-    WRITE_MEMORY(0xE1418B, char*, "LeftToe_End");
-    WRITE_MEMORY(0xE141B3, char*, "LeftToe_End");
-    WRITE_MEMORY(0xE141E7, char*, "RightToe_End");
-    WRITE_MEMORY(0xE1420F, char*, "RightToe_End");
-    WRITE_MEMORY(0xE14237, char*, "RightToe_End");
+    WRITE_MEMORY(0xE1413D, char*, "LeftToe_End"); // Thigh_L
+    WRITE_MEMORY(0xE1418B, char*, "LeftToe_End"); // Calf_L
+    WRITE_MEMORY(0xE141B3, char*, "LeftToe_End"); // Foot_L
+    WRITE_MEMORY(0xE141E7, char*, "RightToe_End"); // Thigh_R
+    WRITE_MEMORY(0xE1420F, char*, "RightToe_End"); // Calf_R
+    WRITE_MEMORY(0xE14237, char*, "RightToe_End"); // Foot_R
 
     // Homing trail texture
     WRITE_MEMORY(0xE5FE61, char*, "homing_sd");
