@@ -1555,10 +1555,10 @@ void TitleUI::applyPatches()
 	WRITE_NOP(0xD22CC9, 5); // don't display auto save icon here
 
 	// Yes No Window
-	m_yesNoText[YesNoTextType::YNTT_QuitGame] = "Quit  the  game.\nThe  progress  of  the  game  from  the  last  saved\npoint  will  not  be  saved.  OK?";
-	m_yesNoText[YesNoTextType::YNTT_QuitGameJP] = u8"ゲームを終了します\n最後にセーブしたところから\nここまでの進行は保存されませんが\nそれでもよろしいですか？";
-	m_yesNoText[YesNoTextType::YNTT_ReturnTitle] = "Return  to  Title  Screen.\nThe  progress  of  the  game  from  the  last  saved\npoint  will  not  be  saved.  OK?";
-	m_yesNoText[YesNoTextType::YNTT_ReturnTitleJP] = u8"ゲームを終了して、タイトルに戻ります\n最後にセーブしたところから\nここまでの進行は保存されませんが\nそれでもよろしいですか？";
+	m_yesNoText[YesNoTextType::YNTT_QuitGame] = "Quit  the  game.\nOK?";
+	m_yesNoText[YesNoTextType::YNTT_QuitGameJP] = u8"ゲームを終了します\nよろしいですか？";
+	m_yesNoText[YesNoTextType::YNTT_ReturnTitle] = "Go  back  to  the  Title  Screen.\nOK? ";
+	m_yesNoText[YesNoTextType::YNTT_ReturnTitleJP] = u8"タイトルにもどりますが\nよろしいですか？";
 	m_yesNoText[YesNoTextType::YNTT_NewGame] = "Are  you  sure  you  want  to  start  a  new  game?\nAny  previous  saved  game\nprogress  will  be  lost.";
 	m_yesNoText[YesNoTextType::YNTT_NewGameJP] = u8"これまでの記録は消えてしまいますが\nよろしいですか？";
 	m_yesNoText[YesNoTextType::YNTT_COUNT] = "MISSING TEXT"; // need this for dummy text
