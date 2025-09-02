@@ -195,6 +195,17 @@ extern "C" __declspec(dllexport) void PostInit(ModInfo_t * modInfo)
         MessageBox(nullptr, TEXT("'Customizable Results Music' mod is not compatible with this mod, please disable it."), TEXT("STH2006 Project"), MB_ICONERROR);
         exit(-1);
     }
+
+    if (!Common::IsModEnabled("Main", "Depends1", "brianuuu.s06hud.shc2025|Sonic 06 HUD (SHC2025)||")
+    || !Common::IsModEnabled("Main", "Depends2", "brianuuu.s06de.shc2025|Sonic 06 Definitive Experience (SHC2025)||")
+    || !Common::IsModEnabled("Main", "Depends1", "brianuuu.sth2006.shadow.shc2025|STH2006 Project Shadow Demo (SHC2025)||")
+    || !Common::IsModEnabled("Main", "DLLFile", "Sonic06HUD.dll")
+    || !Common::IsModEnabled("Main", "DLLFile", "Sonic06DefinitiveExperience.dll")
+    || !Common::IsModEnabled("Main", "DLLFile", "STH2006Project.dll"))
+    {
+        MessageBox(nullptr, TEXT("The following mods MUST be enabled together:\n-Sonic 06 HUD (SHC2025)\n-Sonic 06 Definitive Experience (SHC2025)\n-STH2006 Project Shadow Demo (SHC2025)\n\nUsage outside of SHC2025 or modifications are not allowed."), TEXT("WARNING"), MB_ICONERROR);
+        exit(-1);
+    }
 }
 
 HOOK(LRESULT, __stdcall, WndProc, 0xE7B6C0, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
