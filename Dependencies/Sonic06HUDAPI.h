@@ -18,6 +18,7 @@ public:
 	};
 
 private:
+	LIB_FUNCTION(std::string, "Sonic06HUD.dll", API_GetVersion);
 	LIB_FUNCTION(bool, "Sonic06HUD.dll", API_IsYesNoWindowDrawing);
 	LIB_FUNCTION(SonicGemType, "Sonic06HUD.dll", API_ScrollSonicGem, bool toRight, bool ignoreNone);
 	LIB_FUNCTION(SonicGemType, "Sonic06HUD.dll", API_GetSonicGem);
@@ -35,6 +36,11 @@ public:
         static S06HUD_API* instance = nullptr;
         return instance != nullptr ? instance : instance = new S06HUD_API();
     }
+
+	static std::string GetVersion()
+	{
+		GENERIC_EXPORT(std::string, API_GetVersion);
+	}
 
 	static bool IsYesNoWindowDrawing()
 	{

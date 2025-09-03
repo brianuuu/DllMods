@@ -1,6 +1,12 @@
 #pragma once
+#include "Configuration.h"
 #include "CustomHUD.h"
 #include "SubtitleUI.h"
+
+extern "C" __declspec(dllexport) std::string API_GetVersion()
+{
+	return Configuration::GetVersion();
+}
 
 extern "C" __declspec(dllexport) bool API_IsYesNoWindowDrawing()
 {
