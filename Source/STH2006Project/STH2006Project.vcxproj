@@ -306,6 +306,7 @@
     <ClCompile Include="UI\SubtitleUI.cpp" />
     <ClCompile Include="UI\TitleUI.cpp" />
     <ClCompile Include="UI\UIContext.cpp" />
+    <ClCompile Include="Utils\APIExport.cpp" />
     <ClCompile Include="Utils\ArchiveTreePatcher.cpp" />
     <ClCompile Include="Utils\mst.cpp" />
     <ClCompile Include="Utils\SynchronizedObject.cpp" />
