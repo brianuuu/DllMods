@@ -64,6 +64,7 @@ public:
         static bool m_floatBoost;
     };
 
+    static std::string GetVersion() { return "SHC2025"; }
     static bool load(const std::string& rootPath);
     static bool loadPostInit();
 };

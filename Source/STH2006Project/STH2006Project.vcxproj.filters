@@ -83,6 +83,7 @@
     <ClCompile Include="Objects\boss\MephilesShadow.cpp" />
     <ClCompile Include="Objects\enemy\DarkSphere.cpp" />
     <ClCompile Include="Objects\cmn\CustomEvent.cpp" />
+    <ClCompile Include="Utils\APIExport.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />

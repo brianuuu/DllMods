@@ -3,6 +3,11 @@
 #include "ChaosEnergy.h"
 #include "NextGenShadow.h"
 
+extern "C" __declspec(dllexport) std::string API_GetVersion()
+{
+	return Configuration::GetVersion();
+}
+
 extern "C" __declspec(dllexport) Configuration::ModelType API_GetModelType()
 {
 	return Configuration::m_model;

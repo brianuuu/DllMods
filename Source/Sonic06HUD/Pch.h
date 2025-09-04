@@ -43,3 +43,4 @@
 #include <Common.h>
 #include <ScoreGenerationsAPI.h>
 #include <Sonic06DefinitiveExperienceAPI.h>
+#include <STH2006API.h>

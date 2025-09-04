@@ -14,6 +14,7 @@ public:
     };
 
 private:
+	LIB_FUNCTION(std::string, "Sonic06DefinitiveExperience.dll", API_GetVersion);
     LIB_FUNCTION(ModelType, "Sonic06DefinitiveExperience.dll", API_GetModelType);
     LIB_FUNCTION(bool, "Sonic06DefinitiveExperience.dll", API_IsUsingCharacterMoveset);
     LIB_FUNCTION(void, "Sonic06DefinitiveExperience.dll", API_SetChaosEnergyRewardOverride, float amount);
@@ -32,6 +33,11 @@ public:
         static S06DE_API* instance = nullptr;
         return instance != nullptr ? instance : instance = new S06DE_API();
     }
+
+	static std::string GetVersion()
+	{
+		GENERIC_EXPORT(std::string, API_GetVersion);
+	}
 
     static ModelType GetModelType()
 	{
