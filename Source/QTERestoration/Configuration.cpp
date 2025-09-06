@@ -28,5 +28,5 @@ void Configuration::Read()
 
 	// Settings
 	m_hackAdlibTrickJump = reader.GetBoolean("Settings", "hackAdlibTrickJump", m_hackAdlibTrickJump);
-	m_hackAdlibTrickJump = reader.GetBoolean("Settings", "wiiSFX", m_wiiSFX);
+	m_wiiSFX = reader.GetBoolean("Settings", "wiiSFX", m_wiiSFX);
 }
