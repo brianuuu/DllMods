@@ -1,6 +1,7 @@
 #include "Configuration.h"
 Configuration::ButtonType Configuration::m_buttonType = ButtonType::X360;
 bool Configuration::m_hackAdlibTrickJump = false;
+bool Configuration::m_wiiSFX = false;
 
 void Configuration::Read()
 {
@@ -27,4 +28,5 @@ void Configuration::Read()
 
 	// Settings
 	m_hackAdlibTrickJump = reader.GetBoolean("Settings", "hackAdlibTrickJump", m_hackAdlibTrickJump);
+	m_hackAdlibTrickJump = reader.GetBoolean("Settings", "wiiSFX", m_wiiSFX);
 }

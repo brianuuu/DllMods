@@ -1,5 +1,6 @@
 #include "TrickJumper.h"
 #include "AnimationSetPatcher.h"
+#include "Configuration.h"
 
 BB_SET_OBJECT_MAKE_HOOK(TrickJumper)
 
@@ -432,7 +433,7 @@ public:
                         m_sequenceID++;
                         bool const isLastSequence = m_sequenceID >= m_sequences.size();
 
-                        if (isLastSequence || m_buttonID > 1) // TODO: not Wii config
+                        if (isLastSequence || m_buttonID > 1 || !Configuration::m_wiiSFX)
                         {
                             // last sqeuence always play ding dong, or has more than 1 button
                             Common::SonicContextPlaySound(soundHandle, 3000812995, 0);
@@ -679,11 +680,11 @@ public:
             if (m_sequenceID == 0)
             {
                 static SharedPtrTypeless soundHandle;
-                Common::SonicContextPlaySound(soundHandle, 3000812999, 0);
+                Common::SonicContextPlaySound(soundHandle, Configuration::m_wiiSFX ? 3000813003 : 3000812999, 0);
             }
             PlayMotion(sequence.m_boss, "Intro_Anim");
         }
-        else // TODO: Wii config
+        else if (Configuration::m_wiiSFX)
         {
             // Wii button appear sfx
             SharedPtrTypeless soundHandle;

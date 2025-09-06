@@ -19,5 +19,6 @@ public:
 
 	// Settings
 	static bool m_hackAdlibTrickJump;
+	static bool m_wiiSFX;
 };
 

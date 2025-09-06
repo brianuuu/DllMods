@@ -1,4 +1,5 @@
 #include "QTEReactionPlate.h"
+#include "Configuration.h"
 
 class alignas(16) MsgGetReactionPlateInfo : public Hedgehog::Universe::MessageTypeGet
 {
@@ -140,9 +141,11 @@ void ProcMsgHitReactionPlate(Sonic::Player::CPlayerSpeed* This, const Sonic::Mes
     }
     else
     {
-        // TODO: is Wii config
-        // Spring sfx for Wii
-        This->GetContext()->PlaySound(4002013, false);
+        if (Configuration::m_wiiSFX)
+        {
+            // Spring sfx for Wii
+            This->GetContext()->PlaySound(4002013, false);
+        }
 
         fE5CD90
         (
@@ -179,10 +182,12 @@ HOOK(bool, __stdcall, QTEReactionPlate_PlayUIEffect, 0xE6F3E0, float* This, void
         float maxTime = This[9];
         m_qteReactionPlateAddScore = max(0, (int)((maxTime - 0.5f) * 500.f * (maxTime - inputTime) / maxTime));
 
-        // TODO: is Wii config
-        // Wii OK sfx
-        SharedPtrTypeless soundHandle;
-        Common::SonicContextPlaySound(soundHandle, 3000812995, 0);
+        if (Configuration::m_wiiSFX)
+        {
+            // Wii OK sfx
+            SharedPtrTypeless soundHandle;
+            Common::SonicContextPlaySound(soundHandle, 3000812995, 0);
+        }
     }
 
     return result;
@@ -192,9 +197,8 @@ HOOK(void, __fastcall, QTEReactionPlate_CPlayerSpeedStateReactionJumpAdvance, 0x
 {
     bool const hasUI = *(bool*)(This + 176);
     originalQTEReactionPlate_CPlayerSpeedStateReactionJumpAdvance(This);
-    if (!hasUI && *(bool*)(This + 176))
+    if (!hasUI && *(bool*)(This + 176) && Configuration::m_wiiSFX)
     {
-        // TODO: is Wii config
         // Wii button appear sfx
         SharedPtrTypeless soundHandle;
         Common::SonicContextPlaySound(soundHandle, 3000813003, 0);
@@ -232,8 +236,10 @@ HOOK(void, __fastcall, QTEReactionPlate_MsgHitEventCollision, 0x1017020, uint32_
 
 void QTEReactionPlate_ReactionJumpPlaySfx()
 {
-    // TODO: not Wii config
-    //Sonic::Player::CPlayerSpeedContext::GetInstance()->PlaySound(4002047, 0);
+    if (!Configuration::m_wiiSFX)
+    {
+        Sonic::Player::CPlayerSpeedContext::GetInstance()->PlaySound(4002047, 0);
+    }
 }
 
 void QTEReactionPlate_ReactionJumpSetAnim()
