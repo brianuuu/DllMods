@@ -88,12 +88,6 @@ extern "C" __declspec(dllexport) void PostInit(ModInfo_t * modInfo)
         MessageBox(nullptr, TEXT("This mod requires the latest version of 'Direct3D 9 Ex' OR 'Direct3D 11' enabled."), TEXT("Sonic 06 HUD"), MB_ICONERROR);
         exit(-1);
     }
-
-    if (S06DE_API::GetVersion() != "SHC2025" || STH2006_API::GetVersion() != "SHC2025")
-    {
-        MessageBox(nullptr, TEXT("The following mods MUST be enabled together:\n-Sonic 06 HUD (SHC2025)\n-Sonic 06 Definitive Experience (SHC2025)\n-STH2006 Project Shadow Demo (SHC2025)\n\nUsage outside of SHC2025 or modifications are not allowed."), TEXT("WARNING"), MB_ICONERROR);
-        exit(-1);
-    }
 }
 
 HOOK(LRESULT, __stdcall, WndProc, 0xE7B6C0, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
