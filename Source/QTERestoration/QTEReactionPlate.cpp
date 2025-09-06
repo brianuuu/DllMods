@@ -140,6 +140,10 @@ void ProcMsgHitReactionPlate(Sonic::Player::CPlayerSpeed* This, const Sonic::Mes
     }
     else
     {
+        // TODO: is Wii config
+        // Spring sfx for Wii
+        This->GetContext()->PlaySound(4002013, false);
+
         fE5CD90
         (
             message.m_TargetActorID,
@@ -174,9 +178,27 @@ HOOK(bool, __stdcall, QTEReactionPlate_PlayUIEffect, 0xE6F3E0, float* This, void
         float inputTime = This[12];
         float maxTime = This[9];
         m_qteReactionPlateAddScore = max(0, (int)((maxTime - 0.5f) * 500.f * (maxTime - inputTime) / maxTime));
+
+        // TODO: is Wii config
+        // Wii OK sfx
+        SharedPtrTypeless soundHandle;
+        Common::SonicContextPlaySound(soundHandle, 3000812995, 0);
     }
 
     return result;
+}
+
+HOOK(void, __fastcall, QTEReactionPlate_CPlayerSpeedStateReactionJumpAdvance, 0x119F6A0, uint32_t This)
+{
+    bool const hasUI = *(bool*)(This + 176);
+    originalQTEReactionPlate_CPlayerSpeedStateReactionJumpAdvance(This);
+    if (!hasUI && *(bool*)(This + 176))
+    {
+        // TODO: is Wii config
+        // Wii button appear sfx
+        SharedPtrTypeless soundHandle;
+        Common::SonicContextPlaySound(soundHandle, 3000813003, 0);
+    }
 }
 
 HOOK(int, __fastcall, QTEReactionPlate_CPlayerSpeedStateReactionLandEnd, 0x124B7D0, hh::fnd::CStateMachineBase::CStateBase* This)
@@ -210,7 +232,8 @@ HOOK(void, __fastcall, QTEReactionPlate_MsgHitEventCollision, 0x1017020, uint32_
 
 void QTEReactionPlate_ReactionJumpPlaySfx()
 {
-    Sonic::Player::CPlayerSpeedContext::GetInstance()->PlaySound(4002047, 0);
+    // TODO: not Wii config
+    //Sonic::Player::CPlayerSpeedContext::GetInstance()->PlaySound(4002047, 0);
 }
 
 void QTEReactionPlate_ReactionJumpSetAnim()
@@ -262,6 +285,7 @@ void QTEReactionPlate::applyPatches()
     // main hooks
     INSTALL_HOOK(QTEReactionPlate_CPlayerSpeedProcessMessage);
     INSTALL_HOOK(QTEReactionPlate_PlayUIEffect);
+    INSTALL_HOOK(QTEReactionPlate_CPlayerSpeedStateReactionJumpAdvance);
     INSTALL_HOOK(QTEReactionPlate_CPlayerSpeedStateReactionLandEnd);
     INSTALL_HOOK(QTEReactionPlate_MsgHitEventCollision);
     WRITE_JUMP(0xE5D03E, QTEReactionPlate_ReactionJumpPlaySfxTrampoline);
