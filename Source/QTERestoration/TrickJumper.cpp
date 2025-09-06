@@ -420,8 +420,6 @@ public:
                     // next sequence
                     if (m_buttonID >= sequence.m_buttons.size())
                     {
-                        Common::SonicContextPlaySound(soundHandle, 3000812995, 0);
-
                         sequence.m_bg->SetHideFlag(true);
                         sequence.m_timer->SetHideFlag(true);
                         sequence.m_boss->SetHideFlag(true);
@@ -432,7 +430,20 @@ public:
                         UnleashedHUD_API::AddTrickScore(score);
 
                         m_sequenceID++;
-                        if (m_sequenceID >= m_sequences.size())
+                        bool const isLastSequence = m_sequenceID >= m_sequences.size();
+
+                        if (isLastSequence || m_buttonID > 1) // TODO: not Wii config
+                        {
+                            // last sqeuence always play ding dong, or has more than 1 button
+                            Common::SonicContextPlaySound(soundHandle, 3000812995, 0);
+                        }
+                        else
+                        {
+                            // Wii OK sfx
+                            Common::SonicContextPlaySound(soundHandle, 3000813004, 0);
+                        }
+
+                        if (isLastSequence)
                         {
                             // we are done!
                             if (sequence.m_timer->m_MotionFrame <= 50)
@@ -671,6 +682,12 @@ public:
                 Common::SonicContextPlaySound(soundHandle, 3000812999, 0);
             }
             PlayMotion(sequence.m_boss, "Intro_Anim");
+        }
+        else // TODO: Wii config
+        {
+            // Wii button appear sfx
+            SharedPtrTypeless soundHandle;
+            Common::SonicContextPlaySound(soundHandle, 3000813003, 0);
         }
     }
 
