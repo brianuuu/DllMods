@@ -87,6 +87,20 @@ HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* 
         A2->SetAnimationBlend("BikeBLoop", "Bike", 0.1f);
         A2->SetAnimationBlend("BikeBLoop", "BikeL", 0.1f);
         A2->SetAnimationBlend("BikeBLoop", "BikeR", 0.1f);
+
+        A2->SetAnimationBlend("Jeep", "JeepL", 0.1f);
+        A2->SetAnimationBlend("Jeep", "JeepR", 0.1f);
+        A2->SetAnimationBlend("JeepL", "Jeep", 0.1f);
+        A2->SetAnimationBlend("JeepR", "Jeep", 0.1f);
+        A2->SetAnimationBlend("JeepR", "JeepL", 0.1f);
+        A2->SetAnimationBlend("JeepL", "JeepR", 0.1f);
+        A2->SetAnimationBlend("Jeep", "JeepB", 0.1f);
+        A2->SetAnimationBlend("JeepL", "JeepB", 0.1f);
+        A2->SetAnimationBlend("JeepR", "JeepB", 0.1f);
+        A2->SetAnimationBlend("JeepB", "Jeep", 0.1f);
+        A2->SetAnimationBlend("JeepBLoop", "Jeep", 0.1f);
+        A2->SetAnimationBlend("JeepBLoop", "JeepL", 0.1f);
+        A2->SetAnimationBlend("JeepBLoop", "JeepR", 0.1f);
     }
 }
 
@@ -602,6 +616,18 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationDataSuper.emplace_back("BikeR", "sh_bike_curveR_l", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("BikeB", "sh_bike_back", 1.0f, false, "BikeBLoop");
         m_newAnimationDataSuper.emplace_back("BikeBLoop", "sh_bike_back_l", 1.0f, true, nullptr);
+
+        // Jeep
+        m_newAnimationData.emplace_back("Jeep", "sh_jeep_ride_l", 1.0f, true, nullptr);
+        m_newAnimationData.emplace_back("JeepL", "sh_jeep_curveL_l", 1.0f, true, nullptr);
+        m_newAnimationData.emplace_back("JeepR", "sh_jeep_curveR_l", 1.0f, true, nullptr);
+        m_newAnimationData.emplace_back("JeepB", "sh_jeep_back", 1.0f, false, "JeepBLoop");
+        m_newAnimationData.emplace_back("JeepBLoop", "sh_jeep_back_l", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("Jeep", "sh_jeep_ride_l", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("JeepL", "sh_jeep_curveL_l", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("JeepR", "sh_jeep_curveR_l", 1.0f, true, nullptr);
+        m_newAnimationDataSuper.emplace_back("JeepB", "sh_jeep_back", 1.0f, false, "JeepBLoop");
+        m_newAnimationDataSuper.emplace_back("JeepBLoop", "sh_jeep_back_l", 1.0f, true, nullptr);
     }
 
     if (!m_newAnimationData.empty())
