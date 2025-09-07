@@ -15,6 +15,7 @@
 #include "vehicles/GadgetBike.h"
 #include "vehicles/GadgetHover.h"
 #include "vehicles/GadgetGlider.h"
+#include "vehicles/GadgetJeep.h"
 
 void NextGenObjects::applyPatches()
 {
@@ -115,4 +116,5 @@ void NextGenObjects::applyPatches()
     GadgetBike::registerObject();
     GadgetHover::registerObject();
     GadgetGlider::registerObject();
+    GadgetJeep::registerObject();
 }
