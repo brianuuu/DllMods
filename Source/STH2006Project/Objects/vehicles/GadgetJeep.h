@@ -6,6 +6,34 @@
 #include "GadgetGunSimple.h"
 
 #pragma once
+class GadgetJeepBooster : public Sonic::CObjectBase
+	, public Sonic::IAnimationContext, public Sonic::CAnimationStateMachine
+{
+private:
+	boost::shared_ptr<hh::mr::CMatrixNode> m_spNodeParent;
+
+	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
+	boost::shared_ptr<hh::anim::CAnimationPose> m_spAnimPose;
+
+	bool m_castShadow = true;
+	float m_timer = 0.0f;
+
+public:
+	GadgetJeepBooster(boost::shared_ptr<hh::mr::CMatrixNode> parent, bool castShadow) : m_spNodeParent(parent), m_castShadow(castShadow) {}
+
+	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
+	bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;
+	void UpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo) override;
+
+	// from IAnimationContext
+	Hedgehog::Animation::CAnimationPose* GetAnimationPose() override { return m_spAnimPose.get(); }
+	Hedgehog::Math::CVector GetVelocityForAnimationSpeed() override { return hh::math::CVector::Ones(); }
+	Hedgehog::Math::CVector GetVelocityForAnimationChange() override { return hh::math::CVector::Ones(); }
+
+	bool IsBoosting() const;
+	bool Boost();
+};
+
 class GadgetJeep : public Sonic::CObjectBase, public Sonic::CSetObjectListener
 {
 public:
@@ -47,13 +75,19 @@ private:
 	Direction m_direction = Direction::None;
 	State m_state = State::Idle;
 
+	hh::math::CVector2 m_input = hh::math::CVector2::Zero();
+	hh::math::CQuaternion m_rotation = hh::math::CQuaternion::Identity();
+	float m_wheelAngle = 0.0f;
+	float m_wheelSpin = 0.0f;
+
 	float m_hp = 100.0f;
 	float m_speed = 0.0f;
 	float m_upSpeed = 0.0f;
-	float m_doubleTapTime = -10.0f;
-	float m_boostDashTime = 0.0f;
+	float m_outOfControl = 0.0f;
+	float m_doubleTapTime = 0.0f;
 	bool m_started = false;
 	bool m_brakeLights = false;
+	bool m_isLanded = true;
 
 	struct PlayerGetOnData
 	{
@@ -89,6 +123,9 @@ private:
 
 	boost::shared_ptr<GadgetGunSimple> m_spGunL;
 	boost::shared_ptr<GadgetGunSimple> m_spGunR;
+	boost::shared_ptr<GadgetJeepBooster> m_spBooster;
+
+	boost::shared_ptr<Sonic::CCharacterProxy> m_spProxy;
 
 private:
 	void InitializeEditParam(Sonic::CEditParam& in_rEditParam) override;
@@ -113,6 +150,7 @@ private:
 
 	void BeginDriving();
 	void AdvanceDriving(float dt);
+	void AdvancePhysics(float dt);
 
 	void ToggleBrakeLights(bool on);
 	void TakeDamage(float amount);

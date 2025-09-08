@@ -1,5 +1,98 @@
 #include "GadgetJeep.h"
 
+bool GadgetJeepBooster::SetAddRenderables
+(
+	Sonic::CGameDocument* in_pGameDocument, 
+	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
+)
+{
+	std::string const name = "Gadget_Jeep_Booster";
+
+	// model
+	hh::mr::CMirageDatabaseWrapper wrapper(in_spDatabase.get());
+	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData(name.c_str(), 0);
+	m_spModel = boost::make_shared<hh::mr::CSingleElement>(spModelBaseData);
+	m_spModel->BindMatrixNode(m_spNodeParent);
+	Sonic::CGameObject::AddRenderable("Object", m_spModel, m_castShadow);
+
+	// animations
+	m_spAnimPose = boost::make_shared<Hedgehog::Animation::CAnimationPose>(in_spDatabase, name.c_str());
+	std::vector<hh::anim::SMotionInfo> entries = std::vector<hh::anim::SMotionInfo>(0, { "","" });
+	std::string const revName = name + "_rev";
+	entries.push_back(hh::anim::SMotionInfo("Boost", name.c_str(), 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
+	entries.push_back(hh::anim::SMotionInfo("Return", revName.c_str(), 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
+	m_spAnimPose->AddMotionInfo(&entries.front(), entries.size());
+	m_spAnimPose->CreateAnimationCache();
+	m_spModel->BindPose(m_spAnimPose);
+
+	// states
+	SetContext(this);
+	AddAnimationState("Boost");
+	AddAnimationState("Return");
+	ChangeState("Return");
+	m_spAnimPose->Update(1.0f);
+
+	SetCullingRange(0.0f);
+
+	return true;
+}
+
+bool GadgetJeepBooster::ProcessMessage
+(
+	Hedgehog::Universe::Message& message, bool flag
+)
+{
+	if (flag)
+	{
+		if (message.Is<Sonic::Message::MsgNotifyObjectEvent>())
+		{
+			auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
+			switch (msg.m_Event)
+			{
+			}
+
+			return true;
+		}
+	}
+
+	return Sonic::CObjectBase::ProcessMessage(message, flag);;
+}
+
+void GadgetJeepBooster::UpdateParallel
+(
+	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
+)
+{
+	if (m_timer > 0.0f)
+	{
+		m_timer = max(0.0f, m_timer - in_rUpdateInfo.DeltaTime);
+		if (m_timer == 0.0f)
+		{
+			ChangeState("Return");
+		}
+	}
+
+	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
+	Update(in_rUpdateInfo);
+}
+
+bool GadgetJeepBooster::IsBoosting() const
+{
+	return GetCurrentState()->GetStateName() != "Return" || !Common::IsAnimationFinished(this);
+}
+
+bool GadgetJeepBooster::Boost()
+{
+	if (IsBoosting())
+	{
+		return false;
+	}
+
+	ChangeState("Boost");
+	m_timer = 2.0f;
+	return true;
+}
+
 uint32_t canGetOnJeepActorID = 0u;
 HOOK(bool, __fastcall, GadgetJeep_GroundedStateChange, 0xE013D0, Sonic::Player::CPlayerSpeedContext* context, void* Edx, int a2)
 {
@@ -99,7 +192,7 @@ bool GadgetJeep::SetAddRenderables
 	Sonic::CGameObject::AddRenderable("Object", m_spModelWheelBL, m_pMember->m_CastShadow);
 	Sonic::CGameObject::AddRenderable("Object", m_spModelWheelBR, m_pMember->m_CastShadow);
 
-	// guns
+	// guns & booster
 	float constexpr c_jeepReloadTime = 2.0f;
 	auto const attachNodeGunL = m_spModelBase->GetNode("GunUnder_L");
 	m_spGunL = boost::make_shared<GadgetGunSimple>("Gadget_Jeep_GunL", attachNodeGunL, m_pMember->m_CastShadow, m_ActorID, c_jeepReloadTime);
@@ -107,11 +200,19 @@ bool GadgetJeep::SetAddRenderables
 	auto const attachNodeGunR = m_spModelBase->GetNode("GunUnder_R");
 	m_spGunR = boost::make_shared<GadgetGunSimple>("Gadget_Jeep_GunR", attachNodeGunR, m_pMember->m_CastShadow, m_ActorID, c_jeepReloadTime);
 	in_pGameDocument->AddGameObject(m_spGunR, "main", this);
+	auto const attachNodeBooster = m_spModelBase->GetNode("Booster");
+	m_spBooster = boost::make_shared<GadgetJeepBooster>(attachNodeBooster, m_pMember->m_CastShadow);
+	in_pGameDocument->AddGameObject(m_spBooster, "main", this);
 
 	// external control
 	auto const attachNode = m_spModelBase->GetNode("Charapoint");
 	m_spSonicControlNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
 	m_spSonicControlNode->SetParent(attachNode.get());
+
+	// proxy collision
+	Hedgehog::Base::THolder<Sonic::CWorld> holder(m_pMember->m_pWorld.get());
+	hk2010_2_0::hkpBoxShape* proxyShape = new hk2010_2_0::hkpBoxShape(1.4f, 0.1f, 3.2f);
+	m_spProxy = boost::make_shared<Sonic::CCharacterProxy>(this, holder, proxyShape, hh::math::CVector::UnitY() * 2.0f, hh::math::CQuaternion::Identity(), *(int*)0x1E0AFAC);
 
 	return true;
 }
@@ -128,10 +229,10 @@ bool GadgetJeep::SetAddColliders
 	// Wheel collisions
 	hk2010_2_0::hkpCylinderShape* wheelLShape = new hk2010_2_0::hkpCylinderShape(hh::math::CVector::Zero(), hh::math::CVector(0.5f, 0.0f, 0.0f), 0.54f);
 	hk2010_2_0::hkpCylinderShape* wheelRShape = new hk2010_2_0::hkpCylinderShape(hh::math::CVector::Zero(), hh::math::CVector(-0.5f, 0.0f, 0.0f), 0.54f);
-	AddRigidBody(m_spRigidBodyWheelFL, wheelLShape, *(int*)0x1E0AFF4, m_spNodeWheelFL);
-	AddRigidBody(m_spRigidBodyWheelFR, wheelRShape, *(int*)0x1E0AFF4, m_spNodeWheelFR);
-	AddRigidBody(m_spRigidBodyWheelBL, wheelLShape, *(int*)0x1E0AFF4, m_spNodeWheelBL);
-	AddRigidBody(m_spRigidBodyWheelBR, wheelRShape, *(int*)0x1E0AFF4, m_spNodeWheelBR);
+	AddRigidBody(m_spRigidBodyWheelFL, wheelLShape, *(int*)0x1E0AFF4, m_spNodeGuardL);
+	AddRigidBody(m_spRigidBodyWheelFR, wheelRShape, *(int*)0x1E0AFF4, m_spNodeGuardR);
+	AddRigidBody(m_spRigidBodyWheelBL, wheelLShape, *(int*)0x1E0AFF4, m_spModelBase->GetNode("Wheel_B_L"));
+	AddRigidBody(m_spRigidBodyWheelBR, wheelRShape, *(int*)0x1E0AFF4, m_spModelBase->GetNode("Wheel_B_R"));
 
 	// damage to object
 	uint32_t const typeEnemy = *(uint32_t*)0x1E5E7E8;
@@ -142,7 +243,7 @@ bool GadgetJeep::SetAddColliders
 	m_spNodeCockpit->m_Transform.SetPosition(hh::math::CVector(0.0f, 1.0f, -0.078f));
 	m_spNodeCockpit->NotifyChanged();
 	m_spNodeCockpit->SetParent(m_spMatrixNodeTransform.get());
-	hk2010_2_0::hkpBoxShape* cockpitEventTrigger = new hk2010_2_0::hkpBoxShape(1.4f, 1.4f, 3.2f);
+	hk2010_2_0::hkpBoxShape* cockpitEventTrigger = new hk2010_2_0::hkpBoxShape(1.4f, 1.4f, 4.0f);
 	AddEventCollision("Attack", cockpitEventTrigger, damageID, true, m_spNodeCockpit);
 
 	// player event collision
@@ -162,6 +263,8 @@ void GadgetJeep::AddCallback
 )
 {
 	Sonic::CObjectBase::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
+
+	m_rotation = m_spMatrixNodeTransform->m_Transform.m_Rotation;
 }
 
 void GadgetJeep::KillCallback()
@@ -189,6 +292,7 @@ void GadgetJeep::SetUpdateParallel
 {
 	AdvancePlayerGetOn(in_rUpdateInfo.DeltaTime);
 	AdvanceDriving(in_rUpdateInfo.DeltaTime);
+	AdvancePhysics(in_rUpdateInfo.DeltaTime);
 }
 
 bool GadgetJeep::ProcessMessage
@@ -385,7 +489,7 @@ void GadgetJeep::BeginPlayerGetOff(bool isAlive)
 		velocity.y() = context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_JumpPower);
 		Common::SetPlayerVelocity(velocity);
 		hh::math::CVector position = m_spSonicControlNode->GetWorldMatrix().translation();
-		position.y() += 0.8f;
+		position.y() += 1.0f;
 		Common::SetPlayerPosition(position);
 
 		// Jump animation
@@ -446,8 +550,8 @@ void GadgetJeep::BeginDriving()
 	m_direction = Direction::None;
 
 	SharedPtrTypeless sfx;
-	//Common::ObjectPlaySound(this, 200612016, sfx); // TODO: 
-	//Common::ObjectPlaySound(this, 200612017, m_loopSfx); // TODO: 
+	Common::ObjectPlaySound(this, 200612023, sfx);
+	Common::ObjectPlaySound(this, 200612027, m_loopSfx);
 
 	// load gun
 	SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
@@ -459,7 +563,7 @@ void GadgetJeep::BeginDriving()
 
 	// set HUD
 	S06HUD_API::SetGadgetMaxCount(2);
-	S06HUD_API::SetGadgetCount(2, 2); // TODO: gun loaded?
+	S06HUD_API::SetGadgetCount(2, 2);
 	S06HUD_API::SetGadgetHP(m_hp);
 
 	// player collision
@@ -467,8 +571,41 @@ void GadgetJeep::BeginDriving()
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayerItem", true);
 }
 
+float const c_jeepDoubleTapTime = 0.2f;
+float const c_jeepWheelMaxAngle = 20.0f * DEG_TO_RAD;
+float const c_jeepWheelTurnRate = c_jeepWheelMaxAngle / 0.5f;
+float const c_jeepMaxSpeed = 30.0f;
+float const c_jeepReverseSpeed = -12.0f;
+float const c_jeepMinBrakeSpeed = 5.0f;
+float const c_jeepAccel = 8.0f;
+float const c_jeepBrake = 20.0f;
+float const c_jeepDecel = 4.0f;
+float const c_jeepGravity = 10.0f;
+float const c_jeepBoostDashAccel = 20.0f;
+
 void GadgetJeep::AdvanceDriving(float dt)
 {
+	// helper function
+	auto fnAccel = [&dt](float& value, float target, float accel)
+	{
+		if (value > target)
+		{
+			value = max(target, value - accel * dt);
+		}
+		else if (value < target)
+		{
+			value = min(target, value + accel * dt);
+		}
+	};
+
+	m_outOfControl = max(0.0f, m_outOfControl - dt);
+	if (m_state != State::Driving)
+	{
+		fnAccel(m_wheelAngle, 0.0f, c_jeepWheelTurnRate);
+		fnAccel(m_speed, 0.0f, c_jeepAccel);
+		return;
+	}
+
 	Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 
 	// get off
@@ -476,6 +613,105 @@ void GadgetJeep::AdvanceDriving(float dt)
 	{
 		BeginPlayerGetOff(true);
 		return;
+	}
+
+	// calculate input, follows sub_F82000
+	if (m_playerID)
+	{
+		m_input.x() = (abs(padState->LeftStickHorizontal) - 0.1f) / 0.8f;
+		Common::ClampFloat(m_input.x(), 0.0f, 1.0f);
+		if (padState->LeftStickHorizontal > 0.0f) m_input.x() *= -1.0f;
+		m_input.y() = (abs(padState->LeftStickVertical) - 0.1f) / 0.8f;
+		Common::ClampFloat(m_input.y(), 0.0f, 1.0f);
+		if (padState->LeftStickVertical < 0.0f) m_input.y() *= -1.0f;
+		if (padState->IsDown(Sonic::EKeyState::eKeyState_DpadLeft)) m_input.x() = 1.0f;
+		if (padState->IsDown(Sonic::EKeyState::eKeyState_DpadRight)) m_input.x() = -1.0f;
+		if (padState->IsDown(Sonic::EKeyState::eKeyState_DpadUp)) m_input.y() = 1.0f;
+		if (padState->IsDown(Sonic::EKeyState::eKeyState_DpadDown)) m_input.y() = -1.0f;
+	}
+
+	// rotation
+	if (m_outOfControl == 0.0f && m_input.x() != 0.0f)
+	{
+		fnAccel(m_wheelAngle, m_input.x() * c_jeepWheelMaxAngle, c_jeepWheelTurnRate);
+	}
+	else
+	{
+		fnAccel(m_wheelAngle, 0.0f, c_jeepWheelTurnRate);
+	}
+
+	// acceleration
+	bool shouldStopBrakeSfx = (m_speed <= c_jeepMinBrakeSpeed);
+	if (m_isLanded)
+	{
+		if (m_spBooster->IsBoosting())
+		{
+			// boost dash
+			fnAccel(m_speed, c_jeepMaxSpeed, c_jeepBoostDashAccel);
+			ToggleBrakeLights(false);
+			shouldStopBrakeSfx = true;
+		}
+		else if (m_playerID && m_outOfControl == 0.0f && padState->IsDown(Sonic::EKeyState::eKeyState_A))
+		{
+			// forward
+			fnAccel(m_speed, c_jeepMaxSpeed, m_speed < 0.0f ? c_jeepBrake : c_jeepAccel);
+			ToggleBrakeLights(false);
+			shouldStopBrakeSfx = true;
+		}
+		else if (m_playerID && m_outOfControl == 0.0f && padState->IsDown(Sonic::EKeyState::eKeyState_X))
+		{
+			// brake, reverse
+			fnAccel(m_speed, c_jeepReverseSpeed, m_speed > 0.0f ? c_jeepBrake : c_jeepAccel);
+			ToggleBrakeLights(true);
+
+			// brake sfx
+			if (m_speed > c_jeepMinBrakeSpeed && !m_brakeSfx)
+			{
+				Common::ObjectPlaySound(this, 200612031, m_brakeSfx);
+			}
+		}
+		else
+		{
+			// natural stop
+			fnAccel(m_speed, 0.0f, c_jeepAccel);
+			ToggleBrakeLights(false);
+			shouldStopBrakeSfx = true;
+		}
+	}
+	else
+	{
+		ToggleBrakeLights(false);
+		shouldStopBrakeSfx = true;
+	}
+
+	// stop brake sfx
+	if (m_brakeSfx && shouldStopBrakeSfx)
+	{
+		m_brakeSfx.reset();
+	}
+
+	// boost dash
+	m_doubleTapTime = max(0.0f, m_doubleTapTime - dt);
+	if (m_playerID && m_isLanded && m_outOfControl == 0.0f && padState->IsTapped(Sonic::EKeyState::eKeyState_A))
+	{
+		if (m_doubleTapTime > 0.0f)
+		{
+			if (m_spBooster->Boost())
+			{
+				SharedPtrTypeless sfx;
+				Common::ObjectPlaySound(this, 200612030, sfx);
+
+				// TODO:
+				//m_pGlitterPlayer->PlayOneshot(m_spModelBase->GetNode("pBoost_L"), "ef_bike_boost", 1.0f, 1);
+				//m_pGlitterPlayer->PlayOneshot(m_spModelBase->GetNode("pBoost_R"), "ef_bike_boost", 1.0f, 1);
+			}
+
+			m_doubleTapTime = 0.0f;
+		}
+		else
+		{
+			m_doubleTapTime = c_jeepDoubleTapTime;
+		}
 	}
 
 	// fire missiles
@@ -495,6 +731,159 @@ void GadgetJeep::AdvanceDriving(float dt)
 				SendMessage(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(0));
 			}
 		}
+	}
+}
+
+void GadgetJeep::AdvancePhysics(float dt)
+{
+	hh::math::CVector const upAxis = hh::math::CVector::UnitY();
+	m_speed = min(c_jeepMaxSpeed, m_speed);
+
+	if (m_speed != 0.0f)
+	{
+		// vehicle yaw
+		float const speedRatio = m_speed / c_jeepMaxSpeed;
+		float constexpr steerScale = 10.0f;
+		m_rotation = Eigen::AngleAxisf((m_isLanded ? m_wheelAngle : 0.0f) * speedRatio * steerScale * dt, upAxis) * m_rotation;
+
+		// wheel spin
+		float constexpr wheelRatio = 0.8f;
+		m_wheelSpin += (m_speed / wheelRatio) * dt;
+		if (m_wheelSpin > PI_F * 2.0f) m_wheelSpin -= PI_F * 2.0f;
+		if (m_wheelSpin < PI_F * -2.0f) m_wheelSpin += PI_F * 2.0f;
+	}
+
+	{
+		hh::math::CVector const rightAxis = hh::math::CVector::UnitX();
+
+		// wheels
+		hh::math::CQuaternion newRotation = Eigen::AngleAxisf(m_wheelSpin, rightAxis) * hh::math::CQuaternion::Identity();
+		m_spNodeWheelFR->m_Transform.SetRotation(newRotation);
+		m_spNodeWheelFR->NotifyChanged();
+		m_spNodeWheelFL->m_Transform.SetRotation(newRotation);
+		m_spNodeWheelFL->NotifyChanged();
+		m_spNodeWheelBR->m_Transform.SetRotation(newRotation);
+		m_spNodeWheelBR->NotifyChanged();
+		m_spNodeWheelBL->m_Transform.SetRotation(newRotation);
+		m_spNodeWheelBL->NotifyChanged();
+
+		// guards
+		newRotation = Eigen::AngleAxisf(m_wheelAngle, upAxis) * hh::math::CQuaternion::Identity();
+		m_spNodeGuardR->m_Transform.SetRotation(newRotation);
+		m_spNodeGuardR->NotifyChanged();
+		m_spNodeGuardL->m_Transform.SetRotation(newRotation);
+		m_spNodeGuardL->NotifyChanged();
+	}
+
+	hh::math::CVector forwardAxis = m_rotation * hh::math::CVector::UnitZ();
+	if (!m_isLanded)
+	{
+		// not grounded, let gravity handle y-axis
+		forwardAxis.y() = 0.0f;
+		forwardAxis.normalize();
+	}
+
+	// proxy collision
+	hh::math::CVector newPosition = m_spMatrixNodeTransform->m_Transform.m_Position;
+	if (m_speed != 0.0f)
+	{
+		m_spProxy->m_Position = m_spMatrixNodeTransform->m_Transform.m_Position;
+		m_spProxy->SetRotation(m_rotation);
+		m_spProxy->m_UpVector = m_rotation * hh::math::CVector::UnitY();
+		m_spProxy->m_Velocity = forwardAxis * m_speed;
+		Common::fCCharacterProxyIntegrate(m_spProxy.get(), dt);
+		newPosition = m_spProxy->m_Position;
+		m_speed = m_spProxy->m_Velocity.dot(forwardAxis);
+	}
+
+	// floor detection
+	hh::math::CVector outPos = hh::math::CVector::Zero();
+	hh::math::CVector outNormal = hh::math::CVector::UnitY();
+	hh::math::CVector const testStart = m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector(0.0f, 0.5f, 0.0f);
+
+	// in-air
+	if (!m_isLanded)
+	{
+		m_upSpeed -= c_jeepGravity * dt;
+		newPosition += hh::math::CVector::UnitY() * m_upSpeed * dt;
+
+		// check landing
+		if (m_upSpeed < 0.0f && Common::fRaycast(testStart, newPosition, outPos, outNormal, *(int*)0x1E0AFAC))
+		{
+			SharedPtrTypeless sfx;
+			Common::ObjectPlaySound(this, 200612026, sfx);
+
+			newPosition = outPos;
+			m_upSpeed = 0.0f;
+			m_isLanded = true;
+		}
+
+		// check ceiling
+		hh::math::CVector const top = hh::math::CVector::UnitY() * 1.8f;
+		if (m_upSpeed > 0.0f && Common::fRaycast(testStart, newPosition + top, outPos, outNormal, *(int*)0x1E0AFAC))
+		{
+			newPosition = outPos - top;
+			m_upSpeed = 0.0f;
+		}
+	}
+	else
+	{
+		// check leaving terrain
+		hh::math::CVector const testEnd = m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector(0.0f, -0.25f, 0.0f);
+		if (Common::fRaycast(testStart, testEnd, outPos, outNormal, *(int*)0x1E0AFAC))
+		{
+			newPosition.y() = outPos.y();
+
+			// pitch
+			float constexpr pitchRate = 10.0f;
+			hh::math::CVector const upAxis = m_rotation * hh::math::CVector::UnitY();
+			hh::math::CQuaternion const targetPitch = hh::math::CQuaternion::FromTwoVectors(upAxis.head<3>(), outNormal.head<3>());
+			m_rotation = hh::math::CQuaternion::Identity().slerp(dt * pitchRate, targetPitch) * m_rotation;
+		}
+		else
+		{
+			m_isLanded = false;
+
+			// left ground, separate up/forward component
+			hh::math::CVector forwardHorizontal = forwardAxis;
+			forwardHorizontal.y() = 0.0f;
+			forwardHorizontal.normalize();
+			m_speed = forwardHorizontal.dot(forwardAxis * m_speed);
+			m_upSpeed = hh::math::CVector::UnitY().dot(forwardAxis * m_speed);
+		}
+	}
+
+	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(m_rotation, newPosition);
+	m_spMatrixNodeTransform->NotifyChanged();
+
+	// player animation
+	if (m_playerID && m_state == State::Driving)
+	{
+		Direction direction = GetCurrentDirection(m_input);
+		if (m_direction != direction)
+		{
+			m_direction = direction;
+			SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl(GetAnimationName().c_str()));
+		}
+	}
+
+	// sfx pitch
+	if (m_loopSfx)
+	{
+		hh::math::CVector* pSoundHandle = (hh::math::CVector*)m_loopSfx.get();
+		pSoundHandle[2] = newPosition;
+
+		float value = 0.5f + (m_speed + abs(m_upSpeed)) * 0.5f / c_jeepMaxSpeed;
+		Common::ClampFloat(value, 0.0f, 1.0f);
+
+		FUNCTION_PTR(void*, __thiscall, SetAisac, 0x763D50, void* This, hh::base::CSharedString const& name, float value);
+		SetAisac(m_loopSfx.get(), "gadget_speed", value);
+	}
+
+	if (m_brakeSfx)
+	{
+		hh::math::CVector* pSoundHandle = (hh::math::CVector*)m_brakeSfx.get();
+		pSoundHandle[2] = newPosition;
 	}
 }
 
@@ -521,7 +910,7 @@ void GadgetJeep::TakeDamage(float amount)
 	std::lock_guard guard(m_mutex);
 
 	SharedPtrTypeless sfx;
-	Common::ObjectPlaySound(this, 200612021, sfx); // TODO:
+	Common::ObjectPlaySound(this, 200612025, sfx);
 
 	m_hp -= amount;
 	if (m_hp <= 50.0f && !m_brokenID)
