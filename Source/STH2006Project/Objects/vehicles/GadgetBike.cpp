@@ -589,7 +589,7 @@ void GadgetBike::AdvanceDriving(float dt)
 	else
 	{
 		fnAccel(m_tiltAngle, 0.0f, c_bikeTiltTurnRate);
-		fnAccel(m_wheelAngle, 0.0f, c_bikeTiltTurnRate);
+		fnAccel(m_wheelAngle, 0.0f, c_bikeWheelTurnRate);
 	}
 
 	// acceleration
