@@ -805,7 +805,7 @@ void GadgetBike::AdvancePhysics(float dt)
 
 		// check ceiling
 		hh::math::CVector const top = hh::math::CVector::UnitY() * 1.5f;
-		if (m_upSpeed > 0.0f && Common::fRaycast(testStart + top, newPosition + top, outPos, outNormal, *(int*)0x1E0AFAC))
+		if (m_upSpeed > 0.0f && Common::fRaycast(testStart, newPosition + top, outPos, outNormal, *(int*)0x1E0AFAC))
 		{
 			newPosition = outPos - top;
 			m_upSpeed = 0.0f;

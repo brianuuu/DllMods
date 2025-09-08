@@ -901,7 +901,7 @@ void GadgetHover::AdvancePhysics(float dt)
 
 		// check ceiling
 		hh::math::CVector const top = hh::math::CVector::UnitY() * 2.1f;
-		if (m_upSpeed > 0.0f && Common::fRaycast(testStart + top, newPosition + top, outPos, outNormal, m_landCollisionID))
+		if (m_upSpeed > 0.0f && Common::fRaycast(testStart, newPosition + top, outPos, outNormal, m_landCollisionID))
 		{
 			newPosition = outPos - top;
 			m_jumpAccelTime = 0.0f;
