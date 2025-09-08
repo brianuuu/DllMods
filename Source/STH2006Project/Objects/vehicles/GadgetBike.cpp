@@ -550,7 +550,7 @@ void GadgetBike::AdvanceDriving(float dt)
 	if (m_state != State::Driving)
 	{
 		fnAccel(m_tiltAngle, 0.0f, c_bikeTiltTurnRate);
-		fnAccel(m_wheelAngle, 0.0f, c_bikeTiltTurnRate);
+		fnAccel(m_wheelAngle, 0.0f, c_bikeWheelTurnRate);
 		fnAccel(m_speed, 0.0f, c_bikeAccel);
 		m_boostDashTime = max(-c_bikeBoostDashTimeout, m_boostDashTime - dt);
 		return;
