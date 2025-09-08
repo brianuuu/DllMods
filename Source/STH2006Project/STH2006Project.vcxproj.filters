@@ -85,6 +85,7 @@
     <ClCompile Include="Objects\cmn\CustomEvent.cpp" />
     <ClCompile Include="Utils\APIExport.cpp" />
     <ClCompile Include="Objects\vehicles\GadgetJeep.cpp" />
+    <ClCompile Include="Objects\vehicles\GadgetGunSimple.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -140,6 +141,7 @@
     <ClInclude Include="Objects\enemy\DarkSphere.h" />
     <ClInclude Include="Objects\cmn\CustomEvent.h" />
     <ClInclude Include="Objects\vehicles\GadgetJeep.h" />
+    <ClInclude Include="Objects\vehicles\GadgetGunSimple.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">

@@ -99,7 +99,14 @@ bool GadgetJeep::SetAddRenderables
 	Sonic::CGameObject::AddRenderable("Object", m_spModelWheelBL, m_pMember->m_CastShadow);
 	Sonic::CGameObject::AddRenderable("Object", m_spModelWheelBR, m_pMember->m_CastShadow);
 
-	// TODO: guns
+	// guns
+	float constexpr c_jeepReloadTime = 2.0f;
+	auto const attachNodeGunL = m_spModelBase->GetNode("GunUnder_L");
+	m_spGunL = boost::make_shared<GadgetGunSimple>("Gadget_Jeep_GunL", attachNodeGunL, m_pMember->m_CastShadow, m_ActorID, c_jeepReloadTime);
+	in_pGameDocument->AddGameObject(m_spGunL, "main", this);
+	auto const attachNodeGunR = m_spModelBase->GetNode("GunUnder_R");
+	m_spGunR = boost::make_shared<GadgetGunSimple>("Gadget_Jeep_GunR", attachNodeGunR, m_pMember->m_CastShadow, m_ActorID, c_jeepReloadTime);
+	in_pGameDocument->AddGameObject(m_spGunR, "main", this);
 
 	// external control
 	auto const attachNode = m_spModelBase->GetNode("Charapoint");
@@ -181,6 +188,7 @@ void GadgetJeep::SetUpdateParallel
 )
 {
 	AdvancePlayerGetOn(in_rUpdateInfo.DeltaTime);
+	AdvanceDriving(in_rUpdateInfo.DeltaTime);
 }
 
 bool GadgetJeep::ProcessMessage
@@ -406,9 +414,6 @@ void GadgetJeep::BeginPlayerGetOff(bool isAlive)
 
 void GadgetJeep::UnloadGun()
 {
-	// TODO:
-	return;
-
 	if (!m_spGunR->IsStarted()) return;
 
 	// unload gun
@@ -416,7 +421,7 @@ void GadgetJeep::UnloadGun()
 	SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
 
 	SharedPtrTypeless sfx;
-	Common::ObjectPlaySound(this, 200612013, sfx); // TODO:
+	Common::ObjectPlaySound(this, 200612005, sfx);
 }
 
 void GadgetJeep::CleanUp()
@@ -441,13 +446,13 @@ void GadgetJeep::BeginDriving()
 	m_direction = Direction::None;
 
 	SharedPtrTypeless sfx;
-	Common::ObjectPlaySound(this, 200612016, sfx); // TODO: 
-	Common::ObjectPlaySound(this, 200612017, m_loopSfx); // TODO: 
+	//Common::ObjectPlaySound(this, 200612016, sfx); // TODO: 
+	//Common::ObjectPlaySound(this, 200612017, m_loopSfx); // TODO: 
 
-	// TODO: load gun
-	//SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
-	//SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
-	//Common::ObjectPlaySound(this, 200612013, sfx);
+	// load gun
+	SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+	SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+	Common::ObjectPlaySound(this, 200612005, sfx);
 
 	// Change animation
 	SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl("Jeep", true));
@@ -464,6 +469,33 @@ void GadgetJeep::BeginDriving()
 
 void GadgetJeep::AdvanceDriving(float dt)
 {
+	Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+
+	// get off
+	if (m_playerID && m_Data.m_CanGetOff && padState->IsTapped(Sonic::EKeyState::eKeyState_Y))
+	{
+		BeginPlayerGetOff(true);
+		return;
+	}
+
+	// fire missiles
+	if (m_playerID)
+	{
+		bool const rLoaded = m_spGunR->IsLoaded();
+		bool const lLoaded = m_spGunL->IsLoaded();
+		S06HUD_API::SetGadgetCount(rLoaded + lLoaded, 2);
+		if (m_state == State::Driving && padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger))
+		{
+			if (rLoaded)
+			{
+				SendMessage(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(0));
+			}
+			else if (lLoaded)
+			{
+				SendMessage(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(0));
+			}
+		}
+	}
 }
 
 void GadgetJeep::ToggleBrakeLights(bool on)

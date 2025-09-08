@@ -1,134 +1,6 @@
 #include "GadgetGlider.h"
-#include "GadgetMissile.h"
 
 #include "System/Application.h"
-
-bool GadgetGliderGun::SetAddRenderables
-(
-	Sonic::CGameDocument* in_pGameDocument, 
-	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
-)
-{
-	// model
-	hh::mr::CMirageDatabaseWrapper wrapper(in_spDatabase.get());
-	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData(m_modelName.c_str(), 0);
-	m_spModel = boost::make_shared<hh::mr::CSingleElement>(spModelBaseData);
-	m_spModel->BindMatrixNode(m_spNodeParent);
-	Sonic::CGameObject::AddRenderable("Object", m_spModel, m_castShadow);
-
-	// animations
-	m_spAnimPose = boost::make_shared<Hedgehog::Animation::CAnimationPose>(in_spDatabase, m_modelName.c_str());
-	std::vector<hh::anim::SMotionInfo> entries = std::vector<hh::anim::SMotionInfo>(0, { "","" });
-	std::string const revName = m_modelName + "_rev";
-	entries.push_back(hh::anim::SMotionInfo("Load", m_modelName.c_str(), 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
-	entries.push_back(hh::anim::SMotionInfo("Fire", revName.c_str(), 1.0f, hh::anim::eMotionRepeatType_PlayOnce));
-	m_spAnimPose->AddMotionInfo(&entries.front(), entries.size());
-	m_spAnimPose->CreateAnimationCache();
-	m_spModel->BindPose(m_spAnimPose);
-
-	// states
-	SetContext(this);
-	AddAnimationState("Load");
-	AddAnimationState("Fire");
-	ChangeState("Load");
-
-	// set initial transform
-	UpdateTransform();
-
-	SetCullingRange(0.0f);
-
-	return true;
-}
-
-bool GadgetGliderGun::ProcessMessage
-(
-	Hedgehog::Universe::Message& message,
-	bool flag
-)
-{
-	if (flag)
-	{
-		if (message.Is<Sonic::Message::MsgNotifyObjectEvent>())
-		{
-			auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
-			switch (msg.m_Event)
-			{
-			case 6: 
-			{
-				m_started = true;
-				break;
-			}
-			case 0:
-			{
-				FireMissile();
-				break;
-			}
-			}
-			return true;
-		}
-	}
-
-	return Sonic::CObjectBase::ProcessMessage(message, flag);
-}
-
-float const c_gliderReloadTime = 1.0f;
-
-void GadgetGliderGun::UpdateParallel
-(
-	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
-)
-{
-	if (!m_started) return;
-
-	if (m_loadTimer > 0.0f)
-	{
-		if (GetCurrentState()->GetStateName() != "Fire")
-		{
-			ChangeState("Fire");
-		}
-
-		m_loadTimer = max(0.0f, m_loadTimer - in_rUpdateInfo.DeltaTime);
-		if (m_loadTimer == 0.0f)
-		{
-			ChangeState("Load");
-
-			SharedPtrTypeless sfx;
-			Common::ObjectPlaySound(this, 200612005, sfx);
-		}
-	}
-
-	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
-	Update(in_rUpdateInfo);
-	UpdateTransform();
-}
-
-bool GadgetGliderGun::IsLoaded() const
-{
-	return m_loadTimer <= 0.0f && GetCurrentState()->GetStateName() == "Load" && Common::IsAnimationFinished(this);
-}
-
-void GadgetGliderGun::FireMissile()
-{
-	if (m_loadTimer > 0.0f) return;
-	m_loadTimer = c_gliderReloadTime;
-
-	SharedPtrTypeless sfx;
-	Common::ObjectPlaySound(this, 200612006, sfx);
-
-	auto node = m_spModel->GetNode("MissilePoint");
-	hh::mr::CTransform startTrans;
-	startTrans.m_Rotation = hh::math::CQuaternion(node->GetWorldMatrix().rotation());
-	startTrans.m_Position = node->GetWorldMatrix().translation();
-	m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<GadgetMissile>(m_owner, startTrans));
-}
-
-void GadgetGliderGun::UpdateTransform()
-{
-	// follow attach point so sound can work
-	hh::math::CMatrix const matrix = m_spNodeParent->GetWorldMatrix();
-	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(hh::math::CQuaternion(matrix.rotation()), matrix.translation());
-	m_spMatrixNodeTransform->NotifyChanged();
-}
 
 uint32_t canGetOnGliderActorID = 0u;
 HOOK(bool, __fastcall, GadgetGlider_GroundedStateChange, 0xE013D0, Sonic::Player::CPlayerSpeedContext* context, void* Edx, int a2)
@@ -235,11 +107,12 @@ bool GadgetGlider::SetAddRenderables
 	Sonic::CGameObject::AddRenderable("Object", m_spModelBoosterR, m_pMember->m_CastShadow);
 
 	// Guns
+	float constexpr c_gliderReloadTime = 1.0f;
 	auto const attachNodeGunL = m_spModelBase->GetNode("GunUnder_L");
-	m_spGunL = boost::make_shared<GadgetGliderGun>("Gadget_Glider_GunL", attachNodeGunL, m_pMember->m_CastShadow, m_ActorID);
+	m_spGunL = boost::make_shared<GadgetGunSimple>("Gadget_Glider_GunL", attachNodeGunL, m_pMember->m_CastShadow, m_ActorID, c_gliderReloadTime);
 	in_pGameDocument->AddGameObject(m_spGunL, "main", this);
 	auto const attachNodeGunR = m_spModelBase->GetNode("GunUnder_R");
-	m_spGunR = boost::make_shared<GadgetGliderGun>("Gadget_Glider_GunR", attachNodeGunR, m_pMember->m_CastShadow, m_ActorID);
+	m_spGunR = boost::make_shared<GadgetGunSimple>("Gadget_Glider_GunR", attachNodeGunR, m_pMember->m_CastShadow, m_ActorID, c_gliderReloadTime);
 	in_pGameDocument->AddGameObject(m_spGunR, "main", this);
 
 	// explosion

@@ -3,7 +3,7 @@
 ///	Year: 2025
 ///	Description: Gadget_Bike object from 06
 /*----------------------------------------------------------*/
-#include "GadgetGun.h"
+#include "GadgetGunSimple.h"
 
 #pragma once
 class GadgetJeep : public Sonic::CObjectBase, public Sonic::CSetObjectListener
@@ -87,8 +87,8 @@ private:
 
 	boost::shared_ptr<hh::mot::CSingleElementEffectMotionAll> m_spEffectMotionAll;
 
-	boost::shared_ptr<GadgetGun> m_spGunL;
-	boost::shared_ptr<GadgetGun> m_spGunR;
+	boost::shared_ptr<GadgetGunSimple> m_spGunL;
+	boost::shared_ptr<GadgetGunSimple> m_spGunR;
 
 private:
 	void InitializeEditParam(Sonic::CEditParam& in_rEditParam) override;
