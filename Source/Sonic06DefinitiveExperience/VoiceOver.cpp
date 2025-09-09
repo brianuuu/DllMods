@@ -43,7 +43,6 @@ HOOK(void, __fastcall, VoiceOver_MsgGetItemType, 0xE6D7D0, void* This, void* Edx
 	case 5: // Board
 	case 6: // Rocket Wisp
 	case 7: // Spike Wisp
-	case 8: // Flame Barrier
 	case 9: // Aqua Barrier
 	case 10: // Thunder Barrier
 	case 11:
