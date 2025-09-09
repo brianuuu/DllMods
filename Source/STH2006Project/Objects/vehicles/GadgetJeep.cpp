@@ -265,6 +265,10 @@ void GadgetJeep::AddCallback
 	Sonic::CObjectBase::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
 
 	m_rotation = m_spMatrixNodeTransform->m_Transform.m_Rotation;
+	m_wheelFLPos = m_spNodeWheelFL->GetWorldMatrix().translation();
+	m_wheelFRPos = m_spNodeWheelFR->GetWorldMatrix().translation();
+	m_wheelBLPos = m_spNodeWheelBL->GetWorldMatrix().translation();
+	m_wheelBRPos = m_spNodeWheelBR->GetWorldMatrix().translation();
 }
 
 void GadgetJeep::KillCallback()
@@ -746,29 +750,34 @@ void GadgetJeep::AdvancePhysics(float dt)
 		float constexpr steerScale = 10.0f;
 		m_rotation = Eigen::AngleAxisf((m_isLanded ? m_wheelAngle : 0.0f) * speedRatio * steerScale * dt, upAxis) * m_rotation;
 
-		// wheel spin
-		float constexpr wheelRatio = 0.8f;
-		m_wheelSpin += (m_speed / wheelRatio) * dt;
-		if (m_wheelSpin > PI_F * 2.0f) m_wheelSpin -= PI_F * 2.0f;
-		if (m_wheelSpin < PI_F * -2.0f) m_wheelSpin += PI_F * 2.0f;
+		// wheels
+		float const sign = m_speed > 0.0f ? 1.0f : -1.0f;
+		auto fnWheelSpin = [&dt, &sign](Sonic::CMatrixNodeTransform* transform, hh::math::CVector& pos)
+		{
+			hh::math::CVector const newPos = transform->GetWorldMatrix().translation();
+			if ((newPos - pos).isApprox(hh::math::CVector::Zero()))
+			{
+				return;
+			}
+
+			float const dist = (newPos - pos).norm();
+			float constexpr wheelRadius = 0.54f;
+			float const theta = dist * sign / wheelRadius;
+			hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(theta, hh::math::CVector::UnitX()) * transform->m_Transform.m_Rotation;
+			transform->m_Transform.SetRotation(newRotation);
+			transform->NotifyChanged();
+			pos = newPos;
+		};
+
+		fnWheelSpin(m_spNodeWheelFL.get(), m_wheelFLPos);
+		fnWheelSpin(m_spNodeWheelFR.get(), m_wheelFRPos);
+		fnWheelSpin(m_spNodeWheelBL.get(), m_wheelBLPos);
+		fnWheelSpin(m_spNodeWheelBR.get(), m_wheelBRPos);
 	}
 
 	{
-		hh::math::CVector const rightAxis = hh::math::CVector::UnitX();
-
-		// wheels
-		hh::math::CQuaternion newRotation = Eigen::AngleAxisf(m_wheelSpin, rightAxis) * hh::math::CQuaternion::Identity();
-		m_spNodeWheelFR->m_Transform.SetRotation(newRotation);
-		m_spNodeWheelFR->NotifyChanged();
-		m_spNodeWheelFL->m_Transform.SetRotation(newRotation);
-		m_spNodeWheelFL->NotifyChanged();
-		m_spNodeWheelBR->m_Transform.SetRotation(newRotation);
-		m_spNodeWheelBR->NotifyChanged();
-		m_spNodeWheelBL->m_Transform.SetRotation(newRotation);
-		m_spNodeWheelBL->NotifyChanged();
-
 		// guards
-		newRotation = Eigen::AngleAxisf(m_wheelAngle, upAxis) * hh::math::CQuaternion::Identity();
+		hh::math::CQuaternion newRotation = Eigen::AngleAxisf(m_wheelAngle, upAxis) * hh::math::CQuaternion::Identity();
 		m_spNodeGuardR->m_Transform.SetRotation(newRotation);
 		m_spNodeGuardR->NotifyChanged();
 		m_spNodeGuardL->m_Transform.SetRotation(newRotation);

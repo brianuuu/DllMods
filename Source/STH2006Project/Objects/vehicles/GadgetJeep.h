@@ -77,8 +77,11 @@ private:
 
 	hh::math::CVector2 m_input = hh::math::CVector2::Zero();
 	hh::math::CQuaternion m_rotation = hh::math::CQuaternion::Identity();
+	hh::math::CVector m_wheelFLPos = hh::math::CVector::Zero();
+	hh::math::CVector m_wheelFRPos = hh::math::CVector::Zero();
+	hh::math::CVector m_wheelBLPos = hh::math::CVector::Zero();
+	hh::math::CVector m_wheelBRPos = hh::math::CVector::Zero();
 	float m_wheelAngle = 0.0f;
-	float m_wheelSpin = 0.0f;
 
 	float m_hp = 100.0f;
 	float m_speed = 0.0f;
