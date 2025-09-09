@@ -97,7 +97,7 @@ class ScoreManager
 public:
 	static void applyPatches();
 
-	static void __fastcall addScore(ScoreType type, uint32_t* This = nullptr);
+	static void __fastcall addScore(ScoreType type, uint32_t actorID = 0);
 	static ResultData* calculateResultData();
 	static float getScoreProp(ScoreTable const& scoreTable, int score);
 	static float getPropBetween(int min, int max, int num);
@@ -110,7 +110,7 @@ public:
 	static uint32_t m_enemyChain;
 	static uint32_t m_enemyCount;
 	static float m_enemyChainTimer;
-	static void addEnemyChain(uint32_t* This);
+	static void addEnemyChain(uint32_t actorID);
 	static uint32_t calculateEnemyChainBonus();
 
 	// Bonus GUI
@@ -136,7 +136,7 @@ public:
 
 	// Common members
 	static bool m_internalSystem;
-	static std::unordered_set<uint32_t*> m_savedObjects;
+	static std::unordered_set<uint32_t> m_savedActors;
 
 	// Internal system members
 	static bool m_externalHUD;

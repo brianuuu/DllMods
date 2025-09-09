@@ -26,7 +26,7 @@ void EnemyTrigger_HandleEnemyMsgNotifyObjectEvent(hh::fnd::CMessageActor* This, 
         uint32_t pCEnemyBase = (uint32_t)This - 0x28;
         *(uint8_t*)(pCEnemyBase + 0x16F) = 0u;
 
-        ScoreManager::addEnemyChain((uint32_t*)pCEnemyBase);
+        ScoreManager::addEnemyChain(((Sonic::CGameObject*)pCEnemyBase)->m_ActorID);
         This->SendMessage(This->m_ActorID, boost::make_shared<Sonic::Message::MsgDamage>
             (
                 *(uint32_t*)0x1E0BE30, hh::math::CVector::Zero(), hh::math::CVector::Zero()

@@ -78,7 +78,7 @@ bool Explosion::ProcessMessage(Hedgehog::Universe::Message& message, bool flag)
 
                 if (enemyType > 0)
                 {
-                    ScoreManager::addEnemyChain(senderActor);
+                    ScoreManager::addEnemyChain(((Sonic::CGameObject*)senderActor)->m_ActorID);
                 }
             }
 

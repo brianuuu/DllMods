@@ -6,7 +6,7 @@
 #include "UI/UIContext.h"
 
 bool ScoreManager::m_internalSystem = true;
-std::unordered_set<uint32_t*> ScoreManager::m_savedObjects;
+std::unordered_set<uint32_t> ScoreManager::m_savedActors;
 
 bool ScoreManager::m_externalHUD = false;
 uint32_t ScoreManager::m_scoreLimit = 999999;
@@ -107,7 +107,7 @@ HOOK(void, __fastcall, CScoreManager_CHudSonicStageUpdate, 0x1098A50, void* This
 		if (ScoreManager::m_enemyCount >= 3)
 		{
 			ScoreManager::m_enemyChain++;
-			ScoreManager::addScore(ScoreType::ST_enemyBonus, nullptr);
+			ScoreManager::addScore(ScoreType::ST_enemyBonus);
 		}
 
 		ScoreManager::m_enemyCount = 0;
@@ -127,7 +127,7 @@ HOOK(void, __fastcall, CScoreManager_CHudSonicStageUpdate, 0x1098A50, void* This
 HOOK(int, __fastcall, ScoreManager_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
 {
 	printf("[ScoreManager] RESTARTED!\n");
-	ScoreManager::m_savedObjects.clear();
+	ScoreManager::m_savedActors.clear();
 	return originalScoreManager_MsgRestartStage(This, Edx, message);
 }
 
@@ -171,35 +171,33 @@ HOOK(int*, __fastcall, ScoreManager_GameplayManagerInit, 0xD00F70, uint32_t This
 
 HOOK(void, __fastcall, ScoreManager_GetItem, 0xFFF810, uint32_t* This, void* Edx, void* message)
 {
+	Sonic::CGameObject* pObj = (Sonic::CGameObject*)This;
 	switch (This[71])
 	{
-	default: ScoreManager::addScore(ScoreType::ST_itembox, This); break; // 1up
-	case 6:  ScoreManager::addScore(ScoreType::ST_5ring, This); break; // 5 ring
-	case 7:  ScoreManager::addScore(ScoreType::ST_10ring, This); break; // 10 ring
-	case 8:	 ScoreManager::addScore(ScoreType::ST_20ring, This); break; // 20 ring
+	default: ScoreManager::addScore(ScoreType::ST_itembox, pObj->m_ActorID); break; // 1up
+	case 6:  ScoreManager::addScore(ScoreType::ST_5ring, pObj->m_ActorID); break; // 5 ring
+	case 7:  ScoreManager::addScore(ScoreType::ST_10ring, pObj->m_ActorID); break; // 10 ring
+	case 8:	 ScoreManager::addScore(ScoreType::ST_20ring, pObj->m_ActorID); break; // 20 ring
 	}
 
 	originalScoreManager_GetItem(This, Edx, message);
 }
 
-HOOK(int, __fastcall, ScoreManager_GetRing, 0x10534B0, uint32_t* This, void* Edx, void* message)
+HOOK(int, __fastcall, ScoreManager_GetRing, 0x10534B0, Sonic::CGameObject* This, void* Edx, void* message)
 {
-	uint32_t* owner = This;
-
 	// Allow collecting repeated rings in Silver boss
 	uint32_t stageID = Common::GetCurrentStageID();
-	if (stageID == 22 || stageID == 278)
+	if (stageID != 22 && stageID != 278)
 	{
-		owner = nullptr;
+		ScoreManager::addScore(ScoreType::ST_ring, This->m_ActorID);
 	}
 
-	ScoreManager::addScore(ScoreType::ST_ring, owner);
 	return originalScoreManager_GetRing(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_GetSuperRing, 0x11F2F10, uint32_t* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_GetSuperRing, 0x11F2F10, Sonic::CGameObject* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(ScoreType::ST_10ring, This);
+	ScoreManager::addScore(ScoreType::ST_10ring, This->m_ActorID);
 	originalScoreManager_GetSuperRing(This, Edx, message);
 }
 
@@ -211,7 +209,7 @@ HOOK(void, __fastcall, ScoreManager_GetPhysicsMsgNotifyObjectEvent, 0xEA4F50, So
 		int fakeEnemyType = ChaosEnergy::getFakeEnemyType(name);
 		if (fakeEnemyType)
 		{
-			ScoreManager::addEnemyChain((uint32_t*)This);
+			ScoreManager::addEnemyChain(This->m_ActorID);
 		}
 	}
 
@@ -254,6 +252,8 @@ HOOK(void, __stdcall, ScoreManager_GetPhysics, 0xEA49B0, uint32_t This, int a2, 
 		"aqa_obj_sphere",
 	};
 
+	uint32_t actorID = ((Sonic::CGameObject*)This)->m_ActorID;
+
 	// Check if it's a breakable object
 	if (!*(bool*)(This + 0x120))
 	{
@@ -263,11 +263,11 @@ HOOK(void, __stdcall, ScoreManager_GetPhysics, 0xEA49B0, uint32_t This, int a2, 
 			int fakeEnemyType = ChaosEnergy::getFakeEnemyType(name);
 			if (fakeEnemyType)
 			{
-				ScoreManager::addScore(fakeEnemyType == 1 ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, (uint32_t*)This);
+				ScoreManager::addScore(fakeEnemyType == 1 ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, actorID);
 			}
 			else if (name == "twn_obj_barricade")
 			{
-				ScoreManager::addScore(ScoreType::ST_barricade, (uint32_t*)This);
+				ScoreManager::addScore(ScoreType::ST_barricade, actorID);
 			}
 			else
 			{
@@ -283,7 +283,7 @@ HOOK(void, __stdcall, ScoreManager_GetPhysics, 0xEA49B0, uint32_t This, int a2, 
 
 				if (!filtered)
 				{
-					ScoreManager::addScore(ScoreType::ST_physics, (uint32_t*)This);
+					ScoreManager::addScore(ScoreType::ST_physics, actorID);
 				}
 			}
 		}
@@ -313,88 +313,82 @@ HOOK(void, __fastcall, ScoreManager_GetMissionDashRing, 0xEDB560, uint32_t This,
 {
 	if (*(uint8_t*)(This + 0x154) == 2)
 	{
-		ScoreManager::addScore(ScoreType::ST_missionDashRing, (uint32_t*)This);
+		ScoreManager::addScore(ScoreType::ST_missionDashRing, ((Sonic::CGameObject*)This)->m_ActorID);
 	}
 
 	originalScoreManager_GetMissionDashRing(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemyGunner, 0xBAA2F0, uint32_t* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyGunner, 0xBAA2F0, Sonic::CGameObject* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
+	ScoreManager::addScore(ScoreType::ST_enemySmall, This->m_ActorID);
 	originalScoreManager_EnemyGunner(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemyStingerLancer, 0xBB01B0, uint32_t* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(This[104] ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, This);
+	ScoreManager::addScore(This[104] ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, ((Sonic::CGameObject*)This)->m_ActorID);
 	originalScoreManager_EnemyStingerLancer(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemyBuster, 0xB82900, uint32_t* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyBuster, 0xB82900, Sonic::CGameObject* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(ScoreType::ST_enemyMedium, This);
+	ScoreManager::addScore(ScoreType::ST_enemyMedium, This->m_ActorID);
 	originalScoreManager_EnemyBuster(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemyFlyer, 0xBA6450, uint32_t* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyFlyer, 0xBA6450, Sonic::CGameObject* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
+	ScoreManager::addScore(ScoreType::ST_enemySmall, This->m_ActorID);
 	originalScoreManager_EnemyFlyer(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemySearcherHunter, 0xBDC110, uint32_t* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(*(bool*)((uint32_t)This + 0x17C) ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, This);
+	ScoreManager::addScore(*(bool*)((uint32_t)This + 0x17C) ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, ((Sonic::CGameObject*)This)->m_ActorID);
 	originalScoreManager_EnemySearcherHunter(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemyLiner, 0xBC7440, uint32_t* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyLiner, 0xBC7440, Sonic::CGameObject* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
+	ScoreManager::addScore(ScoreType::ST_enemySmall, This->m_ActorID);
 	originalScoreManager_EnemyLiner(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemyBomber, 0xBCB9A0, uint32_t* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyBomber, 0xBCB9A0, Sonic::CGameObject* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
+	ScoreManager::addScore(ScoreType::ST_enemySmall, This->m_ActorID);
 	originalScoreManager_EnemyBomber(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemyRounder, 0xBCF5E0, uint32_t* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyRounder, 0xBCF5E0, Sonic::CGameObject* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
+	ScoreManager::addScore(ScoreType::ST_enemySmall, This->m_ActorID);
 	originalScoreManager_EnemyRounder(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemyTaker, 0xBA3140, uint32_t* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyTaker, 0xBA3140, Sonic::CGameObject* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
+	ScoreManager::addScore(ScoreType::ST_enemySmall, This->m_ActorID);
 	originalScoreManager_EnemyTaker(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemyBiter, 0xB86850, uint32_t* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyBiter, 0xB86850, Sonic::CGameObject* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(ScoreType::ST_enemySmall, This);
+	ScoreManager::addScore(ScoreType::ST_enemySmall, This->m_ActorID);
 	originalScoreManager_EnemyBiter(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemyCrawler, 0xB99B80, uint32_t* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyCrawler, 0xB99B80, Sonic::CGameObject* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(ScoreType::ST_enemyMedium, This);
+	ScoreManager::addScore(ScoreType::ST_enemyMedium, This->m_ActorID);
 	originalScoreManager_EnemyCrawler(This, Edx, message);
 }
 
 HOOK(void, __fastcall, ScoreManager_EnemySpinner, 0xBBD990, uint32_t* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(*(bool*)((uint32_t)This + 372) ? ScoreType::ST_enemyMedium : ScoreType::ST_enemySmall, This);
+	ScoreManager::addScore(*(bool*)((uint32_t)This + 372) ? ScoreType::ST_enemyMedium : ScoreType::ST_enemySmall, ((Sonic::CGameObject*)This)->m_ActorID);
 	originalScoreManager_EnemySpinner(This, Edx, message);
-}
-
-HOOK(int, __fastcall, ScoreManager_CGameObject3DDestruction, 0xD5D790, uint32_t* This)
-{
-	ScoreManager::m_savedObjects.erase(This);
-	return originalScoreManager_CGameObject3DDestruction(This);
 }
 
 void __declspec(naked) ScoreManager_NextRankScore()
@@ -433,7 +427,7 @@ HOOK(bool, __fastcall, ScoreManager_CRivalSilverMsgDamage, 0xC89080, uint32_t* T
 	uint32_t* pCSilver = (uint32_t*)This[104];
 	if ((pCSilver[81] & 0x100000) != 0)
 	{
-		ScoreManager::addScore(ScoreType::ST_boss, pCSilver);
+		ScoreManager::addScore(ScoreType::ST_boss, ((Sonic::CGameObject*)This)->m_ActorID);
 	}
 
 	return originalScoreManager_CRivalSilverMsgDamage(This, Edx, message);
@@ -489,9 +483,6 @@ void ScoreManager::applyPatches()
 	// Reset stage
 	INSTALL_HOOK(ScoreManager_MsgRestartStage);
 
-	// Remove from list when object is destructed
-	INSTALL_HOOK(ScoreManager_CGameObject3DDestruction);
-
 	// Common score hooks
 	INSTALL_HOOK(ScoreManager_GetItem);
 	INSTALL_HOOK(ScoreManager_GetRing);
@@ -544,18 +535,18 @@ void ScoreManager::applyPatches()
 	WRITE_JUMP(0xC0FFC5, ScoreManager_CBossPerfectChaosAddScore);
 }
 
-void __fastcall ScoreManager::addScore(ScoreType type, uint32_t* This)
+void __fastcall ScoreManager::addScore(ScoreType type, uint32_t actorID)
 {
 	// Prevent same object to add score multiple times
-	if (This)
+	if (actorID)
 	{
-		if (m_savedObjects.count(This))
+		if (m_savedActors.count(actorID))
 		{
-			printf("[ScoreManager] WARNING: Duplicated score\n");
+			printf("[ScoreManager] Actor %u score already added\n", actorID);
 			return;
 		}
 
-		m_savedObjects.insert(This);
+		m_savedActors.insert(actorID);
 	}
 
 	int score = 0;
@@ -619,7 +610,7 @@ void __fastcall ScoreManager::addScore(ScoreType type, uint32_t* This)
 		notifyDraw(BonusCommentType::BCT_Radical);
 	}
 
-	printf("[ScoreManager] Score +%d \tType: %s\n", score, GetScoreTypeName(type));
+	printf("[ScoreManager] Actor %u \tScore +%d \tType: %s\n", actorID, score, GetScoreTypeName(type));
 	if (m_internalSystem)
 	{
 		if (m_pCScoreManager)
@@ -655,10 +646,10 @@ uint32_t ScoreManager::calculateRainbowRingChainBonus()
 	}
 }
 
-void ScoreManager::addEnemyChain(uint32_t* This)
+void ScoreManager::addEnemyChain(uint32_t actorID)
 {
 	// Already counted this object
-	if (!This || m_savedObjects.count(This))
+	if (!actorID || m_savedActors.count(actorID))
 	{
 		return;
 	}
