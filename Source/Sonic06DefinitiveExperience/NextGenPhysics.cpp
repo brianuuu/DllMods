@@ -636,8 +636,9 @@ void NextGenPhysics::applyPatches()
         // Transition to Fall immediately without checking down speed for CPlayerSpeedStateSpecialJump
         WRITE_JUMP(0x11DE320, (void*)0x11DE344);
 
-        // Don't transition to FallLarge when speed < -15.0f
+        // Don't transition to FallLarge/Fall
         WRITE_MEMORY(0x1118DE5, uint8_t, 0xEB);
+        WRITE_MEMORY(0x1118E94, uint8_t, 0xEB);
 
         // Change animation at CSonicStateFall base on current animation
         INSTALL_HOOK(NextGenPhysics_CSonicStateFallBegin);
