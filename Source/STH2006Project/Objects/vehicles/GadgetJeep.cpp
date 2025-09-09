@@ -209,10 +209,32 @@ bool GadgetJeep::SetAddRenderables
 	m_spSonicControlNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
 	m_spSonicControlNode->SetParent(attachNode.get());
 
-	// proxy collision
-	Hedgehog::Base::THolder<Sonic::CWorld> holder(m_pMember->m_pWorld.get());
-	hk2010_2_0::hkpBoxShape* proxyShape = new hk2010_2_0::hkpBoxShape(1.4f, 0.1f, 3.2f);
-	m_spProxy = boost::make_shared<Sonic::CCharacterProxy>(this, holder, proxyShape, hh::math::CVector::UnitY() * 2.0f, hh::math::CQuaternion::Identity(), *(int*)0x1E0AFAC);
+	// mat-anim
+	m_spEffectMotionAll = boost::make_shared<hh::mot::CSingleElementEffectMotionAll>();
+	m_spModelBase->BindEffect(m_spEffectMotionAll);
+
+	FUNCTION_PTR(void, __thiscall, fpGetMaterialAnimData, 0x759720,
+		hh::mot::CMotionDatabaseWrapper const& wrapper,
+		boost::shared_ptr<Hedgehog::Motion::CMaterialAnimationData>&materialAnimData,
+		hh::base::CSharedString const& name,
+		uint32_t flag
+	);
+
+	FUNCTION_PTR(void, __thiscall, fpCreateMatAnim, 0x753910,
+		Hedgehog::Motion::CSingleElementEffectMotionAll * This,
+		boost::shared_ptr<hh::mr::CModelData> const& modelData,
+		boost::shared_ptr<Hedgehog::Motion::CMaterialAnimationData> const& materialAnimData
+	);
+
+	hh::mot::CMotionDatabaseWrapper motWrapper(in_spDatabase.get());
+	boost::shared_ptr<Hedgehog::Motion::CMaterialAnimationData> materialAnimData;
+	fpGetMaterialAnimData(motWrapper, materialAnimData, "Gadget_Jeep_Reverse", 0);
+	fpCreateMatAnim(m_spEffectMotionAll.get(), spModelBaseData, materialAnimData);
+
+	FUNCTION_PTR(void, __thiscall, fpUpdateMotionAll, 0x752F00, Hedgehog::Motion::CSingleElementEffectMotionAll * This, float dt);
+	fpUpdateMotionAll(m_spEffectMotionAll.get(), 0.0f);
+
+	SetCullingRange(0.0f);
 
 	return true;
 }
@@ -251,6 +273,11 @@ bool GadgetJeep::SetAddColliders
 	m_spNodeEventCollision->SetParent(m_spMatrixNodeTransform.get());
 	hk2010_2_0::hkpCapsuleShape* shapeEventTrigger = new hk2010_2_0::hkpCapsuleShape(hh::math::CVector(0.0f, 1.0f, 1.25f), hh::math::CVector(0.0f, 1.0f, -1.25f), 2.5f);
 	AddEventCollision("Player", shapeEventTrigger, *(int*)0x1E0AFD8, true, m_spNodeEventCollision); // ColID_PlayerEvent
+
+	// proxy collision
+	Hedgehog::Base::THolder<Sonic::CWorld> holder(m_pMember->m_pWorld.get());
+	hk2010_2_0::hkpBoxShape* proxyShape = new hk2010_2_0::hkpBoxShape(1.4f, 0.1f, 3.2f);
+	m_spProxy = boost::make_shared<Sonic::CCharacterProxy>(this, holder, proxyShape, hh::math::CVector::UnitY() * 2.0f, hh::math::CQuaternion::Identity(), *(int*)0x1E0AFAC);
 
 	return true;
 }
@@ -898,9 +925,6 @@ void GadgetJeep::AdvancePhysics(float dt)
 
 void GadgetJeep::ToggleBrakeLights(bool on)
 {
-	// TODO:
-	return;
-
 	FUNCTION_PTR(void, __thiscall, fpUpdateMotionAll, 0x752F00, Hedgehog::Motion::CSingleElementEffectMotionAll * This, float dt);
 	if (on && !m_brakeLights)
 	{
