@@ -284,7 +284,7 @@ bool GadgetJeep::SetAddColliders
 	// proxy collision
 	Hedgehog::Base::THolder<Sonic::CWorld> holder(m_pMember->m_pWorld.get());
 	hk2010_2_0::hkpBoxShape* proxyShape = new hk2010_2_0::hkpBoxShape(1.4f, 0.1f, 3.2f);
-	m_spProxy = boost::make_shared<Sonic::CCharacterProxy>(this, holder, proxyShape, hh::math::CVector::UnitY() * 2.0f, hh::math::CQuaternion::Identity(), *(int*)0x1E0AFAC);
+	m_spProxy = boost::make_shared<Sonic::CCharacterProxy>(this, holder, proxyShape, hh::math::CVector::UnitY() * 2.2f, hh::math::CQuaternion::Identity(), *(int*)0x1E0AFAC);
 
 	return true;
 }
@@ -434,6 +434,27 @@ bool GadgetJeep::ProcessMessage
 				SendMessageImm(m_playerID, message);
 			}
 			return true;
+		}
+
+		if (message.IsOfType((char*)0x1680D84)) // MsgApplyImpulse
+		{
+			auto* msg = (MsgApplyImpulse*)&message;
+			hh::math::CVector const dir = msg->m_impulse.normalized();
+			if (dir.dot(hh::math::CVector::UnitY()) <= 0.95f) // not pointing up
+			{
+				hh::math::CVector hDir = dir;
+				hDir.y() = 0.0f;
+				hDir.normalize();
+				float yaw = acos(hDir.z());
+				if (hDir.dot(Eigen::Vector3f::UnitX()) < 0) yaw = -yaw;
+				m_rotation = hh::math::CQuaternion::FromTwoVectors(hDir.head<3>(), dir.head<3>()) * Eigen::AngleAxisf(yaw, Eigen::Vector3f::UnitY());
+			}
+
+			m_speed = msg->m_impulse.dot(m_rotation * hh::math::CVector::UnitZ());
+			m_upSpeed = msg->m_impulse.dot(hh::math::CVector::UnitY());
+			m_outOfControl = msg->m_outOfControl;
+			m_wheelAngle = 0.0f;
+			m_isLanded = false;
 		}
 
 		if (message.Is<Sonic::Message::MsgDeactivate>())
