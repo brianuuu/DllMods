@@ -78,6 +78,8 @@ bool GadgetMissile::ProcessMessage(Hedgehog::Universe::Message& message, bool fl
 			{
 				if (message.m_SenderActorID != m_owner)
 				{
+					// send event to notify kill 2 HP
+					SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(422));
 					SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
 						(
 							*(uint32_t*)0x1E0BE28, // DamageID_SonicHeavy

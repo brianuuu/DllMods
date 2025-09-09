@@ -79,7 +79,7 @@ private:
 	bool m_canDamage = false;
 	bool m_enterHalfHP = false;
 	bool m_enterLastHP = false;
-	bool m_nextDamageChaosBlast = false;
+	int m_nextDamageStrength = 0;
 	float m_spawnBarrierTimer = 0.0f;
 	uint32_t m_cameraActorID = 0;
 	uint32_t m_handLID = 0;

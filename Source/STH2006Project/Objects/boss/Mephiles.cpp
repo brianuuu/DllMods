@@ -334,9 +334,9 @@ bool Mephiles::ProcessMessage
 							Common::ObjectPlaySound(this, 200614000, soundHandle);
 						}
 
-						if (m_nextDamageChaosBlast)
+						if (m_nextDamageStrength)
 						{
-							m_HP = max(0, m_HP - 5);
+							m_HP = max(0, m_HP - m_nextDamageStrength);
 						}
 						else
 						{
@@ -379,7 +379,7 @@ bool Mephiles::ProcessMessage
 				SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamageSuccess>(otherPos, true));
 			}
 
-			m_nextDamageChaosBlast = false;
+			m_nextDamageStrength = 0;
 			return true;
 		}
 		
@@ -495,9 +495,14 @@ bool Mephiles::ProcessMessage
 			case 420:
 			{
 				// Chaos Blast
-				m_nextDamageChaosBlast = true;
+				m_nextDamageStrength = 5;
 				break;
 			}
+			}
+
+			if (msg.m_Event >= 421 && msg.m_Event <= 430)
+			{
+				m_nextDamageStrength = msg.m_Event - 420;
 			}
 			return true;
 		}

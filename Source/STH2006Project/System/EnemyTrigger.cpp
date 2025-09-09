@@ -48,6 +48,22 @@ void EnemyTrigger_HandleEnemyMsgNotifyObjectEvent(hh::fnd::CMessageActor* This, 
             (*hp) = 0;
         }
     }
+    else if (msg.m_Event >= 421 && msg.m_Event <= 430)
+    {
+        // various damage
+        uint32_t pCEnemyBase = (uint32_t)This - 0x28;
+        uint8_t* hp = (uint8_t*)(pCEnemyBase + 0x16F);
+
+        uint8_t deduction = msg.m_Event - 421;
+        if (*hp >= deduction)
+        {
+            (*hp) -= deduction;
+        }
+        else
+        {
+            (*hp) = 0;
+        }
+    }
 }
 
 bool EnemyTrigger_HandleEnemyMsgDamage(hh::fnd::CMessageActor* This, hh::fnd::Message& message)
