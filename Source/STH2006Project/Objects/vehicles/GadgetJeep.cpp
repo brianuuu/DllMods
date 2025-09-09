@@ -274,6 +274,13 @@ bool GadgetJeep::SetAddColliders
 	hk2010_2_0::hkpCapsuleShape* shapeEventTrigger = new hk2010_2_0::hkpCapsuleShape(hh::math::CVector(0.0f, 1.0f, 1.25f), hh::math::CVector(0.0f, 1.0f, -1.25f), 2.5f);
 	AddEventCollision("Player", shapeEventTrigger, *(int*)0x1E0AFD8, true, m_spNodeEventCollision); // ColID_PlayerEvent
 
+	// fake player collision
+	hk2010_2_0::hkpCylinderShape* playerEventTrigger = new hk2010_2_0::hkpCylinderShape(hh::math::CVector(0.342f, 0.0f, -0.388f), hh::math::CVector(0.342f, 1.7f, -0.388f), 0.5f);
+	AddEventCollision("FakePlayer", playerEventTrigger, *(int*)0x1E0AF90, true, m_spMatrixNodeTransform); // TypePlayer
+	AddEventCollision("FakePlayerItem", playerEventTrigger, *(int*)0x1E0AF8C, true, m_spMatrixNodeTransform); // TypePlayerItem
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayerItem", false);
+
 	// proxy collision
 	Hedgehog::Base::THolder<Sonic::CWorld> holder(m_pMember->m_pWorld.get());
 	hk2010_2_0::hkpBoxShape* proxyShape = new hk2010_2_0::hkpBoxShape(1.4f, 0.1f, 3.2f);
