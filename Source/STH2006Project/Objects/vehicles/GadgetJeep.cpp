@@ -81,6 +81,7 @@ bool GadgetJeepBooster::IsBoosting() const
 	return GetCurrentState()->GetStateName() != "Return" || !Common::IsAnimationFinished(this);
 }
 
+float const c_jeepBoostTime = 2.0f;
 bool GadgetJeepBooster::Boost()
 {
 	if (IsBoosting())
@@ -89,8 +90,13 @@ bool GadgetJeepBooster::Boost()
 	}
 
 	ChangeState("Boost");
-	m_timer = 2.0f;
+	m_timer = c_jeepBoostTime;
 	return true;
+}
+
+float GadgetJeepBooster::GetBoostTime() const
+{
+	return c_jeepBoostTime - m_timer;
 }
 
 uint32_t canGetOnJeepActorID = 0u;
@@ -703,7 +709,7 @@ void GadgetJeep::AdvanceDriving(float dt)
 	bool shouldStopBrakeSfx = (m_speed <= c_jeepMinBrakeSpeed);
 	if (m_isLanded)
 	{
-		if (m_spBooster->IsBoosting())
+		if (m_spBooster->IsBoosting() && (m_spBooster->GetBoostTime() <= 1.0f || !padState->IsDown(Sonic::EKeyState::eKeyState_X)))
 		{
 			// boost dash
 			fnAccel(m_speed, c_jeepMaxSpeed, c_jeepBoostDashAccel);

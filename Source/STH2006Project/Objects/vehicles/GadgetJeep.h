@@ -32,6 +32,7 @@ public:
 
 	bool IsBoosting() const;
 	bool Boost();
+	float GetBoostTime() const;
 };
 
 class GadgetJeep : public Sonic::CObjectBase, public Sonic::CSetObjectListener
