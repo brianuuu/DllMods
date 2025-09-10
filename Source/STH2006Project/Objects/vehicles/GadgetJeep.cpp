@@ -766,9 +766,8 @@ void GadgetJeep::AdvanceDriving(float dt)
 				SharedPtrTypeless sfx;
 				Common::ObjectPlaySound(this, 200612030, sfx);
 
-				// TODO:
-				//m_pGlitterPlayer->PlayOneshot(m_spModelBase->GetNode("pBoost_L"), "ef_bike_boost", 1.0f, 1);
-				//m_pGlitterPlayer->PlayOneshot(m_spModelBase->GetNode("pBoost_R"), "ef_bike_boost", 1.0f, 1);
+				m_pGlitterPlayer->PlayOneshot(m_spModelBase->GetNode("pBoost_L"), "ef_jeep_boost", 1.0f, 1);
+				m_pGlitterPlayer->PlayOneshot(m_spModelBase->GetNode("pBoost_R"), "ef_jeep_boost", 1.0f, 1);
 			}
 
 			m_doubleTapTime = 0.0f;
