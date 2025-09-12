@@ -62,6 +62,12 @@
     <ClCompile Include="NextGenObjects.cpp">
       <Filter>Stage</Filter>
     </ClCompile>
+    <ClCompile Include="GadgetGunSimple.cpp">
+      <Filter>Gadget</Filter>
+    </ClCompile>
+    <ClCompile Include="GadgetMissile.cpp">
+      <Filter>Gadget</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pch.h" />
@@ -122,6 +128,12 @@
     <ClInclude Include="NextGenObjects.h">
       <Filter>Stage</Filter>
     </ClInclude>
+    <ClInclude Include="GadgetGunSimple.h">
+      <Filter>Gadget</Filter>
+    </ClInclude>
+    <ClInclude Include="GadgetMissile.h">
+      <Filter>Gadget</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Character">
@@ -132,6 +144,9 @@
     </Filter>
     <Filter Include="Utils">
       <UniqueIdentifier>{bf38077e-6a3f-4dde-bc22-ccda8f039b58}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Gadget">
+      <UniqueIdentifier>{a08803c0-6fc3-42a3-ae69-c13c6db49a02}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

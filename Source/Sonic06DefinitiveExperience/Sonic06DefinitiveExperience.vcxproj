@@ -186,6 +186,8 @@
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="EnemyShock.cpp" />
+    <ClCompile Include="GadgetGunSimple.cpp" />
+    <ClCompile Include="GadgetMissile.cpp" />
     <ClCompile Include="Itembox.cpp" />
     <ClCompile Include="Mod.cpp" />
     <ClCompile Include="Navigation.cpp" />
@@ -220,6 +222,8 @@
     <ClInclude Include="ChaosEnergy.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="EnemyShock.h" />
+    <ClInclude Include="GadgetGunSimple.h" />
+    <ClInclude Include="GadgetMissile.h" />
     <ClInclude Include="Itembox.h" />
     <ClInclude Include="Navigation.h" />
     <ClInclude Include="NextGenBlaze.h" />
