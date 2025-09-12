@@ -19,6 +19,7 @@ vector<string> Configuration::Sonic::m_runStages = {};
 bool Configuration::Sonic::m_unlimitedGauge = false;
 bool Configuration::Sonic::m_gemsEnabled = false;
 
+Configuration::ShadowDPadType Configuration::Shadow::m_shaodwDPad = Configuration::ShadowDPadType::Normal;
 bool Configuration::Shadow::m_chaosBlastCamera = true;
 bool Configuration::Shadow::m_chaosSpearMomentum = false;
 bool Configuration::Shadow::m_antiGravity = false;
@@ -87,6 +88,7 @@ bool Configuration::load(const std::string& rootPath)
     Sonic::m_run = (RunResultType)reader.GetInteger("Sonic", "nRun", 0);
 
     // --------------Shadow--------------
+    Shadow::m_shaodwDPad = (ShadowDPadType)reader.GetInteger("Shadow", "nShaodwDPad", 0);
     Shadow::m_chaosBlastCamera = reader.GetBoolean("Shadow", "bChaosBlastCamera", Shadow::m_chaosBlastCamera);
     Shadow::m_chaosSpearMomentum = reader.GetBoolean("Shadow", "bChaosSpearMomentum", Shadow::m_chaosSpearMomentum);
     Shadow::m_antiGravity = reader.GetBoolean("Shadow", "bAntiGravity", Shadow::m_antiGravity);

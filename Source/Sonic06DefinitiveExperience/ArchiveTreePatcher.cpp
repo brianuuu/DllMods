@@ -1,4 +1,5 @@
 #include "ArchiveTreePatcher.h"
+#include "Configuration.h"
 
 std::vector<ArchiveDependency> ArchiveTreePatcher::m_archiveDependencies = {};
 
@@ -59,6 +60,11 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* A1, char* pData, const s
 void ArchiveTreePatcher::applyPatches()
 {
     // Usage: m_archiveDependencies.push_back(ArchiveDependency( ARCHIVE, { DEPEND_ON_1, DEPEND_ON_2, ... }));
+
+    if (Configuration::m_model == Configuration::ModelType::Shadow && Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Vehicles)
+    {
+        m_archiveDependencies.push_back(ArchiveDependency("VehicleAdd", {"SonicActionCommon"}));
+    }
 
     if (!m_archiveDependencies.empty())
     {

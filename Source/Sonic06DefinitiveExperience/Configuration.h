@@ -30,6 +30,13 @@ public:
         Custom
     };
 
+    enum ShadowDPadType
+    {
+        Normal = 0,
+        Guns,
+        Vehicles
+    };
+
     // General
     static bool m_usingSTH2006Project;
     static ModelType m_model;
@@ -58,6 +65,7 @@ public:
     // Shadow
     struct Shadow
     {
+        static ShadowDPadType m_shaodwDPad;
         static bool m_chaosBlastCamera;
         static bool m_chaosSpearMomentum;
         static bool m_antiGravity;
