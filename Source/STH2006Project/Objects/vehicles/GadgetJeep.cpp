@@ -548,6 +548,8 @@ void GadgetJeep::BeginPlayerGetOff(bool isAlive)
 	SendMessageImm(m_playerID, Sonic::Message::MsgFinishExternalControl(deadNoHP ? Sonic::Message::MsgFinishExternalControl::EChangeState::DEAD : Sonic::Message::MsgFinishExternalControl::EChangeState::FALL));
 
 	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	context->StateFlag(eStateFlag_EnableHomingAttack) = true;
+
 	hh::math::CVector velocity = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitZ() * m_speed;
 	if (isAlive)
 	{

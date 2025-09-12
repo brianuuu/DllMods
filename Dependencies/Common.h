@@ -1144,6 +1144,18 @@ static bool fGetPlayerParameterPtr
 	return false;
 }
 
+static void ClearFowardAndDashPath()
+{
+	static void* const pClearFowardAndDashPath = (void*)0xDFFF80;
+	__asm
+	{
+		xor		al, al
+		mov		esi, PLAYER_CONTEXT
+		mov		esi, [esi]
+		call	[pClearFowardAndDashPath]
+	}
+}
+
 static bool fRaycast
 (
 	Eigen::Vector4f const& rayStartPos,

@@ -448,6 +448,9 @@ void GadgetGlider::BeginPlayerGetOff()
 	Common::SetPlayerVelocity(hh::math::CVector::Zero());
 	S06HUD_API::SetGadgetMaxCount(-1);
 
+	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	context->StateFlag(eStateFlag_EnableHomingAttack) = true;
+
 	if (deadNoHP)
 	{
 		SendMessage(m_playerID, boost::make_shared<Sonic::Message::MsgSetRotation>(m_spMatrixNodeTransform->m_Transform.m_Rotation));
