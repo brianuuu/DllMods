@@ -546,6 +546,8 @@ void GadgetBike::AdvanceDriving(float dt)
 		}
 	};
 
+	Common::ClampFloat(m_speed, -c_bikeMaxSpeed, c_bikeMaxSpeed);
+
 	m_outOfControl = max(0.0f, m_outOfControl - dt);
 	if (m_state != State::Driving)
 	{

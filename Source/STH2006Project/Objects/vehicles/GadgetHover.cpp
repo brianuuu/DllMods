@@ -584,6 +584,8 @@ void GadgetHover::AdvanceDriving(float dt)
 		}
 	};
 
+	Common::ClampFloat(m_speed, -c_hoverMaxSpeed, c_hoverMaxSpeed);
+
 	if (m_state != State::Driving)
 	{
 		fnAccel(m_guardAngle, 0.0f, c_hoverGuardTurnRate);

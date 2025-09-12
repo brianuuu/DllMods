@@ -663,6 +663,8 @@ void GadgetJeep::AdvanceDriving(float dt)
 		}
 	};
 
+	Common::ClampFloat(m_speed, -c_jeepMaxSpeed, c_jeepMaxSpeed);
+
 	m_outOfControl = max(0.0f, m_outOfControl - dt);
 	if (m_state != State::Driving)
 	{
