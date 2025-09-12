@@ -47,6 +47,7 @@ private:
 	uint32_t m_playerID = 0u;
 	Direction m_direction = Direction::None;
 	State m_state = State::Idle;
+	float m_collisionEnableTimer = 0.0f;
 
 	hh::math::CVector2 m_input = hh::math::CVector2::Zero();
 	hh::math::CQuaternion m_rotation = hh::math::CQuaternion::Identity();

@@ -453,9 +453,6 @@ void GadgetHover::BeginPlayerGetOff(bool isAlive)
 	{
 		velocity.y() = context->m_spParameter->Get<float>(Sonic::Player::ePlayerSpeedParameter_JumpPower);
 		Common::SetPlayerVelocity(velocity);
-		hh::math::CVector position = m_spSonicControlNode->GetWorldMatrix().translation();
-		position.y() += 0.8f;
-		Common::SetPlayerPosition(position);
 
 		// Jump animation
 		SharedPtrTypeless soundHandle;
@@ -477,6 +474,10 @@ void GadgetHover::BeginPlayerGetOff(bool isAlive)
 
 	// out of control
 	Common::SetPlayerOutOfControl(0.1f);
+
+	// Disable rigid body for a bit
+	Common::ToggleRigidBodyCollision(m_spRigidBody.get(), false);
+	m_collisionEnableTimer = 0.1f;
 
 	CleanUp();
 }
@@ -826,6 +827,15 @@ void GadgetHover::AdvanceGuns(float dt)
 
 void GadgetHover::AdvancePhysics(float dt)
 {
+	if (m_collisionEnableTimer > 0.0f)
+	{
+		m_collisionEnableTimer = max(0.0f, m_collisionEnableTimer - dt);
+		if (m_collisionEnableTimer == 0.0f)
+		{
+			Common::ToggleRigidBodyCollision(m_spRigidBody.get(), true);
+		}
+	}
+
 	hh::math::CVector forward = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitZ();
 	if (!m_isLanded)
 	{
