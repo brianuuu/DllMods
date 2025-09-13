@@ -190,6 +190,7 @@
     <ClCompile Include="GadgetBike.cpp" />
     <ClCompile Include="GadgetGun.cpp" />
     <ClCompile Include="GadgetGunSimple.cpp" />
+    <ClCompile Include="GadgetHover.cpp" />
     <ClCompile Include="GadgetJeep.cpp" />
     <ClCompile Include="GadgetMissile.cpp" />
     <ClCompile Include="Itembox.cpp" />
@@ -230,6 +231,7 @@
     <ClInclude Include="GadgetBike.h" />
     <ClInclude Include="GadgetGun.h" />
     <ClInclude Include="GadgetGunSimple.h" />
+    <ClInclude Include="GadgetHover.h" />
     <ClInclude Include="GadgetJeep.h" />
     <ClInclude Include="GadgetMissile.h" />
     <ClInclude Include="Itembox.h" />
