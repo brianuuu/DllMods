@@ -65,6 +65,9 @@
     <ClCompile Include="GadgetGunSimple.cpp">
       <Filter>Gadget</Filter>
     </ClCompile>
+    <ClCompile Include="GadgetJeep.cpp">
+      <Filter>Gadget</Filter>
+    </ClCompile>
     <ClCompile Include="GadgetMissile.cpp">
       <Filter>Gadget</Filter>
     </ClCompile>
@@ -129,6 +132,9 @@
       <Filter>Stage</Filter>
     </ClInclude>
     <ClInclude Include="GadgetGunSimple.h">
+      <Filter>Gadget</Filter>
+    </ClInclude>
+    <ClInclude Include="GadgetJeep.h">
       <Filter>Gadget</Filter>
     </ClInclude>
     <ClInclude Include="GadgetMissile.h">

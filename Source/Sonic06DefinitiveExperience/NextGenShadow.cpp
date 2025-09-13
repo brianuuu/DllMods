@@ -5,6 +5,8 @@
 #include "CustomCamera.h"
 #include "EnemyShock.h"
 
+#include "GadgetJeep.h"
+
 //---------------------------------------------------
 // Animation
 //---------------------------------------------------
@@ -218,38 +220,82 @@ HOOK(int, __fastcall, NextGenShadow_AssignFootstepFloorCues, 0xDFD420, Sonic::Pl
     }
 }
 
+boost::shared_ptr<Sonic::CGameObject3D> NextGenShadow::m_vehicleSingleton;
 HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPlayerSpeed* This, void* Edx, float* dt)
 {
-    if (*pModernSonicContext)
+    if (!*pModernSonicContext)
     {
-        auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-        hh::mr::CSingleElement* pModel = context->m_pPlayer->m_spCharacterModel.get();
+        originalNextGenShadow_CSonicUpdate(This, Edx, dt);
+        return;
+    }
 
-        // jet effect
-        if (NextGenShadow::ShouldPlayJetEffect() && !Common::IsPlayerSuper())
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+    hh::mr::CSingleElement* pModel = context->m_pPlayer->m_spCharacterModel.get();
+
+    // jet effect
+    if (NextGenShadow::ShouldPlayJetEffect() && !Common::IsPlayerSuper())
+    {
+        if (!jetRightFront)
         {
-            if (!jetRightFront)
+            NextGenShadow::SetJetEffectVisible(true, pModel, false);
+        }
+    }
+    else if (jetRightFront)
+    {
+        NextGenShadow::SetJetEffectVisible(false, pModel, false);
+    }
+
+    // chaos boost drain
+    if (NextGenShadow::m_chaosBoostLevel > 0 && !Common::IsPlayerSuper())
+    {
+        float* currentBoost = Common::GetPlayerBoost();
+        float const previousBoost = *currentBoost;
+        *currentBoost = max(0.0f, *currentBoost - (NextGenShadow::m_chaosBoostLevel + 1) * *dt);
+
+        if (*currentBoost == 0.0f && NextGenShadow::m_chaosBoostCanLevelDown)
+        {
+            NextGenShadow::SetChaosBoostLevel(0, true);
+        }
+    }
+
+    CSonicStateFlags const* flags = Common::GetSonicStateFlags();
+    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+    if (Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Vehicles)
+    {
+        if (!flags->KeepRunning && !flags->OutOfControl && !flags->Diving && !flags->InvokeSkateBoard
+         && !context->m_spGrindPathController && !context->m_Is2DMode && context->m_Grounded
+         && !NextGenShadow::m_vehicleSingleton)
+        {
+            if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadRight))
             {
-                NextGenShadow::SetJetEffectVisible(true, pModel, false);
+                // jeep
+                NextGenShadow::m_vehicleSingleton = boost::make_shared<GadgetJeep>(context->m_spMatrixNode->m_Transform, context->m_HorizontalVelocity.norm());
+            }
+            else if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadLeft))
+            {
+                // bike
+            }
+            else if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadUp))
+            {
+                // jet glider
+            }
+            else if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadDown))
+            {
+                // hovercraft
+            }
+
+            // spawn vehicle
+            if (NextGenShadow::m_vehicleSingleton)
+            {
+                context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(NextGenShadow::m_vehicleSingleton);
+                context->m_pPlayer->SendMessage(NextGenShadow::m_vehicleSingleton->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
+                Common::ClearFowardAndDashPath();
             }
         }
-        else if (jetRightFront)
-        {
-            NextGenShadow::SetJetEffectVisible(false, pModel, false);
-        }
-
-        // chaos boost drain
-        if (NextGenShadow::m_chaosBoostLevel > 0 && !Common::IsPlayerSuper())
-        {
-            float* currentBoost = Common::GetPlayerBoost();
-            float const previousBoost = *currentBoost;
-            *currentBoost = max(0.0f, *currentBoost - (NextGenShadow::m_chaosBoostLevel + 1) * *dt);
-
-            if (*currentBoost == 0.0f && NextGenShadow::m_chaosBoostCanLevelDown)
-            {
-                NextGenShadow::SetChaosBoostLevel(0, true);
-            }
-        }
+    }
+    else if (Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Guns)
+    {
+        // TODO:
     }
 
     originalNextGenShadow_CSonicUpdate(This, Edx, dt);
@@ -3373,4 +3419,13 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_CSonicStateSquatBegin);
     INSTALL_HOOK(NextGenShadow_CSonicStateSquatAdvance);
     INSTALL_HOOK(NextGenShadow_CSonicStateSquatEnd);
+
+    //-------------------------------------------------------
+    // D-Pad mode 
+    //-------------------------------------------------------
+    // Ignore D-pad input for Shadow's control
+    if (Configuration::Shadow::m_shaodwDPad != Configuration::ShadowDPadType::Normal)
+    {
+        WRITE_JUMP(0xD97B56, (void*)0xD97B9E);
+    }
 }

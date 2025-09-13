@@ -82,6 +82,9 @@ public:
 		SH_ChaosBlast,
 	} m_overrideType;
 
+	// vehicle
+	static boost::shared_ptr<Sonic::CGameObject3D> m_vehicleSingleton;
+
 	// APIs
 	static void ToggleStartTeleport(bool enable);
 	static void SetChaosAttackForced(bool forced) { m_chaosAttackForced = forced; }
