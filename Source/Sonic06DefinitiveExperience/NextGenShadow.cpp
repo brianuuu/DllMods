@@ -6,6 +6,8 @@
 #include "EnemyShock.h"
 
 #include "GadgetBike.h"
+#include "GadgetGlider.h"
+#include "GadgetHover.h"
 #include "GadgetJeep.h"
 
 //---------------------------------------------------
@@ -267,23 +269,27 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
          && !context->m_spGrindPathController && !context->m_Is2DMode && context->m_Grounded
          && !NextGenShadow::m_vehicleSingleton)
         {
+            hh::mr::CTransform transform = context->m_spMatrixNode->m_Transform;
             if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadRight))
             {
                 // jeep
-                NextGenShadow::m_vehicleSingleton = boost::make_shared<GadgetJeep>(context->m_spMatrixNode->m_Transform, context->m_HorizontalVelocity.norm());
+                NextGenShadow::m_vehicleSingleton = boost::make_shared<GadgetJeep>(transform, context->m_HorizontalVelocity.norm());
             }
             else if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadLeft))
             {
                 // bike
-                NextGenShadow::m_vehicleSingleton = boost::make_shared<GadgetBike>(context->m_spMatrixNode->m_Transform, context->m_HorizontalVelocity.norm());
+                NextGenShadow::m_vehicleSingleton = boost::make_shared<GadgetBike>(transform, context->m_HorizontalVelocity.norm());
             }
             else if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadUp))
             {
                 // jet glider
+                transform.m_Position.y() += 2.0f;
+                NextGenShadow::m_vehicleSingleton = boost::make_shared<GadgetGlider>(transform, context->m_HorizontalVelocity.norm());
             }
             else if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadDown))
             {
                 // hovercraft
+                NextGenShadow::m_vehicleSingleton = boost::make_shared<GadgetHover>(transform, context->m_HorizontalVelocity.norm());
             }
 
             // spawn vehicle

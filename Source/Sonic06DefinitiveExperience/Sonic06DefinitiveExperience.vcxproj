@@ -188,6 +188,7 @@
     <ClCompile Include="EnemyBullet.cpp" />
     <ClCompile Include="EnemyShock.cpp" />
     <ClCompile Include="GadgetBike.cpp" />
+    <ClCompile Include="GadgetGlider.cpp" />
     <ClCompile Include="GadgetGun.cpp" />
     <ClCompile Include="GadgetGunSimple.cpp" />
     <ClCompile Include="GadgetHover.cpp" />
@@ -229,6 +230,7 @@
     <ClInclude Include="EnemyBullet.h" />
     <ClInclude Include="EnemyShock.h" />
     <ClInclude Include="GadgetBike.h" />
+    <ClInclude Include="GadgetGlider.h" />
     <ClInclude Include="GadgetGun.h" />
     <ClInclude Include="GadgetGunSimple.h" />
     <ClInclude Include="GadgetHover.h" />

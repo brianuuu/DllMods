@@ -186,7 +186,7 @@ bool GadgetBike::ProcessMessage
 
 	if (message.Is<Sonic::Message::MsgRestartStage>() || message.Is<Sonic::Message::MsgStageClear>())
 	{
-		m_playerID = 0.0f;
+		m_playerID = 0;
 		CleanUp();
 		Kill();
 		return true;

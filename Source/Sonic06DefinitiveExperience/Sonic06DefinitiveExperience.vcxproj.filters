@@ -83,6 +83,9 @@
     <ClCompile Include="GadgetHover.cpp">
       <Filter>Gadget</Filter>
     </ClCompile>
+    <ClCompile Include="GadgetGlider.cpp">
+      <Filter>Gadget</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pch.h" />
@@ -162,6 +165,9 @@
       <Filter>Enemy</Filter>
     </ClInclude>
     <ClInclude Include="GadgetHover.h">
+      <Filter>Gadget</Filter>
+    </ClInclude>
+    <ClInclude Include="GadgetGlider.h">
       <Filter>Gadget</Filter>
     </ClInclude>
   </ItemGroup>
