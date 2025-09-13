@@ -536,6 +536,9 @@ void NextGenPhysics::applyPatches()
     // Handle MsgGetEnemyType
     INSTALL_HOOK(NextGenPhysics_CEnemyBaseProcessMessage);
 
+    // Gunner ignore slip damage
+    WRITE_MEMORY(0xBAA40F, uint8_t, 0xEB);
+
     // Disable trick system
     if (Configuration::m_noTrick)
     {
