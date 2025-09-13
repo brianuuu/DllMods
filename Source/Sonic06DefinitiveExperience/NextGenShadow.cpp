@@ -5,6 +5,7 @@
 #include "CustomCamera.h"
 #include "EnemyShock.h"
 
+#include "GadgetBike.h"
 #include "GadgetJeep.h"
 
 //---------------------------------------------------
@@ -274,6 +275,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
             else if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadLeft))
             {
                 // bike
+                NextGenShadow::m_vehicleSingleton = boost::make_shared<GadgetBike>(context->m_spMatrixNode->m_Transform, context->m_HorizontalVelocity.norm());
             }
             else if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadUp))
             {

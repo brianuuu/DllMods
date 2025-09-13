@@ -185,7 +185,10 @@
     <ClCompile Include="ChaosEnergy.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DllMain.cpp" />
+    <ClCompile Include="EnemyBullet.cpp" />
     <ClCompile Include="EnemyShock.cpp" />
+    <ClCompile Include="GadgetBike.cpp" />
+    <ClCompile Include="GadgetGun.cpp" />
     <ClCompile Include="GadgetGunSimple.cpp" />
     <ClCompile Include="GadgetJeep.cpp" />
     <ClCompile Include="GadgetMissile.cpp" />
@@ -222,7 +225,10 @@
     <ClInclude Include="CustomCamera.h" />
     <ClInclude Include="ChaosEnergy.h" />
     <ClInclude Include="Configuration.h" />
+    <ClInclude Include="EnemyBullet.h" />
     <ClInclude Include="EnemyShock.h" />
+    <ClInclude Include="GadgetBike.h" />
+    <ClInclude Include="GadgetGun.h" />
     <ClInclude Include="GadgetGunSimple.h" />
     <ClInclude Include="GadgetJeep.h" />
     <ClInclude Include="GadgetMissile.h" />

@@ -56,9 +56,6 @@
     <ClCompile Include="ArchiveTreePatcher.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="EnemyShock.cpp">
-      <Filter>Stage</Filter>
-    </ClCompile>
     <ClCompile Include="NextGenObjects.cpp">
       <Filter>Stage</Filter>
     </ClCompile>
@@ -70,6 +67,18 @@
     </ClCompile>
     <ClCompile Include="GadgetMissile.cpp">
       <Filter>Gadget</Filter>
+    </ClCompile>
+    <ClCompile Include="GadgetBike.cpp">
+      <Filter>Gadget</Filter>
+    </ClCompile>
+    <ClCompile Include="GadgetGun.cpp">
+      <Filter>Gadget</Filter>
+    </ClCompile>
+    <ClCompile Include="EnemyBullet.cpp">
+      <Filter>Enemy</Filter>
+    </ClCompile>
+    <ClCompile Include="EnemyShock.cpp">
+      <Filter>Enemy</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -125,9 +134,6 @@
     <ClInclude Include="ArchiveTreePatcher.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="EnemyShock.h">
-      <Filter>Stage</Filter>
-    </ClInclude>
     <ClInclude Include="NextGenObjects.h">
       <Filter>Stage</Filter>
     </ClInclude>
@@ -139,6 +145,18 @@
     </ClInclude>
     <ClInclude Include="GadgetMissile.h">
       <Filter>Gadget</Filter>
+    </ClInclude>
+    <ClInclude Include="GadgetBike.h">
+      <Filter>Gadget</Filter>
+    </ClInclude>
+    <ClInclude Include="GadgetGun.h">
+      <Filter>Gadget</Filter>
+    </ClInclude>
+    <ClInclude Include="EnemyBullet.h">
+      <Filter>Enemy</Filter>
+    </ClInclude>
+    <ClInclude Include="EnemyShock.h">
+      <Filter>Enemy</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -153,6 +171,9 @@
     </Filter>
     <Filter Include="Gadget">
       <UniqueIdentifier>{a08803c0-6fc3-42a3-ae69-c13c6db49a02}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Enemy">
+      <UniqueIdentifier>{ad3ac420-a3c2-4775-a037-289111b88f85}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
