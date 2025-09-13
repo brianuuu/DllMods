@@ -283,11 +283,7 @@ void GadgetJeep::AddCallback
 void GadgetJeep::KillCallback()
 {
 	BeginPlayerGetOff(false);
-
-	if (NextGenShadow::m_vehicleSingleton.get() == this)
-	{
-		NextGenShadow::m_vehicleSingleton.reset();
-	}
+	NextGenShadow::m_vehicleSingleton.reset();
 }
 
 void GadgetJeep::GetObjectTriggerType

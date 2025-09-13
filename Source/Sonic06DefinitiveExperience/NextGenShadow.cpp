@@ -301,6 +301,12 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
     originalNextGenShadow_CSonicUpdate(This, Edx, dt);
 }
 
+HOOK(int, __fastcall, NextGenShadow_CSonicDestructor, 0x518AF0, uint32_t This, void* Edx, bool a2)
+{
+    NextGenShadow::m_vehicleSingleton.reset();
+    return originalNextGenShadow_CSonicDestructor(This, Edx, a2);
+}
+
 HOOK(bool, __fastcall, NextGenShadow_CSonicSpRenderableSsnUpdate, 0xE71510, uint32_t This, void* Edx, Hedgehog::Universe::SUpdateInfo const& a2)
 {
     if (*pModernSonicContext && *(uint32_t*)This == 0x16DA834)
@@ -3235,6 +3241,7 @@ void NextGenShadow::applyPatches()
     // Handle model hide/unhide, jet effect
     INSTALL_HOOK(NextGenShadow_MsgRestartStage);
     INSTALL_HOOK(NextGenShadow_CSonicUpdate);
+    INSTALL_HOOK(NextGenShadow_CSonicDestructor);
     INSTALL_HOOK(NextGenShadow_AssignFootstepFloorCues);
 
     // HACK: CRASH PREVENTION

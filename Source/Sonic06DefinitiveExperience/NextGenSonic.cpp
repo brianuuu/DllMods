@@ -1960,6 +1960,12 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicUpdate, 0xE6BF20, Sonic::Player::C
     originalNextGenSonicGems_CSonicUpdate(This, Edx, dt);
 }
 
+HOOK(int, __fastcall, NextGenSonicGems_CSonicDestructor, 0x518AF0, uint32_t This, void* Edx, bool a2)
+{
+    m_spSkyGemSingleton.reset();
+    return originalNextGenSonicGems_CSonicDestructor(This, Edx, a2);
+}
+
 SharedPtrTypeless soundHandle_thunderShield;
 HOOK(bool*, __fastcall, NextGenSonicGems_CPlayerSpeedStatePluginThunderBarrierBegin, 0x11DD970, void* This)
 {
@@ -2671,6 +2677,7 @@ void NextGenSonic::applyPatchesPostInit()
     if (!m_isElise && Configuration::Sonic::m_gemsEnabled)
     {
         INSTALL_HOOK(NextGenSonicGems_CSonicUpdate);
+        INSTALL_HOOK(NextGenSonicGems_CSonicDestructor);
 
         // Ignore D-pad input for Sonic's control
         WRITE_JUMP(0xD97B56, (void*)0xD97B9E);
