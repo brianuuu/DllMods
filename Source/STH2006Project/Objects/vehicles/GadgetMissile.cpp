@@ -133,28 +133,29 @@ void GadgetMissile::UpdateParallel
 	hh::math::CVector const currentPosition = m_spMatrixNodeTransform->m_Transform.m_Position;
 	if (!m_targets.empty())
 	{
-		float minDistSq = FLT_MAX;
+		float minAngle = FLT_MAX;
+		hh::math::CVector oldDirection = m_velocity.normalized();
 		hh::math::CVector newDirection = hh::math::CVector::Zero();
 		for (uint32_t const targetID : m_targets)
 		{
-			// get closest target position
+			// get smallest turning angle
 			hh::math::CVector targetPosition = hh::math::CVector::Zero();
 			SendMessageImm(targetID, boost::make_shared<Sonic::Message::MsgGetPosition>(&targetPosition));
 			if (!targetPosition.isZero())
 			{
 				SendMessageImm(targetID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
-				float const distSq = (targetPosition - currentPosition).squaredNorm();
-				if (distSq < minDistSq)
+				hh::math::CVector tempDirection = (targetPosition - currentPosition).normalized();
+				float const angle = acos(oldDirection.dot(tempDirection));
+				if (angle < minAngle)
 				{
-					minDistSq = distSq;
-					newDirection = (targetPosition - currentPosition).normalized();
+					minAngle = angle;
+					newDirection = tempDirection;
 				}
 			}
 		}
 
 		if (!newDirection.isZero())
 		{
-			hh::math::CVector oldDirection = m_velocity.normalized();
 			float dot = oldDirection.dot(newDirection);
 			Common::ClampFloat(dot, -1.0f, 1.0f);
 
