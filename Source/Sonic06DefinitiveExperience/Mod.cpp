@@ -195,7 +195,7 @@ extern "C" __declspec(dllexport) void PostInit(ModInfo_t * modInfo)
     }
 
     bool const isSonicCheck = Configuration::m_model == Configuration::ModelType::Sonic && Configuration::Sonic::m_gemsEnabled;
-    bool const isShadowCheck = Configuration::m_model == Configuration::ModelType::Shadow && Configuration::m_characterMoveset;
+    bool const isShadowCheck = Configuration::m_model == Configuration::ModelType::Shadow && (Configuration::m_characterMoveset || Configuration::Shadow::m_shaodwDPad != Configuration::ShadowDPadType::Normal);
     if (isSonicCheck || isShadowCheck)
     {
         bool noGamepad = true;
@@ -218,7 +218,7 @@ extern "C" __declspec(dllexport) void PostInit(ModInfo_t * modInfo)
             }
             else if (isShadowCheck)
             {
-                MessageBox(nullptr, TEXT("No controllers detected, it is required to make full use of 06 Shadow movesets."), TEXT("Sonic 06 Definitive Experience"), MB_ICONWARNING);
+                MessageBox(nullptr, TEXT("No controllers detected, it is required to make full use of 06 Shadow movesets or D-Pad controls."), TEXT("Sonic 06 Definitive Experience"), MB_ICONWARNING);
             }
         }
     }
