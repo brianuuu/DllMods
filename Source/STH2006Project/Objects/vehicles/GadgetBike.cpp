@@ -828,7 +828,7 @@ void GadgetBike::AdvancePhysics(float dt)
 	else
 	{
 		// check leaving terrain
-		hh::math::CVector const testEnd = m_spMatrixNodeTransform->m_Transform.m_Position + hh::math::CVector(0.0f, -0.25f, 0.0f);
+		hh::math::CVector const testEnd = newPosition + hh::math::CVector(0.0f, -0.25f, 0.0f);
 		if (Common::fRaycast(testStart, testEnd, outPos, outNormal, *(int*)0x1E0AFAC))
 		{
 			newPosition.y() = outPos.y();
