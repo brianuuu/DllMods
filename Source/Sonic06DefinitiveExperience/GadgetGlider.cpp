@@ -131,7 +131,7 @@ bool GadgetGlider::SetAddColliders
 	AddRigidBody(m_spRigidBodyCockpit, cockpitEventTrigger, Common::MakeCollisionID((1llu << typeInsulate), 0), m_spNodeCockpit);
 
 	// fake player collision
-	hk2010_2_0::hkpSphereShape* playerEventTrigger = new hk2010_2_0::hkpSphereShape(0.5f);
+	hk2010_2_0::hkpCylinderShape* playerEventTrigger = new hk2010_2_0::hkpCylinderShape(hh::math::CVector::Zero(), hh::math::CVector(0.0f, 1.0f, 0.0f), 0.5f);
 	AddEventCollision("FakePlayer", playerEventTrigger, *(int*)0x1E0AF90, true, m_spSonicControlNode); // TypePlayer
 	AddEventCollision("FakePlayerItem", playerEventTrigger, *(int*)0x1E0AF8C, true, m_spSonicControlNode); // TypePlayerItem
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
