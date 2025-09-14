@@ -1510,6 +1510,26 @@ HOOK(void, __stdcall, TitleUI_DoShowCesa, 0xD773D0, int* a1, int a2)
 	result[1] = Common::GetVoiceLanguageType();
 }
 
+HOOK(int, __fastcall, TitleUI_CGameplayFlowStage_CStateDisplayGameOverBegin, 0xCFDDF0, void* This)
+{
+	int* pLives = Common::GetPlayerLives();
+	*pLives = max(*pLives, 5);
+
+	// Force saving at game over
+	TitleUI_CTitleOptionCStateOutroSaving(m_spSave, nullptr);
+
+	return originalTitleUI_CGameplayFlowStage_CStateDisplayGameOverBegin(This);
+}
+
+HOOK(void, __fastcall, TitleUI_CGameplayFlowStage_CStateDisplayGameOverAdvance, 0xCFE6C0, void* This)
+{
+	if (!m_spSave || m_spSave->m_saveCompleted)
+	{
+		m_spSave = nullptr;
+		originalTitleUI_CGameplayFlowStage_CStateDisplayGameOverAdvance(This);
+	}
+}
+
 void TitleUI::applyPatches()
 {
 	populateTrialData();
@@ -1606,6 +1626,10 @@ void TitleUI::applyPatches()
 	{
 		iter.second = std::regex_replace(iter.second, std::regex(" "), "  ");
 	}
+
+	// Set min 5 lives after game over
+	INSTALL_HOOK(TitleUI_CGameplayFlowStage_CStateDisplayGameOverBegin);
+	INSTALL_HOOK(TitleUI_CGameplayFlowStage_CStateDisplayGameOverAdvance);
 }
 
 void TitleUI::populateTrialData()

@@ -1688,11 +1688,11 @@ inline uint32_t* GetPlayerRingCount()
 	return (uint32_t*)((uint32_t)*PLAYER_CONTEXT + 0x5B8);
 }
 
-inline uint32_t* GetPlayerLives()
+inline int* GetPlayerLives()
 {
 	if (!*PLAYER_CONTEXT) return 0;
-	uint32_t lifeAddress = GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x9FDC });
-	return (uint32_t*)lifeAddress;
+	int lifeAddress = GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x9FDC });
+	return (int*)lifeAddress;
 }
 
 inline float* GetPlayerBoost()
