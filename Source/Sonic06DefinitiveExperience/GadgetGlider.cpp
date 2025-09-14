@@ -172,7 +172,7 @@ float const c_gliderAccel = 10.0f;
 float const c_gliderMaxSpeed = 10.0f;
 float const c_gliderBoostSpeed = 21.0f;
 float const c_gliderMaxSteer = 5.0f;
-float const c_gliderMaxPitch = 30.0f * DEG_TO_RAD;
+float const c_gliderMaxPitch = 45.0f * DEG_TO_RAD;
 float const c_gliderSteerRate = 10.0f;
 float const c_gliderSteerToAngle = 4.5f * DEG_TO_RAD;
 float const c_gliderExplodeTime = 5.0f;
@@ -481,7 +481,7 @@ void GadgetGlider::AdvanceFlight(float dt)
 
 		if (m_steer.x() != 0.0f)
 		{
-			newRotation = Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle * dt, hh::math::CVector::UnitY()) * newRotation;
+			newRotation = Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle * dt * 1.5f, hh::math::CVector::UnitY()) * newRotation;
 		}
 
 		// steering y-axis
@@ -489,7 +489,7 @@ void GadgetGlider::AdvanceFlight(float dt)
 		{
 			m_steer.y() += input.y() * c_gliderSteerRate * dt;
 			Common::ClampFloat(m_steer.y(), -c_gliderMaxSteer, c_gliderMaxSteer);
-			m_pitch += m_steer.y() * c_gliderSteerToAngle * dt * 1.5f;
+			m_pitch += m_steer.y() * c_gliderSteerToAngle * dt * 2.0f;
 		}
 		else
 		{
