@@ -136,7 +136,6 @@ private:
 	void AdvancePlayerGetOn(float dt);
 	void BeginPlayerGetOff(bool isAlive);
 
-	void UnloadGun();
 	void CleanUp();
 
 	void BeginDriving();

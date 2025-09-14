@@ -243,7 +243,6 @@ bool GadgetBike::ProcessMessage
 	if (message.Is<Sonic::Message::MsgExitedExternalControl>())
 	{
 		m_playerID = 0;
-		UnloadGun();
 		CleanUp();
 		return true;
 	}
@@ -372,8 +371,6 @@ void GadgetBike::BeginPlayerGetOff(bool isAlive)
 		Common::SonicContextPlayVoice(soundHandle, 3002000, 0);
 		FUNCTION_PTR(void*, __thiscall, ChangeAnimationCustomPlayback, 0xE74BF0, void* context, Hedgehog::Base::CSharedString const& name, hh::math::CVector const& change);
 		ChangeAnimationCustomPlayback(context, "JumpBall", hh::math::CVector::Zero());
-
-		UnloadGun();
 	}
 	else
 	{
@@ -384,18 +381,6 @@ void GadgetBike::BeginPlayerGetOff(bool isAlive)
 	Common::SetPlayerOutOfControl(0.1f);
 
 	CleanUp();
-}
-
-void GadgetBike::UnloadGun()
-{
-	if (!m_spGunR->IsStarted()) return;
-
-	// unload gun
-	SendMessageImm(m_spGunR->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
-	SendMessageImm(m_spGunL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
-
-	SharedPtrTypeless sfx;
-	Common::ObjectPlaySound(this, 200612013, sfx);
 }
 
 void GadgetBike::CleanUp()
