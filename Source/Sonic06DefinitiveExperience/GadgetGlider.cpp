@@ -359,6 +359,7 @@ void GadgetGlider::BeginPlayerGetOff()
 
 	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	context->StateFlag(eStateFlag_EnableHomingAttack) = true;
+	context->StateFlag(eStateFlag_EnableAirOnceAction) = true;
 
 	// out of control
 	Common::SetPlayerOutOfControl(0.1f);

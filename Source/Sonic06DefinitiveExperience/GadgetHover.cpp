@@ -416,6 +416,7 @@ void GadgetHover::BeginPlayerGetOff(bool isAlive)
 
 	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	context->StateFlag(eStateFlag_EnableHomingAttack) = true;
+	context->StateFlag(eStateFlag_EnableAirOnceAction) = true;
 
 	hh::math::CVector velocity = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitZ() * m_speed;
 	if (isAlive)
