@@ -112,12 +112,6 @@ bool GadgetBike::SetAddColliders
 	uint32_t const typeBreakable = *(uint32_t*)0x1E5E77C;
 	AddEventCollision("Breakable", cockpitEventTrigger, Common::MakeCollisionID(0, (1llu << typeBreakable)), true, m_spNodeCockpit);
 
-	// player event collision
-	m_spNodeEventCollision = boost::make_shared<Sonic::CMatrixNodeTransform>();
-	m_spNodeEventCollision->SetParent(m_spNodeModel.get());
-	hk2010_2_0::hkpCapsuleShape* shapeEventTrigger = new hk2010_2_0::hkpCapsuleShape(hh::math::CVector(0.0f, 0.5f, 1.0f), hh::math::CVector(0.0f, 0.5f, -1.0f), 2.0f);
-	AddEventCollision("Player", shapeEventTrigger, *(int*)0x1E0AFD8, true, m_spNodeEventCollision); // ColID_PlayerEvent
-
 	// fake player collision
 	hk2010_2_0::hkpCylinderShape* playerEventTrigger = new hk2010_2_0::hkpCylinderShape(hh::math::CVector(0.0f, 0.0f, -0.3f), hh::math::CVector(0.0f, 1.2f, -0.3f), 0.5f);
 	AddEventCollision("FakePlayer", playerEventTrigger, *(int*)0x1E0AF90, true, m_spNodeModel); // TypePlayer

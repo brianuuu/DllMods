@@ -137,14 +137,6 @@ bool GadgetGlider::SetAddColliders
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayerItem", false);
 
-	// player event collision
-	m_spNodeEventCollision = boost::make_shared<Sonic::CMatrixNodeTransform>();
-	m_spNodeEventCollision->m_Transform.SetPosition(hh::math::CVector(0.0f, -0.8f, 0.0f));
-	m_spNodeEventCollision->NotifyChanged();
-	m_spNodeEventCollision->SetParent(m_spNodeModel.get());
-	hk2010_2_0::hkpSphereShape* shapeEventTrigger = new hk2010_2_0::hkpSphereShape(2.0f);
-	AddEventCollision("Player", shapeEventTrigger, *(int*)0x1E0AFD8, true, m_spNodeEventCollision); // ColID_PlayerEvent
-
 	return true;
 }
 

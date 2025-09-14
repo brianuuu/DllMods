@@ -172,14 +172,6 @@ bool GadgetHover::SetAddColliders
 	AddEventCollision("Enemy", cockpitEventTrigger, *(int*)0x1E0AF54, true, m_spNodeCockpit); // ColID_TypeEnemy
 	AddEventCollision("Breakable", cockpitEventTrigger, damageID, true, m_spNodeCockpit);
 	
-	// player event collision
-	m_spNodeEventCollision = boost::make_shared<Sonic::CMatrixNodeTransform>();
-	m_spNodeEventCollision->m_Transform.SetPosition(hh::math::CVector(0.0f, 0.856, 0.117));
-	m_spNodeEventCollision->NotifyChanged();
-	m_spNodeEventCollision->SetParent(m_spMatrixNodeTransform.get());
-	hk2010_2_0::hkpSphereShape* shapeEventTrigger = new hk2010_2_0::hkpSphereShape(2.5f);
-	AddEventCollision("Player", shapeEventTrigger, *(int*)0x1E0AFD8, true, m_spNodeEventCollision); // ColID_PlayerEvent
-
 	// fake player collision
 	hk2010_2_0::hkpCylinderShape* playerEventTrigger = new hk2010_2_0::hkpCylinderShape(hh::math::CVector(0.0f, 0.85f, -0.63f), hh::math::CVector(0.0f, 1.85f, -0.63f), 0.5f);
 	AddEventCollision("FakePlayer", playerEventTrigger, *(int*)0x1E0AF90, true, m_spMatrixNodeTransform); // TypePlayer
