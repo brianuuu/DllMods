@@ -155,14 +155,6 @@ void GadgetBike::KillCallback()
 	NextGenShadow::m_vehicleSingleton.reset();
 }
 
-void GadgetBike::GetObjectTriggerType
-(
-	hh::vector<uint32_t>& in_rTriggerTypeList
-)
-{
-	in_rTriggerTypeList.push_back(1);
-}
-
 void GadgetBike::SetUpdateParallel
 (
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo

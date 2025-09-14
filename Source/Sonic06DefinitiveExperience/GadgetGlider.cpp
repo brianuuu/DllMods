@@ -168,14 +168,6 @@ void GadgetGlider::KillCallback()
 	NextGenShadow::m_vehicleSingleton.reset();
 }
 
-void GadgetGlider::GetObjectTriggerType
-(
-	hh::vector<uint32_t>& in_rTriggerTypeList
-)
-{
-	in_rTriggerTypeList.push_back(1);
-}
-
 float const c_gliderAccel = 10.0f;
 float const c_gliderMaxSpeed = 10.0f;
 float const c_gliderBoostSpeed = 21.0f;

@@ -221,14 +221,6 @@ void GadgetHover::KillCallback()
 	NextGenShadow::m_vehicleSingleton.reset();
 }
 
-void GadgetHover::GetObjectTriggerType
-(
-	hh::vector<uint32_t>& in_rTriggerTypeList
-)
-{
-	in_rTriggerTypeList.push_back(1);
-}
-
 void GadgetHover::SetUpdateParallel
 (
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
