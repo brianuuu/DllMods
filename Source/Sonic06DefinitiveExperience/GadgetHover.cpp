@@ -173,7 +173,7 @@ bool GadgetHover::SetAddColliders
 	AddEventCollision("Breakable", cockpitEventTrigger, damageID, true, m_spNodeCockpit);
 	
 	// fake player collision
-	hk2010_2_0::hkpCylinderShape* playerEventTrigger = new hk2010_2_0::hkpCylinderShape(hh::math::CVector(0.0f, 0.85f, -0.63f), hh::math::CVector(0.0f, 1.85f, -0.63f), 0.5f);
+	hk2010_2_0::hkpCylinderShape* playerEventTrigger = new hk2010_2_0::hkpCylinderShape(hh::math::CVector(0.0f, 0.0f, -0.63f), hh::math::CVector(0.0f, 1.85f, -0.63f), 0.5f);
 	AddEventCollision("FakePlayer", playerEventTrigger, *(int*)0x1E0AF90, true, m_spMatrixNodeTransform); // TypePlayer
 	AddEventCollision("FakePlayerItem", playerEventTrigger, *(int*)0x1E0AF8C, true, m_spMatrixNodeTransform); // TypePlayerItem
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
@@ -315,6 +315,26 @@ bool GadgetHover::ProcessMessage
 			SendMessageImm(m_playerID, message);
 		}
 		return true;
+	}
+
+	if (message.IsOfType((char*)0x1680D84)) // MsgApplyImpulse
+	{
+		auto* msg = (MsgApplyImpulse*)&message;
+		hh::math::CVector const dir = msg->m_impulse.normalized();
+		if (dir.dot(hh::math::CVector::UnitY()) <= 0.95f) // not pointing up
+		{
+			hh::math::CVector hDir = dir;
+			hDir.y() = 0.0f;
+			hDir.normalize();
+			float yaw = acos(hDir.z());
+			if (hDir.dot(Eigen::Vector3f::UnitX()) < 0) yaw = -yaw;
+
+			hh::math::CQuaternion const newRotation = hh::math::CQuaternion::FromTwoVectors(hDir.head<3>(), dir.head<3>()) * Eigen::AngleAxisf(yaw, Eigen::Vector3f::UnitY());
+			m_spMatrixNodeTransform->m_Transform.SetRotation(newRotation);
+			m_spMatrixNodeTransform->NotifyChanged();
+		}
+
+		m_speed = msg->m_impulse.norm();
 	}
 
 	if (message.Is<Sonic::Message::MsgDeactivate>())
