@@ -246,7 +246,7 @@ bool GadgetJeep::SetAddColliders
 	AddEventCollision("Breakable", cockpitEventTrigger, Common::MakeCollisionID(0, (1llu << typeBreakable)), true, m_spNodeCockpit);
 
 	// fake player collision
-	hk2010_2_0::hkpCylinderShape* playerEventTrigger = new hk2010_2_0::hkpCylinderShape(hh::math::CVector(0.0f, 0.0f, -0.388f), hh::math::CVector(0.0f, 1.7f, -0.388f), 0.6f);
+	hk2010_2_0::hkpCylinderShape* playerEventTrigger = new hk2010_2_0::hkpCylinderShape(hh::math::CVector(0.0f, 0.0f, -0.388f), hh::math::CVector(0.0f, 1.7f, -0.388f), 0.8f);
 	AddEventCollision("FakePlayer", playerEventTrigger, *(int*)0x1E0AF90, true, m_spMatrixNodeTransform); // TypePlayer
 	AddEventCollision("FakePlayerItem", playerEventTrigger, *(int*)0x1E0AF8C, true, m_spMatrixNodeTransform); // TypePlayerItem
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
