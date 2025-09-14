@@ -10,7 +10,7 @@ class GadgetGlider : public Sonic::CObjectBase
 	, public Sonic::IAnimationContext, public Sonic::CAnimationStateMachine
 {
 public:
-	GadgetGlider(hh::mr::CTransform const& startTrans, float speed);
+	GadgetGlider(hh::mr::CTransform const& startTrans, float speed, bool spawnGounded);
 	virtual ~GadgetGlider() override;
 
 	enum class Direction
@@ -38,12 +38,13 @@ private:
 	Direction m_direction = Direction::None;
 	State m_state = State::Idle;
 
+	float m_collisionEnableTimer = 0.0f;
 	float m_hp = 100.0f;
 	float m_speed = 0.0f;
+	float m_pitch = 0.0f;
+	bool m_spawnGrounded = true;
 
 	hh::math::CVector2 m_steer = hh::math::CVector2::Zero();
-	hh::math::CVector m_forward = hh::math::CVector::Zero();
-	hh::math::CQuaternion m_rotation = hh::math::CQuaternion::Identity();
 
 	struct PlayerGetOnData
 	{
@@ -56,6 +57,7 @@ private:
 	boost::shared_ptr<Sonic::CRigidBody> m_spRigidBodyMove;
 	boost::shared_ptr<Sonic::CRigidBody> m_spRigidBodyCockpit;
 	boost::shared_ptr<hh::anim::CAnimationPose> m_spAnimPose;
+	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeModel;
 
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModelBoosterL;
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModelBoosterR;

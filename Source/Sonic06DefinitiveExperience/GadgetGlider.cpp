@@ -4,13 +4,15 @@
 GadgetGlider::GadgetGlider
 (
 	hh::mr::CTransform const& startTrans,
-	float speed
+	float speed,
+	bool spawnGounded
 )
 {
 	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(startTrans.m_Rotation, startTrans.m_Position);
 	m_spMatrixNodeTransform->NotifyChanged();
 
 	m_speed = speed;
+	m_spawnGrounded = spawnGounded;
 }
 
 GadgetGlider::~GadgetGlider()
@@ -32,8 +34,10 @@ bool GadgetGlider::SetAddRenderables
 	// base
 	char const* modelName = "Gadget_Glider";
 	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData(modelName, 0);
+	m_spNodeModel = boost::make_shared<Sonic::CMatrixNodeTransform>();
+	m_spNodeModel->SetParent(m_spMatrixNodeTransform.get());
 	m_spModelBase = boost::make_shared<hh::mr::CSingleElement>(spModelBaseData);
-	m_spModelBase->BindMatrixNode(m_spMatrixNodeTransform);
+	m_spModelBase->BindMatrixNode(m_spNodeModel);
 	Sonic::CGameObject::AddRenderable("Object", m_spModelBase, m_pMember->m_CastShadow);
 
 	// animations
@@ -80,8 +84,8 @@ bool GadgetGlider::SetAddRenderables
 	m_spNodeExplodeR->m_Transform.SetPosition(hh::math::CVector(-1.7f, 0.0f, 0.0f));
 	m_spNodeExplodeL->NotifyChanged();
 	m_spNodeExplodeR->NotifyChanged();
-	m_spNodeExplodeL->SetParent(m_spMatrixNodeTransform.get());
-	m_spNodeExplodeR->SetParent(m_spMatrixNodeTransform.get());
+	m_spNodeExplodeL->SetParent(m_spNodeModel.get());
+	m_spNodeExplodeR->SetParent(m_spNodeModel.get());
 
 	// external control
 	auto const attachNode = m_spModelBase->GetNode("Charapoint");
@@ -100,33 +104,44 @@ bool GadgetGlider::SetAddColliders
 {
 	// Rigid body
 	char const* rigidBodyName = "Gadget_Glider";
-	AddRigidBody(m_spRigidBody, rigidBodyName, rigidBodyName, *(int*)0x1E0AFF4, m_spMatrixNodeTransform, in_spDatabase);
+	AddRigidBody(m_spRigidBody, rigidBodyName, rigidBodyName, *(int*)0x1E0AFF4, m_spNodeModel, in_spDatabase);
+
+	// Disable rigid body for a bit
+	Common::ToggleRigidBodyCollision(m_spRigidBody.get(), false);
+	m_collisionEnableTimer = 0.1f;
 
 	// damage to object
 	uint32_t const typeInsulate = *(uint32_t*)0x1E5E780;
 	uint32_t const typeBreakable = *(uint32_t*)0x1E5E77C;
 	uint32_t const damageID = Common::MakeCollisionID(0, (1llu << typeBreakable));
 	hk2010_2_0::hkpBoxShape* bodyEventTrigger = new hk2010_2_0::hkpBoxShape(4.9f, 0.7f, 2.0f);
-	AddEventCollision("Enemy", bodyEventTrigger, *(int*)0x1E0AF54, true, m_spMatrixNodeTransform); // ColID_TypeEnemy
-	AddEventCollision("Breakable", bodyEventTrigger, damageID, true, m_spMatrixNodeTransform);
-	AddEventCollision("Terrain", bodyEventTrigger, *(int*)0x1E0AFAC, true, m_spMatrixNodeTransform);
-	AddRigidBody(m_spRigidBodyMove, bodyEventTrigger, Common::MakeCollisionID((1llu << typeInsulate), 0), m_spMatrixNodeTransform);
+	AddEventCollision("Enemy", bodyEventTrigger, *(int*)0x1E0AF54, true, m_spNodeModel); // ColID_TypeEnemy
+	AddEventCollision("Breakable", bodyEventTrigger, damageID, true, m_spNodeModel);
+	AddEventCollision("Terrain", bodyEventTrigger, *(int*)0x1E0AFAC, true, m_spNodeModel);
+	AddRigidBody(m_spRigidBodyMove, bodyEventTrigger, Common::MakeCollisionID((1llu << typeInsulate), 0), m_spNodeModel);
 
 	m_spNodeCockpit = boost::make_shared<Sonic::CMatrixNodeTransform>();
 	m_spNodeCockpit->m_Transform.SetPosition(hh::math::CVector(0.0f, -0.6f, 0.0f));
 	m_spNodeCockpit->NotifyChanged();
-	m_spNodeCockpit->SetParent(m_spMatrixNodeTransform.get());
+	m_spNodeCockpit->SetParent(m_spNodeModel.get());
 	hk2010_2_0::hkpBoxShape* cockpitEventTrigger = new hk2010_2_0::hkpBoxShape(0.8f, 0.5f, 1.5f);
 	AddEventCollision("Enemy", cockpitEventTrigger, *(int*)0x1E0AF54, true, m_spNodeCockpit); // ColID_TypeEnemy
 	AddEventCollision("Breakable", cockpitEventTrigger, damageID, true, m_spNodeCockpit);
 	AddEventCollision("Terrain", cockpitEventTrigger, *(int*)0x1E0AFAC, true, m_spNodeCockpit);
 	AddRigidBody(m_spRigidBodyCockpit, cockpitEventTrigger, Common::MakeCollisionID((1llu << typeInsulate), 0), m_spNodeCockpit);
 
+	// fake player collision
+	hk2010_2_0::hkpSphereShape* playerEventTrigger = new hk2010_2_0::hkpSphereShape(0.5f);
+	AddEventCollision("FakePlayer", playerEventTrigger, *(int*)0x1E0AF90, true, m_spSonicControlNode); // TypePlayer
+	AddEventCollision("FakePlayerItem", playerEventTrigger, *(int*)0x1E0AF8C, true, m_spSonicControlNode); // TypePlayerItem
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", false);
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayerItem", false);
+
 	// player event collision
 	m_spNodeEventCollision = boost::make_shared<Sonic::CMatrixNodeTransform>();
 	m_spNodeEventCollision->m_Transform.SetPosition(hh::math::CVector(0.0f, -0.8f, 0.0f));
 	m_spNodeEventCollision->NotifyChanged();
-	m_spNodeEventCollision->SetParent(m_spMatrixNodeTransform.get());
+	m_spNodeEventCollision->SetParent(m_spNodeModel.get());
 	hk2010_2_0::hkpSphereShape* shapeEventTrigger = new hk2010_2_0::hkpSphereShape(2.0f);
 	AddEventCollision("Player", shapeEventTrigger, *(int*)0x1E0AFD8, true, m_spNodeEventCollision); // ColID_PlayerEvent
 
@@ -141,9 +156,6 @@ void GadgetGlider::AddCallback
 )
 {
 	Sonic::CObjectBase::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
-
-	m_rotation = m_spMatrixNodeTransform->m_Transform.m_Rotation;
-	m_forward = m_rotation * hh::math::CVector::UnitZ();
 
 	SharedPtrTypeless soundHandle;
 	Common::SonicContextPlaySound(soundHandle, 80041038, 1);
@@ -168,6 +180,7 @@ float const c_gliderAccel = 10.0f;
 float const c_gliderMaxSpeed = 10.0f;
 float const c_gliderBoostSpeed = 21.0f;
 float const c_gliderMaxSteer = 5.0f;
+float const c_gliderMaxPitch = 30.0f * DEG_TO_RAD;
 float const c_gliderSteerRate = 10.0f;
 float const c_gliderSteerToAngle = 4.5f * DEG_TO_RAD;
 float const c_gliderExplodeTime = 5.0f;
@@ -308,13 +321,17 @@ void GadgetGlider::BeginPlayerGetOn()
 	m_spSonicControlNode->NotifyChanged();
 
 	// Jump sfx
-	SharedPtrTypeless soundHandle;
-	Common::SonicContextPlaySound(soundHandle, 2002027, 1);
-	Common::SonicContextPlayVoice(soundHandle, 3002000, 0);
+	if (m_spawnGrounded)
+	{
+		SharedPtrTypeless soundHandle;
+		Common::SonicContextPlaySound(soundHandle, 2002027, 1);
+		Common::SonicContextPlayVoice(soundHandle, 3002000, 0);
+	}
 
 	// start external control
 	auto msgStartExternalControl = Sonic::Message::MsgStartExternalControl(m_spSonicControlNode, false, false);
 	msgStartExternalControl.NoDamage = true;
+	msgStartExternalControl.ChangeCollisionFlags = 2;
 	SendMessageImm(m_playerID, msgStartExternalControl);
 	SendMessageImm(m_playerID, Sonic::Message::MsgChangeMotionInExternalControl("JumpBall", true));
 }
@@ -326,7 +343,7 @@ void GadgetGlider::AdvancePlayerGetOn(float dt)
 	float constexpr timeToGetOn = 1.0f;
 	m_playerGetOnData.m_time += dt;
 
-	if (m_playerGetOnData.m_time >= timeToGetOn)
+	if (m_playerGetOnData.m_time >= timeToGetOn || !m_spawnGrounded)
 	{
 		m_spSonicControlNode->m_Transform.SetPosition(hh::math::CVector::Zero());
 		m_spSonicControlNode->NotifyChanged();
@@ -388,10 +405,23 @@ void GadgetGlider::BeginFlight()
 	S06HUD_API::SetGadgetHP(m_hp);
 	SharedPtrTypeless sfx;
 	Common::ObjectPlaySound(this, 200612005, sfx);
+
+	// player collision
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayer", true);
+	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayerItem", true);
 }
 
 void GadgetGlider::AdvanceFlight(float dt)
 {
+	if (m_collisionEnableTimer > 0.0f)
+	{
+		m_collisionEnableTimer = max(0.0f, m_collisionEnableTimer - dt);
+		if (m_collisionEnableTimer == 0.0f)
+		{
+			Common::ToggleRigidBodyCollision(m_spRigidBody.get(), true);
+		}
+	}
+
 	Common::ClampFloat(m_speed, 0.0f, c_gliderBoostSpeed);
 
 	// counterweight animation
@@ -428,6 +458,7 @@ void GadgetGlider::AdvanceFlight(float dt)
 	float currentMaxSpeed = c_gliderMaxSpeed;
 
 	// player input
+	hh::math::CQuaternion newRotation = m_spMatrixNodeTransform->m_Transform.m_Rotation;
 	if (m_state == State::Flight)
 	{
 		// get off
@@ -456,11 +487,17 @@ void GadgetGlider::AdvanceFlight(float dt)
 			fnAccel(m_steer.x(), 0.0f, c_gliderSteerRate);
 		}
 
+		if (m_steer.x() != 0.0f)
+		{
+			newRotation = Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle * dt, hh::math::CVector::UnitY()) * newRotation;
+		}
+
 		// steering y-axis
-		if (m_playerID && input.y() != 0.0f)
+		if (m_playerID && ((input.y() < 0.0f && m_pitch > -c_gliderMaxPitch) || (input.y() > 0.0f && m_pitch < c_gliderMaxPitch)))
 		{
 			m_steer.y() += input.y() * c_gliderSteerRate * dt;
 			Common::ClampFloat(m_steer.y(), -c_gliderMaxSteer, c_gliderMaxSteer);
+			m_pitch += m_steer.y() * c_gliderSteerToAngle * dt * 1.5f;
 		}
 		else
 		{
@@ -498,19 +535,25 @@ void GadgetGlider::AdvanceFlight(float dt)
 		}
 	}
 
+	float const xSmoothed = sin(m_steer.x() * PI_F * 0.5f / c_gliderMaxSteer) * c_gliderMaxSteer;
+
+	// roll
+	m_spNodeModel->m_Transform.SetRotation(Eigen::AngleAxisf(m_pitch, -hh::math::CVector::UnitX()) * Eigen::AngleAxisf(xSmoothed* c_gliderSteerToAngle, -hh::math::CVector::UnitZ()) * hh::math::CQuaternion::Identity());
+	m_spNodeModel->NotifyChanged();
+
 	// adjust speed
 	fnAccel(m_speed, currentMaxSpeed, c_gliderAccel);
 
-	//hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(m_steer.y() * c_gliderSteerToAngle, -rightAxis) * Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle, upAxis) * Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle, -forward) * m_followData.m_rotation;
-	hh::math::CVector const newPosition = m_spMatrixNodeTransform->m_Transform.m_Position + m_forward * m_speed * dt;
-
-	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(m_rotation, newPosition);
+	hh::math::CVector const rightAxis = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitX();
+	hh::math::CVector const forwardAxis = Eigen::AngleAxisf(m_pitch, -rightAxis) * m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitZ();
+	hh::math::CVector const newPosition = m_spMatrixNodeTransform->m_Transform.m_Position + forwardAxis * m_speed * dt;
+	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(newRotation, newPosition);
 	m_spMatrixNodeTransform->NotifyChanged();
 
-	hh::math::CQuaternion const boosterLRotation = Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle * 1.2f, hh::math::CVector::UnitX()) * hh::math::CQuaternion::Identity();
+	hh::math::CQuaternion const boosterLRotation = Eigen::AngleAxisf(xSmoothed * c_gliderSteerToAngle * 1.2f, hh::math::CVector::UnitX()) * hh::math::CQuaternion::Identity();
 	m_spNodeBoosterL->m_Transform.SetRotation(boosterLRotation);
 	m_spNodeBoosterL->NotifyChanged();
-	hh::math::CQuaternion const boosterRRotation = Eigen::AngleAxisf(m_steer.x() * c_gliderSteerToAngle * 1.2f, -hh::math::CVector::UnitX()) * hh::math::CQuaternion::Identity();
+	hh::math::CQuaternion const boosterRRotation = Eigen::AngleAxisf(xSmoothed * c_gliderSteerToAngle * 1.2f, -hh::math::CVector::UnitX()) * hh::math::CQuaternion::Identity();
 	m_spNodeBoosterR->m_Transform.SetRotation(boosterRRotation);
 	m_spNodeBoosterR->NotifyChanged();
 

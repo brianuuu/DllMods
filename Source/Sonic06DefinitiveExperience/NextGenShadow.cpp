@@ -223,6 +223,7 @@ HOOK(int, __fastcall, NextGenShadow_AssignFootstepFloorCues, 0xDFD420, Sonic::Pl
     }
 }
 
+bool canSpawnVehicleInAir = true;
 boost::shared_ptr<Sonic::CGameObject3D> NextGenShadow::m_vehicleSingleton;
 HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPlayerSpeed* This, void* Edx, float* dt)
 {
@@ -261,32 +262,47 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
         }
     }
 
+    // track if shadow has landed before
+    if (!canSpawnVehicleInAir && context->m_Grounded)
+    {
+        canSpawnVehicleInAir = true;
+    }
+
     CSonicStateFlags const* flags = Common::GetSonicStateFlags();
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
     if (Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Vehicles)
     {
         if (!flags->KeepRunning && !flags->OutOfControl && !flags->Diving && !flags->InvokeSkateBoard
-         && !context->m_spGrindPathController && !context->m_Is2DMode && context->m_Grounded
+         && !context->m_spGrindPathController && !context->m_Is2DMode
          && !NextGenShadow::m_vehicleSingleton)
         {
             hh::mr::CTransform transform = context->m_spMatrixNode->m_Transform;
-            if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadRight))
+            if (context->m_Grounded && padState->IsTapped(Sonic::EKeyState::eKeyState_DpadRight))
             {
                 // jeep
                 NextGenShadow::m_vehicleSingleton = boost::make_shared<GadgetJeep>(transform, context->m_HorizontalVelocity.norm());
             }
-            else if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadLeft))
+            else if (context->m_Grounded && padState->IsTapped(Sonic::EKeyState::eKeyState_DpadLeft))
             {
                 // bike
                 NextGenShadow::m_vehicleSingleton = boost::make_shared<GadgetBike>(transform, context->m_HorizontalVelocity.norm());
             }
-            else if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadUp))
+            else if ((context->m_Grounded || canSpawnVehicleInAir) && padState->IsTapped(Sonic::EKeyState::eKeyState_DpadUp))
             {
                 // jet glider
-                transform.m_Position.y() += 2.0f;
-                NextGenShadow::m_vehicleSingleton = boost::make_shared<GadgetGlider>(transform, context->m_HorizontalVelocity.norm());
+                hh::math::CVector forward = transform.m_Rotation * hh::math::CVector::UnitZ();
+                forward.y() = 0.0f; forward.normalize();
+                if (!forward.isApprox(hh::math::CVector::UnitZ()))
+                {
+                    transform.m_Rotation = hh::math::CQuaternion::FromTwoVectors(hh::math::CVector::UnitZ().head<3>(), forward.head<3>());
+                }
+                transform.m_Position.y() += context->m_Grounded ? 2.0f : 0.815f;
+                NextGenShadow::m_vehicleSingleton = boost::make_shared<GadgetGlider>(transform, context->m_HorizontalVelocity.norm(), context->m_Grounded);
+
+                // can only spanw vehicle in the air once until landed again
+                canSpawnVehicleInAir = false;
             }
-            else if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadDown))
+            else if (context->m_Grounded && padState->IsTapped(Sonic::EKeyState::eKeyState_DpadDown))
             {
                 // hovercraft
                 NextGenShadow::m_vehicleSingleton = boost::make_shared<GadgetHover>(transform, context->m_HorizontalVelocity.norm());
