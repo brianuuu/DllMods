@@ -163,11 +163,9 @@ void GadgetGlider::KillCallback()
 float const c_gliderAccel = 10.0f;
 float const c_gliderMaxSpeed = 10.0f;
 float const c_gliderBoostSpeed = 21.0f;
-float const c_gliderMaxSteer = 5.0f;
 float const c_gliderMaxPitch = 45.0f * DEG_TO_RAD;
-float const c_gliderSteerRate = 10.0f;
-float const c_gliderSteerToAngle = 4.5f * DEG_TO_RAD;
-float const c_gliderExplodeTime = 5.0f;
+float const c_gliderSteerRate = 2.0f;
+float const c_gliderSteerToAngle = 22.5f * DEG_TO_RAD;
 
 void GadgetGlider::SetUpdateParallel
 (
@@ -465,11 +463,11 @@ void GadgetGlider::AdvanceFlight(float dt)
 		if (m_playerID && input.x() != 0.0f)
 		{
 			m_steer.x() += input.x() * c_gliderSteerRate * dt;
-			Common::ClampFloat(m_steer.x(), -c_gliderMaxSteer, c_gliderMaxSteer);
+			Common::ClampFloat(m_steer.x(), -1.0f, 1.0f);
 		}
-		else
+		else if (abs(m_steer.x()) < 0.2f)
 		{
-			fnAccel(m_steer.x(), 0.0f, c_gliderSteerRate);
+			fnAccel(m_steer.x(), 0.0f, c_gliderSteerRate * dt * 10.0f);
 		}
 
 		if (m_steer.x() != 0.0f)
@@ -480,9 +478,9 @@ void GadgetGlider::AdvanceFlight(float dt)
 		// steering y-axis
 		if (m_playerID && ((input.y() < 0.0f && m_pitch > -c_gliderMaxPitch) || (input.y() > 0.0f && m_pitch < c_gliderMaxPitch)))
 		{
-			m_steer.y() += input.y() * c_gliderSteerRate * dt;
-			Common::ClampFloat(m_steer.y(), -c_gliderMaxSteer, c_gliderMaxSteer);
-			m_pitch += m_steer.y() * c_gliderSteerToAngle * dt * 2.0f;
+			m_steer.y() += input.y() * dt;
+			Common::ClampFloat(m_steer.y(), -1.0f, 1.0f);
+			m_pitch += m_steer.y() * c_gliderSteerToAngle * 0.05f;
 		}
 		else
 		{
@@ -520,7 +518,7 @@ void GadgetGlider::AdvanceFlight(float dt)
 		}
 	}
 
-	float const xSmoothed = sin(m_steer.x() * PI_F * 0.5f / c_gliderMaxSteer) * c_gliderMaxSteer;
+	float const xSmoothed = sin(m_steer.x() * PI_F * 0.5f);
 
 	// roll
 	m_spNodeModel->m_Transform.SetRotation(Eigen::AngleAxisf(m_pitch, -hh::math::CVector::UnitX()) * Eigen::AngleAxisf(xSmoothed* c_gliderSteerToAngle, -hh::math::CVector::UnitZ()) * hh::math::CQuaternion::Identity());
