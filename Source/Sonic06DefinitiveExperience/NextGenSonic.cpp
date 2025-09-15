@@ -223,6 +223,8 @@ HOOK(void, __fastcall, NextGenSonic_CSonicStateSlidingAdvance, 0x11D69A0, hh::fn
 {
     originalNextGenSonic_CSonicStateSlidingAdvance(This);
 
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+
     bool bDown, bPressed, bReleased;
     NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
     if (bPressed || NextGenSonic::m_slidingTime - This->m_Time <= 0.0f)
@@ -233,18 +235,21 @@ HOOK(void, __fastcall, NextGenSonic_CSonicStateSlidingAdvance, 0x11D69A0, hh::fn
             return;
         }
 
-        if (NextGenSonic::m_isSpindash)
+        if (context->m_Field4A0 >= 1.2f) // enough ceiling height
         {
-            // Cancel spindash, this will still do sweep kick and will also allow jumping before it
-            StateManager::ChangeState(StateAction::Walk, *PLAYER_CONTEXT);
-            return;
-        }
-        else
-        {
-            // Cancel sliding
-            slidingEndWasSliding_Sonic = NextGenSonic::m_isSliding;
-            StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
-            return;
+            if (NextGenSonic::m_isSpindash)
+            {
+                // Cancel spindash, this will still do sweep kick and will also allow jumping before it
+                StateManager::ChangeState(StateAction::Walk, *PLAYER_CONTEXT);
+                return;
+            }
+            else
+            {
+                // Cancel sliding
+                slidingEndWasSliding_Sonic = NextGenSonic::m_isSliding;
+                StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
+                return;
+            }
         }
     }
 
@@ -482,6 +487,13 @@ bool __fastcall NextGenSonic_CSonicStateSquatKickAdvanceTransitionOutImpl(char c
 {
     if (strcmp(name, "Stand") == 0 || strcmp(name, "Walk") == 0)
     {
+        auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+        if (context->m_Field4A0 < 1.2f)
+        {
+            StateManager::ChangeState(StateAction::Sliding, *PLAYER_CONTEXT);
+            return true;
+        }
+
         CSonicStateFlags* flags = Common::GetSonicStateFlags();
         if (!flags->KeepRunning)
         {

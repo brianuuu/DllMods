@@ -2670,6 +2670,13 @@ bool __fastcall NextGenShadow_CSonicStateSquatKickAdvanceTransitionOutImpl(char 
 {
     if (strcmp(name, "Stand") == 0 || strcmp(name, "Walk") == 0)
     {
+        auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+        if (context->m_Field4A0 < 1.2f)
+        {
+            StateManager::ChangeState(StateAction::Sliding, *PLAYER_CONTEXT);
+            return true;
+        }
+
         CSonicStateFlags* flags = Common::GetSonicStateFlags();
         if (!flags->KeepRunning)
         {
@@ -2800,7 +2807,9 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateSlidingAdvance, 0x11D69A0, hh::f
 {
     originalNextGenShadow_CSonicStateSlidingAdvance(This);
 
-    if (NextGenShadow::CheckChaosBoost())
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+
+    if (context->m_Field4A0 >= 1.2f && NextGenShadow::CheckChaosBoost())
     {
         return;
     }
@@ -2815,22 +2824,25 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateSlidingAdvance, 0x11D69A0, hh::f
             return;
         }
 
-        if (NextGenShadow::m_isSpindash)
+        if (context->m_Field4A0 >= 1.2f) // enough ceiling height
         {
-            // Cancel spindash, this will still do sweep kick and will also allow jumping before it
-            StateManager::ChangeState(StateAction::Walk, *PLAYER_CONTEXT);
-            return;
-        }
-        else
-        {
-            // Cancel sliding
-            slidingEndWasSliding_Shadow = NextGenShadow::m_isSliding;
-            StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
+            if (NextGenShadow::m_isSpindash)
+            {
+                // Cancel spindash, this will still do sweep kick and will also allow jumping before it
+                StateManager::ChangeState(StateAction::Walk, *PLAYER_CONTEXT);
+                return;
+            }
+            else
+            {
+                // Cancel sliding
+                slidingEndWasSliding_Shadow = NextGenShadow::m_isSliding;
+                StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
 
-            // Set out of control to prevent immediate squat kick
-            FUNCTION_PTR(int, __stdcall, SetOutOfControl, 0xE5AC00, CSonicContext * context, float duration);
-            SetOutOfControl(*pModernSonicContext, 0.1f);
-            return;
+                // Set out of control to prevent immediate squat kick
+                FUNCTION_PTR(int, __stdcall, SetOutOfControl, 0xE5AC00, CSonicContext * context, float duration);
+                SetOutOfControl(*pModernSonicContext, 0.1f);
+                return;
+            }
         }
     }
 
