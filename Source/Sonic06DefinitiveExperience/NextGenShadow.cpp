@@ -3184,6 +3184,26 @@ HOOK(bool, __fastcall, NextGenShadow_CSonicStateStartCrouchingEnd, 0xDEF0A0, hh:
     return originalNextGenShadow_CSonicStateStartCrouchingEnd(This);
 }
 
+void __declspec(naked) NextGenShadow_fixExternalControlBobbing()
+{
+    static uint32_t successAddress = 0x11DD001;
+    static uint32_t failAddress = 0x11DD01B;
+    __asm
+    {
+        // original
+        cmp     byte ptr [edi + 360h], 0
+        jnz     success
+
+        // check external control
+        cmp     dword ptr [edi + 7D8h], 0
+        jnz     success
+        jmp     [failAddress]
+
+        success:
+        jmp     [successAddress]
+    }
+}
+
 //---------------------------------------------------
 // APIs
 //---------------------------------------------------
@@ -3458,5 +3478,11 @@ void NextGenShadow::applyPatches()
     if (Configuration::Shadow::m_shaodwDPad != Configuration::ShadowDPadType::Normal)
     {
         WRITE_JUMP(0xD97B56, (void*)0xD97B9E);
+
+        if (Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Vehicles)
+        {
+            // Fix external control bobbing up and down at sea level
+            WRITE_JUMP(0x11DCFF8, NextGenShadow_fixExternalControlBobbing);
+        }
     }
 }
