@@ -276,6 +276,16 @@ bool GadgetGlider::ProcessMessage
 		return true;
 	}
 
+	if (message.Is<Sonic::Message::MsgGetItemType>() || message.Is<Sonic::Message::MsgTakeObject>())
+	{
+		if (m_playerID)
+		{
+			// forward message to player
+			SendMessageImm(m_playerID, message);
+		}
+		return true;
+	}
+
 	if (message.Is<Sonic::Message::MsgDeactivate>())
 	{
 		if (IsFlight())
