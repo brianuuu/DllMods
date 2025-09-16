@@ -648,7 +648,7 @@ float const c_jeepMinBrakeSpeed = 5.0f;
 float const c_jeepAccel = 8.0f;
 float const c_jeepBrake = 20.0f;
 float const c_jeepDecel = 4.0f;
-float const c_jeepGravity = 10.0f;
+float const c_jeepGravity = 20.0f;
 float const c_jeepBoostDashAccel = 20.0f;
 
 void GadgetJeep::AdvanceDriving(float dt)
