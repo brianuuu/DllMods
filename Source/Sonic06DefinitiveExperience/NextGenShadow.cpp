@@ -39,7 +39,7 @@ bool NextGenShadow::m_isBrakeFlip = false;
 Eigen::Vector3f NextGenShadow::m_brakeFlipDir(0, 0, 1);
 float NextGenShadow::m_squatKickSpeed = 0.0f;
 float const cShadow_squatKickPressMaxTime = 0.3f;
-float const cShadow_startTeleportTime = 1.0f;
+float const cShadow_startTeleportTime = 0.7f;
 
 // Triple kick
 int NextGenShadow::m_tripleKickCount = -1;
