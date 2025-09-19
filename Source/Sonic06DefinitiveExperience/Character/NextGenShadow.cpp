@@ -536,9 +536,9 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
         hh::math::CVector targetPosition = hh::math::CVector::Zero();
         context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetPosition>(&targetPosition));
 
-        if (targetPosition.isZero() || direction.dot(targetPosition - playerPosition) < 0.0f)
+        if (!targetPosition.isZero() && direction.dot(targetPosition - playerPosition) < 0.0f && (targetPosition - playerPosition).norm() >= 1.0f)
         {
-            // target lost or is behind
+            // target is behind
             NextGenPhysics::m_useHomingDownSpeed = false;
             Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
             StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
