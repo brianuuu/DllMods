@@ -1,6 +1,7 @@
 ﻿#include "LoadingUI.h"
 
 #include "Managers/MissionManager.h"
+#include "Managers/MstManager.h"
 #include "System/Application.h"
 #include "UI/UIContext.h"
 
@@ -75,25 +76,34 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 	else
 	{
 		// Get loading UI data from ini
-		const INIReader reader(Application::getModDirString() + "Assets\\Database\\titleData.ini");
+		const INIReader reader(Application::getModDirString() + "Assets\\Database\\trialData.ini");
 		if (reader.ParseError() != 0)
 		{
 			UIContext::loadTextureFromFile((dir + L"Assets\\Title\\cmn.dds").c_str(), &LoadingUI::m_stageTexture);
-			LoadingUI::m_bottomText = "titleData.ini parse error" + std::to_string(reader.ParseError());
+			LoadingUI::m_bottomText = "trialData.ini parse error" + std::to_string(reader.ParseError());
 		}
 		else
 		{
 			std::string currentStageStr = std::to_string(currentStage);
 
 			// Title card
-			std::string title = reader.Get(currentStageStr, "Title", "cmn");
+			std::string title = reader.Get(currentStageStr, "loadingType", "cmn");
 			std::wstring titleWide = dir + L"Assets\\Title\\" + Common::multiByteToWideChar(title.c_str()) + L".dds";
 			UIContext::loadTextureFromFile(titleWide.c_str(), &LoadingUI::m_stageTexture);
 
 			// Bottom text (add extra space)
-			LoadingUI::m_bottomText = reader.Get(currentStageStr, isJapanese ? "TextJP" : "Text", "MISSING TEXT");
-			LoadingUI::m_bottomText = std::regex_replace(LoadingUI::m_bottomText, std::regex(" "), "  ");
-			LoadingUI::m_bottomText = std::regex_replace(LoadingUI::m_bottomText, std::regex("\\\\n"), "\n");
+			MstManager::RequestMst("msg_system");
+			std::string const loadingText = reader.Get(currentStageStr, "loadingText", "");
+			if (!loadingText.empty())
+			{
+				mst::TextEntry entry = MstManager::GetSubtitle("msg_system", loadingText);
+				if (!entry.m_subtitles.empty())
+				{
+					LoadingUI::m_bottomText = Common::wideCharToMultiByte(entry.m_subtitles.front().c_str());
+					LoadingUI::m_bottomText = std::regex_replace(LoadingUI::m_bottomText, std::regex(" "), "  ");
+					LoadingUI::m_bottomText = std::regex_replace(LoadingUI::m_bottomText, std::regex("\\\\n"), "\n");
+				}
+			}
 
 			// Character tips (For S06DE character movesets only)
 			if (title != "cmn" && title.find("twn") == std::string::npos)

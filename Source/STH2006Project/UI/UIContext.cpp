@@ -113,7 +113,7 @@ void UIContext::initialize(HWND window, IUnknown* device)
     ImFontGlyphRangesBuilder builderTextbox;
     builderTextbox.AddText("0123456789'\"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ: ?");
     initFontDatabase(L"Assets\\Database\\npcData.ini", builderTextbox);
-    initFontDatabase(L"Assets\\Database\\titleData.ini", builderTextbox);
+    initFontDatabase(L"Assets\\Database\\trialData.ini", builderTextbox);
     initFontDatabase(L"Assets\\Database\\fontDatabase.txt", builderTextbox);
     for (auto const& iter : TitleUI::m_yesNoText)
     {

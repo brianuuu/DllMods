@@ -904,8 +904,8 @@ HOOK(void, __fastcall, TitleUI_TitleCMainCState_SelectMenuAdvance, 0x5728F0, hh:
 				Common::PlaySoundStatic(soundHandle, 1000005);
 
 				bool isJapanese = Common::GetUILanguageType() == LT_Japanese;
-				const INIReader reader(Application::getModDirString() + "Assets\\Database\\titleData.ini");
-				std::string warningStr = reader.Get(std::to_string(data.m_stage), Common::GetUILanguageType() == LT_Japanese ? "WarningMessageJP" : "WarningMessage", "");
+				const INIReader reader(Application::getModDirString() + "Assets\\Database\\trialData.ini");
+				std::string warningStr = reader.Get(std::to_string(data.m_stage), Common::GetUILanguageType() == LT_Japanese ? "warningMessageJP" : "warningMessage", "");
 				if (warningStr.empty())
 				{
 					TitleUI::enterModeSelect();
