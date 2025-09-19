@@ -274,7 +274,8 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
     {
         if (!flags->KeepRunning && !flags->OutOfControl && !flags->Diving && !flags->InvokeSkateBoard
          && !context->m_spGrindPathController && !context->m_Is2DMode
-         && !NextGenShadow::m_vehicleSingleton)
+         && !NextGenShadow::m_vehicleSingleton
+         && (Common::GetCurrentStageID() & 0xFF) <= SMT_pla200)
         {
             hh::mr::CTransform transform = context->m_spMatrixNode->m_Transform;
             if (context->m_Grounded && padState->IsTapped(Sonic::EKeyState::eKeyState_DpadRight))
@@ -299,7 +300,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
                 transform.m_Position.y() += context->m_Grounded ? 2.0f : 0.815f;
                 NextGenShadow::m_vehicleSingleton = boost::make_shared<GadgetGlider>(transform, context->m_HorizontalVelocity.norm(), context->m_Grounded);
 
-                // can only spanw vehicle in the air once until landed again
+                // can only spawn vehicle in the air once until landed again
                 canSpawnVehicleInAir = false;
             }
             else if (context->m_Grounded && padState->IsTapped(Sonic::EKeyState::eKeyState_DpadDown))

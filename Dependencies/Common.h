@@ -974,6 +974,8 @@ enum StageMissionType : uint32_t
 	SMT_Mission4 = 0x400,
 	SMT_Mission5 = 0x500,
 
+	SMT_BossFirst = SMT_bms,
+	SMT_BossLast = SMT_blb,
 	SMT_BossHard = 0x100,
 
 	// STH2006 stages
