@@ -278,32 +278,45 @@ void PathManager::followAdvance(PathFollowData& followData, float dt)
 
     std::vector<float> const& segmentLengths = followData.m_pPathData->m_segmentLengths;
 
-    // Find the target segment we end up at
-    float distRemaining = followData.m_speed * dt;
-    float segmentLength = (1.0f - followData.m_segmentTime) * segmentLengths[followData.m_segmentID];
-    if (distRemaining > segmentLength)
-    {
-        while (distRemaining > segmentLength)
-        {
-            distRemaining -= segmentLength;
+    int constexpr c_steps = 8;
+    float const targetDist = followData.m_speed * dt;
+    float const advanceDist = targetDist / c_steps;
 
-            followData.m_segmentID++;
-            if (followData.m_segmentID >= segmentLengths.size())
-            {
-                followData.m_segmentID = 0;
-                if (!followData.m_loop)
-                {
-                    followData.m_finished = true;
-                    return;
-                }
-            }
-            segmentLength = segmentLengths[followData.m_segmentID];
-        }
-        followData.m_segmentTime = distRemaining / segmentLength;
-    }
-    else
+    float travelledDist = 0.0f;
+    while (travelledDist < targetDist)
     {
-        followData.m_segmentTime = 1.0f - ((segmentLength - distRemaining) / segmentLengths[followData.m_segmentID]);
+        // Find the target segment we end up at
+        float distRemaining = advanceDist;
+        float segmentLength = (1.0f - followData.m_segmentTime) * segmentLengths[followData.m_segmentID];
+        if (distRemaining > segmentLength)
+        {
+            while (distRemaining > segmentLength)
+            {
+                distRemaining -= segmentLength;
+
+                followData.m_segmentID++;
+                if (followData.m_segmentID >= segmentLengths.size())
+                {
+                    followData.m_segmentID = 0;
+                    if (!followData.m_loop)
+                    {
+                        followData.m_finished = true;
+                        return;
+                    }
+                }
+                segmentLength = segmentLengths[followData.m_segmentID];
+            }
+            followData.m_segmentTime = distRemaining / segmentLength;
+        }
+        else
+        {
+            followData.m_segmentTime = 1.0f - ((segmentLength - distRemaining) / segmentLengths[followData.m_segmentID]);
+        }
+
+        // get the actual dist travelled
+        Eigen::Vector3f const currentPos = interpolateSegment(followData.m_pPathData->m_knots, followData.m_segmentID, followData.m_segmentTime);
+        travelledDist += (currentPos - followData.m_position).norm();
+        followData.m_position = currentPos;
     }
 
     // Calculate the new position and rotation
