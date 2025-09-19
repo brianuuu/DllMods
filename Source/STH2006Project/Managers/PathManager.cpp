@@ -278,7 +278,7 @@ void PathManager::followAdvance(PathFollowData& followData, float dt)
 
     std::vector<float> const& segmentLengths = followData.m_pPathData->m_segmentLengths;
 
-    int constexpr c_steps = 8;
+    int constexpr c_steps = 16;
     float const targetDist = followData.m_speed * dt;
     float const advanceDist = targetDist / c_steps;
 
