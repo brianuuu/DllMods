@@ -179,8 +179,8 @@ void BallSwitch::SetUpdateParallel
 	{
 		m_angle -= 2.0f * PI_F;
 	}
-	hh::math::CVector const upAxis = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitY(); 
-	hh::math::CVector const rightAxis = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitX();
+	hh::math::CVector const upAxis = hh::math::CVector::UnitY(); 
+	hh::math::CVector const rightAxis = hh::math::CVector::UnitX();
 	hh::math::CQuaternion const newRotation = Eigen::AngleAxisf(m_angle, upAxis) * Eigen::AngleAxisf(0.5f * PI_F * currentForwardDistToAnchor / maxAnchorDist, -rightAxis);
 
 	m_spNodeModelBall->m_Transform.SetRotationAndPosition(newRotation, newPosition);
