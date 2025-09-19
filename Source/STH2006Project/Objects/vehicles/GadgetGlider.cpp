@@ -17,6 +17,22 @@ HOOK(bool, __fastcall, GadgetGlider_GroundedStateChange, 0xE013D0, Sonic::Player
 	return originalGadgetGlider_GroundedStateChange(context, Edx, a2);
 }
 
+HOOK(bool, __fastcall, GadgetGlider_CObjSetRigidBodyProcessMessage, 0xFE59D0, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
+{
+	if (flag && message.Is<Sonic::Message::MsgIsWall>())
+	{
+		uint32_t const pCObjSetRigidBody = (uint32_t)This - 0x28;
+		bool const isInsulate = *(bool*)(pCObjSetRigidBody + 0x108);
+
+		// if not insulate, it must be a wall
+		auto& msg = static_cast<Sonic::Message::MsgIsWall&>(message);
+		*msg.m_pIsWall = !isInsulate;
+		return true;
+	}
+
+	return originalGadgetGlider_CObjSetRigidBodyProcessMessage(This, Edx, message, flag);
+}
+
 BB_SET_OBJECT_MAKE_HOOK(GadgetGlider)
 void GadgetGlider::registerObject()
 {
@@ -27,6 +43,7 @@ void GadgetGlider::registerObject()
 void GadgetGlider::applyPatches()
 {
 	INSTALL_HOOK(GadgetGlider_GroundedStateChange);
+	INSTALL_HOOK(GadgetGlider_CObjSetRigidBodyProcessMessage);
 }
 
 GadgetGlider::~GadgetGlider()
@@ -150,9 +167,12 @@ bool GadgetGlider::SetAddColliders
 	uint32_t const typeInsulate = *(uint32_t*)0x1E5E780;
 	uint64_t const bitfield = (1llu << typeEnemy) | (1llu << typeBreakable);
 	uint32_t const damageID = Common::MakeCollisionID(0, bitfield);
+	uint32_t const typeTerrain = *(uint32_t*)0x1E5E754;
+	uint32_t const typePlayerTerrain = *(uint32_t*)0x1E5E758;
+	uint32_t const proxyID = Common::MakeCollisionID(0, (1llu << typeTerrain) | (1llu << typePlayerTerrain));
 	hk2010_2_0::hkpBoxShape* bodyEventTrigger = new hk2010_2_0::hkpBoxShape(4.9f, 0.7f, 2.0f);
 	AddEventCollision("Attack", bodyEventTrigger, damageID, true, m_spMatrixNodeTransform);
-	AddEventCollision("Terrain", bodyEventTrigger, *(int*)0x1E0AFAC, true, m_spMatrixNodeTransform);
+	AddEventCollision("Terrain", bodyEventTrigger, proxyID, true, m_spMatrixNodeTransform);
 	AddRigidBody(m_spRigidBodyMove, bodyEventTrigger, Common::MakeCollisionID((1llu << typeInsulate), 0), m_spMatrixNodeTransform);
 
 	m_spNodeCockpit = boost::make_shared<Sonic::CMatrixNodeTransform>();
@@ -161,7 +181,7 @@ bool GadgetGlider::SetAddColliders
 	m_spNodeCockpit->SetParent(m_spMatrixNodeTransform.get());
 	hk2010_2_0::hkpBoxShape* cockpitEventTrigger = new hk2010_2_0::hkpBoxShape(0.8f, 0.5f, 1.5f);
 	AddEventCollision("Attack", cockpitEventTrigger, damageID, true, m_spNodeCockpit);
-	AddEventCollision("Terrain", cockpitEventTrigger, *(int*)0x1E0AFAC, true, m_spNodeCockpit);
+	AddEventCollision("Terrain", cockpitEventTrigger, proxyID, true, m_spNodeCockpit);
 	AddRigidBody(m_spRigidBodyCockpit, cockpitEventTrigger, Common::MakeCollisionID((1llu << typeInsulate), 0), m_spNodeCockpit);
 
 	// player event collision

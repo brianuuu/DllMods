@@ -288,9 +288,12 @@ bool GadgetJeep::SetAddColliders
 	Common::ObjectToggleEventCollision(m_spEventCollisionHolder.get(), "FakePlayerItem", false);
 
 	// proxy collision
+	uint32_t const typeTerrain = *(uint32_t*)0x1E5E754;
+	uint32_t const typePlayerTerrain = *(uint32_t*)0x1E5E758;
+	uint32_t const proxyID = Common::MakeCollisionID(0, (1llu << typeTerrain) | (1llu << typePlayerTerrain));
 	Hedgehog::Base::THolder<Sonic::CWorld> holder(m_pMember->m_pWorld.get());
 	hk2010_2_0::hkpBoxShape* proxyShape = new hk2010_2_0::hkpBoxShape(1.4f, 0.1f, 3.2f);
-	m_spProxy = boost::make_shared<Sonic::CCharacterProxy>(this, holder, proxyShape, hh::math::CVector::UnitY() * 2.2f, hh::math::CQuaternion::Identity(), *(int*)0x1E0AFAC);
+	m_spProxy = boost::make_shared<Sonic::CCharacterProxy>(this, holder, proxyShape, hh::math::CVector::UnitY() * 2.2f, hh::math::CQuaternion::Identity(), proxyID);
 
 	return true;
 }

@@ -10,6 +10,8 @@ class GadgetGlider : public Sonic::CObjectBase
 	, public Sonic::IAnimationContext, public Sonic::CAnimationStateMachine
 {
 public:
+	static void applyPatches();
+
 	GadgetGlider(hh::mr::CTransform const& startTrans, float speed, bool spawnGounded);
 	virtual ~GadgetGlider() override;
 

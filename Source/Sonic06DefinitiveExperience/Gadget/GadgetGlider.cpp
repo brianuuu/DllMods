@@ -1,6 +1,27 @@
 #include "GadgetGlider.h"
 #include "Character/NextGenShadow.h"
 
+HOOK(bool, __fastcall, GadgetGlider_CObjSetRigidBodyProcessMessage, 0xFE59D0, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
+{
+	if (flag && message.Is<Sonic::Message::MsgIsWall>())
+	{
+		uint32_t const pCObjSetRigidBody = (uint32_t)This - 0x28;
+		bool const isInsulate = *(bool*)(pCObjSetRigidBody + 0x108);
+
+		// if not insulate, it must be a wall
+		auto& msg = static_cast<Sonic::Message::MsgIsWall&>(message);
+		*msg.m_pIsWall = !isInsulate;
+		return true;
+	}
+
+	return originalGadgetGlider_CObjSetRigidBodyProcessMessage(This, Edx, message, flag);
+}
+
+void GadgetGlider::applyPatches()
+{
+	INSTALL_HOOK(GadgetGlider_CObjSetRigidBodyProcessMessage);
+}
+
 GadgetGlider::GadgetGlider
 (
 	hh::mr::CTransform const& startTrans,
@@ -114,10 +135,13 @@ bool GadgetGlider::SetAddColliders
 	uint32_t const typeInsulate = *(uint32_t*)0x1E5E780;
 	uint32_t const typeBreakable = *(uint32_t*)0x1E5E77C;
 	uint32_t const damageID = Common::MakeCollisionID(0, (1llu << typeBreakable));
+	uint32_t const typeTerrain = *(uint32_t*)0x1E5E754;
+	uint32_t const typePlayerTerrain = *(uint32_t*)0x1E5E758;
+	uint32_t const proxyID = Common::MakeCollisionID(0, (1llu << typeTerrain) | (1llu << typePlayerTerrain));
 	hk2010_2_0::hkpBoxShape* bodyEventTrigger = new hk2010_2_0::hkpBoxShape(4.9f, 0.7f, 2.0f);
 	AddEventCollision("Enemy", bodyEventTrigger, *(int*)0x1E0AF54, true, m_spNodeModel); // ColID_TypeEnemy
 	AddEventCollision("Breakable", bodyEventTrigger, damageID, true, m_spNodeModel);
-	AddEventCollision("Terrain", bodyEventTrigger, *(int*)0x1E0AFAC, true, m_spNodeModel);
+	AddEventCollision("Terrain", bodyEventTrigger, proxyID, true, m_spNodeModel);
 	AddRigidBody(m_spRigidBodyMove, bodyEventTrigger, Common::MakeCollisionID((1llu << typeInsulate), 0), m_spNodeModel);
 
 	m_spNodeCockpit = boost::make_shared<Sonic::CMatrixNodeTransform>();
@@ -127,7 +151,7 @@ bool GadgetGlider::SetAddColliders
 	hk2010_2_0::hkpBoxShape* cockpitEventTrigger = new hk2010_2_0::hkpBoxShape(0.8f, 0.5f, 1.5f);
 	AddEventCollision("Enemy", cockpitEventTrigger, *(int*)0x1E0AF54, true, m_spNodeCockpit); // ColID_TypeEnemy
 	AddEventCollision("Breakable", cockpitEventTrigger, damageID, true, m_spNodeCockpit);
-	AddEventCollision("Terrain", cockpitEventTrigger, *(int*)0x1E0AFAC, true, m_spNodeCockpit);
+	AddEventCollision("Terrain", cockpitEventTrigger, proxyID, true, m_spNodeCockpit);
 	AddRigidBody(m_spRigidBodyCockpit, cockpitEventTrigger, Common::MakeCollisionID((1llu << typeInsulate), 0), m_spNodeCockpit);
 
 	// fake player collision
@@ -261,7 +285,11 @@ bool GadgetGlider::ProcessMessage
 				}
 				else
 				{
-					TakeDamage(8.0f);
+					auto* senderMessageActor = m_pMessageManager->GetMessageActor(message.m_SenderActorID);
+					uint32_t* senderActor = (uint32_t*)((uint32_t)senderMessageActor - 0x28);
+					bool isObjectPhysics = *(uint32_t*)senderMessageActor == 0x16CF58C;
+
+					TakeDamage(isObjectPhysics ? 1.0f : 8.0f);
 				}
 			}
 		}

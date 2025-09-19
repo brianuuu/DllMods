@@ -3517,6 +3517,9 @@ void NextGenShadow::applyPatches()
         {
             // Fix external control bobbing up and down at sea level
             WRITE_JUMP(0x11DCFF8, NextGenShadow_fixExternalControlBobbing);
+
+            // vehicle patches
+            GadgetGlider::applyPatches();
         }
     }
 }

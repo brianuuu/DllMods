@@ -186,9 +186,11 @@ bool GadgetHover::SetAddColliders
 	m_landCollisionID = Common::MakeCollisionID(0, bitfieldLand);
 
 	// proxy collision
+	uint32_t const typePlayerTerrain = *(uint32_t*)0x1E5E758;
+	uint32_t const proxyID = Common::MakeCollisionID(0, (1llu << typeTerrain) | (1llu << typePlayerTerrain));
 	Hedgehog::Base::THolder<Sonic::CWorld> holder(m_pMember->m_pWorld.get());
 	hk2010_2_0::hkpCylinderShape* proxyShape = new hk2010_2_0::hkpCylinderShape(hh::math::CVector(0.0f, 2.0f, 0.0f), hh::math::CVector(0.0f, 2.1f, 0.0f), 1.5f);
-	m_spProxy = boost::make_shared<Sonic::CCharacterProxy>(this, holder, proxyShape, hh::math::CVector::Zero(), hh::math::CQuaternion::Identity(), *(int*)0x1E0AFAC);
+	m_spProxy = boost::make_shared<Sonic::CCharacterProxy>(this, holder, proxyShape, hh::math::CVector::Zero(), hh::math::CQuaternion::Identity(), proxyID);
 
 	return true;
 }
