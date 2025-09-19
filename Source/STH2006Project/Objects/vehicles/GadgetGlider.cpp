@@ -386,6 +386,12 @@ bool GadgetGlider::ProcessMessage
 		return true;
 	}
 
+	if (message.Is<Sonic::Message::MsgDead>())
+	{
+		Explode();
+		return true;
+	}
+
 	if (message.Is<Sonic::Message::MsgDeactivate>())
 	{
 		if (IsFlight())

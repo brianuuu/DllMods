@@ -311,6 +311,12 @@ bool GadgetHover::ProcessMessage
 		return true;
 	}
 
+	if (message.Is<Sonic::Message::MsgDead>())
+	{
+		Explode();
+		return true;
+	}
+
 	if (message.Is<Sonic::Message::MsgGetItemType>() || message.Is<Sonic::Message::MsgTakeObject>())
 	{
 		if (m_playerID)
