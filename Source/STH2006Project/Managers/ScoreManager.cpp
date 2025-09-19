@@ -684,7 +684,7 @@ ResultData* ScoreManager::calculateResultData()
 	int timeBonusRate = 40;
 
 	// Get base score and timebonus rate
-	uint32_t stageID = Common::GetCurrentStageID();
+	uint32_t const stageID = Common::GetCurrentStageID();
 	switch (stageID)
 	{
 	case SMT_ghz100:	timeBonusBase = 45000;	break; // Prelude Stage
@@ -703,9 +703,6 @@ ResultData* ScoreManager::calculateResultData()
 	case (SMT_bsl | SMT_BossHard):		timeBonusBase = 22000;	break; // Silver Hard Mode
 	case SMT_bpc:						timeBonusBase = 19000;	break; // Iblis
 	case (SMT_bpc | SMT_BossHard):		timeBonusBase = 20000;	break; // Iblis Hard Mode
-
-	case STH_tsd:		timeBonusBase = 20000;	break; // Chaos Training Ground
-	case STH_bmf:		timeBonusBase = 30000;	break; // Mephiles Phase 1
 	default:	break;
 	}
 
@@ -716,7 +713,6 @@ ResultData* ScoreManager::calculateResultData()
 	case (SMT_bsl | SMT_BossHard):	// Silver Hard Mode
 	case SMT_bpc:					// Iblis
 	case (SMT_bpc | SMT_BossHard):	// Iblis Hard Mode
-	case STH_bmf:					// Mephiles Phase 1
 	{
 		scoreTable = ScoreTable{ 30000,27500,25000,5000 };
 		timeBonusRate = 80;
@@ -761,8 +757,21 @@ ResultData* ScoreManager::calculateResultData()
 	default: break;
 	}
 
+	// Read score data from INI
+	const INIReader reader(Application::getModDirString() + "Assets\\Database\\scoreData.ini");
+	if (reader.ParseError() == 0)
+	{
+		std::string const currentStageStr = std::to_string(stageID);
+		scoreTable.m_scoreS = reader.GetInteger(currentStageStr, "S", scoreTable.m_scoreS);
+		scoreTable.m_scoreA = reader.GetInteger(currentStageStr, "A", scoreTable.m_scoreA);
+		scoreTable.m_scoreB = reader.GetInteger(currentStageStr, "B", scoreTable.m_scoreB);
+		scoreTable.m_scoreC = reader.GetInteger(currentStageStr, "C", scoreTable.m_scoreC);
+		timeBonusBase = reader.GetInteger(currentStageStr, "timeBonusBase", timeBonusBase);
+		timeBonusRate = reader.GetInteger(currentStageStr, "timeBonusRate", timeBonusRate);
+	}
+
 	// Calculate final score
-	static ResultData data;
+	static ResultData data{};
 	m_timeBonus = max(timeBonusBase - (int)floorf(ScoreManager::m_currentTime) * timeBonusRate, 0 );
 	int ringBonus = *Common::GetPlayerRingCount() * 100;
 	data.m_score = m_pCScoreManager->m_score + m_timeBonus + ringBonus;
