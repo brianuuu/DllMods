@@ -1,6 +1,7 @@
 #include "RankRunAnimation.h"
+
 #include "Configuration.h"
-#include "AnimationSetPatcher.h"
+#include "Utils/AnimationSetPatcher.h"
 
 #define STH2006_RUN_STAGE_COUNT 4
 const char* sth2006RunStageIDs[STH2006_RUN_STAGE_COUNT] = { "ghz200", "sph200", "ssh200", "euc200" };

@@ -1,7 +1,8 @@
 #include "NextGenBlaze.h"
+
 #include "Configuration.h"
-#include "Application.h"
-#include "AnimationSetPatcher.h"
+#include "System/Application.h"
+#include "Utils/AnimationSetPatcher.h"
 
 //---------------------------------------------------
 // Animation

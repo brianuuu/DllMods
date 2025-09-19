@@ -1,7 +1,8 @@
 #include "CustomCamera.h"
-#include "Application.h"
+
 #include "Configuration.h"
-#include "NextGenSonic.h"
+#include "Character/NextGenSonic.h"
+#include "System/Application.h"
 
 // Normal Camera
 bool m_blockByTerrainMode = false;

@@ -1,5 +1,5 @@
 #include "GadgetHover.h"
-#include "NextGenShadow.h"
+#include "Character/NextGenShadow.h"
 
 bool GadgetHoverSuspension::SetAddRenderables
 (

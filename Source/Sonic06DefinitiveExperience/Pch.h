@@ -26,7 +26,7 @@
 #include <Eigen/Eigen>
 #include <Eigen/Geometry>
 
-#include "tinyxml2.h"
+#include "Utils/tinyxml2.h"
 
 // LostCodeLoader
 #include <ModLoader.h>

@@ -1,5 +1,5 @@
 #include "Configuration.h"
-#include "bbWriter.h"
+#include "Utils/bbWriter.h"
 
 bool Configuration::m_usingSTH2006Project = false;
 Configuration::ModelType Configuration::m_model = Configuration::ModelType::Sonic;

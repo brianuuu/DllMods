@@ -1,5 +1,5 @@
 #include "GadgetGlider.h"
-#include "NextGenShadow.h"
+#include "Character/NextGenShadow.h"
 
 GadgetGlider::GadgetGlider
 (

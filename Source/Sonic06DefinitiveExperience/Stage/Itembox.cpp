@@ -1,6 +1,7 @@
 #include "Itembox.h"
-#include "NextGenPhysics.h"
-#include "NextGenShadow.h"
+
+#include "Character/NextGenPhysics.h"
+#include "Character/NextGenShadow.h"
 
 // Have to use ASM to prevent double playing sfx
 void __declspec(naked) objItemPlaySfx()

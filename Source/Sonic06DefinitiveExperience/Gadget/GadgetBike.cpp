@@ -1,5 +1,5 @@
 #include "GadgetBike.h"
-#include "NextGenShadow.h"
+#include "Character/NextGenShadow.h"
 
 GadgetBike::GadgetBike
 (

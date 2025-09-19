@@ -1,5 +1,5 @@
 #include "GadgetJeep.h"
-#include "NextGenShadow.h"
+#include "Character/NextGenShadow.h"
 
 bool GadgetJeepBooster::SetAddRenderables
 (

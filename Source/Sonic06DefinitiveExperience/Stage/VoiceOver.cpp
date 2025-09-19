@@ -1,6 +1,7 @@
 #include "VoiceOver.h"
-#include "NextGenShadow.h"
+
 #include "Configuration.h"
+#include "Character/NextGenShadow.h"
 
 HOOK(int, __fastcall, VoiceOver_CSonicStateHomingAttackBegin, 0x1232040, hh::fnd::CStateMachineBase::CStateBase* This)
 {

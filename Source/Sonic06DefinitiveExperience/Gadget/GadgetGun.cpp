@@ -1,6 +1,6 @@
 #include "GadgetGun.h"
 
-#include "EnemyBullet.h"
+#include "Enemy/EnemyBullet.h"
 
 bool GadgetGun::SetAddRenderables
 (

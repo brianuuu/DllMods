@@ -1,14 +1,15 @@
 #include "NextGenShadow.h"
-#include "Configuration.h"
-#include "Application.h"
-#include "AnimationSetPatcher.h"
-#include "CustomCamera.h"
-#include "EnemyShock.h"
 
-#include "GadgetBike.h"
-#include "GadgetGlider.h"
-#include "GadgetHover.h"
-#include "GadgetJeep.h"
+#include "Configuration.h"
+#include "Enemy/EnemyShock.h"
+#include "Stage/CustomCamera.h"
+#include "System/Application.h"
+#include "Utils/AnimationSetPatcher.h"
+
+#include "Gadget/GadgetBike.h"
+#include "Gadget/GadgetGlider.h"
+#include "Gadget/GadgetHover.h"
+#include "Gadget/GadgetJeep.h"
 
 //---------------------------------------------------
 // Animation

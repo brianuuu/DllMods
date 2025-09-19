@@ -1,9 +1,10 @@
 #include "NextGenSonic.h"
+
 #include "Configuration.h"
-#include "Application.h"
-#include "AnimationSetPatcher.h"
-#include "VoiceOver.h"
-#include "CustomCamera.h"
+#include "Stage/CustomCamera.h"
+#include "Stage/VoiceOver.h"
+#include "System/Application.h"
+#include "Utils/AnimationSetPatcher.h"
 
 //---------------------------------------------------
 // Animation

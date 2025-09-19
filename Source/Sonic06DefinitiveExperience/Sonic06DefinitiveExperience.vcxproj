@@ -97,7 +97,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>Pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>..\..\Dependencies;..\..\Dependencies\Detours\include;..\..\Dependencies\Loaders;..\..\Include\BlueBlur;..\..\Include\BlueBlurCustom;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\Dependencies;..\..\Dependencies\Detours\include;..\..\Dependencies\Loaders;..\..\Include\BlueBlur;..\..\Include\BlueBlurCustom;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>Pch.h</ForcedIncludeFiles>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -138,7 +138,7 @@
       <PrecompiledHeaderFile>Pch.h</PrecompiledHeaderFile>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
-      <AdditionalIncludeDirectories>..\..\Dependencies;..\..\Dependencies\Detours\include;..\..\Dependencies\Loaders;..\..\Include\BlueBlur;..\..\Include\BlueBlurCustom;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\Dependencies;..\..\Dependencies\Detours\include;..\..\Dependencies\Loaders;..\..\Include\BlueBlur;..\..\Include\BlueBlurCustom;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>Pch.h</ForcedIncludeFiles>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -176,32 +176,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AnimationSetPatcher.cpp" />
-    <ClCompile Include="APIExport.cpp" />
-    <ClCompile Include="Application.cpp" />
-    <ClCompile Include="ArchiveTreePatcher.cpp" />
-    <ClCompile Include="bbWriter.cpp" />
-    <ClCompile Include="CustomCamera.cpp" />
-    <ClCompile Include="ChaosEnergy.cpp" />
+    <ClCompile Include="Character\NextGenBlaze.cpp" />
+    <ClCompile Include="Stage\NextGenObjects.cpp" />
+    <ClCompile Include="Character\NextGenPhysics.cpp" />
+    <ClCompile Include="Character\NextGenShadow.cpp" />
+    <ClCompile Include="Character\NextGenSonic.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DllMain.cpp" />
-    <ClCompile Include="EnemyBullet.cpp" />
-    <ClCompile Include="EnemyShock.cpp" />
-    <ClCompile Include="GadgetBike.cpp" />
-    <ClCompile Include="GadgetGlider.cpp" />
-    <ClCompile Include="GadgetGun.cpp" />
-    <ClCompile Include="GadgetGunSimple.cpp" />
-    <ClCompile Include="GadgetHover.cpp" />
-    <ClCompile Include="GadgetJeep.cpp" />
-    <ClCompile Include="GadgetMissile.cpp" />
-    <ClCompile Include="Itembox.cpp" />
+    <ClCompile Include="Enemy\EnemyBullet.cpp" />
+    <ClCompile Include="Enemy\EnemyShock.cpp" />
+    <ClCompile Include="Gadget\GadgetBike.cpp" />
+    <ClCompile Include="Gadget\GadgetGlider.cpp" />
+    <ClCompile Include="Gadget\GadgetGun.cpp" />
+    <ClCompile Include="Gadget\GadgetGunSimple.cpp" />
+    <ClCompile Include="Gadget\GadgetHover.cpp" />
+    <ClCompile Include="Gadget\GadgetJeep.cpp" />
+    <ClCompile Include="Gadget\GadgetMissile.cpp" />
     <ClCompile Include="Mod.cpp" />
-    <ClCompile Include="Navigation.cpp" />
-    <ClCompile Include="NextGenBlaze.cpp" />
-    <ClCompile Include="NextGenObjects.cpp" />
-    <ClCompile Include="NextGenPhysics.cpp" />
-    <ClCompile Include="NextGenShadow.cpp" />
-    <ClCompile Include="NextGenSonic.cpp" />
     <ClCompile Include="Pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pch.h</PrecompiledHeaderFile>
@@ -212,44 +203,53 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="RailPhysics.cpp" />
-    <ClCompile Include="RankQuote.cpp" />
-    <ClCompile Include="RankRunAnimation.cpp" />
-    <ClCompile Include="SuperSonic.cpp" />
-    <ClCompile Include="tinyxml2.cpp" />
-    <ClCompile Include="VoiceOver.cpp" />
+    <ClCompile Include="Stage\ChaosEnergy.cpp" />
+    <ClCompile Include="Stage\CustomCamera.cpp" />
+    <ClCompile Include="Stage\Itembox.cpp" />
+    <ClCompile Include="Stage\Navigation.cpp" />
+    <ClCompile Include="Stage\RailPhysics.cpp" />
+    <ClCompile Include="Stage\RankQuote.cpp" />
+    <ClCompile Include="Stage\RankRunAnimation.cpp" />
+    <ClCompile Include="Stage\SuperSonic.cpp" />
+    <ClCompile Include="Stage\VoiceOver.cpp" />
+    <ClCompile Include="System\Application.cpp" />
+    <ClCompile Include="Utils\AnimationSetPatcher.cpp" />
+    <ClCompile Include="Utils\APIExport.cpp" />
+    <ClCompile Include="Utils\ArchiveTreePatcher.cpp" />
+    <ClCompile Include="Utils\bbWriter.cpp" />
+    <ClCompile Include="Utils\tinyxml2.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AnimationSetPatcher.h" />
-    <ClInclude Include="Application.h" />
-    <ClInclude Include="ArchiveTreePatcher.h" />
-    <ClInclude Include="bbWriter.h" />
-    <ClInclude Include="CustomCamera.h" />
-    <ClInclude Include="ChaosEnergy.h" />
+    <ClInclude Include="Character\NextGenBlaze.h" />
+    <ClInclude Include="Stage\NextGenObjects.h" />
+    <ClInclude Include="Character\NextGenPhysics.h" />
+    <ClInclude Include="Character\NextGenShadow.h" />
+    <ClInclude Include="Character\NextGenSonic.h" />
     <ClInclude Include="Configuration.h" />
-    <ClInclude Include="EnemyBullet.h" />
-    <ClInclude Include="EnemyShock.h" />
-    <ClInclude Include="GadgetBike.h" />
-    <ClInclude Include="GadgetGlider.h" />
-    <ClInclude Include="GadgetGun.h" />
-    <ClInclude Include="GadgetGunSimple.h" />
-    <ClInclude Include="GadgetHover.h" />
-    <ClInclude Include="GadgetJeep.h" />
-    <ClInclude Include="GadgetMissile.h" />
-    <ClInclude Include="Itembox.h" />
-    <ClInclude Include="Navigation.h" />
-    <ClInclude Include="NextGenBlaze.h" />
-    <ClInclude Include="NextGenObjects.h" />
-    <ClInclude Include="NextGenPhysics.h" />
-    <ClInclude Include="NextGenShadow.h" />
-    <ClInclude Include="NextGenSonic.h" />
+    <ClInclude Include="Enemy\EnemyBullet.h" />
+    <ClInclude Include="Enemy\EnemyShock.h" />
+    <ClInclude Include="Gadget\GadgetBike.h" />
+    <ClInclude Include="Gadget\GadgetGlider.h" />
+    <ClInclude Include="Gadget\GadgetGun.h" />
+    <ClInclude Include="Gadget\GadgetGunSimple.h" />
+    <ClInclude Include="Gadget\GadgetHover.h" />
+    <ClInclude Include="Gadget\GadgetJeep.h" />
+    <ClInclude Include="Gadget\GadgetMissile.h" />
     <ClInclude Include="Pch.h" />
-    <ClInclude Include="RailPhysics.h" />
-    <ClInclude Include="RankQuote.h" />
-    <ClInclude Include="RankRunAnimation.h" />
-    <ClInclude Include="SuperSonic.h" />
-    <ClInclude Include="tinyxml2.h" />
-    <ClInclude Include="VoiceOver.h" />
+    <ClInclude Include="Stage\ChaosEnergy.h" />
+    <ClInclude Include="Stage\CustomCamera.h" />
+    <ClInclude Include="Stage\Itembox.h" />
+    <ClInclude Include="Stage\Navigation.h" />
+    <ClInclude Include="Stage\RailPhysics.h" />
+    <ClInclude Include="Stage\RankQuote.h" />
+    <ClInclude Include="Stage\RankRunAnimation.h" />
+    <ClInclude Include="Stage\SuperSonic.h" />
+    <ClInclude Include="Stage\VoiceOver.h" />
+    <ClInclude Include="System\Application.h" />
+    <ClInclude Include="Utils\AnimationSetPatcher.h" />
+    <ClInclude Include="Utils\ArchiveTreePatcher.h" />
+    <ClInclude Include="Utils\bbWriter.h" />
+    <ClInclude Include="Utils\tinyxml2.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

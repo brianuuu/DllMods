@@ -1,7 +1,8 @@
 #pragma once
 #include "Configuration.h"
-#include "ChaosEnergy.h"
-#include "NextGenShadow.h"
+
+#include "Stage/ChaosEnergy.h"
+#include "Character/NextGenShadow.h"
 
 extern "C" __declspec(dllexport) std::string API_GetVersion()
 {

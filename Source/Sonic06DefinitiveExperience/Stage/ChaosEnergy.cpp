@@ -1,6 +1,7 @@
 #include "ChaosEnergy.h"
+
 #include "Configuration.h"
-#include "NextGenShadow.h"
+#include "Character/NextGenShadow.h"
 
 float c_chaosEnergyReward = 5.0f;
 

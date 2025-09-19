@@ -1,7 +1,8 @@
 #include "NextGenPhysics.h"
+
 #include "Configuration.h"
-#include "AnimationSetPatcher.h"
-#include "Application.h"
+#include "System/Application.h"
+#include "Utils/AnimationSetPatcher.h"
 
 #include "NextGenSonic.h"
 #include "NextGenBlaze.h"
