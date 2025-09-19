@@ -1521,12 +1521,17 @@ HOOK(int, __fastcall, TitleUI_CGameplayFlowStage_CStateDisplayGameOverBegin, 0xC
 	return originalTitleUI_CGameplayFlowStage_CStateDisplayGameOverBegin(This);
 }
 
-HOOK(void, __fastcall, TitleUI_CGameplayFlowStage_CStateDisplayGameOverAdvance, 0xCFE6C0, void* This)
+HOOK(void, __fastcall, TitleUI_CGameplayFlowStage_CStateDisplayGameOverAdvance, 0xCFE6C0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
 	if (!m_spSave || m_spSave->m_saveCompleted)
 	{
 		m_spSave = nullptr;
-		originalTitleUI_CGameplayFlowStage_CStateDisplayGameOverAdvance(This);
+
+		uint32_t const state = *(uint32_t*)((uint32_t)This + 36);
+		if (state != 2 || This->m_Time >= 2.0f)
+		{
+			originalTitleUI_CGameplayFlowStage_CStateDisplayGameOverAdvance(This);
+		}
 	}
 }
 

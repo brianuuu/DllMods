@@ -188,11 +188,12 @@ bool m_ignoreStopNowLoadingRequest = false;
 float LoadingUI::m_startCountdown = -1.0f;
 void LoadingUI::startNowLoading(float countdown, bool ignoreOthers)
 {
+	if (m_ignoreStopNowLoadingRequest) return;
+	m_ignoreStopNowLoadingRequest = ignoreOthers;
+
 	if (!m_drawEnabled)
 	{
 		UIContext::clearDraw();
-
-		m_ignoreStopNowLoadingRequest = ignoreOthers;
 		if (countdown > 0.0f)
 		{
 			m_startCountdown = countdown;
@@ -212,6 +213,7 @@ void LoadingUI::stopNowLoading(float fadeInTime, bool forceStop)
 {
 	if (!m_ignoreStopNowLoadingRequest || (m_ignoreStopNowLoadingRequest && forceStop))
 	{
+		m_ignoreStopNowLoadingRequest = false;
 		if (m_drawEnabled && LoadingUI::m_fadeInTime == 0.0f)
 		{
 			LoadingUI::m_fadeInTime = (fadeInTime <= 0.0f) ? 0.001f : fadeInTime;
