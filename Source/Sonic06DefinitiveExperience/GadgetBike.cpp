@@ -239,6 +239,7 @@ bool GadgetBike::ProcessMessage
 		m_playerID = 0;
 		CleanUp();
 		NextGenShadow::m_vehicleSingleton.reset();
+		Explode();
 		return true;
 	}
 

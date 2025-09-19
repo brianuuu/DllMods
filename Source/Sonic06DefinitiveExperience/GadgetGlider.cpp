@@ -273,6 +273,7 @@ bool GadgetGlider::ProcessMessage
 		m_playerID = 0;
 		S06HUD_API::SetGadgetMaxCount(-1);
 		NextGenShadow::m_vehicleSingleton.reset();
+		Explode();
 		return true;
 	}
 
