@@ -17,9 +17,26 @@ HOOK(int, __fastcall, SubtitleUI_MsgRestartStage, 0xE76810, uint32_t* This, void
     return originalSubtitleUI_MsgRestartStage(This, Edx, message);
 }
 
+HOOK(void, __fastcall, SubtitleUI_MsgDamage, 0xE27890, uint32_t* This, void* Edx, void* message)
+{
+    originalSubtitleUI_MsgDamage(This, Edx, message);
+    if (Common::IsPlayerDead())
+    {
+        SubtitleUI::m_subtitleSfx.reset();
+    }
+}
+
+HOOK(void, __fastcall, SubtitleUI_MsgDead, 0xE6AC60, uint32_t* This, void* Edx, void* message)
+{
+    SubtitleUI::m_subtitleSfx.reset();
+    originalSubtitleUI_MsgDead(This, Edx, message);
+}
+
 void SubtitleUI::applyPatches()
 {
     INSTALL_HOOK(SubtitleUI_MsgRestartStage);
+    INSTALL_HOOK(SubtitleUI_MsgDamage);
+    INSTALL_HOOK(SubtitleUI_MsgDead);
 }
 
 float SubtitleUI::addSubtitle(std::string const& name, std::string const& id)
@@ -297,6 +314,12 @@ void SubtitleUI::draw()
                 m_subtitleSfx.reset();
                 Common::PlaySoundStatic(m_subtitleSfx, m_captionData.m_subtitles.front().m_cueID);
             }
+        }
+
+        // if there's a player and dead, just finish current subtitle
+        if (*PLAYER_CONTEXT && Common::IsPlayerDead() && m_captionData.m_subtitles.size() > 1)
+        {
+            m_captionData.m_subtitles.resize(1);
         }
     }
     else if (!m_captionData.m_captions.empty())
