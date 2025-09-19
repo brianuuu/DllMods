@@ -45,6 +45,7 @@ public:
 	static void applyNoTrickPatches();
 
 	// Common 06 Physics
+	static bool m_useHomingDownSpeed;
 	static float m_homingDownSpeed;
 	static NextGenAnimation m_animationData;
 	static void applyCharacterAnimationSpeed();

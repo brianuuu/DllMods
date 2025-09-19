@@ -268,6 +268,7 @@ void __declspec(naked) noTrickRainbowRing()
 //---------------------------------------------------
 // Homing Attack
 //---------------------------------------------------
+bool NextGenPhysics::m_useHomingDownSpeed = true;
 float NextGenPhysics::m_homingDownSpeed = 0.0f;
 float const c_homingDownSpeedAdd = 15.0f;
 SharedPtrTypeless homingPfxHandle;
@@ -301,13 +302,15 @@ HOOK(int, __fastcall, NextGenPhysics_CSonicStateHomingAttackBegin, 0x1232040, hh
 HOOK(int*, __fastcall, NextGenPhysics_CSonicStateHomingAttackEnd, 0x1231F80, void* This)
 {
     // Apply down speed before homing attack
-    if (Configuration::m_physics && StateManager::isCurrentAction(StateAction::Fall))
+    if (Configuration::m_physics && StateManager::isCurrentAction(StateAction::Fall) && NextGenPhysics::m_useHomingDownSpeed)
     {
         Eigen::Vector3f playerVelocity;
         Common::GetPlayerVelocity(playerVelocity);
         playerVelocity.y() += NextGenPhysics::m_homingDownSpeed - c_homingDownSpeedAdd;
         Common::SetPlayerVelocity(playerVelocity);
     }
+
+    NextGenPhysics::m_useHomingDownSpeed = true;
 
     // Kill homing pfx
     Common::fCGlitterEnd(*PLAYER_CONTEXT, homingPfxHandle, Configuration::m_model == Configuration::ModelType::Shadow);

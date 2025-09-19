@@ -483,6 +483,8 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
             if (targetPosition.isZero())
             {
                 // lost target
+                NextGenPhysics::m_useHomingDownSpeed = false;
+                Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
                 StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
                 return;
             }
@@ -521,6 +523,24 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
                 PlayChaosSnap();
                 Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosAttackWait);
             }
+        }
+    }
+
+    // check if somehow gone behind target
+    if (NextGenShadow::m_chaosBoostLevel > 0 && hasChaosSnapTeleported)
+    {
+        hh::math::CVector direction = context->m_spMatrixNode->m_Transform.m_Rotation * hh::math::CVector::UnitZ();
+        hh::math::CVector playerPosition = context->m_spMatrixNode->m_Transform.m_Position;
+        hh::math::CVector targetPosition = hh::math::CVector::Zero();
+        context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetPosition>(&targetPosition));
+
+        if (targetPosition.isZero() || direction.dot(targetPosition - playerPosition) < 0.0f)
+        {
+            // target lost or is behind
+            NextGenPhysics::m_useHomingDownSpeed = false;
+            Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+            StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
+            return;
         }
     }
 
