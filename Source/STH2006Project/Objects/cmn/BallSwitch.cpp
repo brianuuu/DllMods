@@ -151,7 +151,7 @@ void BallSwitch::SetUpdateParallel
 			{
 				if (currentDistToPlayer < 0.001f)
 				{
-					horizontalDir = m_spMatrixNodeTransform->m_Transform.m_Rotation * hh::math::CVector::UnitX();
+					horizontalDir = hh::math::CVector::UnitX();
 				}
 				else
 				{
