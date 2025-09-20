@@ -294,7 +294,11 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
                 // jet glider
                 hh::math::CVector forward = transform.m_Rotation * hh::math::CVector::UnitZ();
                 forward.y() = 0.0f; forward.normalize();
-                if (!forward.isApprox(-hh::math::CVector::UnitZ()))
+                if (forward.isApprox(-hh::math::CVector::UnitZ()))
+                {
+                    transform.m_Rotation = Eigen::AngleAxis(PI_F, hh::math::CVector::UnitY()) * hh::math::CQuaternion::Identity();
+                }
+                else
                 {
                     transform.m_Rotation = hh::math::CQuaternion::FromTwoVectors(hh::math::CVector::UnitZ().head<3>(), forward.head<3>());
                 }
