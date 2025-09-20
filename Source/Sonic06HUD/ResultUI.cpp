@@ -90,7 +90,7 @@ void ResultUI::applyPatches()
 {
 	if (!m_init) return;
 
-	if (Configuration::m_usingSTH2006Project && Common::IsModEnabled("Main", "ScoreSystem", "True"))
+	if (Configuration::m_usingSTH2006Project)
 	{
 		printf("[06HUD] Applying score system with 'STH2006 Project'\n");
 		INSTALL_HOOK(CScoreManager_MsgRestartStage);
