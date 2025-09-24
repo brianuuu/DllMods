@@ -165,6 +165,9 @@ SubtitleButtonType SubtitleUI::getButtonTypeFromTag(std::string const& tag)
         {"button_rt", SBT_RT},
         {"button_start", SBT_Start},
         {"button_back", SBT_Back},
+        {"button_lstick", SBT_LStick},
+        {"button_rstick", SBT_RStick},
+        {"button_dpad", SBT_DPad},
     };
 
     auto iter = s_buttomMap.find(tag);
