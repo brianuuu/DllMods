@@ -12,6 +12,8 @@
 #include "cmn/Laser.h"
 #include "cmn/UpDownReel.h"
 
+#include "enemy/EnemyLander.h"
+
 #include "vehicles/GadgetBike.h"
 #include "vehicles/GadgetHover.h"
 #include "vehicles/GadgetGlider.h"
@@ -117,4 +119,7 @@ void NextGenObjects::applyPatches()
     GadgetHover::registerObject();
     GadgetGlider::registerObject();
     GadgetJeep::registerObject();
+
+    // enemies
+    EnemyLander::applyPatches();
 }
