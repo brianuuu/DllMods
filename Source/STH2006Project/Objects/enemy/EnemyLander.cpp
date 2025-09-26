@@ -31,7 +31,7 @@ HOOK(int*, __fastcall, EnemyLander_SpawnBrk, 0xBCBBC0, EnemyLander* This)
 	return result;
 }
 
-void __declspec(naked) StageManager_EnemyLander_SetModel()
+void __declspec(naked) EnemyLander_SetModel()
 {
 	static uint32_t returnAddress = 0xBCF054;
 	static char const* enm_lander_HD = "enm_lander_HD";
@@ -61,5 +61,5 @@ void EnemyLander::applyPatches()
 
 	INSTALL_HOOK(EnemyLander_InitializeEditParam);
 	INSTALL_HOOK(EnemyLander_SpawnBrk);
-	WRITE_JUMP(0xBCF04F, StageManager_EnemyLander_SetModel);
+	WRITE_JUMP(0xBCF04F, EnemyLander_SetModel);
 }
