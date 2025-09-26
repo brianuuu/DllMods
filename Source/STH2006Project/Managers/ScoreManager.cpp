@@ -1,6 +1,7 @@
 #include "ScoreManager.h"
 
 #include "Configuration.h"
+#include "Objects/enemy/EnemyGanigani.h"
 #include "Objects/enemy/EnemyLander.h"
 #include "Objects/enemy/EnemyMotora.h"
 #include "System/ChaosEnergy.h"
@@ -357,9 +358,9 @@ HOOK(void, __fastcall, ScoreManager_EnemyLiner, 0xBC7440, EnemyMotora* This, voi
 	originalScoreManager_EnemyLiner(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemyBomber, 0xBCB9A0, Sonic::CGameObject* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyBomber, 0xBCB9A0, EnemyGanigani* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(ScoreType::ST_enemySmall, This->m_ActorID);
+	ScoreManager::addScore(This->m_isSweeper ? ScoreType::ST_enemyStealth : (This->m_isArmor ? ScoreType::ST_enemyMedium : ScoreType::ST_enemySmall), This->m_ActorID);
 	originalScoreManager_EnemyBomber(This, Edx, message);
 }
 

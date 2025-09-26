@@ -251,6 +251,7 @@
       </ForcedIncludeFiles>
     </ClCompile>
     <ClCompile Include="Configuration.cpp" />
+    <ClCompile Include="Objects\enemy\EnemyGanigani.cpp" />
     <ClCompile Include="Objects\enemy\EnemyMotora.cpp" />
     <ClCompile Include="Objects\enemy\EnemyLander.cpp" />
     <ClCompile Include="Objects\vehicles\GadgetGunSimple.cpp" />
@@ -319,6 +320,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
+    <ClInclude Include="Objects\enemy\EnemyGanigani.h" />
     <ClInclude Include="Objects\enemy\EnemyMotora.h" />
     <ClInclude Include="Objects\enemy\EnemyLander.h" />
     <ClInclude Include="Objects\vehicles\GadgetGunSimple.h" />

@@ -12,6 +12,7 @@
 #include "cmn/Laser.h"
 #include "cmn/UpDownReel.h"
 
+#include "enemy/EnemyGanigani.h"
 #include "enemy/EnemyLander.h"
 #include "enemy/EnemyMotora.h"
 
@@ -122,6 +123,7 @@ void NextGenObjects::applyPatches()
     GadgetJeep::registerObject();
 
     // enemies
+    EnemyGanigani::applyPatches();
     EnemyLander::applyPatches();
     EnemyMotora::applyPatches();
 }
