@@ -31,6 +31,25 @@ HOOK(int*, __fastcall, EnemyLander_SpawnBrk, 0xBCBBC0, EnemyLander* This)
 	return result;
 }
 
+void __declspec(naked) StageManager_EnemyLander_SetModel()
+{
+	static uint32_t returnAddress = 0xBCF054;
+	static char const* enm_lander_HD = "enm_lander_HD";
+	static char const* enm_cander_HD = "enm_cander_HD";
+	__asm
+	{
+		mov		eax, [ebx + 280h]
+		test	al, al
+		jz		original
+		push	enm_cander_HD
+		jmp		[returnAddress]
+
+		original:
+		push	enm_lander_HD
+		jmp		[returnAddress]
+	}
+}
+
 void EnemyLander::applyPatches()
 {
 	// increase alloc size
@@ -42,36 +61,5 @@ void EnemyLander::applyPatches()
 
 	INSTALL_HOOK(EnemyLander_InitializeEditParam);
 	INSTALL_HOOK(EnemyLander_SpawnBrk);
-	WRITE_MEMORY(0x16F5F80, void*, AddCallback);
-}
-
-void EnemyLander::AddCallback
-(
-	EnemyLander* This, void*,
-	const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, 
-	Sonic::CGameDocument* in_pGameDocument, 
-	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
-)
-{
-	FUNCTION_PTR(void, __thiscall, fpCEnemyBaseAddCallback, 0xBDF720,
-		void* This,
-		const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder,
-		Sonic::CGameDocument* in_pGameDocument,
-		const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
-	);
-
-	fpCEnemyBaseAddCallback(This, in_rWorldHolder, in_pGameDocument, in_spDatabase);
-
-	if (This->m_isCommander)
-	{
-		// switch material
-		FUNCTION_PTR(void*, __thiscall, CSingleElementChangeMaterial, 0x701CC0, Hedgehog::Mirage::CSingleElement * singleElement, hh::mr::CMaterialData * from, boost::shared_ptr<hh::mr::CMaterialData>&to);
-		hh::mr::CMirageDatabaseWrapper wrapper(Sonic::CGameDocument::GetInstance()->m_pMember->m_spDatabase.get());
-		boost::shared_ptr<hh::mr::CMaterialData> matFrom1 = wrapper.GetMaterialData("en_eRounder.xno0");
-		boost::shared_ptr<hh::mr::CMaterialData> matFrom2 = wrapper.GetMaterialData("en_eRounder.xno1");
-		boost::shared_ptr<hh::mr::CMaterialData> matTo1 = wrapper.GetMaterialData("en_eCounder.xno0");
-		boost::shared_ptr<hh::mr::CMaterialData> matTo2 = wrapper.GetMaterialData("en_eCounder.xno1");
-		CSingleElementChangeMaterial(This->m_spModel.get(), matFrom1.get(), matTo1);
-		CSingleElementChangeMaterial(This->m_spModel.get(), matFrom2.get(), matTo2);
-	}
+	WRITE_JUMP(0xBCF04F, StageManager_EnemyLander_SetModel);
 }
