@@ -1,6 +1,8 @@
 #include "ScoreManager.h"
 
 #include "Configuration.h"
+#include "Objects/enemy/EnemyLander.h"
+#include "Objects/enemy/EnemyMotora.h"
 #include "System/ChaosEnergy.h"
 #include "System/Application.h"
 #include "UI/UIContext.h"
@@ -349,9 +351,9 @@ HOOK(void, __fastcall, ScoreManager_EnemySearcherHunter, 0xBDC110, uint32_t* Thi
 	originalScoreManager_EnemySearcherHunter(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemyLiner, 0xBC7440, Sonic::CGameObject* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyLiner, 0xBC7440, EnemyMotora* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(ScoreType::ST_enemySmall, This->m_ActorID);
+	ScoreManager::addScore(This->m_isChaser ? ScoreType::ST_enemyMedium : ScoreType::ST_enemySmall, This->m_ActorID);
 	originalScoreManager_EnemyLiner(This, Edx, message);
 }
 
@@ -361,9 +363,9 @@ HOOK(void, __fastcall, ScoreManager_EnemyBomber, 0xBCB9A0, Sonic::CGameObject* T
 	originalScoreManager_EnemyBomber(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemyRounder, 0xBCF5E0, Sonic::CGameObject* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyRounder, 0xBCF5E0, EnemyLander* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(ScoreType::ST_enemySmall, This->m_ActorID);
+	ScoreManager::addScore(This->m_isCommander ? ScoreType::ST_enemyMedium : ScoreType::ST_enemySmall, This->m_ActorID);
 	originalScoreManager_EnemyRounder(This, Edx, message);
 }
 

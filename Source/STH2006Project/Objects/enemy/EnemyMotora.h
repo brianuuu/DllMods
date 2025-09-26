@@ -5,12 +5,12 @@
 /*----------------------------------------------------------*/
 
 #pragma once
-class EnemyMotora
+class EnemyMotora : public Sonic::CObjectBase
 {
 public:
 	// Dummy data struct
 	static uint32_t const c_size = 0x260;
-	INSERT_PADDING(0x178);
+	INSERT_PADDING(0x78);
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
 	INSERT_PADDING(0xE0);
 

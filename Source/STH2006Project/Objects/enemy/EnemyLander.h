@@ -6,12 +6,12 @@
 
 #pragma once
 
-class EnemyLander
+class EnemyLander : public Sonic::CObjectBase
 {
 public:
 	// Dummy data struct
 	static uint32_t const c_size = 0x280;
-	INSERT_PADDING(0x174);
+	INSERT_PADDING(0x74);
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
 	INSERT_PADDING(0x104);
 
