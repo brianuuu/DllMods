@@ -87,6 +87,7 @@
     <ClCompile Include="Objects\vehicles\GadgetJeep.cpp" />
     <ClCompile Include="Objects\vehicles\GadgetGunSimple.cpp" />
     <ClCompile Include="Objects\enemy\EnemyLander.cpp" />
+    <ClCompile Include="Objects\enemy\EnemyMotora.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -144,6 +145,7 @@
     <ClInclude Include="Objects\vehicles\GadgetJeep.h" />
     <ClInclude Include="Objects\vehicles\GadgetGunSimple.h" />
     <ClInclude Include="Objects\enemy\EnemyLander.h" />
+    <ClInclude Include="Objects\enemy\EnemyMotora.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">

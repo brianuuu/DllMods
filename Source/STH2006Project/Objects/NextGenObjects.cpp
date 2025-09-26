@@ -13,6 +13,7 @@
 #include "cmn/UpDownReel.h"
 
 #include "enemy/EnemyLander.h"
+#include "enemy/EnemyMotora.h"
 
 #include "vehicles/GadgetBike.h"
 #include "vehicles/GadgetHover.h"
@@ -122,4 +123,5 @@ void NextGenObjects::applyPatches()
 
     // enemies
     EnemyLander::applyPatches();
+    EnemyMotora::applyPatches();
 }

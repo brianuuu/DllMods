@@ -1,6 +1,7 @@
 #include "EnemyHealth.h"
 
 #include "Objects/enemy/EnemyLander.h"
+#include "Objects/enemy/EnemyMotora.h"
 
 std::mutex EnemyHealth::m_mutex;
 std::map<uint32_t, EnemyHealth::HealthData> EnemyHealth::m_healthData;
@@ -308,6 +309,7 @@ HOOK_ENEMY_PROCESS_MESSAGE(CEnemyBeeton, 0xBDC180)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyEggRobo, 0xBB0220)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyELauncher, 0xB82B40)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyCrawler, 0xB99E10)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyMotora, 0xBC7350)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyLander, 0xBCF740)
 
 void EnemyHealth::applyPatches()
@@ -326,6 +328,7 @@ void EnemyHealth::applyPatches()
     INSTALL_HOOK(EnemyHealth_CEnemyEggRobo_ProcessMessage);
     INSTALL_HOOK(EnemyHealth_CEnemyELauncher_ProcessMessage);
     INSTALL_HOOK(EnemyHealth_CEnemyCrawler_ProcessMessage);
+    INSTALL_HOOK(EnemyHealth_CEnemyMotora_ProcessMessage);
     INSTALL_HOOK(EnemyHealth_CEnemyLander_ProcessMessage);
 
     // Reset health for FakeDead enemies
@@ -361,6 +364,10 @@ float EnemyHealth::GetHealthOffset(uint32_t pCEnemyBase)
     {
         return 1.5f;
     }
+    case 0x16F67C4: // CEnemyMotora
+    {
+        return 0.7f;
+    }
     }
 
     return 0.0f;
@@ -386,6 +393,10 @@ uint32_t EnemyHealth::GetMaxHealth(uint32_t pCEnemyBase)
     case 0x16F5F64: // CEnemyLander
     {
         return ((EnemyLander*)pCEnemyBase)->m_isCommander ? 2u : 0u;
+    }
+    case 0x16F67C4: // CEnemyMotora
+    {
+        return ((EnemyMotora*)pCEnemyBase)->m_isChaser ? 2u : 0u;
     }
     }
 
