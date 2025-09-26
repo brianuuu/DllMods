@@ -340,7 +340,6 @@ void EnemyHealth::applyPatches()
     WRITE_MEMORY(0xBAF655, uint32_t, 0x1E0AF24); // CEnemyEggRobo
     WRITE_MEMORY(0xBAB07F, uint32_t, 0x1E0AF24); // CEnemyEggRobo revive
     WRITE_MEMORY(0xB8211B, uint32_t, 0x1E0AF24); // CEnemyELauncher
-    WRITE_MEMORY(0xBCE58D, uint32_t, 0x1E0AF24); // CEnemyLander
 }
 
 float EnemyHealth::GetHealthOffset(uint32_t pCEnemyBase)

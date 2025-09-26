@@ -56,6 +56,7 @@ void EnemyMotora::applyPatches()
 	WRITE_MEMORY(0xBC71D6, uint32_t, c_size + 4); // 2D
 	WRITE_MEMORY(0xBC7016, uint32_t, c_size + 4); // 3D
 
+	// change model
 	INSTALL_HOOK(EnemyMotora_InitializeEditParam);
 	INSTALL_HOOK(EnemyMotora_SpawnBrk);
 	WRITE_JUMP(0xBC5FF0, EnemyMotora_SetModel);

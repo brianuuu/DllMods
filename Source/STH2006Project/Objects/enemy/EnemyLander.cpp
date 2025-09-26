@@ -59,10 +59,14 @@ void EnemyLander::applyPatches()
 	// increase radius
 	WRITE_MEMORY(0xBCE449, uint32_t, 0x1574644); // 0.8 -> 1.0
 
+	// change model
 	INSTALL_HOOK(EnemyLander_InitializeEditParam);
 	INSTALL_HOOK(EnemyLander_SpawnBrk);
 	WRITE_JUMP(0xBCF04F, EnemyLander_SetModel);
 	WRITE_MEMORY(0x16F5F80, void*, AddCallback);
+
+	// remove interaction type
+	WRITE_MEMORY(0xBCE58D, uint32_t, 0x1E0AF24);
 }
 
 void EnemyLander::AddCallback
