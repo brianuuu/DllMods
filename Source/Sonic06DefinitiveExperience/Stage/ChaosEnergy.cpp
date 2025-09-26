@@ -81,19 +81,6 @@ void __declspec(naked) setChaosEnergySfxPfx()
 	}
 }
 
-
-void __declspec(naked) getEnemyChaosEnergyAmount()
-{
-	static uint32_t returnAddress = 0xBE05EF;
-	__asm
-	{
-		mov		ecx, esi
-		call	ChaosEnergy::getEnemyChaosEnergyAmountImpl
-		mov		ecx, eax
-		jmp		[returnAddress]
-	}
-}
-
 void __declspec(naked) getEnemyChaosEnergyType()
 {
 	static uint32_t returnAddress = 0xBE05F7;
@@ -195,9 +182,6 @@ void ChaosEnergy::applyPatches()
 
 	if (Configuration::m_physics)
 	{
-		// Change number of chaos energy spawn from enemies
-		WRITE_JUMP(0xBE05E9, getEnemyChaosEnergyAmount);
-
 		// Don't give boost rewards, handle them ourselves
 		WRITE_JUMP(0xE1827B, (void*)0xE182E0); // MsgDamageSuccess
 		WRITE_MEMORY(0x11A128F, uint8_t, 0x83, 0xC4, 0x04, 0x90, 0x90); // Board trick jump
@@ -207,18 +191,6 @@ void ChaosEnergy::applyPatches()
 
 		// Award 5 boost when chaos energy reach Sonic
 		WRITE_JUMP(0x1124594, addBoostFromChaosEnergy);
-	}
-}
-
-uint32_t __fastcall ChaosEnergy::getEnemyChaosEnergyAmountImpl(uint32_t* pEnemy)
-{
-	//printf("0x%08X\n", pEnemy[0]);
-	switch (pEnemy[0])
-	{
-		case 0x016F7C9C: return pEnemy[104] ? 1 : 2; // CEnemyEggRobo[104] == 1 -> missile
-		case 0x016FB1FC: return 3; // CEnemyELauncher
-		case 0x016F95CC: return 2; // CEnemyCrawler
-		default: return 1;
 	}
 }
 
