@@ -19,6 +19,9 @@ public:
 
 public:
 	static void applyPatches();
+
+private:
+	static void __fastcall AddCallback(EnemyMotora* This, void*, const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase);
 };
 
 BB_ASSERT_OFFSETOF(EnemyMotora, m_isChaser, EnemyMotora::c_size);

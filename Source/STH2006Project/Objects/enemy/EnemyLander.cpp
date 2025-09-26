@@ -62,4 +62,28 @@ void EnemyLander::applyPatches()
 	INSTALL_HOOK(EnemyLander_InitializeEditParam);
 	INSTALL_HOOK(EnemyLander_SpawnBrk);
 	WRITE_JUMP(0xBCF04F, EnemyLander_SetModel);
+	WRITE_MEMORY(0x16F5F80, void*, AddCallback);
+}
+
+void EnemyLander::AddCallback
+(
+	EnemyLander* This, void*,
+	const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder,
+	Sonic::CGameDocument* in_pGameDocument,
+	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
+)
+{
+	FUNCTION_PTR(void, __thiscall, fpCEnemyBaseAddCallback, 0xBDF720,
+		void* This,
+		const Hedgehog::Base::THolder<Sonic::CWorld>&in_rWorldHolder,
+		Sonic::CGameDocument * in_pGameDocument,
+		const boost::shared_ptr<Hedgehog::Database::CDatabase>&in_spDatabase
+	);
+
+	fpCEnemyBaseAddCallback(This, in_rWorldHolder, in_pGameDocument, in_spDatabase);
+	if (This->m_isCommander)
+	{
+		// modify chaos energy amount
+		*(uint32_t*)((uint32_t)This + 0x118) = 2;
+	}
 }

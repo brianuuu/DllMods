@@ -59,4 +59,28 @@ void EnemyMotora::applyPatches()
 	INSTALL_HOOK(EnemyMotora_InitializeEditParam);
 	INSTALL_HOOK(EnemyMotora_SpawnBrk);
 	WRITE_JUMP(0xBC5FF0, EnemyMotora_SetModel);
+	WRITE_MEMORY(0x16F67E0, void*, AddCallback);
+}
+
+void EnemyMotora::AddCallback
+(
+	EnemyMotora* This, void*,
+	const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder,
+	Sonic::CGameDocument* in_pGameDocument,
+	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
+)
+{
+	FUNCTION_PTR(void, __thiscall, fpCEnemyBaseAddCallback, 0xBDF720,
+		void* This,
+		const Hedgehog::Base::THolder<Sonic::CWorld>&in_rWorldHolder,
+		Sonic::CGameDocument * in_pGameDocument,
+		const boost::shared_ptr<Hedgehog::Database::CDatabase>&in_spDatabase
+	);
+
+	fpCEnemyBaseAddCallback(This, in_rWorldHolder, in_pGameDocument, in_spDatabase);
+	if (This->m_isChaser)
+	{
+		// modify chaos energy amount
+		*(uint32_t*)((uint32_t)This + 0x118) = 2;
+	}
 }

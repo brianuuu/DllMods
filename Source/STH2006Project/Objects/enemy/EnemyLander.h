@@ -20,6 +20,9 @@ public:
 
 public:
 	static void applyPatches();
+
+private:
+	static void __fastcall AddCallback(EnemyLander* This, void*, const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase);
 };
 
 BB_ASSERT_OFFSETOF(EnemyLander, m_isCommander, EnemyLander::c_size);
