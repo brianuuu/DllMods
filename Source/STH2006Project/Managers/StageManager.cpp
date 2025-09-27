@@ -678,9 +678,6 @@ void StageManager::applyPatches()
     // Hide ELauncher missile respawn
     WRITE_JUMP(0xB81488, (void*)StageManager_CEnemyELauncher_HideMissile);
 
-    // CEnemyBeeton size
-    WRITE_MEMORY(0xBDB1FE, uint32_t, 0x1574644); // body radius -> 1.0
-
     // ELauncher
     WRITE_MEMORY(0xB820C0, uint32_t, 0x1574644); // rigidbody radius -> 1.0
     WRITE_MEMORY(0xB8207F, uint32_t, 0x156460C); // attached rigidbody to Spine
