@@ -157,5 +157,9 @@ void __fastcall EnemyTaker::AddCallback
 	}
 
 	// can only construct in runtime?
-	m_darkSphereExplosionData.m_effectName = "ef_mephiles_spherebomb_s";
+	if (!m_darkSphereExplosionData.m_init)
+	{
+		m_darkSphereExplosionData.m_effectName = "ef_mephiles_spherebomb_s";
+		m_darkSphereExplosionData.m_init = true;
+	}
 }

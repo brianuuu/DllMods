@@ -41,10 +41,12 @@ private:
 struct DarkSphereExplosionData
 {
 	Hedgehog::Base::CSharedString m_effectName;
-	float m_cueID = 200614014; // TODO:
+	uint32_t m_cueID = 200614014; // TODO:
 	float m_field08 = 1.0f;
 	float m_field0C = 1.0f;
 	float m_field10 = 3.0f;
 	uint32_t m_damageType = 0;
+
+	bool m_init = false;
 };
 static DarkSphereExplosionData m_darkSphereExplosionData;

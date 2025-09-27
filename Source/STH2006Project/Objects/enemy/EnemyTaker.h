@@ -23,4 +23,3 @@ private:
 
 BB_ASSERT_OFFSETOF(EnemyTaker, m_energyAmount, 0x118);
 BB_ASSERT_OFFSETOF(EnemyTaker, m_isDark, EnemyTaker::c_size);
-
