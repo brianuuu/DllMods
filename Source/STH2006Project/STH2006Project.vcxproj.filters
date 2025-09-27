@@ -93,6 +93,7 @@
     <ClCompile Include="Objects\enemy\EnemyGunHunter.cpp" />
     <ClCompile Include="Objects\enemy\EnemyEggRobo.cpp" />
     <ClCompile Include="Objects\enemy\EnemyELauncher.cpp" />
+    <ClCompile Include="Objects\enemy\EnemyBeetle.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -156,6 +157,7 @@
     <ClInclude Include="Objects\enemy\EnemyGunHunter.h" />
     <ClInclude Include="Objects\enemy\EnemyEggRobo.h" />
     <ClInclude Include="Objects\enemy\EnemyELauncher.h" />
+    <ClInclude Include="Objects\enemy\EnemyBeetle.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">

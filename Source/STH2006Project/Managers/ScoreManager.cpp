@@ -2,6 +2,7 @@
 
 #include "Configuration.h"
 
+#include "Objects/enemy/EnemyBeetle.h"
 #include "Objects/enemy/EnemyBeeton.h"
 #include "Objects/enemy/EnemyEggRobo.h"
 #include "Objects/enemy/EnemyELauncher.h"
@@ -346,9 +347,9 @@ HOOK(void, __fastcall, ScoreManager_EnemyBuster, 0xB82900, EnemyELauncher* This,
 	originalScoreManager_EnemyBuster(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemyFlyer, 0xBA6450, Sonic::CGameObject* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyFlyer, 0xBA6450, EnemyBeetle* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(ScoreType::ST_enemySmall, This->m_ActorID);
+	ScoreManager::addScore(This->isBuster() ? ScoreType::ST_enemyMedium : ScoreType::ST_enemySmall, This->m_ActorID);
 	originalScoreManager_EnemyFlyer(This, Edx, message);
 }
 

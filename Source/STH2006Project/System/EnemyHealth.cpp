@@ -1,5 +1,6 @@
 #include "EnemyHealth.h"
 
+#include "Objects/enemy/EnemyBeetle.h"
 #include "Objects/enemy/EnemyBeeton.h"
 #include "Objects/enemy/EnemyEggRobo.h"
 #include "Objects/enemy/EnemyGanigani.h"
@@ -308,6 +309,7 @@ HOOK(bool, __fastcall, EnemyHealth_##enemyName##_ProcessMessage, address, hh::fn
     return originalEnemyHealth_##enemyName##_ProcessMessage(This, Edx, message, flag); \
 }
 
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyBeetle, 0xBA6510)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyBeeton, 0xBDC180)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyEggRobo, 0xBB0220)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyELauncher, 0xB82B40)
@@ -328,6 +330,7 @@ void EnemyHealth::applyPatches()
     INSTALL_HOOK(EnemyHealth_CEnemyBaseDeathCallback);
 
     // Individual enemy hooks
+    INSTALL_HOOK(EnemyHealth_CEnemyBeetle_ProcessMessage);
     INSTALL_HOOK(EnemyHealth_CEnemyBeeton_ProcessMessage);
     INSTALL_HOOK(EnemyHealth_CEnemyEggRobo_ProcessMessage);
     INSTALL_HOOK(EnemyHealth_CEnemyELauncher_ProcessMessage);
@@ -373,6 +376,7 @@ float EnemyHealth::GetHealthOffset(uint32_t pCEnemyBase)
         return 0.7f;
     }
     case 0x16F62B4: // CEnemyGanigani
+    case 0x16F87CC: // CEnemyMonoBeetle
     {
         return 1.1f;
     }
@@ -395,6 +399,7 @@ uint32_t EnemyHealth::GetMaxHealth(uint32_t pCEnemyBase)
     }
     case 0x16FB1FC: // CEnemyELauncher
     case 0x16F95CC: // CEnemyCrawler
+    case 0x16F87CC: // CEnemyMonoBeetle
     {
         return 3u;
     }

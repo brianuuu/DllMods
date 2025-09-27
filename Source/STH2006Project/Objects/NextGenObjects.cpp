@@ -12,6 +12,7 @@
 #include "cmn/Laser.h"
 #include "cmn/UpDownReel.h"
 
+#include "enemy/EnemyBeetle.h"
 #include "enemy/EnemyBeeton.h"
 #include "enemy/EnemyEggRobo.h"
 #include "enemy/EnemyELauncher.h"
@@ -127,6 +128,7 @@ void NextGenObjects::applyPatches()
     GadgetJeep::registerObject();
 
     // enemies
+    EnemyBeetle::applyPatches();
     EnemyBeeton::applyPatches();
     EnemyEggRobo::applyPatches();
     EnemyELauncher::applyPatches();
