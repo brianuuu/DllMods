@@ -1,6 +1,7 @@
 #include "EnemyHealth.h"
 
 #include "Objects/enemy/EnemyBeeton.h"
+#include "Objects/enemy/EnemyEggRobo.h"
 #include "Objects/enemy/EnemyGanigani.h"
 #include "Objects/enemy/EnemyLander.h"
 #include "Objects/enemy/EnemyMotora.h"
@@ -390,7 +391,7 @@ uint32_t EnemyHealth::GetMaxHealth(uint32_t pCEnemyBase)
     }
     case 0x16F7C9C: // CEnemyEggRobo
     {
-        return *(bool*)(pCEnemyBase + 416) ? 0u : 2u;
+        return ((EnemyEggRobo*)pCEnemyBase)->m_isStinger ? 0u : 2u;
     }
     case 0x16FB1FC: // CEnemyELauncher
     case 0x16F95CC: // CEnemyCrawler

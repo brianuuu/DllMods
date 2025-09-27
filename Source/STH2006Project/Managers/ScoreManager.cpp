@@ -1,11 +1,14 @@
 #include "ScoreManager.h"
 
 #include "Configuration.h"
+
 #include "Objects/enemy/EnemyBeeton.h"
+#include "Objects/enemy/EnemyEggRobo.h"
 #include "Objects/enemy/EnemyGanigani.h"
 #include "Objects/enemy/EnemyGunHunter.h"
 #include "Objects/enemy/EnemyLander.h"
 #include "Objects/enemy/EnemyMotora.h"
+
 #include "System/ChaosEnergy.h"
 #include "System/Application.h"
 #include "UI/UIContext.h"
@@ -330,9 +333,9 @@ HOOK(void, __fastcall, ScoreManager_EnemyGunner, 0xBAA2F0, EnemyGunHunter* This,
 	originalScoreManager_EnemyGunner(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemyStingerLancer, 0xBB01B0, uint32_t* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyStingerLancer, 0xBB01B0, EnemyEggRobo* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(This[104] ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, ((Sonic::CGameObject*)This)->m_ActorID);
+	ScoreManager::addScore(This->m_isStinger ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, This->m_ActorID);
 	originalScoreManager_EnemyStingerLancer(This, Edx, message);
 }
 
