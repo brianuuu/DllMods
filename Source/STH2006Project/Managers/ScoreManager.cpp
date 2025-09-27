@@ -3,6 +3,7 @@
 #include "Configuration.h"
 #include "Objects/enemy/EnemyBeeton.h"
 #include "Objects/enemy/EnemyGanigani.h"
+#include "Objects/enemy/EnemyGunHunter.h"
 #include "Objects/enemy/EnemyLander.h"
 #include "Objects/enemy/EnemyMotora.h"
 #include "System/ChaosEnergy.h"
@@ -323,7 +324,7 @@ HOOK(void, __fastcall, ScoreManager_GetMissionDashRing, 0xEDB560, uint32_t This,
 	originalScoreManager_GetMissionDashRing(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemyGunner, 0xBAA2F0, Sonic::CGameObject* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyGunner, 0xBAA2F0, EnemyGunHunter* This, void* Edx, void* message)
 {
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This->m_ActorID);
 	originalScoreManager_EnemyGunner(This, Edx, message);
