@@ -194,12 +194,13 @@ void ChaosEnergy::applyPatches()
 	}
 }
 
-uint32_t __fastcall ChaosEnergy::getEnemyChaosEnergyTypeImpl(uint32_t* pEnemy, uint32_t amount)
+uint32_t __fastcall ChaosEnergy::getEnemyChaosEnergyTypeImpl(uint32_t pCEnemyBase, uint32_t amount)
 {
+	uint32_t const pAimTargetParams = *(uint32_t*)(pCEnemyBase + 0x11C);
+	bool const isCrisisCityEnemy = *(bool*)(pAimTargetParams + 0x28);
+
 	// For Iblis monsters, add 0x00010000 to notify it to use lightcore
-	if (pEnemy[0] == 0x016F95CC ||  // CEnemyCrawler
-		pEnemy[0] == 0x016F8C54 ||  // CEnemyTaker
-		pEnemy[0] == 0x016FAD14)	// CEnemyBiter
+	if (isCrisisCityEnemy)
 	{
 		amount += 0x00010000;
 	}
