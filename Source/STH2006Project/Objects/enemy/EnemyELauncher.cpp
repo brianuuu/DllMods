@@ -25,7 +25,7 @@ void EnemyELauncher::applyPatches()
     WRITE_MEMORY(0x16FB1FC + 0xC8, void*, AddCallback);
 }
 
-void EnemyELauncher::AddCallback
+void __fastcall EnemyELauncher::AddCallback
 (
 	EnemyELauncher* This, void*, void*
 )

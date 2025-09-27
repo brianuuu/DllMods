@@ -68,7 +68,7 @@ void EnemyLander::applyPatches()
 	WRITE_MEMORY(0xBCE58D, uint32_t, 0x1E0AF24);
 }
 
-void EnemyLander::AddCallback
+void __fastcall EnemyLander::AddCallback
 (
 	EnemyLander* This, void*, void*
 )

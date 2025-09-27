@@ -106,7 +106,7 @@ void EnemyGanigani::applyPatches()
 	WRITE_JUMP(0x5F6343, (void*)0x5F6383);
 }
 
-void EnemyGanigani::AddCallback
+void __fastcall EnemyGanigani::AddCallback
 (
 	EnemyGanigani* This, void*, void*
 )

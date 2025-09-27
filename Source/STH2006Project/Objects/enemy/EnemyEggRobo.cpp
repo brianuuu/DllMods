@@ -66,7 +66,7 @@ void EnemyEggRobo::applyPatches()
     WRITE_MEMORY(0x16F7C9C + 0xC8, void*, AddCallback);
 }
 
-void EnemyEggRobo::AddCallback
+void __fastcall EnemyEggRobo::AddCallback
 (
     EnemyEggRobo* This, void*, void*
 )

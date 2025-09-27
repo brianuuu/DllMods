@@ -9,7 +9,7 @@ void EnemyBeeton::applyPatches()
 	WRITE_MEMORY(0xBDB1FE, uint32_t, 0x1574644); // body radius -> 1.0
 }
 
-void EnemyBeeton::AddCallback
+void __fastcall EnemyBeeton::AddCallback
 (
 	EnemyBeeton* This, void*, void*
 )

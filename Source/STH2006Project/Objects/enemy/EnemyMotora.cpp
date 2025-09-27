@@ -62,7 +62,7 @@ void EnemyMotora::applyPatches()
 	WRITE_MEMORY(0x16F67C4 + 0xC8, void*, AddCallback);
 }
 
-void EnemyMotora::AddCallback
+void __fastcall EnemyMotora::AddCallback
 (
 	EnemyMotora* This, void*, void*
 )

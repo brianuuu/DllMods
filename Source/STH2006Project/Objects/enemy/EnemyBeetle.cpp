@@ -20,7 +20,7 @@ bool EnemyBeetle::isBuster() const
 	return *(uint32_t*)this == 0x16F87CC;
 }
 
-void EnemyBeetle::AddCallback
+void __fastcall EnemyBeetle::AddCallback
 (
 	EnemyBeetle* This, void*, void*
 )
