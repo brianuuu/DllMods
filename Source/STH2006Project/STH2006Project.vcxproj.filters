@@ -89,6 +89,7 @@
     <ClCompile Include="Objects\enemy\EnemyLander.cpp" />
     <ClCompile Include="Objects\enemy\EnemyMotora.cpp" />
     <ClCompile Include="Objects\enemy\EnemyGanigani.cpp" />
+    <ClCompile Include="Objects\enemy\EnemyBeeton.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -148,6 +149,7 @@
     <ClInclude Include="Objects\enemy\EnemyLander.h" />
     <ClInclude Include="Objects\enemy\EnemyMotora.h" />
     <ClInclude Include="Objects\enemy\EnemyGanigani.h" />
+    <ClInclude Include="Objects\enemy\EnemyBeeton.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">

@@ -1,6 +1,7 @@
 #include "ScoreManager.h"
 
 #include "Configuration.h"
+#include "Objects/enemy/EnemyBeeton.h"
 #include "Objects/enemy/EnemyGanigani.h"
 #include "Objects/enemy/EnemyLander.h"
 #include "Objects/enemy/EnemyMotora.h"
@@ -346,9 +347,9 @@ HOOK(void, __fastcall, ScoreManager_EnemyFlyer, 0xBA6450, Sonic::CGameObject* Th
 	originalScoreManager_EnemyFlyer(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemySearcherHunter, 0xBDC110, uint32_t* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemySearcherHunter, 0xBDC110, EnemyBeeton* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(*(bool*)((uint32_t)This + 0x17C) ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, ((Sonic::CGameObject*)This)->m_ActorID);
+	ScoreManager::addScore(This->m_isSearcher ? ScoreType::ST_enemySmall : ScoreType::ST_enemyMedium, This->m_ActorID);
 	originalScoreManager_EnemySearcherHunter(This, Edx, message);
 }
 

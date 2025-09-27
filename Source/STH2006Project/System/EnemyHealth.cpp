@@ -1,5 +1,6 @@
 #include "EnemyHealth.h"
 
+#include "Objects/enemy/EnemyBeeton.h"
 #include "Objects/enemy/EnemyGanigani.h"
 #include "Objects/enemy/EnemyLander.h"
 #include "Objects/enemy/EnemyMotora.h"
@@ -385,7 +386,7 @@ uint32_t EnemyHealth::GetMaxHealth(uint32_t pCEnemyBase)
     {
     case 0x16F517C: // CEnemyBeeton
     {
-        return *(bool*)(pCEnemyBase + 0x17C) ? 0u : 3u;
+        return ((EnemyBeeton*)pCEnemyBase)->m_isSearcher ? 0u : 3u;
     }
     case 0x16F7C9C: // CEnemyEggRobo
     {
