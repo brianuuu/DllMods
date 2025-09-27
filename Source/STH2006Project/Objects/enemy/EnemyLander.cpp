@@ -38,8 +38,7 @@ void __declspec(naked) EnemyLander_SetModel()
 	static char const* enm_cander_HD = "enm_cander_HD";
 	__asm
 	{
-		mov		eax, [ebx + 280h]
-		test	al, al
+		cmp     byte ptr [ebx + 280h], 0
 		jz		original
 		push	enm_cander_HD
 		jmp		[returnAddress]
@@ -88,6 +87,6 @@ void EnemyLander::AddCallback
 	if (This->m_isCommander)
 	{
 		// modify chaos energy amount
-		*(uint32_t*)((uint32_t)This + 0x118) = 2;
+		This->m_energyAmount = 2;
 	}
 }

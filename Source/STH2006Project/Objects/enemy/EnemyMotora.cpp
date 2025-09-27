@@ -38,8 +38,7 @@ void __declspec(naked) EnemyMotora_SetModel()
 	static char const* enm_cotora_HD = "enm_cotora_HD";
 	__asm
 	{
-		mov		eax, [ebx + 260h]
-		test	al, al
+		cmp     byte ptr [ebx + 260h], 0
 		jz		original
 		push	enm_cotora_HD
 		jmp		[returnAddress]
@@ -82,6 +81,6 @@ void EnemyMotora::AddCallback
 	if (This->m_isChaser)
 	{
 		// modify chaos energy amount
-		*(uint32_t*)((uint32_t)This + 0x118) = 2;
+		This->m_energyAmount = 2;
 	}
 }

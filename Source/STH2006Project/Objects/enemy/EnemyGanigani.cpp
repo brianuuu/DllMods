@@ -53,15 +53,13 @@ void __declspec(naked) EnemyGanigani_SetModel()
 	static char const* enm_aanigani_HD = "enm_aanigani_HD";
 	__asm
 	{
-		mov		eax, [ebx + 250h]
-		test	al, al
+		cmp     byte ptr [ebx + 250h], 0
 		jz		armor
 		push	enm_sanigani_HD
 		jmp		[returnAddress]
 
 		armor:
-		mov		eax, [ebx + 251h]
-		test	al, al
+		cmp     byte ptr [ebx + 251h], 0
 		jz		original
 		push	enm_aanigani_HD
 		jmp		[returnAddress]
@@ -124,9 +122,14 @@ void EnemyGanigani::AddCallback
 	);
 
 	fpCEnemyBaseAddCallback(This, in_rWorldHolder, in_pGameDocument, in_spDatabase);
-	if (This->m_isArmor)
+	if (This->m_isSweeper)
 	{
 		// modify chaos energy amount
-		*(uint32_t*)((uint32_t)This + 0x118) = 2;
+		This->m_energyAmount = 2;
+	}
+	else if (This->m_isArmor)
+	{
+		// modify chaos energy amount
+		This->m_energyAmount = 2;
 	}
 }

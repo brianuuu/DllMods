@@ -8,11 +8,10 @@
 class EnemyMotora : public Sonic::CObjectBase
 {
 public:
-	// Dummy data struct
 	static uint32_t const c_size = 0x260;
-	INSERT_PADDING(0x78);
-	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
-	INSERT_PADDING(0xE0);
+	INSERT_PADDING(0x18);
+	uint32_t m_energyAmount = 1;
+	INSERT_PADDING(0x144);
 
 	// New data
 	bool m_isChaser = false;
@@ -24,4 +23,5 @@ private:
 	static void __fastcall AddCallback(EnemyMotora* This, void*, const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase);
 };
 
+BB_ASSERT_OFFSETOF(EnemyMotora, m_energyAmount, 0x118);
 BB_ASSERT_OFFSETOF(EnemyMotora, m_isChaser, EnemyMotora::c_size);

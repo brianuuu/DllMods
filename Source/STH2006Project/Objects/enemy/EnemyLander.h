@@ -9,11 +9,10 @@
 class EnemyLander : public Sonic::CObjectBase
 {
 public:
-	// Dummy data struct
 	static uint32_t const c_size = 0x280;
-	INSERT_PADDING(0x74);
-	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
-	INSERT_PADDING(0x104);
+	INSERT_PADDING(0x18);
+	uint32_t m_energyAmount = 1;
+	INSERT_PADDING(0x164);
 
 	// New data
 	bool m_isCommander = false;
@@ -25,4 +24,5 @@ private:
 	static void __fastcall AddCallback(EnemyLander* This, void*, const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase);
 };
 
+BB_ASSERT_OFFSETOF(EnemyLander, m_energyAmount, 0x118);
 BB_ASSERT_OFFSETOF(EnemyLander, m_isCommander, EnemyLander::c_size);
