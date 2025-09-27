@@ -10,6 +10,7 @@
 #include "Objects/enemy/EnemyGunHunter.h"
 #include "Objects/enemy/EnemyLander.h"
 #include "Objects/enemy/EnemyMotora.h"
+#include "Objects/enemy/EnemyTaker.h"
 
 #include "System/ChaosEnergy.h"
 #include "System/Application.h"
@@ -377,7 +378,7 @@ HOOK(void, __fastcall, ScoreManager_EnemyRounder, 0xBCF5E0, EnemyLander* This, v
 	originalScoreManager_EnemyRounder(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemyTaker, 0xBA3140, Sonic::CGameObject* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyTaker, 0xBA3140, EnemyTaker* This, void* Edx, void* message)
 {
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This->m_ActorID);
 	originalScoreManager_EnemyTaker(This, Edx, message);

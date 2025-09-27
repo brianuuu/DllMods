@@ -20,6 +20,7 @@
 #include "enemy/EnemyGunHunter.h"
 #include "enemy/EnemyLander.h"
 #include "enemy/EnemyMotora.h"
+#include "enemy/EnemyTaker.h"
 
 #include "vehicles/GadgetBike.h"
 #include "vehicles/GadgetHover.h"
@@ -136,4 +137,5 @@ void NextGenObjects::applyPatches()
     EnemyGunHunter::applyPatches();
     EnemyLander::applyPatches();
     EnemyMotora::applyPatches();
+    EnemyTaker::applyPatches();
 }

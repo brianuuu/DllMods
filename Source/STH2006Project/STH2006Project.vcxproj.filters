@@ -94,6 +94,7 @@
     <ClCompile Include="Objects\enemy\EnemyEggRobo.cpp" />
     <ClCompile Include="Objects\enemy\EnemyELauncher.cpp" />
     <ClCompile Include="Objects\enemy\EnemyBeetle.cpp" />
+    <ClCompile Include="Objects\enemy\EnemyTaker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -158,6 +159,7 @@
     <ClInclude Include="Objects\enemy\EnemyEggRobo.h" />
     <ClInclude Include="Objects\enemy\EnemyELauncher.h" />
     <ClInclude Include="Objects\enemy\EnemyBeetle.h" />
+    <ClInclude Include="Objects\enemy\EnemyTaker.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">
