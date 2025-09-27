@@ -62,7 +62,7 @@ void EnemyLander::applyPatches()
 	INSTALL_HOOK(EnemyLander_InitializeEditParam);
 	INSTALL_HOOK(EnemyLander_SpawnBrk);
 	WRITE_JUMP(0xBCF04F, EnemyLander_SetModel);
-	WRITE_MEMORY(0x16F5F80, void*, AddCallback);
+	WRITE_MEMORY(0x16F5F64 + 0xC8, void*, AddCallback);
 
 	// remove interaction type
 	WRITE_MEMORY(0xBCE58D, uint32_t, 0x1E0AF24);
@@ -70,23 +70,12 @@ void EnemyLander::applyPatches()
 
 void EnemyLander::AddCallback
 (
-	EnemyLander* This, void*,
-	const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder,
-	Sonic::CGameDocument* in_pGameDocument,
-	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
+	EnemyLander* This, void*, void*
 )
 {
-	FUNCTION_PTR(void, __thiscall, fpCEnemyBaseAddCallback, 0xBDF720,
-		void* This,
-		const Hedgehog::Base::THolder<Sonic::CWorld>&in_rWorldHolder,
-		Sonic::CGameDocument * in_pGameDocument,
-		const boost::shared_ptr<Hedgehog::Database::CDatabase>&in_spDatabase
-	);
-
-	fpCEnemyBaseAddCallback(This, in_rWorldHolder, in_pGameDocument, in_spDatabase);
+	// modify chaos energy amount
 	if (This->m_isCommander)
 	{
-		// modify chaos energy amount
 		This->m_energyAmount = 2;
 	}
 }

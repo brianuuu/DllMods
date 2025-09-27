@@ -21,7 +21,7 @@ public:
 	static void applyPatches();
 
 private:
-	static void __fastcall AddCallback(EnemyGanigani* This, void*, const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase);
+	static void __fastcall AddCallback(EnemyGanigani* This, void*, void*);
 };
 
 BB_ASSERT_OFFSETOF(EnemyGanigani, m_energyAmount, 0x118);

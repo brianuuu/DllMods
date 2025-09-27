@@ -94,7 +94,7 @@ void EnemyGanigani::applyPatches()
 	INSTALL_HOOK(EnemyGanigani_SpawnBrk);
 	INSTALL_HOOK(EnemyGanigani_MsgGetHomingAttackPosition);
 	WRITE_JUMP(0xBC9E55, EnemyGanigani_SetModel);
-	WRITE_MEMORY(0x16F62D0, void*, AddCallback);
+	WRITE_MEMORY(0x16F62B4 + 0xC8, void*, AddCallback);
 
 	// remove interaction type, change collision size
 	WRITE_JUMP(0xBCAEAB, EnemyGanigani_SetCollision);
@@ -108,28 +108,16 @@ void EnemyGanigani::applyPatches()
 
 void EnemyGanigani::AddCallback
 (
-	EnemyGanigani* This, void*,
-	const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder,
-	Sonic::CGameDocument* in_pGameDocument,
-	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
+	EnemyGanigani* This, void*, void*
 )
 {
-	FUNCTION_PTR(void, __thiscall, fpCEnemyBaseAddCallback, 0xBDF720,
-		void* This,
-		const Hedgehog::Base::THolder<Sonic::CWorld>&in_rWorldHolder,
-		Sonic::CGameDocument * in_pGameDocument,
-		const boost::shared_ptr<Hedgehog::Database::CDatabase>&in_spDatabase
-	);
-
-	fpCEnemyBaseAddCallback(This, in_rWorldHolder, in_pGameDocument, in_spDatabase);
+	// modify chaos energy amount
 	if (This->m_isSweeper)
 	{
-		// modify chaos energy amount
-		This->m_energyAmount = 2;
+		This->m_energyAmount = 3;
 	}
 	else if (This->m_isArmor)
 	{
-		// modify chaos energy amount
 		This->m_energyAmount = 2;
 	}
 }
