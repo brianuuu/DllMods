@@ -4,6 +4,7 @@
 
 #include "Objects/enemy/EnemyBeeton.h"
 #include "Objects/enemy/EnemyEggRobo.h"
+#include "Objects/enemy/EnemyELauncher.h"
 #include "Objects/enemy/EnemyGanigani.h"
 #include "Objects/enemy/EnemyGunHunter.h"
 #include "Objects/enemy/EnemyLander.h"
@@ -339,7 +340,7 @@ HOOK(void, __fastcall, ScoreManager_EnemyStingerLancer, 0xBB01B0, EnemyEggRobo* 
 	originalScoreManager_EnemyStingerLancer(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemyBuster, 0xB82900, Sonic::CGameObject* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyBuster, 0xB82900, EnemyELauncher* This, void* Edx, void* message)
 {
 	ScoreManager::addScore(ScoreType::ST_enemyMedium, This->m_ActorID);
 	originalScoreManager_EnemyBuster(This, Edx, message);

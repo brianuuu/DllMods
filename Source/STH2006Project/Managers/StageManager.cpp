@@ -460,17 +460,6 @@ HOOK(void, __fastcall, StageManager_CEnemyBiter_MsgHitEventCollision, 0xB83A20, 
 //---------------------------------------------------
 // Enemy Fixes
 //---------------------------------------------------
-void __declspec(naked) StageManager_CEnemyELauncher_HideMissile()
-{
-    static uint32_t returnAddress = 0xB81491;
-    __asm
-    {
-        mov     dword ptr [esp + 184h], 0xC61C4000 // -10000y
-        movss   [esp + 190h], xmm0 // original
-        jmp     [returnAddress]
-    }
-}
-
 bool __fastcall StageManager_CEnemyShotPoint_IgnoreEnemyImpl(Hedgehog::Universe::CMessageActor* messageActor)
 {
     uint32_t enemyType = 0u;
@@ -624,13 +613,6 @@ void StageManager::applyPatches()
     //---------------------------------------------------
     // Enemy Fixes
     //---------------------------------------------------
-    // Hide ELauncher missile respawn
-    WRITE_JUMP(0xB81488, (void*)StageManager_CEnemyELauncher_HideMissile);
-
-    // ELauncher
-    WRITE_MEMORY(0xB820C0, uint32_t, 0x1574644); // rigidbody radius -> 1.0
-    WRITE_MEMORY(0xB8207F, uint32_t, 0x156460C); // attached rigidbody to Spine
-
     // Enemy projectile damage all rigid body not just aimed target
     WRITE_JUMP(0xB6B408, (void*)StageManager_CEnemyShotPoint_IgnoreEnemy);
 
