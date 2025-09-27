@@ -4,6 +4,7 @@
 
 #include "Objects/enemy/EnemyBeetle.h"
 #include "Objects/enemy/EnemyBeeton.h"
+#include "Objects/enemy/EnemyCrawler.h"
 #include "Objects/enemy/EnemyEggRobo.h"
 #include "Objects/enemy/EnemyELauncher.h"
 #include "Objects/enemy/EnemyGanigani.h"
@@ -390,9 +391,9 @@ HOOK(void, __fastcall, ScoreManager_EnemyBiter, 0xB86850, Sonic::CGameObject* Th
 	originalScoreManager_EnemyBiter(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemyCrawler, 0xB99B80, Sonic::CGameObject* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyCrawler, 0xB99B80, EnemyCrawler* This, void* Edx, void* message)
 {
-	ScoreManager::addScore(ScoreType::ST_enemyMedium, This->m_ActorID);
+	ScoreManager::addScore(This->m_isDark ? ScoreType::ST_enemyLarge : ScoreType::ST_enemyMedium, This->m_ActorID);
 	originalScoreManager_EnemyCrawler(This, Edx, message);
 }
 

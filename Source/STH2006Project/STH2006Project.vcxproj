@@ -251,6 +251,7 @@
       </ForcedIncludeFiles>
     </ClCompile>
     <ClCompile Include="Configuration.cpp" />
+    <ClCompile Include="Objects\enemy\EnemyCrawler.cpp" />
     <ClCompile Include="Objects\enemy\EnemyTaker.cpp" />
     <ClCompile Include="Objects\enemy\EnemyBeetle.cpp" />
     <ClCompile Include="Objects\enemy\EnemyELauncher.cpp" />
@@ -326,6 +327,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
+    <ClInclude Include="Objects\enemy\EnemyCrawler.h" />
     <ClInclude Include="Objects\enemy\EnemyTaker.h" />
     <ClInclude Include="Objects\enemy\EnemyBeetle.h" />
     <ClInclude Include="Objects\enemy\EnemyELauncher.h" />
