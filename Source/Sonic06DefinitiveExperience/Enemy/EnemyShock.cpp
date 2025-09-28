@@ -159,8 +159,8 @@ void HandleEnemyAddShock(hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Messa
 
 void HandleEnemyRemoveShock(uint32_t pCEnemyBase, bool checkHP = false)
 {
-    // more than 2 HP, shouldn't remove shock
-    if (checkHP && *(uint8_t*)(pCEnemyBase + 0x16F) > 1)
+    // still has health, shouldn't remove shock
+    if (checkHP && *(uint8_t*)(pCEnemyBase + 0x16F))
     {
         return;
     }
