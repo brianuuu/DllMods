@@ -256,11 +256,12 @@ HOOK(int, __fastcall, EnemyShock_CEnemySpinner_CStateFakeDeadBegin, 0x5FC1B0, He
             HandleEnemyAddShock(This, Edx, message); \
             return true; \
         } \
+        bool result = originalEnemyShock_##enemyName##_ProcessMessage(This, Edx, message, flag); \
         if (flag && message.Is<Sonic::Message::MsgDamage>()) \
         { \
             HandleEnemyRemoveShock((uint32_t)This - 0x28, true); \
         } \
-        return originalEnemyShock_##enemyName##_ProcessMessage(This, Edx, message, flag); \
+        return result; \
     }
 
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyEChaserSV, 0xB76390)
