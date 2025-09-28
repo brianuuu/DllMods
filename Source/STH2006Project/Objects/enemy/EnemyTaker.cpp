@@ -64,6 +64,24 @@ void __declspec(naked) EnemyTaker_SetAnim()
 	}
 }
 
+void __declspec(naked) EnemyTaker_SetMuzzle()
+{
+	static uint32_t returnAddress = 0xBA2A67;
+	static char const* ef_en_clr_yh2_muzzle = "ef_en_clr_yh2_muzzle";
+	static char const* ef_en_drk_yh2_muzzle = "ef_en_drk_yh2_muzzle";
+	__asm
+	{
+		cmp     byte ptr [ebx + 5A0h], 0
+		jz		original
+		push	ef_en_drk_yh2_muzzle
+		jmp		[returnAddress]
+
+		original:
+		push	ef_en_clr_yh2_muzzle
+		jmp		[returnAddress]
+	}
+}
+
 void __declspec(naked) EnemyTaker_SetThrowSfx()
 {
 	static uint32_t returnAddress = 0xBA2A59;
@@ -130,6 +148,9 @@ void EnemyTaker::applyPatches()
 	WRITE_JUMP(0xBA00A5, EnemyTaker_SetMaterial);
 	WRITE_JUMP(0xBA00C9, EnemyTaker_SetAnim);
 	WRITE_MEMORY(0x16F8C54 + 0xC8, void*, AddCallback);
+
+	// change effect
+	WRITE_JUMP(0xBA2A62, EnemyTaker_SetMuzzle);
 
 	// TODO: set fireball data
 	//WRITE_JUMP(0xBA2A54, EnemyTaker_SetThrowSfx);
