@@ -220,18 +220,22 @@ bool UpDownReel::ProcessMessage
 
 	if (message.Is<Sonic::Message::MsgHitEventCollision>())
 	{
-		m_playerID = message.m_SenderActorID;
-		SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgStartHangOn>
-			(
-				Sonic::Message::MsgStartHangOn::Type::UpReel, m_spNodeModelPlayer
-			)
-		);
-
-		if (m_isOn)
+		bool const isPlayer = SendMessageImm(message.m_SenderActorID, Sonic::Message::MsgGetPlayerType());
+		if (isPlayer)
 		{
-			m_loopSfx.reset();
-			Common::ObjectPlaySound(this, 200600028, m_loopSfx);
-			m_speed = GetTargetSpaeed();
+			m_playerID = message.m_SenderActorID;
+			SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgStartHangOn>
+				(
+					Sonic::Message::MsgStartHangOn::Type::UpReel, m_spNodeModelPlayer
+				)
+			);
+
+			if (m_isOn)
+			{
+				m_loopSfx.reset();
+				Common::ObjectPlaySound(this, 200600028, m_loopSfx);
+				m_speed = GetTargetSpaeed();
+			}
 		}
 		return true;
 	}
