@@ -2,6 +2,7 @@
 
 #include "Objects/enemy/EnemyBeetle.h"
 #include "Objects/enemy/EnemyBeeton.h"
+#include "Objects/enemy/EnemyBiter.h"
 #include "Objects/enemy/EnemyCrawler.h"
 #include "Objects/enemy/EnemyEggRobo.h"
 #include "Objects/enemy/EnemyGanigani.h"
@@ -320,6 +321,7 @@ HOOK_ENEMY_PROCESS_MESSAGE(CEnemyMotora, 0xBC7350)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyGanigani, 0xBCB8D0)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyLander, 0xBCF740)
 HOOK_ENEMY_PROCESS_MESSAGE(CEnemyTaker, 0xBA3250)
+HOOK_ENEMY_PROCESS_MESSAGE(CEnemyBiter, 0xB869B0)
 
 void EnemyHealth::applyPatches()
 {
@@ -342,6 +344,7 @@ void EnemyHealth::applyPatches()
     INSTALL_HOOK(EnemyHealth_CEnemyGanigani_ProcessMessage);
     INSTALL_HOOK(EnemyHealth_CEnemyLander_ProcessMessage);
     INSTALL_HOOK(EnemyHealth_CEnemyTaker_ProcessMessage);
+    INSTALL_HOOK(EnemyHealth_CEnemyBiter_ProcessMessage);
 
     // Reset health for FakeDead enemies
     INSTALL_HOOK(EnemyHealth_CEnemyBeeton_CStateReviveWaitEnd);
@@ -368,6 +371,7 @@ float EnemyHealth::GetHealthOffset(uint32_t pCEnemyBase)
     }
     case 0x16FB1FC: // CEnemyELauncher
     case 0x16F95CC: // CEnemyCrawler
+    case 0x16FAD14: // CEnemyBiter
     {
         return 2.0f;
     }
@@ -426,6 +430,10 @@ uint32_t EnemyHealth::GetMaxHealth(uint32_t pCEnemyBase)
     case 0x16F95CC: // CEnemyCrawler
     {
         return ((EnemyCrawler*)pCEnemyBase)->m_isDark ? 5u : 3u;
+    }
+    case 0x16FAD14: // CEnemyBiter
+    {
+        return ((EnemyBiter*)pCEnemyBase)->m_isDark ? 2u : 0u;
     }
     }
 

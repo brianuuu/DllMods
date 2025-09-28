@@ -4,6 +4,7 @@
 
 #include "Objects/enemy/EnemyBeetle.h"
 #include "Objects/enemy/EnemyBeeton.h"
+#include "Objects/enemy/EnemyBiter.h"
 #include "Objects/enemy/EnemyCrawler.h"
 #include "Objects/enemy/EnemyEggRobo.h"
 #include "Objects/enemy/EnemyELauncher.h"
@@ -385,7 +386,7 @@ HOOK(void, __fastcall, ScoreManager_EnemyTaker, 0xBA3140, EnemyTaker* This, void
 	originalScoreManager_EnemyTaker(This, Edx, message);
 }
 
-HOOK(void, __fastcall, ScoreManager_EnemyBiter, 0xB86850, Sonic::CGameObject* This, void* Edx, void* message)
+HOOK(void, __fastcall, ScoreManager_EnemyBiter, 0xB86850, EnemyBiter* This, void* Edx, void* message)
 {
 	ScoreManager::addScore(ScoreType::ST_enemySmall, This->m_ActorID);
 	originalScoreManager_EnemyBiter(This, Edx, message);

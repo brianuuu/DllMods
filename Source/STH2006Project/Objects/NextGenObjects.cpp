@@ -14,6 +14,7 @@
 
 #include "enemy/EnemyBeetle.h"
 #include "enemy/EnemyBeeton.h"
+#include "enemy/EnemyBiter.h"
 #include "enemy/EnemyCrawler.h"
 #include "enemy/EnemyEggRobo.h"
 #include "enemy/EnemyELauncher.h"
@@ -132,6 +133,7 @@ void NextGenObjects::applyPatches()
     // enemies
     EnemyBeetle::applyPatches();
     EnemyBeeton::applyPatches();
+    EnemyBiter::applyPatches();
     EnemyCrawler::applyPatches();
     EnemyEggRobo::applyPatches();
     EnemyELauncher::applyPatches();
