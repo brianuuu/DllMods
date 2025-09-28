@@ -275,6 +275,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
     {
         if (!flags->KeepRunning && !flags->OutOfControl && !flags->Diving && !flags->InvokeSkateBoard
          && !context->m_spGrindPathController && !context->m_Is2DMode
+         && !Common::IsPlayerHangOn()
          && !NextGenShadow::m_vehicleSingleton
          && (Common::GetCurrentStageID() & 0xFF) <= SMT_pla200)
         {
