@@ -81,6 +81,60 @@ void __declspec(naked) EnemyCrawler_SetAnim()
 	}
 }
 
+void __declspec(naked) EnemyCrawler_SetJump()
+{
+	static uint32_t returnAddress = 0x60893B;
+	static char const* ef_en_clr_yh2_jump_omen = "ef_en_clr_yh2_jump_omen";
+	static char const* ef_en_drk_yh2_jump_omen = "ef_en_drk_yh2_jump_omen";
+	__asm
+	{
+		cmp     byte ptr [esi + 270h], 0
+		jz		original
+		push	ef_en_drk_yh2_jump_omen
+		jmp		[returnAddress]
+
+		original:
+		push	ef_en_clr_yh2_jump_omen
+		jmp		[returnAddress]
+	}
+}
+
+void __declspec(naked) EnemyCrawler_SetMuzzle()
+{
+	static uint32_t returnAddress = 0xB98A10;
+	static char const* ef_en_clr_yh2_muzzle = "ef_en_clr_yh2_muzzle";
+	static char const* ef_en_drk_yh2_muzzle = "ef_en_drk_yh2_muzzle";
+	__asm
+	{
+		cmp     byte ptr [ebx + 270h], 0
+		jz		original
+		push	ef_en_drk_yh2_muzzle
+		jmp		[returnAddress]
+
+		original:
+		push	ef_en_clr_yh2_muzzle
+		jmp		[returnAddress]
+	}
+}
+
+void __declspec(naked) EnemyCrawler_SetShot()
+{
+	static uint32_t returnAddress = 0x609069;
+	static char const* ef_en_clr_yh2_shot_omen = "ef_en_clr_yh2_shot_omen";
+	static char const* ef_en_drk_yh2_shot_omen = "ef_en_drk_yh2_shot_omen";
+	__asm
+	{
+		cmp     byte ptr [esi + 270h], 0
+		jz		original
+		push	ef_en_drk_yh2_shot_omen
+		jmp		[returnAddress]
+
+		original:
+		push	ef_en_clr_yh2_shot_omen
+		jmp		[returnAddress]
+	}
+}
+
 void __declspec(naked) EnemyCrawler_SetProjectileData()
 {
 	static uint32_t returnAddress = 0xB98578;
@@ -106,8 +160,8 @@ void __declspec(naked) EnemyCrawler_SetExplosionData()
 	{
 		cmp     byte ptr [ebx + 270h], 0
 		jz		original
-		lea		eax, m_darkTogeballExplosionData
-		mov		dword ptr [esp + 0xF8], eax
+		lea		edx, m_darkTogeballExplosionData
+		mov		dword ptr [esp + 0xF8], edx
 		jmp		[returnAddress]
 
 		original:
@@ -129,6 +183,11 @@ void EnemyCrawler::applyPatches()
 	WRITE_JUMP(0xB97C8C, EnemyCrawler_SetMgm);
 	WRITE_JUMP(0xB97CB0, EnemyCrawler_SetAnim);
 	WRITE_MEMORY(0x16F95CC + 0xC8, void*, AddCallback);
+
+	// change effect
+	WRITE_JUMP(0x608936, EnemyCrawler_SetJump);
+	WRITE_JUMP(0xB98A0B, EnemyCrawler_SetMuzzle);
+	WRITE_JUMP(0x609064, EnemyCrawler_SetShot);
 
 	// TODO: set fireball data
 	WRITE_JUMP(0xB98573, EnemyCrawler_SetProjectileData);
