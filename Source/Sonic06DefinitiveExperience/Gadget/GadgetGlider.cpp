@@ -185,6 +185,7 @@ void GadgetGlider::KillCallback()
 }
 
 float const c_gliderAccel = 10.0f;
+float const c_gliderMinSpeed = 5.0f;
 float const c_gliderMaxSpeed = 10.0f;
 float const c_gliderBoostSpeed = 21.0f;
 float const c_gliderMaxPitch = 45.0f * DEG_TO_RAD;
@@ -500,9 +501,16 @@ void GadgetGlider::AdvanceFlight(float dt)
 		}
 
 		// boost max speed
-		if (m_playerID && padState->IsDown(Sonic::EKeyState::eKeyState_A))
+		if (m_playerID)
 		{
-			currentMaxSpeed = c_gliderBoostSpeed;
+			if (padState->IsDown(Sonic::EKeyState::eKeyState_A))
+			{
+				currentMaxSpeed = c_gliderBoostSpeed;
+			}
+			else if (padState->IsDown(Sonic::EKeyState::eKeyState_X))
+			{
+				currentMaxSpeed = c_gliderMinSpeed;
+			}
 		}
 
 		// steering x-axis
