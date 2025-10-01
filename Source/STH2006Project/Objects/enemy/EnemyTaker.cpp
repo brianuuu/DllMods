@@ -89,11 +89,11 @@ void __declspec(naked) EnemyTaker_SetThrowSfx()
 	{
 		cmp     byte ptr [ebx + 5A0h], 0
 		jz		original
-		push	200614012 // TODO:
+		push	5162008
 		jmp		[returnAddress]
 
 		original:
-		push	5161002 // TODO:
+		push	5162006
 		jmp		[returnAddress]
 	}
 }
@@ -152,11 +152,11 @@ void EnemyTaker::applyPatches()
 	// change effect
 	WRITE_JUMP(0xBA2A62, EnemyTaker_SetMuzzle);
 
-	// TODO: set fireball data
-	//WRITE_JUMP(0xBA2A54, EnemyTaker_SetThrowSfx);
+	// set fireball data
+	WRITE_JUMP(0xBA2A54, EnemyTaker_SetThrowSfx);
 	WRITE_JUMP(0xBA1B1A, EnemyTaker_SetProjectileData);
 	WRITE_JUMP(0xBA1BB1, EnemyTaker_SetExplosionData);
-	//WRITE_MEMORY(0x12B5D2F, uint32_t, 200614010);
+	WRITE_MEMORY(0x12B5D2F, uint32_t, 5162007);
 	WRITE_MEMORY(0xBA1AE7, uint32_t, 0x1704138); // radius 0.7 -> 0.2
 
 	// set dark monsters dead effect

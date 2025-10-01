@@ -189,9 +189,10 @@ void EnemyCrawler::applyPatches()
 	WRITE_JUMP(0xB98A0B, EnemyCrawler_SetMuzzle);
 	WRITE_JUMP(0x609064, EnemyCrawler_SetShot);
 
-	// TODO: set fireball data
+	// set fireball data
 	WRITE_JUMP(0xB98573, EnemyCrawler_SetProjectileData);
 	WRITE_JUMP(0xB98602, EnemyCrawler_SetExplosionData);
+	WRITE_MEMORY(0x12B724A, uint32_t, 5162007);
 }
 
 void __fastcall EnemyCrawler::AddCallback
