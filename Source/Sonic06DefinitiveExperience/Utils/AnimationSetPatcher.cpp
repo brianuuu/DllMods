@@ -51,6 +51,7 @@ HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* 
     AnimationSetPatcher::createAnimationState(A2, AnimationSetPatcher::m_newAnimationData);
     originalCSonicCreateAnimationStates(This, Edx, A2, A3);
 
+    A2->SetAnimationBlend("IdleInWater", "Stand", 0.2f);
     if (Configuration::m_model == Configuration::ModelType::Shadow)
     {
         A2->SetAnimationBlend("Glider", "GliderL", 0.2f);
