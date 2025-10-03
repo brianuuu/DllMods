@@ -714,7 +714,7 @@ void GadgetJeep::AdvanceDriving(float dt)
 		bool const rLoaded = m_spGunR->IsLoaded();
 		bool const lLoaded = m_spGunL->IsLoaded();
 		S06HUD_API::SetGadgetCount(rLoaded + lLoaded, 2);
-		if (m_state == State::Driving && padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger))
+		if (m_state == State::Driving && (padState->IsTapped(Sonic::EKeyState::eKeyState_RightBumper) || padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger)))
 		{
 			if (rLoaded)
 			{

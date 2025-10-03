@@ -652,7 +652,7 @@ void GadgetHover::AdvanceDriving(float dt)
 	if (m_playerID)
 	{
 		m_bulletTimer = max(0.0f, m_bulletTimer - dt);
-		if (m_bullets > 0 && m_bulletTimer <= 0.0f && padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && m_spGunR->IsReady() && m_spGunL->IsReady())
+		if (m_bullets > 0 && m_bulletTimer <= 0.0f && (padState->IsDown(Sonic::EKeyState::eKeyState_RightBumper) || padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger)) && m_spGunR->IsReady() && m_spGunL->IsReady())
 		{
 			if (m_useGunL)
 			{
