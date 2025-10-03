@@ -135,6 +135,12 @@ void TitleUI_PlayButtonMotion(bool twoButton)
 		index = twoButton ? 0 : 2;
 	}
 
+	// PS3 buttons
+	if (Configuration::m_buttonType == Configuration::ButtonType::BT_PS3)
+	{
+		index += 4;
+	}
+
 	m_sceneButton->GetNode("text")->SetPatternIndex(index);
 	m_sceneButton->SetMotion("DefaultAnim");
 	m_sceneButton->m_MotionFrame = 0.0f;
