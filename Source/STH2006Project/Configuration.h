@@ -15,12 +15,24 @@ public:
 		TMT_E3,
 	};
 
+	enum ButtonType
+	{
+		BT_Xbox,
+		BT_PS3,
+	};
+
 	static std::string GetVersion() { return "SHC2025"; }
     static bool load(const std::string& rootPath);
 
-	static bool m_using06ScoreSystem;
-	static bool m_using06HUD;
+	// Apperance
 	static bool m_usingCustomWindow;
 	static TitleLogoType m_titleLogo;
+
+	// Gameplay
+	static bool m_using06HUD;
+	static bool m_using06ScoreSystem;
+	static ButtonType m_buttonType;
+
+	// Music
 	static TitleMusicType m_titleMusic;
 };

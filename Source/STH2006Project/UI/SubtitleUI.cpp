@@ -76,6 +76,22 @@ float SubtitleUI::addSubtitle(mst::TextEntry const& entry, std::vector<float> co
                 synthName.pop_back();
                 newSubtitle.m_cueID = Common::GetSoundCueFromSynth(synthName.c_str());
 
+                // find PS3 variant
+                if (Configuration::m_buttonType == Configuration::ButtonType::BT_PS3)
+                {
+                    // fix name for PS3
+                    size_t const psIndex = synthName.find("ps_");
+                    if (psIndex != std::string::npos)
+                    {
+                        synthName.insert(psIndex, "_");
+                        uint32_t const psCueID = Common::GetSoundCueFromSynth(synthName.c_str());
+                        if (psCueID)
+                        {
+                            newSubtitle.m_cueID = psCueID;
+                        }
+                    }
+                }
+
                 if (newSubtitle.m_cueID)
                 {
                     // Get duration from sound cue if not overritten
@@ -216,16 +232,33 @@ bool CaptionData::init()
     success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\YesNoBox.dds").c_str(), &m_acceptbox);
     success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Arrow.dds").c_str(), &m_arrow);
 
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_A.dds").c_str(), &m_buttonA);
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_B.dds").c_str(), &m_buttonB);
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_X.dds").c_str(), &m_buttonX);
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_Y.dds").c_str(), &m_buttonY);
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_LB.dds").c_str(), &m_buttonLB);
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_LT.dds").c_str(), &m_buttonLT);
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_RB.dds").c_str(), &m_buttonRB);
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_RT.dds").c_str(), &m_buttonRT);
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_Start.dds").c_str(), &m_buttonStart);
-    success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_Back.dds").c_str(), &m_buttonBack);
+    if (Configuration::m_buttonType == Configuration::ButtonType::BT_PS3)
+    {
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\ButtonPS_Cross.dds").c_str(), &m_buttonA);
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\ButtonPS_Circle.dds").c_str(), &m_buttonB);
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\ButtonPS_Square.dds").c_str(), &m_buttonX);
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\ButtonPS_Triangle.dds").c_str(), &m_buttonY);
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\ButtonPS_L1.dds").c_str(), &m_buttonLB);
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\ButtonPS_L2.dds").c_str(), &m_buttonLT);
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\ButtonPS_R1.dds").c_str(), &m_buttonRB);
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\ButtonPS_R2.dds").c_str(), &m_buttonRT);
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\ButtonPS_Start.dds").c_str(), &m_buttonStart);
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\ButtonPS_Select.dds").c_str(), &m_buttonBack);
+    }
+    else
+    {
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_A.dds").c_str(), &m_buttonA);
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_B.dds").c_str(), &m_buttonB);
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_X.dds").c_str(), &m_buttonX);
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_Y.dds").c_str(), &m_buttonY);
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_LB.dds").c_str(), &m_buttonLB);
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_LT.dds").c_str(), &m_buttonLT);
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_RB.dds").c_str(), &m_buttonRB);
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_RT.dds").c_str(), &m_buttonRT);
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_Start.dds").c_str(), &m_buttonStart);
+        success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_Back.dds").c_str(), &m_buttonBack);
+    }
+
     success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_LStick.dds").c_str(), &m_buttonLStick);
     success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_RStick.dds").c_str(), &m_buttonRStick);
     success &= UIContext::loadTextureFromFile((dir + L"Assets\\Textbox\\Button_DPad.dds").c_str(), &m_buttonDPad);

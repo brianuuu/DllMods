@@ -1,5 +1,6 @@
 #include "MstManager.h"
 
+#include "Configuration.h"
 #include "System/Application.h"
 
 std::mutex MstManager::m_requestMutex;
@@ -22,6 +23,12 @@ bool MstManager::RequestMst
 	std::string const& name
 )
 {
+	// load PS3 file instead
+	if (Configuration::m_buttonType == Configuration::ButtonType::BT_PS3 && name == "msg_hint_xenon")
+	{
+		return RequestMst("msg_hint_ps3");
+	}
+
 	// check or fill m_mstRequested
 	{
 		std::scoped_lock lock(m_requestMutex);
@@ -46,7 +53,13 @@ mst::TextEntry MstManager::GetSubtitle
 	std::string const& id
 )
 {
-	if (!IsRequested(name))
+	// load PS3 entry instead
+	if (Configuration::m_buttonType == Configuration::ButtonType::BT_PS3 && name == "msg_hint_xenon")
+	{
+		return GetSubtitle("msg_hint_ps3", id);
+	}
+
+	if (!RequestMst(name))
 	{
 		return mst::TextEntry();
 	}
