@@ -315,7 +315,7 @@ bool Mephiles::ProcessMessage
 			if (!m_damagedThisFrame)
 			{
 				bool const isPlayer = SendMessageImm(message.m_SenderActorID, Sonic::Message::MsgGetPlayerType());
-				float damageDist = 1.2f; // default shielded
+				float damageDist = 0.8f; // default shielded
 
 				m_damagedThisFrame = true;
 				if (m_barrierID)
