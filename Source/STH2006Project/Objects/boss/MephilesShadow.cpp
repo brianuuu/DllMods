@@ -288,6 +288,7 @@ bool MephilesShadow::ProcessMessage
 			case 3:
 			{
 				m_avoidOwner = true;
+				m_avoidOwnerFar = false;
 				break;
 			}
 			case 4:
@@ -298,6 +299,12 @@ bool MephilesShadow::ProcessMessage
 			case 5:
 			{
 				m_ownerDead = true;
+				break;
+			}
+			case 6:
+			{
+				m_avoidOwner = true;
+				m_avoidOwnerFar = true;
 				break;
 			}
 			}
@@ -433,26 +440,36 @@ void MephilesShadow::StateIdleAdvance(float dt)
 	float distance = 0.0f;
 	m_direction = GetPlayerDirection(true, &distance);
 
+	float multiplier = 1.0f;
 	if (m_avoidOwner)
 	{
 		hh::math::CVector ownerDiff = hh::math::CVector::Zero();
 		SendMessageImm(m_owner, Sonic::Message::MsgGetPosition(&ownerDiff));
 		ownerDiff -= m_spMatrixNodeTransform->m_Transform.m_Position;
 		ownerDiff.y() = 0.0f;
-		distance = min(distance, ownerDiff.norm());
+
+		// always avoid owner for halfHP or if owner is in front of us
+		bool const shouldAvoidOwner = m_avoidOwnerFar || ownerDiff.dot(m_direction) > 0.0f;
+
+		float const ownerDist = ownerDiff.norm();
+		if (shouldAvoidOwner && ownerDist < distance)
+		{
+			distance = ownerDist;
+			multiplier = m_avoidOwnerFar ? 1.0f : 0.5f;
+		}
 	}
 
-	if (!m_targetLost && distance > c_TargetLostDistance)
+	if (!m_targetLost && distance > c_TargetLostDistance * multiplier)
 	{
 		// too far, get back into c_MaxEncirclementRadius
 		m_targetLost = true;
 	}
 
-	if (m_targetLost && distance > c_MaxEncirclementRadius)
+	if (m_targetLost && distance > c_MaxEncirclementRadius * multiplier)
 	{
 		fnAccel(m_speed, c_ApproachSpeed, c_DeltaSpeed);
 	}
-	else if (distance < c_MinEncirclementRadius)
+	else if (distance < c_MinEncirclementRadius * multiplier)
 	{
 		fnAccel(m_speed, -c_EscapeSpeed, c_DeltaSpeed);
 	}

@@ -212,4 +212,5 @@ private:
 	void SpawnCircleWait(int count, float radius, float attackStartTime, float attackMaxDelay, MephilesShadow::Type attackType);
 	void AdvanceShadowSpawn(float dt);
 	void AdvanceShadowExplode(float dt);
+	void SetShadowAvoidMephiles(bool avoid);
 };

@@ -996,10 +996,10 @@ void Mephiles::StateHalfHPBegin()
 	SendMessage(context->m_pPlayer->m_ActorID, boost::make_shared<Sonic::Message::MsgSetRotation>(hh::math::CQuaternion(0.23595f, 0.0f, -0.971765f, 0.0f)));
 	Common::SetPlayerVelocity(hh::math::CVector::Zero());
 
-	// shadow avoid Mephiles
+	// shadow avoid Mephiles (far)
 	for (auto const& iter : m_shadows)
 	{
-		SendMessage(iter.first, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(3));
+		SendMessage(iter.first, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(6));
 	}
 }
 
@@ -1093,11 +1093,8 @@ void Mephiles::StateHalfHPAdvance(float dt)
 			auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 			SendMessage(context->m_pPlayer->m_ActorID, boost::make_shared<Sonic::Message::MsgReopenActivity>());
 			
-			// disable shadow avoid Mephiles
-			for (auto const& iter : m_shadows)
-			{
-				SendMessage(iter.first, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(4));
-			}
+			// shadow still avoid Mephiles but move closer
+			SetShadowAvoidMephiles(true);
 
 			// throw darksphere
 			if (m_darkSphereL)
@@ -1184,6 +1181,8 @@ void Mephiles::StateHalfHPEnd()
 		SendMessage(m_darkSphereL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
 		m_darkSphereL.reset();
 	}
+
+	SetShadowAvoidMephiles(false);
 }
 
 //---------------------------------------------------
@@ -1338,6 +1337,8 @@ void Mephiles::StateAttackSphereSBegin()
 	{
 		m_spawnBarrierTimer = 1.0f;
 	}
+
+	SetShadowAvoidMephiles(true);
 }
 
 void Mephiles::StateAttackSphereSAdvance(float dt)
@@ -1416,6 +1417,8 @@ void Mephiles::StateAttackSphereSEnd()
 		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
 		m_cameraActorID = 0;
 	}
+
+	SetShadowAvoidMephiles(false);
 }
 
 void Mephiles::FireSphereS()
@@ -1440,6 +1443,8 @@ void Mephiles::StateAttackSphereLBegin()
 	{
 		m_spawnBarrierTimer = 1.0f;
 	}
+
+	SetShadowAvoidMephiles(true);
 }
 
 void Mephiles::StateAttackSphereLAdvance(float dt)
@@ -1536,6 +1541,8 @@ void Mephiles::StateAttackSphereLEnd()
 		SendMessage(m_darkSphereL->m_ActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
 		m_darkSphereL.reset();
 	}
+
+	SetShadowAvoidMephiles(false);
 }
 
 void Mephiles::FireSphereL()
@@ -1561,6 +1568,8 @@ void Mephiles::StateAttackChargeBegin()
 	{
 		m_spawnBarrierTimer = 1.0f;
 	}
+
+	SetShadowAvoidMephiles(true);
 }
 
 void Mephiles::StateAttackChargeAdvance(float dt)
@@ -1629,6 +1638,8 @@ void Mephiles::StateAttackChargeEnd()
 		Common::fSendMessageToSetObject(this, m_cameraActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(7));
 		m_cameraActorID = 0;
 	}
+
+	SetShadowAvoidMephiles(false);
 }
 
 //---------------------------------------------------
@@ -2038,5 +2049,13 @@ void Mephiles::AdvanceShadowExplode(float dt)
 	else if (m_attachSfx)
 	{
 		m_attachSfx.reset();
+	}
+}
+
+void Mephiles::SetShadowAvoidMephiles(bool avoid)
+{
+	for (auto const& iter : m_shadows)
+	{
+		SendMessage(iter.first, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(avoid ? 3 : 4));
 	}
 }
