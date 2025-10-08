@@ -987,6 +987,7 @@ void Mephiles::StateHalfHPBegin()
 	// teleport to middle
 	m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(hh::math::CQuaternion(0.971765f, 0.0f, 0.23595f, 0.0f), hh::math::CVector(0.0f, 4.0f, 0.0f));
 	m_spMatrixNodeTransform->NotifyChanged();
+	m_warpIndex = 0;
 
 	// teleport player
 	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
