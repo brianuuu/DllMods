@@ -246,6 +246,11 @@ bool Configuration::load(const std::string& rootPath)
         bb3.addReplace("Sonic.ar.00", str + ".ar.00");
         bb3.addReplace("Sonic.ar.01", str + ".ar.01");
         bb3.addReplace("Sonic.ar.02", str + ".ar.02");
+        bb3.addReplace("Sonic.ar.03", str + ".ar.03");
+        bb3.addReplace("Sonic.ar.04", str + ".ar.04");
+        bb3.addReplace("Sonic.ar.05", str + ".ar.05");
+        bb3.addReplace("Sonic.ar.06", str + ".ar.06");
+        bb3.addReplace("Sonic.ar.07", str + ".ar.07");
     }
 
     // Optional codes
