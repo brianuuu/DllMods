@@ -4,6 +4,7 @@
 #include "Managers/ScoreManager.h"
 #include "Objects/cmn/Itembox.h"
 #include "System/Application.h"
+#include "UI/ExtraUI.h"
 #include "UI/LoadingUI.h"
 #include "UI/SubtitleUI.h"
 #include "UI/TitleUI.h"
@@ -243,6 +244,7 @@ void UIContext::update()
             ImGui::PushFont(fontSubtitle);
             TitleUI::drawStageData();
             TitleUI::drawYesNoWindow();
+            ExtraUI::draw();
             SubtitleUI::draw();
             LoadingUI::draw();
             ImGui::PopFont();
