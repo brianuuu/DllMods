@@ -1,7 +1,6 @@
 #include "ArchiveTreePatcher.h"
 
 #include "Configuration.h"
-#include "Managers/ScoreManager.h"
 
 std::vector<ArchiveDependency> ArchiveTreePatcher::m_archiveDependencies = {};
 
@@ -63,6 +62,11 @@ void ArchiveTreePatcher::applyPatches()
 {
     // Usage: m_archiveDependencies.push_back(ArchiveDependency( ARCHIVE, { DEPEND_ON_1, DEPEND_ON_2, ... }));
     
+    if (Configuration::m_buttonType == Configuration::ButtonType::BT_PS3)
+    {
+        m_archiveDependencies.push_back(ArchiveDependency("PlaystationHud", {"SonicActionCommonHud"}));
+    }
+
     if (!m_archiveDependencies.empty())
     {
         INSTALL_HOOK(ParseArchiveTree);
