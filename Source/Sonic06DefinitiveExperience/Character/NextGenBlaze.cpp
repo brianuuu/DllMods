@@ -48,6 +48,7 @@ float NextGenBlaze::m_spinningClawTime = 0.0f;
 float const cBlaze_spinningClawMinTime = 3.0f;
 float const cBlaze_spinningClawMaxTime = 15.0f;
 float const cBlaze_spinningClawRadius = 1.5f;
+float const cBlaze_spinningClawWaterBounce = 15.0f;
 
 char const* ef_ch_bl_firetornado = "ef_ch_bl_firetornado";
 char const* ef_ch_bl_axeljump = "ef_ch_bl_axeljump";
@@ -371,9 +372,11 @@ bool NextGenBlaze::bActionHandlerImpl()
 //---------------------------------------------------
 // CSonicStateSliding
 //---------------------------------------------------
+bool spinningClawOnWater = false;
 HOOK(int, __fastcall, NextGenBlaze_CSonicStateSlidingBegin, 0x11D7110, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+    spinningClawOnWater = context->StateFlag(eStateFlag_OnWater);
     
     // clear lock-on
     Common::SonicContextHudHomingAttackClear(context);
@@ -391,9 +394,25 @@ HOOK(int, __fastcall, NextGenBlaze_CSonicStateSlidingBegin, 0x11D7110, hh::fnd::
     return originalNextGenBlaze_CSonicStateSlidingBegin(This);
 }
 
-HOOK(void, __fastcall, NextGenBlaze_CSonicStateSlidingAdvance, 0x11D69A0, int This)
+HOOK(void, __fastcall, NextGenBlaze_CSonicStateSlidingAdvance, 0x11D69A0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     originalNextGenBlaze_CSonicStateSlidingAdvance(This);
+
+    // bounce on water
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+    bool const wasOnWater = spinningClawOnWater;
+    spinningClawOnWater = context->StateFlag(eStateFlag_OnWater);
+    if (!wasOnWater && spinningClawOnWater)
+    {
+        Eigen::Vector3f velocity;
+        Common::GetPlayerVelocity(velocity);
+
+        if (velocity.y() <= 0.0f)
+        {
+            velocity.y() = cBlaze_spinningClawWaterBounce;
+            Common::SetPlayerVelocity(velocity);
+        }
+    }
 
     bool bDown, bPressed, bReleased;
     NextGenPhysics::getActionButtonStates(bDown, bPressed, bReleased);
@@ -404,8 +423,7 @@ HOOK(void, __fastcall, NextGenBlaze_CSonicStateSlidingAdvance, 0x11D69A0, int Th
         return;
     }
 
-    float stateTime = *(float*)(This + 16);
-    if (bReleased || stateTime > NextGenBlaze::m_spinningClawTime)
+    if (bReleased || This->m_Time > NextGenBlaze::m_spinningClawTime)
     {
         // Cancel sliding
         StateManager::ChangeState(StateAction::SlidingEnd, *PLAYER_CONTEXT);
