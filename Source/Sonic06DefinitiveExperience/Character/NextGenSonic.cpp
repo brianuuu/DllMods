@@ -916,7 +916,8 @@ HOOK(int*, __fastcall, NextGenSonic_CSonicStatePluginBoostBegin, 0x1117A20, void
     // Float on water
     Common::GetSonicStateFlags()->AcceptBuoyancyForce = true;
     WRITE_NOP(0x119C0E5, 2); // float even if speed is 0
-    WRITE_NOP(0xDED132, 3);  // don't reset AcceptBuoyancyForce
+    WRITE_NOP(0xDED132, 3);  // don't reset AcceptBuoyancyForce (Walk)
+    WRITE_NOP(0x1118F88, 4);  // don't reset AcceptBuoyancyForce (Fall)
     WRITE_MEMORY(0xDFB98A, uint8_t, 0x90, 0x90, 0xF3, 0x0F, 0x10, 0x05, 0x00,   // always use BuoyantForceMaxGravityRate
         0xB5, 0x58, 0x01, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90);      // and set it as 10.0f
     WRITE_MEMORY(0x119C00E, uint8_t, 0x0F, 0x57, 0xC0, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90); // Set WaterDecreaseForce = 0
@@ -989,12 +990,27 @@ HOOK(void, __fastcall, NextGenSonic_CSonicStatePluginBoostEnd, 0x1117900, void* 
     }
     WRITE_MEMORY(0x119C0E5, uint8_t, 0x76, 0x59);
     WRITE_MEMORY(0xDED132, uint8_t, 0x88, 0x59, 0x59);
+    WRITE_MEMORY(0x1118F88, uint8_t, 0xC6, 0x42, 0x59, 0x00);
     WRITE_MEMORY(0xDFB98A, uint8_t, 0x74, 0x3A, 0x8B, 0x86, 0x7C, 0x02, 0x00,
         0x00, 0x68, 0xA6, 0x00, 0x00, 0x00, 0xE8, 0x54, 0xF0, 0x73, 0xFF);
     WRITE_MEMORY(0x119C00E, uint8_t, 0x68, 0xA7, 0x00, 0x00, 0x00, 0xE8, 0xD8, 0xE9, 0x39, 0xFF);
 
     // Revert CObjCscLavaRide to stomp collision
     WRITE_MEMORY(0xF1E7D6, SonicCollision, TypeSonicStomping);
+}
+
+HOOK(void, __fastcall, NextGenSonic_CPlayerSpeedPosturePluginOnWaterBegin, 0x119C6E0, void* This)
+{
+    originalNextGenSonic_CPlayerSpeedPosturePluginOnWaterBegin(This);
+    
+    if (NextGenSonic::m_isShield)
+    {
+        Eigen::Vector3f velocity;
+        Common::GetPlayerVelocity(velocity);
+    
+        velocity.y() = max(velocity.y(), 0.0f);
+        Common::SetPlayerVelocity(velocity);
+    }
 }
 
 float NextGenSonic::m_shieldDecRate = 10.0f;
@@ -2433,7 +2449,7 @@ HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickEnd, 0x12527B0, hh::
 }
 
 //---------------------------------------------------
-// Super Soniic
+// Super Sonic
 //---------------------------------------------------
 HOOK(void, __fastcall, NextGenSonic_CPlayerSpeedStateTransformSpAdvance, 0xE425B0, float* This)
 {
@@ -2666,6 +2682,7 @@ void NextGenSonic::applyPatches()
         INSTALL_HOOK(NextGenSonic_CSonicStatePluginBoostBegin);
         INSTALL_HOOK(NextGenSonic_CSonicStatePluginBoostAdvance);
         INSTALL_HOOK(NextGenSonic_CSonicStatePluginBoostEnd);
+        INSTALL_HOOK(NextGenSonic_CPlayerSpeedPosturePluginOnWaterBegin);
 
         //WRITE_JUMP(0xE303F3, (void*)0xE30403); // boost forward push
 
