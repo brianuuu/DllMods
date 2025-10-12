@@ -98,6 +98,7 @@
     <ClCompile Include="Objects\enemy\EnemyCrawler.cpp" />
     <ClCompile Include="Objects\enemy\EnemyBiter.cpp" />
     <ClCompile Include="UI\ExtraUI.cpp" />
+    <ClCompile Include="Objects\cmn\GenericObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -166,6 +167,7 @@
     <ClInclude Include="Objects\enemy\EnemyCrawler.h" />
     <ClInclude Include="Objects\enemy\EnemyBiter.h" />
     <ClInclude Include="UI\ExtraUI.h" />
+    <ClInclude Include="Objects\cmn\GenericObject.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">

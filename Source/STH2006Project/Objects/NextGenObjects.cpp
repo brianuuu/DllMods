@@ -5,6 +5,7 @@
 #include "cmn/BallSwitch.h"
 #include "cmn/Cage.h"
 #include "cmn/CustomEvent.h"
+#include "cmn/GenericObject.h"
 #include "cmn/Guillotine.h"
 #include "cmn/Hint.h"
 #include "cmn/Itembox.h"
@@ -118,6 +119,7 @@ void NextGenObjects::applyPatches()
     BallSwitch::registerObject();
     Cage::registerObject();
     CustomEvent::registerObject();
+    GenericObject::registerObject();
     Guillotine::registerObject();
     Hint::registerObject();
     JumpChain::registerObject();
