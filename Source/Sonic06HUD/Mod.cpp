@@ -1,5 +1,6 @@
 #include "Configuration.h"
 #include "Application.h"
+#include "ArchiveTreePatcher.h"
 #include "Stage.h"
 #include "SubtitleUI.h"
 #include "UIContext.h"
@@ -36,6 +37,7 @@ extern "C" __declspec(dllexport) void Init(ModInfo_t * modInfo)
     // -------------Patches--------------
     // General application patches
     Application::applyPatches();
+    ArchiveTreePatcher::applyPatches();
 
     // Stage specific patches
     Stage::applyPatches();
