@@ -2355,6 +2355,12 @@ HOOK(void, __fastcall, NextGenShadow_MsgStartHangOn, 0xE6C0D0, Sonic::Player::CP
     originalNextGenShadow_MsgStartHangOn(player, Edx, message);
 }
 
+HOOK(void, __fastcall, NextGenShadow_MsgStopActivity, 0xE27B20, Sonic::Player::CPlayer* player, void* Edx, uint32_t* message)
+{
+    isChaosControl = false;
+    originalNextGenShadow_MsgStopActivity(player, Edx, message);
+}
+
 HOOK(int, __fastcall, NextGenShadow_CObjCannonMsgNotifyObjectEvent, 0x468EB0, void* This, void* Edx, uint32_t* message)
 {
     isChaosControl = false;
@@ -3401,6 +3407,7 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_MsgPlayerGoal);
     INSTALL_HOOK(NextGenShadow_MsgStartExternalControl);
     INSTALL_HOOK(NextGenShadow_MsgStartHangOn);
+    INSTALL_HOOK(NextGenShadow_MsgStopActivity);
     INSTALL_HOOK(NextGenShadow_CObjCannonMsgNotifyObjectEvent);
     INSTALL_HOOK(NextGenShadow_CObjSelectCanonMsgNotifyObjectEvent);
     INSTALL_HOOK(NextGenShadow_CObjJumpSelectorMsgNotifyObjectEvent);
