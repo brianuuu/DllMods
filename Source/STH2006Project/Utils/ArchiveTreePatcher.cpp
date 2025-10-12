@@ -64,7 +64,19 @@ void ArchiveTreePatcher::applyPatches()
     
     if (Configuration::m_buttonType == Configuration::ButtonType::BT_PS3)
     {
-        m_archiveDependencies.push_back(ArchiveDependency("PlaystationHud", {"SonicActionCommonHud"}));
+        m_archiveDependencies.push_back(ArchiveDependency("PlaystationHud",
+            {
+                "cmn200",
+                "pam000",
+                "pam_cmn",
+                "Guide",
+                "NoticeBoard",
+                "SonicActionCommon",
+                "SonicActionCommonHud",
+                "SystemCommon",
+                "Title"
+            }
+        ));
     }
 
     if (!m_archiveDependencies.empty())
