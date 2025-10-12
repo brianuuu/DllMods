@@ -55,15 +55,15 @@ bool GenericObject::SetAddColliders
 	{
 		// Rigid body, ColID_BasicCamTerrain + TypeReactRing
 		AddRigidBody(m_spRigidBody, m_Data.m_Name->m_pMember->m_DefaultValueName.c_str(), m_Data.m_Name->m_pMember->m_DefaultValueName.c_str(), *(int*)0x1E0AF18, m_spMatrixNodeTransform, in_spDatabase);
-	
-		if (m_Data.m_HasDamage)
-		{
-			AddEventCollision("Damage", m_spRigidBody->GetShape(), *(int*)0x1E0AFD8, true, m_spMatrixNodeTransform); // ColID_PlayerEvent
-		}
 
 		if (!m_Data.m_HasCollision)
 		{
 			Common::ToggleRigidBodyCollision(m_spRigidBody.get(), false);
+		}
+
+		if (m_Data.m_HasDamage)
+		{
+			AddEventCollision("Damage", m_spRigidBody->GetShape(), *(int*)0x1E0AFD8, true, m_spMatrixNodeTransform); // ColID_PlayerEvent
 		}
 	}
 
