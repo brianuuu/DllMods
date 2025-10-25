@@ -1,4 +1,5 @@
 #include "GadgetGlider.h"
+#include "Configuration.h"
 #include "Character/NextGenShadow.h"
 
 HOOK(bool, __fastcall, GadgetGlider_CObjSetRigidBodyProcessMessage, 0xFE59D0, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag)
@@ -482,6 +483,7 @@ void GadgetGlider::AdvanceFlight(float dt)
 		input.y() = (abs(padState->LeftStickVertical) - 0.1f) / 0.8f;
 		Common::ClampFloat(input.y(), 0.0f, 1.0f);
 		if (padState->LeftStickVertical < 0.0f) input.y() *= -1.0f;
+		if (Configuration::Shadow::m_gliderInvert)  input.y() *= -1.0f;
 	}
 
 	// speed

@@ -32,6 +32,7 @@ public:
 	static bool m_using06HUD;
 	static bool m_using06ScoreSystem;
 	static ButtonType m_buttonType;
+	static bool m_gliderInvert;
 
 	// Music
 	static TitleMusicType m_titleMusic;

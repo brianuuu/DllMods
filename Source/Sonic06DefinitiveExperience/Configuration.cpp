@@ -24,6 +24,7 @@ bool Configuration::Shadow::m_chaosBlastCamera = true;
 bool Configuration::Shadow::m_chaosSpearMomentum = false;
 bool Configuration::Shadow::m_antiGravity = false;
 bool Configuration::Shadow::m_floatBoost = false;
+bool Configuration::Shadow::m_gliderInvert = false;
 
 std::string iniPath;
 bool Configuration::load(const std::string& rootPath)
@@ -93,6 +94,15 @@ bool Configuration::load(const std::string& rootPath)
     Shadow::m_chaosSpearMomentum = reader.GetBoolean("Shadow", "bChaosSpearMomentum", Shadow::m_chaosSpearMomentum);
     Shadow::m_antiGravity = reader.GetBoolean("Shadow", "bAntiGravity", Shadow::m_antiGravity);
     Shadow::m_floatBoost = reader.GetBoolean("Shadow", "bFloatBoost", Shadow::m_floatBoost);
+    Shadow::m_gliderInvert = reader.GetBoolean("Shadow", "bGliderInvert", Shadow::m_gliderInvert);
+    if (Common::IsModEnabled("Gameplay", "bGliderInvert", "True"))
+    {
+        Shadow::m_gliderInvert = true;
+    }
+    else if (Common::IsModEnabled("Gameplay", "bGliderInvert", "False"))
+    {
+        Shadow::m_gliderInvert = false;
+    }
 
     string str;
 

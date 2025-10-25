@@ -4,6 +4,7 @@ bool Configuration::m_usingCustomWindow = true;
 Configuration::TitleLogoType Configuration::m_titleLogo = Configuration::TitleLogoType::TLT_Original;
 
 Configuration::ButtonType Configuration::m_buttonType = Configuration::ButtonType::BT_Xbox;
+bool Configuration::m_gliderInvert = false;
 bool Configuration::m_using06HUD = false;
 bool Configuration::m_using06ScoreSystem = true;
 
@@ -18,14 +19,15 @@ bool Configuration::load(const std::string& rootPath)
     }
 
     // Appearance
-    m_usingCustomWindow = reader.GetBoolean("Appearance", "CustomWindow", m_usingCustomWindow);
-    m_titleLogo = (TitleLogoType)reader.GetInteger("Appearance", "TitleLogo", m_titleLogo);
+    m_usingCustomWindow = reader.GetBoolean("Appearance", "bCustomWindow", m_usingCustomWindow);
+    m_titleLogo = (TitleLogoType)reader.GetInteger("Appearance", "nTitleLogo", m_titleLogo);
 
     // Gameplay
-    m_buttonType = (ButtonType)reader.GetInteger("Gameplay", "ButtonType", m_buttonType);
+    m_buttonType = (ButtonType)reader.GetInteger("Gameplay", "nButtonType", m_buttonType);
+    m_gliderInvert = reader.GetBoolean("Gameplay", "bGliderInvert", m_gliderInvert);
 
     // Music
-    m_titleMusic = (TitleMusicType)reader.GetInteger("Music", "TitleMusic", m_titleMusic);
+    m_titleMusic = (TitleMusicType)reader.GetInteger("Music", "nTitleMusic", m_titleMusic);
 
     return true;
 }

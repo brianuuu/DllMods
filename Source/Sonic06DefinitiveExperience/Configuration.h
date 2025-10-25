@@ -70,6 +70,7 @@ public:
         static bool m_chaosSpearMomentum;
         static bool m_antiGravity;
         static bool m_floatBoost;
+        static bool m_gliderInvert;
     };
 
     static std::string GetVersion() { return "SHC2025"; }

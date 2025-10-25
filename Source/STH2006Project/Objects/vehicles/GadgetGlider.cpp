@@ -1,5 +1,6 @@
 #include "GadgetGlider.h"
 
+#include "Configuration.h"
 #include "System/Application.h"
 
 uint32_t canGetOnGliderActorID = 0u;
@@ -567,6 +568,7 @@ void GadgetGlider::AdvanceFlight(float dt)
 		if (padState->IsDown(Sonic::EKeyState::eKeyState_DpadRight)) input.x() = -1.0f;
 		if (padState->IsDown(Sonic::EKeyState::eKeyState_DpadUp)) input.y() = 1.0f;
 		if (padState->IsDown(Sonic::EKeyState::eKeyState_DpadDown)) input.y() = -1.0f;
+		if (Configuration::m_gliderInvert) input.y() *= -1.0f;
 	}
 
 	// speed
