@@ -22,11 +22,11 @@ bool Configuration::load(const std::string& rootPath)
     m_buttonType = (ButtonType)reader.GetInteger("Main", "bButtonType", m_buttonType);
 
     // check STH2006 Project button type
-    if (Common::IsModEnabled("Gameplay", "ButtonType", "0"))
+    if (Common::IsModEnabled("Gameplay", "nButtonType", "0"))
     {
         m_buttonType = Configuration::ButtonType::BT_Xbox;
     }
-    else if (Common::IsModEnabled("Gameplay", "ButtonType", "1"))
+    else if (Common::IsModEnabled("Gameplay", "nButtonType", "1"))
     {
         m_buttonType = Configuration::ButtonType::BT_PS3;
     }
