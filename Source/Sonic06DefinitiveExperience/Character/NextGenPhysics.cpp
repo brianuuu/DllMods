@@ -532,6 +532,9 @@ void NextGenPhysics::applyPatches()
     // Disable ef_ch_sps_yh1_spinattack on Super Form 
     WRITE_STRING(0x15F99DC, "");
 
+    // Disable bobsleigh boost effect
+    WRITE_STRING(0x164330C, "");
+
     // Maintain down speed when homing attack finished (for 06 physics)
     // Apply Motion Blur during Homing Attack
     INSTALL_HOOK(NextGenPhysics_CSonicStateHomingAttackBegin);
