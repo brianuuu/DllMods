@@ -317,5 +317,8 @@ bool Configuration::loadPostInit()
     S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_Yellow, bGemYellow);
     S06HUD_API::SetSonicGemEnabled(S06HUD_API::SonicGemType::SGT_None, Sonic::m_gemsEnabled);
 
+    // HMM code "Disable Homing Reticle" enabled
+    m_noCursor |= *(uint8_t*)0xDEBC36 == 0x00;
+
     return true;
 }
