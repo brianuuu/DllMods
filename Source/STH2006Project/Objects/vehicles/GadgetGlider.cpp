@@ -54,6 +54,11 @@ GadgetGlider::~GadgetGlider()
 		m_loopSfx.reset();
 	}
 
+	if (m_Data.m_FollowPath)
+	{
+		m_Data.m_FollowPath->Release();
+	}
+
 	if (canGetOnGliderActorID == m_ActorID)
 	{
 		canGetOnGliderActorID = 0;
