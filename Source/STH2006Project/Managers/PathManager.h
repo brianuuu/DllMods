@@ -26,6 +26,7 @@ struct PathData
 
 	KnotDataCollection m_knots;
 	std::vector<float> m_segmentLengths;
+	float m_totalLength;
 };
 typedef std::vector<PathData> PathDataCollection;
 
@@ -71,5 +72,7 @@ public:
 	static tinyxml2::XMLError parsePathXml(PathDataCollection& collection, bool closedPaths, char const* pDataOrFileName, size_t pDataSize = 0);
 	
 	static void followAdvance(PathFollowData& followData, float dt);
+	static void followSetProp(PathFollowData& followData, float prop);
+	static void calculateFinal(PathFollowData& followData);
 };
 

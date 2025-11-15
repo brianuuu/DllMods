@@ -238,6 +238,7 @@ tinyxml2::XMLError PathManager::parsePathXml(PathDataCollection& collection, boo
                         //printf("Point: %.3f, %.3f, %.3f\n", knotData.m_point.x(), knotData.m_point.y(), knotData.m_point.z());
                     }
 
+                    pathData.m_totalLength = 0.0f;
                     pathData.m_segmentLengths.resize(knotDataList.size() - 1);
                     for (uint32_t i = 0; i < knotDataList.size() - 1; i++)
                     {
@@ -255,6 +256,7 @@ tinyxml2::XMLError PathManager::parsePathXml(PathDataCollection& collection, boo
                             }
                         }
                         pathData.m_segmentLengths[i] = segmentLength;
+                        pathData.m_totalLength += segmentLength;
                     }
 
                     // Push path data
@@ -319,6 +321,37 @@ void PathManager::followAdvance(PathFollowData& followData, float dt)
         followData.m_position = currentPos;
     }
 
+    calculateFinal(followData);
+}
+
+void PathManager::followSetProp(PathFollowData& followData, float prop)
+{
+    if (!followData.m_pPathData || !followData.m_enabled || followData.m_finished) return;
+
+    std::vector<float> const& segmentLengths = followData.m_pPathData->m_segmentLengths;
+    
+    float const targetLength = followData.m_pPathData->m_totalLength * prop;
+    float currentLength = 0.0f;
+    for (int i = 0; i < segmentLengths.size(); i++)
+    {
+        float const endLength = currentLength + segmentLengths[i];
+        if (endLength >= targetLength)
+        {
+            followData.m_segmentID = i;
+            followData.m_segmentTime = (targetLength - currentLength) / segmentLengths[i];
+            break;
+        }
+        else
+        {
+            currentLength = endLength;
+        }
+    }
+
+    calculateFinal(followData);
+}
+
+void PathManager::calculateFinal(PathFollowData& followData)
+{
     // Calculate the new position and rotation
     Eigen::Vector3f dir = interpolateTangent(followData.m_pPathData->m_knots, followData.m_segmentID, followData.m_segmentTime);
     Eigen::Quaternionf rotation(0, 0, 0, 1);
