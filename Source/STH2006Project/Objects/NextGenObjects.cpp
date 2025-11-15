@@ -25,6 +25,8 @@
 #include "enemy/EnemyMotora.h"
 #include "enemy/EnemyTaker.h"
 
+#include "twn/SoleannaCar.h"
+
 #include "vehicles/GadgetBike.h"
 #include "vehicles/GadgetHover.h"
 #include "vehicles/GadgetGlider.h"
@@ -144,4 +146,7 @@ void NextGenObjects::applyPatches()
     EnemyLander::applyPatches();
     EnemyMotora::applyPatches();
     EnemyTaker::applyPatches();
+
+    // twn
+    SoleannaCar::registerObject();
 }
