@@ -25,7 +25,7 @@ char const* SoleannaCar::c_carNames[(int)Type::COUNT] =
 
 float SoleannaCar::c_carWheelRadius[(int)Type::COUNT] =
 {
-	0.28f, 0.33f, 0.33f
+	0.28f, 0.335f, 0.32f
 };
 
 void SoleannaCar::InitializeEditParam
@@ -163,12 +163,12 @@ void SoleannaCar::AddCallback
 	m_wheelBLPos = m_spNodeWheelBL->GetWorldMatrix().translation();
 	m_wheelBRPos = m_spNodeWheelBR->GetWorldMatrix().translation();
 
-	if (!m_Data.m_PathName->m_pMember->m_DefaultValueName.empty())
+	if (m_Data.m_Speed != 0.0f && !m_Data.m_PathName->m_pMember->m_DefaultValueName.empty())
 	{
 		bool const valid = PathManager::parsePathXml(m_path, false, (Application::getModDirString() + "Assets\\Stage\\" + m_Data.m_PathName->m_pMember->m_DefaultValueName.c_str() + ".path.xml").c_str()) == tinyxml2::XML_SUCCESS;
 		if (!valid || m_path.empty())
 		{
-			MessageBox(NULL, L"Failed to parse Glider path", NULL, MB_ICONERROR);
+			MessageBox(NULL, L"Failed to parse SoleannaCar path", NULL, MB_ICONERROR);
 			Kill();
 			return;
 		}
@@ -186,7 +186,7 @@ void SoleannaCar::AddCallback
 			PathManager::followSetProp(m_followData, m_Data.m_PathStartProp);
 		}
 
-		m_spMatrixNodeTransform->m_Transform.SetPosition(m_followData.m_position);
+		m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(m_followData.m_rotation, m_followData.m_position);
 		m_spMatrixNodeTransform->NotifyChanged();
 	}
 }
@@ -196,16 +196,13 @@ void SoleannaCar::SetUpdateParallel
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
 )
 {
-	if (!m_Data.m_PathName->m_pMember->m_DefaultValueName.empty())
+	if (m_Data.m_Speed != 0.0f && !m_Data.m_PathName->m_pMember->m_DefaultValueName.empty())
 	{
 		PathManager::followAdvance(m_followData, in_rUpdateInfo.DeltaTime);
 
 		m_spMatrixNodeTransform->m_Transform.SetRotationAndPosition(m_followData.m_rotation, m_followData.m_position);
 		m_spMatrixNodeTransform->NotifyChanged();
-	}
 
-	if (m_Data.m_Speed != 0.0f)
-	{
 		// wheels
 		auto fnWheelSpin = [this](Sonic::CMatrixNodeTransform* transform, hh::math::CVector& pos)
 		{
