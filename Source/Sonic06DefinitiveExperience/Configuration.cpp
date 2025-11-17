@@ -287,6 +287,12 @@ bool Configuration::load(const std::string& rootPath)
         WRITE_MEMORY(0x10538EB, uint8_t, 0xE9, 0x8F, 0x00, 0x00, 0x00, 0x90);
     }
 
+    // Increase dropped ring bounce damping to 0.5
+    if (reader.GetBoolean("Physics", "bDroppedRingBounce", true))
+    {
+        WRITE_MEMORY(0x119A1D3, uint32_t, 0x16617B0);
+    }
+
     return true;
 }
 
