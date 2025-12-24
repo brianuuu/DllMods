@@ -19,8 +19,11 @@ private:
 	void SetUpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo) override;
 	bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;
 
+	bool m_disableBoost = false;
 	bool m_chaosBoostCanLevelDown = true;
 	bool m_chaosBoostMatchMaxLevel = false;
 	uint32_t m_chaosBoostMaxLevel = 3;
+
+	void SetDisableBoost(bool disable);
 };
 

@@ -23,6 +23,11 @@ CustomEvent::~CustomEvent()
 	{
 		S06DE_API::SetChaosBoostMaxLevel(3);
 	}
+
+	if (m_disableBoost)
+	{
+		SetDisableBoost(false);
+	}
 }
 
 void CustomEvent::AddCallback
@@ -49,6 +54,11 @@ void CustomEvent::AddCallback
 	{
 		S06DE_API::SetChaosBoostMaxLevel(m_chaosBoostMaxLevel);
 	}
+
+	if (m_disableBoost)
+	{
+		SetDisableBoost(true);
+	}
 }
 
 void CustomEvent::AddParameterBank
@@ -56,6 +66,7 @@ void CustomEvent::AddParameterBank
 	const Hedgehog::Base::CRefPtr<Sonic::CParameterBank>& in_rParameterBank
 )
 {
+	in_rParameterBank->AccessParameterBankBool("DisableBoost", &m_disableBoost);
 	in_rParameterBank->AccessParameterBankBool("ChaosBoostLevelDown", &m_chaosBoostCanLevelDown);
 	in_rParameterBank->AccessParameterBankBool("ChaosBoostMatchMaxLevel", &m_chaosBoostMatchMaxLevel);
 	in_rParameterBank->AccessParameterBankUnsignedInt("ChaosBoostMaxLevel", &m_chaosBoostMaxLevel);
@@ -162,9 +173,47 @@ bool CustomEvent::ProcessMessage
 				S06DE_API::SetChaosBoostMatchMaxLevel(false);
 				break;
 			}
+			case 12:
+			{
+				SetDisableBoost(true);
+				break;
+			}
+			case 13:
+			{
+				SetDisableBoost(false);
+				break;
+			}
 			}
 		}
 	}
 
 	return Sonic::CObjectBase::ProcessMessage(message, flag);
+}
+
+void CustomEvent::SetDisableBoost(bool disable)
+{
+	m_disableBoost = disable;
+
+	if (disable)
+	{
+		// jump codes
+		WRITE_MEMORY(0xDFF266, uint8_t, 0xEB);
+		WRITE_MEMORY(0xDFDF57, uint8_t, 0xE9, 0x8A, 0x00, 0x00, 0x00, 0x90);
+		WRITE_MEMORY(0xE3D99C, uint8_t, 0xE9, 0x7D, 0x01, 0x00, 0x00, 0x90);
+		WRITE_MEMORY(0xE47776, uint8_t, 0xE9, 0x95, 0x00, 0x00, 0x00, 0x90);
+		WRITE_MEMORY(0x1118CF9, uint8_t, 0xE9, 0x94, 0x00, 0x00, 0x00, 0x90);
+		WRITE_MEMORY(0x111D80C, uint8_t, 0xEB);
+		WRITE_MEMORY(0x11A0725, uint8_t, 0xE9, 0x93, 0x00, 0x00, 0x00, 0x90);
+	}
+	else
+	{
+		// restore codes
+		WRITE_MEMORY(0xDFF266, uint8_t, 0x74);
+		WRITE_MEMORY(0xDFDF57, uint8_t, 0x0F, 0x84, 0x89, 0x00, 0x00, 0x00);
+		WRITE_MEMORY(0xE3D99C, uint8_t, 0x0F, 0x84, 0x7C, 0x01, 0x00, 0x00);
+		WRITE_MEMORY(0xE47776, uint8_t, 0x0F, 0x84, 0x94, 0x00, 0x00, 0x00);
+		WRITE_MEMORY(0x1118CF9, uint8_t, 0x0F, 0x84, 0x93, 0x00, 0x00, 0x00);
+		WRITE_MEMORY(0x111D80C, uint8_t, 0x74);
+		WRITE_MEMORY(0x11A0725, uint8_t, 0x0F, 0x84, 0x92, 0x00, 0x00, 0x00);
+	}
 }
