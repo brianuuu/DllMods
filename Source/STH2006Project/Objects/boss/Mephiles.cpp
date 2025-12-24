@@ -853,7 +853,7 @@ void Mephiles::StateDiveAdvance(float dt)
 	}
 	case 2:
 	{
-		if (m_stateTime >= 0.5f)
+		if (m_stateTime >= 0.1f)
 		{
 			if (m_cameraActorID)
 			{
