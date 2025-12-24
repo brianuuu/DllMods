@@ -606,15 +606,15 @@ void NextGenPhysics::applyPatches()
         WRITE_MEMORY(0x1230BB6, uint32_t, 4);   // Squat end
 
         // R2 actions
-        WRITE_MEMORY(0xDFF25B, uint32_t, 32);   // Grind Boost
+        WRITE_MEMORY(0xDFF25B, uint32_t, 32);   // Begin Boost
         WRITE_MEMORY(0xDFDF4C, uint32_t, 32);   // Air Boost
         WRITE_MEMORY(0xE3D991, uint32_t, 32);   // Blast Off
         WRITE_MEMORY(0xE4776B, uint32_t, 32);   // Dummy Boost
-        WRITE_MEMORY(0x11177EE, uint32_t, 32);  // Boost
-        WRITE_MEMORY(0x1118CEE, uint32_t, 32);  // Fall Boost
-        WRITE_MEMORY(0x111BE61, uint32_t, 32);  // Null Boost?
-        WRITE_MEMORY(0x111BEE8, uint32_t, 32);  // Dummy Boost plugin
-        WRITE_MEMORY(0x111D801, uint32_t, 32);  // Board Fall Boost
+        WRITE_MEMORY(0x11177EE, uint32_t, 32);  // Release Boost
+        WRITE_MEMORY(0x1118CEE, uint32_t, 32);  // Fall->Water auto Boost
+        WRITE_MEMORY(0x111BE61, uint32_t, 32);  // Null Boost release
+        WRITE_MEMORY(0x111BEE8, uint32_t, 32);  // Dummy Boost release
+        WRITE_MEMORY(0x111D801, uint32_t, 32);  // Board Fall->Water auto Boost
         WRITE_MEMORY(0x11A0716, uint32_t, 32);  // Dummy Boost External
         WRITE_MEMORY(0x11A07D7, uint32_t, 32);  // Speed external control
         WRITE_MEMORY(0x11A0DA8, uint32_t, 32);  // Speed external control
