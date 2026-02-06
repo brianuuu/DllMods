@@ -650,7 +650,7 @@ HOOK(int32_t*, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterBegin, 0x11
         NextGenShadow::m_chaosAttackBuffered = false;
 
         // Chaos Snap immediately goes to next attack
-        if (NextGenShadow::m_chaosBoostLevel > 0 && hasChaosSnapTeleported)
+        if (NextGenShadow::m_chaosBoostLevel > 0)
         {
             // first attack
             if (NextGenShadow::m_chaosAttackCount < 0)
@@ -684,14 +684,21 @@ HOOK(int32_t*, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterBegin, 0x11
 
 HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118600, hh::fnd::CStateMachineBase::CStateBase* This)
 {
+    alignas(16) MsgGetAnimationInfo message {};
+    Common::SonicContextGetAnimationInfo(message);
+
+    if (std::strstr(message.m_name, "HomingAttackAfter"))
+    {
+        // fallback check: already playing HomingAttackAfter, it cannot be Chaos Attack
+        originalNextGenShadow_CSonicStateHomingAttackAfterAdvance(This);
+        return;
+    }
+
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
     if (NextGenShadow::m_chaosAttackCount >= 0 && !context->StateFlag(eStateFlag_StopPositionCount))
     {
         Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
         Common::SetPlayerPosition(NextGenShadow::m_holdPosition);
-
-        alignas(16) MsgGetAnimationInfo message {};
-        Common::SonicContextGetAnimationInfo(message);
 
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
         bool const isPressedA = padState->IsTapped(Sonic::EKeyState::eKeyState_A);
