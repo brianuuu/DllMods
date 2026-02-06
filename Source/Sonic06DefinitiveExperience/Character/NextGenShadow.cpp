@@ -650,7 +650,7 @@ HOOK(int32_t*, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterBegin, 0x11
         NextGenShadow::m_chaosAttackBuffered = false;
 
         // Chaos Snap immediately goes to next attack
-        if (NextGenShadow::m_chaosBoostLevel > 0)
+        if (NextGenShadow::m_chaosBoostLevel > 0 && hasChaosSnapTeleported)
         {
             // first attack
             if (NextGenShadow::m_chaosAttackCount < 0)
