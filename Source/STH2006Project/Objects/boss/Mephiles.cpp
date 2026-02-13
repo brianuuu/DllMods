@@ -225,6 +225,11 @@ void Mephiles::AddCallback
 	WRITE_JUMP(0x11245A3, (void*)0x11245AF);
 }
 
+void Mephiles::KillCallback()
+{
+	ToggleSlowTime(false);
+}
+
 void Mephiles::SetUpdateParallel
 (
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
