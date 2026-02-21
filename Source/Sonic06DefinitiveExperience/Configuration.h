@@ -65,12 +65,12 @@ public:
     // Shadow
     struct Shadow
     {
-        static ShadowDPadType m_shaodwDPad;
         static bool m_chaosBlastCamera;
         static bool m_chaosSpearMomentum;
         static bool m_antiGravity;
         static bool m_floatBoost;
         static bool m_gliderInvert;
+        static bool m_dpadVehicles;
     };
 
     static std::string GetVersion() { return "SHC2025"; }

@@ -61,7 +61,7 @@ void ArchiveTreePatcher::applyPatches()
 {
     // Usage: m_archiveDependencies.push_back(ArchiveDependency( ARCHIVE, { DEPEND_ON_1, DEPEND_ON_2, ... }));
 
-    if (Configuration::m_model == Configuration::ModelType::Shadow && Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Vehicles)
+    if (Configuration::m_model == Configuration::ModelType::Shadow && Configuration::Shadow::m_dpadVehicles)
     {
         m_archiveDependencies.push_back(ArchiveDependency("ShadowVehicle", {"SonicActionCommon"}));
     }

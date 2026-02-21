@@ -195,7 +195,7 @@ extern "C" __declspec(dllexport) void PostInit(ModInfo_t * modInfo)
     }
 
     bool const isSonicCheck = Configuration::m_model == Configuration::ModelType::Sonic && Configuration::Sonic::m_gemsEnabled;
-    bool const isShadowCheck = Configuration::m_model == Configuration::ModelType::Shadow && (Configuration::m_characterMoveset || Configuration::Shadow::m_shaodwDPad != Configuration::ShadowDPadType::Normal);
+    bool const isShadowCheck = Configuration::m_model == Configuration::ModelType::Shadow && (Configuration::m_characterMoveset || Configuration::Shadow::m_dpadVehicles);
     if (isSonicCheck || isShadowCheck)
     {
         bool noGamepad = true;

@@ -271,7 +271,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
 
     CSonicStateFlags const* flags = Common::GetSonicStateFlags();
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-    if (Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Vehicles)
+    if (Configuration::Shadow::m_dpadVehicles)
     {
         if (!flags->KeepRunning && !flags->OutOfControl && !flags->Diving && !flags->InvokeSkateBoard
          && !context->m_spGrindPathController && !context->m_Is2DMode
@@ -323,10 +323,6 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
                 Common::ClearFowardAndDashPath();
             }
         }
-    }
-    else if (Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Guns)
-    {
-        // TODO:
     }
 
     originalNextGenShadow_CSonicUpdate(This, Edx, dt);
@@ -3525,20 +3521,17 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_CSonicStateSquatEnd);
 
     //-------------------------------------------------------
-    // D-Pad mode 
+    // Vehicles
     //-------------------------------------------------------
-    // Ignore D-pad input for Shadow's control
-    if (Configuration::Shadow::m_shaodwDPad != Configuration::ShadowDPadType::Normal)
+    if (Configuration::Shadow::m_dpadVehicles)
     {
+        // Ignore D-pad input
         WRITE_JUMP(0xD97B56, (void*)0xD97B9E);
+            
+        // Fix external control bobbing up and down at sea level
+        WRITE_JUMP(0x11DCFF8, NextGenShadow_fixExternalControlBobbing);
 
-        if (Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Vehicles)
-        {
-            // Fix external control bobbing up and down at sea level
-            WRITE_JUMP(0x11DCFF8, NextGenShadow_fixExternalControlBobbing);
-
-            // vehicle patches
-            GadgetGlider::applyPatches();
-        }
+        // vehicle patches
+        GadgetGlider::applyPatches();
     }
 }
