@@ -290,7 +290,8 @@ bool Configuration::load(const std::string& rootPath)
     // Increase dropped ring bounce damping to 0.75
     if (reader.GetBoolean("Physics", "bDroppedRingBounce", true))
     {
-        WRITE_MEMORY(0x119A1D3, uint32_t, 0x1A426B4);
+        WRITE_MEMORY(0x1199B84, uint32_t, 0x1A426B4); // 2D
+        WRITE_MEMORY(0x119A1D3, uint32_t, 0x1A426B4); // 3D
     }
 
     return true;
