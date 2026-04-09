@@ -331,7 +331,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
         // TODO:
         if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadRight))
         {
-            NextGenShadow::m_weaponSingleton = boost::make_shared<CObjWeapon>(context->m_pPlayer->m_spCharacterModel->GetNode("Reference"), CObjWeapon::Type::EggPawnGun);
+            NextGenShadow::m_weaponSingleton = boost::make_shared<CObjWeapon>(context->m_pPlayer->m_spCharacterModel->GetNode("Reference"), WT_EggPawnGun);
             context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(NextGenShadow::m_weaponSingleton);
         }
     }
