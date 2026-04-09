@@ -177,6 +177,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Character\NextGenBlaze.cpp" />
+    <ClCompile Include="Object\CObjWeapon.cpp" />
     <ClCompile Include="Stage\NextGenObjects.cpp" />
     <ClCompile Include="Character\NextGenPhysics.cpp" />
     <ClCompile Include="Character\NextGenShadow.cpp" />
@@ -221,6 +222,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Character\NextGenBlaze.h" />
+    <ClInclude Include="Object\CObjWeapon.h" />
     <ClInclude Include="Stage\NextGenObjects.h" />
     <ClInclude Include="Character\NextGenPhysics.h" />
     <ClInclude Include="Character\NextGenShadow.h" />

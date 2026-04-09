@@ -61,9 +61,19 @@ void ArchiveTreePatcher::applyPatches()
 {
     // Usage: m_archiveDependencies.push_back(ArchiveDependency( ARCHIVE, { DEPEND_ON_1, DEPEND_ON_2, ... }));
 
-    if (Configuration::m_model == Configuration::ModelType::Shadow && Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Vehicles)
+    if (Configuration::m_model == Configuration::ModelType::Shadow)
     {
-        m_archiveDependencies.push_back(ArchiveDependency("ShadowVehicle", {"SonicActionCommon"}));
+        switch (Configuration::Shadow::m_shaodwDPad)
+        {
+        case Configuration::ShadowDPadType::Vehicles:
+            m_archiveDependencies.push_back(ArchiveDependency("ShadowVehicle", { "SonicActionCommon" }));
+            break;
+        case Configuration::ShadowDPadType::Weapons:
+            m_archiveDependencies.push_back(ArchiveDependency("ShadowWeapon", { "SonicActionCommon" }));
+            break;
+        default:
+            break;
+        }
     }
 
     if (!m_archiveDependencies.empty())

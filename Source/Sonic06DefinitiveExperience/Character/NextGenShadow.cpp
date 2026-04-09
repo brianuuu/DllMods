@@ -10,6 +10,7 @@
 #include "Gadget/GadgetGlider.h"
 #include "Gadget/GadgetHover.h"
 #include "Gadget/GadgetJeep.h"
+#include "Object/CObjWeapon.h"
 
 //---------------------------------------------------
 // Animation
@@ -226,6 +227,7 @@ HOOK(int, __fastcall, NextGenShadow_AssignFootstepFloorCues, 0xDFD420, Sonic::Pl
 
 bool canSpawnVehicleInAir = true;
 boost::shared_ptr<Sonic::CGameObject3D> NextGenShadow::m_vehicleSingleton;
+boost::shared_ptr<Sonic::CGameObject3D> NextGenShadow::m_weaponSingleton;
 HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPlayerSpeed* This, void* Edx, float* dt)
 {
     if (!*pModernSonicContext)
@@ -324,9 +326,14 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
             }
         }
     }
-    else if (Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Guns)
+    else if (Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Weapons)
     {
         // TODO:
+        if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadRight))
+        {
+            NextGenShadow::m_weaponSingleton = boost::make_shared<CObjWeapon>(context->m_pPlayer->m_spCharacterModel->GetNode("Reference"), CObjWeapon::Type::EggPawnGun);
+            context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(NextGenShadow::m_weaponSingleton);
+        }
     }
 
     originalNextGenShadow_CSonicUpdate(This, Edx, dt);

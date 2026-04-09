@@ -33,8 +33,8 @@ public:
     enum ShadowDPadType
     {
         Normal = 0,
-        Guns,
-        Vehicles
+        Vehicles,
+        Weapons,
     };
 
     // General

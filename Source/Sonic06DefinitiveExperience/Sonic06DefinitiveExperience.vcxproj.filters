@@ -34,6 +34,7 @@
     <ClCompile Include="Utils\ArchiveTreePatcher.cpp" />
     <ClCompile Include="Utils\bbWriter.cpp" />
     <ClCompile Include="Utils\tinyxml2.cpp" />
+    <ClCompile Include="Object\CObjWeapon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pch.h" />
@@ -66,5 +67,6 @@
     <ClInclude Include="Utils\ArchiveTreePatcher.h" />
     <ClInclude Include="Utils\bbWriter.h" />
     <ClInclude Include="Utils\tinyxml2.h" />
+    <ClInclude Include="Object\CObjWeapon.h" />
   </ItemGroup>
 </Project>
