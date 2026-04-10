@@ -24,8 +24,10 @@ private:
 	WeaponType m_type = WT_EggPawnGun;
 	float m_speed = 0.0f;
 	float m_gravity = 0.0f;
+	float m_radius = 0.1f;
 	std::string m_modelName;
 	std::string m_effectName;
+	std::string m_muzzleEffectName;
 	std::string m_hitEffectName;
 	uint32_t m_shootSfx = 0;
 	uint32_t m_hitSfx = 0;
@@ -43,6 +45,7 @@ private:
 };
 
 class CObjWeapon : public Sonic::CGameObject3D
+	, public Sonic::IAnimationContext, public Sonic::CAnimationStateMachine
 {
 public:
 	
@@ -51,10 +54,12 @@ public:
 		WeaponData
 		(
 			std::string modelName,
+			int spriteIndex,
 			int maxAmmo
 		)
-		: m_modelName(modelName)
-		, m_maxAmmo(maxAmmo)
+			: m_modelName(modelName)
+			, m_spriteIndex(spriteIndex)
+			, m_maxAmmo(maxAmmo)
 		{
 			Reset();
 		}
@@ -65,28 +70,29 @@ public:
 		}
 
 		std::string m_modelName;
-
-		float const m_shotInterval = 1.0f;
+		int const m_spriteIndex = 0;
 		int const m_maxAmmo = 0;
 		int m_ammo = 0;
 	};
 
+	static WeaponType m_type;
 	static std::vector<WeaponData> m_weaponData;
+
 	static void ResetWeaponData();
 	static WeaponData& GetWeaponData(WeaponType type) { return m_weaponData[type]; }
+	static bool CanShoot();
 
 public:
-	CObjWeapon(boost::shared_ptr<hh::mr::CMatrixNode> parent, WeaponType type);
+	CObjWeapon(boost::shared_ptr<hh::mr::CMatrixNode> parent);
 	void Shoot();
 
 private:
 	boost::shared_ptr<hh::mr::CMatrixNode> m_spNodeParent;
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeModel;
+	boost::shared_ptr<hh::anim::CAnimationPose> m_spAnimPose;
 
-	WeaponType const m_type = WT_EggPawnGun;
 	WeaponData* m_pData = nullptr;
-	float m_shotTimer = 0.0f;
 
 private:
 	void AddCallback(const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
@@ -94,4 +100,8 @@ private:
 	bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;
 	void UpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo) override;
 
+	// from IAnimationContext
+	Hedgehog::Animation::CAnimationPose* GetAnimationPose() override { return m_spAnimPose.get(); }
+	Hedgehog::Math::CVector GetVelocityForAnimationSpeed() override { return hh::math::CVector::Ones(); }
+	Hedgehog::Math::CVector GetVelocityForAnimationChange() override { return hh::math::CVector::Ones(); }
 };

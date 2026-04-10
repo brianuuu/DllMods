@@ -4,6 +4,66 @@
 FUNCTION_PTR(void*, __stdcall, fpCreateAnimationState, 0xCDFA20, void* This, boost::shared_ptr<void>& spAnimationState, const Hedgehog::Base::CSharedString& name, const Hedgehog::Base::CSharedString& name2);
 FUNCTION_PTR(uint32_t*, __stdcall, fpGetAnimationTransitionData, 0xCDFB40, void* A2, const Hedgehog::Base::CSharedString& name);
 
+
+
+const char* volatile const AnimationSetPatcher::RunResult = "RunResult";
+const char* volatile const AnimationSetPatcher::RunResultLoop = "RunResultLoop";
+const char* volatile const AnimationSetPatcher::BrakeFlip = "BrakeFlip";
+
+const char* volatile const AnimationSetPatcher::SpinFall = "SpinFall";
+const char* volatile const AnimationSetPatcher::SpinFallSpring = "SpinFallSpring";
+const char* volatile const AnimationSetPatcher::SpinFallLoop = "SpinFallLoop";
+
+const char* volatile const AnimationSetPatcher::HomingAttackLoop = "HomingAttackLoop";
+
+const char* volatile const AnimationSetPatcher::AccelJumpLoop = "AccelJumpLoop";
+const char* volatile const AnimationSetPatcher::FireTornadoLoop = "FireTornadoLoop";
+const char* volatile const AnimationSetPatcher::FireTornadoEnd = "FireTornadoEnd";
+
+const char* volatile const AnimationSetPatcher::GreenGemGround = "GreenGemGround";
+const char* volatile const AnimationSetPatcher::GreenGemAir = "GreenGemAir";
+const char* volatile const AnimationSetPatcher::SkyGem = "SkyGem";
+const char* volatile const AnimationSetPatcher::SkyGemLoop = "SkyGemLoop";
+const char* volatile const AnimationSetPatcher::SkyGemEnd = "SkyGemEnd";
+
+const char* volatile const AnimationSetPatcher::FloatingBoost = "FloatingBoost";
+
+const char* volatile const AnimationSetPatcher::SpinFast = "SpinFast";
+const char* volatile const AnimationSetPatcher::ChaosAttack[5] =
+{
+    "ChaosAttack00",
+    "ChaosAttack01",
+    "ChaosAttack02",
+    "ChaosAttack03",
+    "ChaosAttack04"
+};
+const char* volatile const AnimationSetPatcher::ChaosAttackWait = "ChaosAttackWait";
+const char* volatile const AnimationSetPatcher::SpinAttack[3] =
+{
+    "SpinAttack00",
+    "SpinAttack01",
+    "SpinAttack02"
+};
+const char* volatile const AnimationSetPatcher::SpearWait = "SpearWait";
+const char* volatile const AnimationSetPatcher::SpearWaitLoop = "SpearWaitLoop";
+const char* volatile const AnimationSetPatcher::SpearShot = "SpearShot";
+const char* volatile const AnimationSetPatcher::SpearShotLoop = "SpearShotLoop";
+const char* volatile const AnimationSetPatcher::SpearSuperWait = "SpearSuperWait";
+const char* volatile const AnimationSetPatcher::SpearSuperWaitLoop = "SpearSuperWaitLoop";
+const char* volatile const AnimationSetPatcher::SpearSuperShot = "SpearSuperShot";
+const char* volatile const AnimationSetPatcher::SpearSuperShotLoop = "SpearSuperShotLoop";
+const char* volatile const AnimationSetPatcher::ChaosBoost = "ChaosBoost";
+const char* volatile const AnimationSetPatcher::ChaosBoostLoop = "ChaosBoostLoop";
+const char* volatile const AnimationSetPatcher::ChaosBlastWait = "ChaosBlastWait";
+const char* volatile const AnimationSetPatcher::ChaosBlastWaitLoop = "ChaosBlastWaitLoop";
+const char* volatile const AnimationSetPatcher::ChaosBlast = "ChaosBlast";
+const char* volatile const AnimationSetPatcher::ChaosBlastLoop = "ChaosBlastLoop";
+
+const char* volatile const AnimationSetPatcher::WeaponAirLoop[WT_COUNT] =
+{
+    "WeaponEggPawnGunAirLoop",
+};
+
 HOOK(bool, __fastcall, CAnimationControlSingle_Debug, 0x6D84F0, uint32_t** This, void* Edx, float a2, int a3)
 {
     std::string name((char*)(This[58][2]));
@@ -225,59 +285,6 @@ void AnimationSetPatcher::createAnimationState(void* A2, NewAnimationDataList co
         }
     }
 }
-
-const char* volatile const AnimationSetPatcher::RunResult = "RunResult";
-const char* volatile const AnimationSetPatcher::RunResultLoop = "RunResultLoop";
-const char* volatile const AnimationSetPatcher::BrakeFlip = "BrakeFlip";
-
-const char* volatile const AnimationSetPatcher::SpinFall = "SpinFall";
-const char* volatile const AnimationSetPatcher::SpinFallSpring = "SpinFallSpring";
-const char* volatile const AnimationSetPatcher::SpinFallLoop = "SpinFallLoop";
-
-const char* volatile const AnimationSetPatcher::HomingAttackLoop = "HomingAttackLoop";
-
-const char* volatile const AnimationSetPatcher::AccelJumpLoop = "AccelJumpLoop";
-const char* volatile const AnimationSetPatcher::FireTornadoLoop = "FireTornadoLoop";
-const char* volatile const AnimationSetPatcher::FireTornadoEnd = "FireTornadoEnd";
-
-const char* volatile const AnimationSetPatcher::GreenGemGround = "GreenGemGround";
-const char* volatile const AnimationSetPatcher::GreenGemAir = "GreenGemAir";
-const char* volatile const AnimationSetPatcher::SkyGem = "SkyGem";
-const char* volatile const AnimationSetPatcher::SkyGemLoop = "SkyGemLoop";
-const char* volatile const AnimationSetPatcher::SkyGemEnd = "SkyGemEnd";
-
-const char* volatile const AnimationSetPatcher::FloatingBoost = "FloatingBoost";
-
-const char* volatile const AnimationSetPatcher::SpinFast = "SpinFast";
-const char* volatile const AnimationSetPatcher::ChaosAttack[5] = 
-{ 
-    "ChaosAttack00",
-    "ChaosAttack01",
-    "ChaosAttack02",
-    "ChaosAttack03",
-    "ChaosAttack04"
-};
-const char* volatile const AnimationSetPatcher::ChaosAttackWait = "ChaosAttackWait";
-const char* volatile const AnimationSetPatcher::SpinAttack[3] =
-{
-    "SpinAttack00",
-    "SpinAttack01",
-    "SpinAttack02"
-};
-const char* volatile const AnimationSetPatcher::SpearWait = "SpearWait";
-const char* volatile const AnimationSetPatcher::SpearWaitLoop = "SpearWaitLoop";
-const char* volatile const AnimationSetPatcher::SpearShot = "SpearShot";
-const char* volatile const AnimationSetPatcher::SpearShotLoop = "SpearShotLoop";
-const char* volatile const AnimationSetPatcher::SpearSuperWait = "SpearSuperWait";
-const char* volatile const AnimationSetPatcher::SpearSuperWaitLoop = "SpearSuperWaitLoop";
-const char* volatile const AnimationSetPatcher::SpearSuperShot = "SpearSuperShot";
-const char* volatile const AnimationSetPatcher::SpearSuperShotLoop = "SpearSuperShotLoop";
-const char* volatile const AnimationSetPatcher::ChaosBoost = "ChaosBoost";
-const char* volatile const AnimationSetPatcher::ChaosBoostLoop = "ChaosBoostLoop";
-const char* volatile const AnimationSetPatcher::ChaosBlastWait = "ChaosBlastWait";
-const char* volatile const AnimationSetPatcher::ChaosBlastWaitLoop = "ChaosBlastWaitLoop";
-const char* volatile const AnimationSetPatcher::ChaosBlast = "ChaosBlast";
-const char* volatile const AnimationSetPatcher::ChaosBlastLoop = "ChaosBlastLoop";
 
 void AnimationSetPatcher::applyPatches()
 {
@@ -629,6 +636,9 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationDataSuper.emplace_back("JeepR", "sh_jeep_curveR_l", 1.0f, true, nullptr);
         m_newAnimationDataSuper.emplace_back("JeepB", "sh_jeep_back", 1.0f, false, "JeepBLoop");
         m_newAnimationDataSuper.emplace_back("JeepBLoop", "sh_jeep_back_l", 1.0f, true, nullptr);
+
+        // Weapons
+        m_newAnimationData.emplace_back(WeaponAirLoop[0], "wpn_eggpawngun_air_l", 2.0f, false, nullptr);
     }
 
     if (!m_newAnimationData.empty())

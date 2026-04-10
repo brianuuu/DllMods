@@ -10,7 +10,6 @@
 #include "Gadget/GadgetGlider.h"
 #include "Gadget/GadgetHover.h"
 #include "Gadget/GadgetJeep.h"
-#include "Object/CObjWeapon.h"
 
 //---------------------------------------------------
 // Animation
@@ -227,7 +226,7 @@ HOOK(int, __fastcall, NextGenShadow_AssignFootstepFloorCues, 0xDFD420, Sonic::Pl
 
 bool canSpawnVehicleInAir = true;
 boost::shared_ptr<Sonic::CGameObject3D> NextGenShadow::m_vehicleSingleton;
-boost::shared_ptr<Sonic::CGameObject3D> NextGenShadow::m_weaponSingleton;
+boost::shared_ptr<CObjWeapon> NextGenShadow::m_weaponSingleton;
 HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPlayerSpeed* This, void* Edx, float* dt)
 {
     if (!*pModernSonicContext)
@@ -331,8 +330,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
         // TODO:
         if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadRight))
         {
-            NextGenShadow::m_weaponSingleton = boost::make_shared<CObjWeapon>(context->m_pPlayer->m_spCharacterModel->GetNode("Reference"), WT_EggPawnGun);
-            context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(NextGenShadow::m_weaponSingleton);
+            
         }
     }
 
@@ -342,6 +340,8 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
 HOOK(int, __fastcall, NextGenShadow_CSonicDestructor, 0x518AF0, uint32_t This, void* Edx, bool a2)
 {
     NextGenShadow::m_vehicleSingleton.reset();
+    NextGenShadow::m_weaponSingleton.reset();
+    CObjWeapon::ResetWeaponData();
     return originalNextGenShadow_CSonicDestructor(This, Edx, a2);
 }
 
@@ -901,6 +901,9 @@ HOOK(int, __fastcall, NextGenShadow_MsgRestartStage, 0xE76810, Sonic::Player::CP
 
     // Re-enable auto run actions (squat kick)
     NextGenShadow::m_enableAutoRunAction = true;
+
+    // Restore ammo
+    CObjWeapon::ResetWeaponData();
 
     return result;
 }
@@ -1658,7 +1661,14 @@ bool NextGenShadow::AirActionCheck()
             return true;
         }
 
-        m_overrideType = OverrideType::SH_SpearWait;
+        if (CObjWeapon::CanShoot() && Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Weapons)
+        {
+            m_overrideType = OverrideType::SH_WeaponAirLoop;
+        }
+        else
+        {
+            m_overrideType = OverrideType::SH_SpearWait;
+        }
         StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
         return true;
     }
@@ -1822,6 +1832,15 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
         
         CustomCamera::m_chaosBlastCameraEnabled = true;
         isChaosControl = false;
+        break;
+    }
+    case NextGenShadow::OverrideType::SH_WeaponAirLoop:
+    {
+        NextGenShadow::m_holdPosition = context->m_spMatrixNode->m_Transform.m_Position;
+
+        // animation is handled by weapon
+        NextGenShadow::m_weaponSingleton = boost::make_shared<CObjWeapon>(context->m_pPlayer->m_spCharacterModel->GetNode("Reference"));
+        context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(NextGenShadow::m_weaponSingleton);
         break;
     }
     }
@@ -2177,6 +2196,35 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
 
         break;
     }
+    case NextGenShadow::OverrideType::SH_WeaponAirLoop:
+    {
+        if (context->m_Grounded)
+        {
+            StateManager::ChangeState(StateAction::LandJumpShort, *PLAYER_CONTEXT);
+            return nullptr;
+        }
+
+        if (!context->StateFlag(eStateFlag_StopPositionCount))
+        {
+            Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
+            Common::SetPlayerPosition(NextGenShadow::m_holdPosition);
+        }
+
+        originalNextGenShadow_HomingUpdate(context);
+        Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+        if (Common::IsAnimationFinished(NextGenShadow::m_weaponSingleton.get()))
+        {
+            if (padState->IsDown(Sonic::EKeyState::eKeyState_X) && NextGenShadow::m_weaponSingleton->CanShoot())
+            {
+                NextGenShadow::m_weaponSingleton->Shoot();
+            }
+            else
+            {
+                StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
+            }
+        }
+        break;
+    }
     }
 
     return nullptr;
@@ -2216,6 +2264,12 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::f
         context->StateFlag(eStateFlag_OutOfControl)--;
         context->StateFlag(eStateFlag_NoDamage)--;
         context->m_GravityTimer = 1000.0f;
+        break;
+    }
+    case NextGenShadow::OverrideType::SH_WeaponAirLoop:
+    {
+        NextGenShadow::m_weaponSingleton->Kill();
+        NextGenShadow::m_weaponSingleton.reset();
         break;
     }
     }

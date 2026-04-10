@@ -5,6 +5,7 @@
 /*----------------------------------------------------------*/
 
 #include "NextGenPhysics.h"
+#include "Object/CObjWeapon.h"
 
 #pragma once
 class NextGenShadow
@@ -80,11 +81,12 @@ public:
 		SH_ChaosBoost,
 		SH_ChaosBlastWait,
 		SH_ChaosBlast,
+		SH_WeaponAirLoop,
 	} m_overrideType;
 
 	// vehicle & weapon
 	static boost::shared_ptr<Sonic::CGameObject3D> m_vehicleSingleton;
-	static boost::shared_ptr<Sonic::CGameObject3D> m_weaponSingleton;
+	static boost::shared_ptr<CObjWeapon> m_weaponSingleton;
 
 	// APIs
 	static void ToggleStartTeleport(bool enable);

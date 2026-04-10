@@ -3,6 +3,7 @@
 //	Year: 2021
 //	Description: Inject new animations
 /*----------------------------------------------------------*/
+#include "Object/CObjWeapon.h"
 
 #pragma once
 struct CAnimationStateInfo
@@ -102,5 +103,7 @@ public:
     static const char* volatile const ChaosBlastWaitLoop;
     static const char* volatile const ChaosBlast;
     static const char* volatile const ChaosBlastLoop;
+
+    static const char* volatile const WeaponAirLoop[WT_COUNT];
 };
 

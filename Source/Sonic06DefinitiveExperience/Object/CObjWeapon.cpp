@@ -1,10 +1,12 @@
 #include "CObjWeapon.h"
 #include "Character/NextGenShadow.h"
+#include "Utils/AnimationSetPatcher.h"
 
+WeaponType CObjWeapon::m_type = WT_EggPawnGun; // TODO: default WT_COUNT
 std::vector<CObjWeapon::WeaponData> CObjWeapon::m_weaponData =
 {
 	// EggPawnGun
-	{ "weapon_eggpawngun", 50 },
+	{ "weapon_eggpawngun", 1, 50 },
 };
 
 CObjProjectile::CObjProjectile
@@ -21,7 +23,9 @@ CObjProjectile::CObjProjectile
 	case WT_EggPawnGun:
 	{
 		m_speed = 20.0f;
+		m_radius = 0.125f;
 		m_effectName = "ef_eggpanwgun_bullet";
+		m_muzzleEffectName = "ef_eggpanwgun_muzzle";
 		m_hitEffectName = "ef_projectile_impact";
 		break;
 	}
@@ -98,6 +102,16 @@ bool CObjProjectile::SetAddRenderables
 		m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, m_effectName.c_str(), 1.0f);
 	}
 
+	// muzzle
+	if (!m_muzzleEffectName.empty())
+	{
+		auto effectNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
+		effectNode->SetParent(Sonic::CApplicationDocument::GetInstance()->m_pMember->m_spMatrixNodeRoot.get());
+		effectNode->m_Transform.SetPosition(m_spMatrixNodeTransform->m_Transform.m_Position);
+		effectNode->NotifyChanged();
+		m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, effectNode, m_muzzleEffectName.c_str(), 1.0f);
+	}
+
 	return true;
 }
 
@@ -111,7 +125,7 @@ bool CObjProjectile::SetAddColliders
 	uint32_t const typeBreakable = *(uint32_t*)0x1E5E77C;
 	uint32_t const typeTerrain = *(uint32_t*)0x1E5E754;
 	uint64_t const bitfield = (1llu << typeEnemy) | (1llu << typeBreakable) | (1llu << typeTerrain);
-	hk2010_2_0::hkpCapsuleShape* bodyEventTrigger = new hk2010_2_0::hkpCapsuleShape(hh::math::CVector(0.0f, 0.0f, 0.31f), hh::math::CVector(0.0f, 0.0f, -0.33f), 0.1f);
+	hk2010_2_0::hkpSphereShape* bodyEventTrigger = new hk2010_2_0::hkpSphereShape(m_radius);
 	AddEventCollision("Attack", bodyEventTrigger, Common::MakeCollisionID(0, bitfield), true, m_spMatrixNodeTransform);
 
 	return true;
@@ -199,32 +213,48 @@ void CObjWeapon::ResetWeaponData()
 	}
 }
 
+bool CObjWeapon::CanShoot()
+{
+	return m_type != WT_COUNT && m_weaponData[m_type].m_ammo > 0;
+}
+
 CObjWeapon::CObjWeapon
 (
-	boost::shared_ptr<hh::mr::CMatrixNode> parent, 
-	WeaponType type
+	boost::shared_ptr<hh::mr::CMatrixNode> parent
 )
 	: m_spNodeParent(parent)
-	, m_type(type)
-	, m_pData(&GetWeaponData(type))
+	, m_pData(&GetWeaponData(m_type))
 {
 }
 
 void CObjWeapon::Shoot()
 {
-	if (m_pData->m_ammo == 0)
+	if (!CanShoot())
 	{
 		return;
 	}
 
 	m_pData->m_ammo--;
-	m_shotTimer = m_pData->m_shotInterval;
+	
+	// change animation
+	ChangeState("AirLoop");
+	m_spAnimPose->Update(0.001f); // force update bone position
+	Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirLoop[m_type]);
 
+	// shoot projectile
 	auto node = m_spModel->GetNode("WeaponEffect");
 	hh::mr::CTransform startTrans;
 	startTrans.m_Rotation = node->GetWorldMatrix().rotation();
 	startTrans.m_Position = node->GetWorldMatrix().translation();
-	m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjProjectile>(m_type, startTrans));
+
+	hh::math::CVector targetPos = hh::math::CVector::Zero();
+	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	if (context->m_HomingAttackTargetActorID)
+	{
+		SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPos));
+	}
+
+	m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjProjectile>(m_type, startTrans, targetPos));
 }
 
 void CObjWeapon::AddCallback
@@ -238,6 +268,7 @@ void CObjWeapon::AddCallback
 	Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
 	in_pGameDocument->AddUpdateUnit("0", this);
 
+	// model
 	hh::mr::CMirageDatabaseWrapper wrapper(in_spDatabase.get());
 	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData(m_pData->m_modelName.c_str(), 0);
 	m_spNodeModel = boost::make_shared<Sonic::CMatrixNodeTransform>();
@@ -245,6 +276,22 @@ void CObjWeapon::AddCallback
 	m_spModel = boost::make_shared<hh::mr::CSingleElement>(spModelBaseData);
 	m_spModel->BindMatrixNode(m_spNodeModel);
 	Sonic::CGameObject::AddRenderable("Object", m_spModel, true);
+
+	// animations
+	std::string const air_l = m_pData->m_modelName + "_air_l";
+	m_spAnimPose = boost::make_shared<Hedgehog::Animation::CAnimationPose>(in_spDatabase, m_pData->m_modelName.c_str());
+	std::vector<hh::anim::SMotionInfo> entries = std::vector<hh::anim::SMotionInfo>(0, { "","" });
+	entries.push_back(hh::anim::SMotionInfo("AirLoop", air_l.c_str(), 2.0f, hh::anim::eMotionRepeatType_PlayOnce));
+	m_spAnimPose->AddMotionInfo(&entries.front(), entries.size());
+	m_spAnimPose->CreateAnimationCache();
+	m_spModel->BindPose(m_spAnimPose);
+
+	// states
+	SetContext(this);
+	AddAnimationState("AirLoop");
+
+	// initial fire
+	Shoot();
 }
 
 void CObjWeapon::KillCallback()
@@ -275,12 +322,6 @@ void CObjWeapon::UpdateParallel
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
 )
 {
-	if (m_shotTimer > 0.0f)
-	{
-		m_shotTimer -= in_rUpdateInfo.DeltaTime;
-	}
-	else
-	{
-		Shoot();
-	}
+	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
+	Update(in_rUpdateInfo);
 }
