@@ -327,10 +327,17 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
     }
     else if (Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Weapons)
     {
-        // TODO:
-        if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadRight))
+        CObjWeapon::VerifySpriteIndex();
+        if (!Common::IsPlayerHangOn() && !Common::IsPlayerSuper() && !NextGenShadow::m_weaponSingleton)
         {
-            
+            if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadUp))
+            {
+                CObjWeapon::SetWeaponType(WT_COUNT);
+            }
+            if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadRight))
+            {
+                CObjWeapon::NextGun();
+            }
         }
     }
 
@@ -3588,18 +3595,28 @@ void NextGenShadow::applyPatches()
     //-------------------------------------------------------
     // D-Pad mode 
     //-------------------------------------------------------
-    // Ignore D-pad input for Shadow's control
     if (Configuration::Shadow::m_shaodwDPad != Configuration::ShadowDPadType::Normal)
     {
+        // Ignore D-pad input for Shadow's control
         WRITE_JUMP(0xD97B56, (void*)0xD97B9E);
 
-        if (Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Vehicles)
+        switch (Configuration::Shadow::m_shaodwDPad)
+        {
+        case Configuration::ShadowDPadType::Vehicles:
         {
             // Fix external control bobbing up and down at sea level
             WRITE_JUMP(0x11DCFF8, NextGenShadow_fixExternalControlBobbing);
 
             // vehicle patches
             GadgetGlider::applyPatches();
+            break;
+        }
+        case Configuration::ShadowDPadType::Weapons:
+        {
+            // refill ammo
+            CObjWeapon::ResetWeaponData();
+            break;
+        }
         }
     }
 }

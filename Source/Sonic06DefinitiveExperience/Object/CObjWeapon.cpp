@@ -2,7 +2,7 @@
 #include "Character/NextGenShadow.h"
 #include "Utils/AnimationSetPatcher.h"
 
-WeaponType CObjWeapon::m_type = WT_EggPawnGun; // TODO: default WT_COUNT
+WeaponType CObjWeapon::m_type = WT_COUNT; // TODO: default WT_COUNT
 std::vector<WeaponData> CObjWeapon::m_weaponData =
 {
 	// EggPawnGun
@@ -217,9 +217,52 @@ void CObjWeapon::ResetWeaponData()
 	}
 }
 
+void CObjWeapon::VerifySpriteIndex()
+{
+	if (m_type == WT_COUNT) return;
+
+	WeaponData const& data = m_weaponData[m_type];
+	if (S06HUD_API::GetGadgetSpriteIndex() != data.m_spriteIndex)
+	{
+		// don't call SetWeaponType, we just want to match HUD
+		m_type = WT_COUNT;
+	}
+}
+
 bool CObjWeapon::CanShoot()
 {
 	return m_type != WT_COUNT && m_weaponData[m_type].m_ammo > 0;
+}
+
+void CObjWeapon::SetWeaponType(WeaponType type)
+{
+	if (m_type == type) return;
+
+	if (type == WT_COUNT)
+	{
+		WeaponData const& data = m_weaponData[m_type];
+		S06HUD_API::SetGadgetMaxCount(-1, data.m_spriteIndex);
+	}
+	else
+	{
+		WeaponData const& data = m_weaponData[type];
+		S06HUD_API::SetGadgetMaxCount(data.m_maxAmmo, data.m_spriteIndex);
+		S06HUD_API::SetGadgetCount(data.m_ammo, data.m_maxAmmo);
+	}
+
+	m_type = type;
+}
+
+void CObjWeapon::NextGun()
+{
+	if (m_type < WT_GunFirst || m_type >= WT_GunLast)
+	{
+		SetWeaponType(WT_GunFirst);
+	}
+	else
+	{
+		SetWeaponType(WeaponType(m_type + 1));
+	}
 }
 
 CObjWeapon::CObjWeapon
@@ -239,6 +282,7 @@ void CObjWeapon::Shoot()
 	}
 
 	m_pData->m_ammo--;
+	S06HUD_API::SetGadgetCount(m_pData->m_ammo, m_pData->m_maxAmmo);
 	
 	// change animation
 	ChangeState("AirLoop");

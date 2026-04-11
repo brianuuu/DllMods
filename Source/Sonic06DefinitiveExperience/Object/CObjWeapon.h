@@ -8,7 +8,11 @@
 enum WeaponType
 {
 	WT_EggPawnGun,
-	WT_COUNT
+
+	WT_COUNT,
+
+	WT_GunFirst = WT_EggPawnGun,
+	WT_GunLast = WT_EggPawnGun,
 };
 
 struct WeaponData
@@ -72,7 +76,12 @@ public:
 
 	static void ResetWeaponData();
 	static WeaponData& GetWeaponData(WeaponType type) { return m_weaponData[type]; }
+	static void VerifySpriteIndex();
 	static bool CanShoot();
+
+	// switch weapon
+	static void SetWeaponType(WeaponType type);
+	static void NextGun();
 
 public:
 	CObjWeapon(boost::shared_ptr<hh::mr::CMatrixNode> parent);
