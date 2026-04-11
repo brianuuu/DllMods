@@ -11,6 +11,33 @@ enum WeaponType
 	WT_COUNT
 };
 
+struct WeaponData
+{
+	std::string m_weaponModelName;
+	int m_ammo = 0;
+	int const m_maxAmmo = 0;
+	int const m_spriteIndex = 0;
+	std::string const m_chargeEffectName;
+	float const m_chargeTime = 0.0f;
+
+	float const m_speed = 0.0f;
+	float const m_gravity = 0.0f;
+	float const m_radius = 0.1f;
+	std::string const m_projectileModelName;
+	std::string const m_projectileEffectName;
+	std::string const m_muzzleEffectName;
+	std::string const m_hitEffectName;
+
+	uint32_t const m_chargeSfx = 0;
+	uint32_t const m_shootSfx = 0;
+	uint32_t const m_hitSfx = 0;
+
+	void Reset()
+	{
+		m_ammo = m_maxAmmo;
+	}
+};
+
 class CObjProjectile : public Sonic::CObjectBase
 {
 private:
@@ -21,16 +48,8 @@ private:
 	hh::math::CVector m_velocity = hh::math::CVector::Zero();
 
 	// Fixed weapon data
-	WeaponType m_type = WT_EggPawnGun;
-	float m_speed = 0.0f;
-	float m_gravity = 0.0f;
-	float m_radius = 0.1f;
-	std::string m_modelName;
-	std::string m_effectName;
-	std::string m_muzzleEffectName;
-	std::string m_hitEffectName;
-	uint32_t m_shootSfx = 0;
-	uint32_t m_hitSfx = 0;
+	WeaponType m_type = WT_COUNT;
+	WeaponData* m_pData = nullptr;
 
 public:
 	CObjProjectile(WeaponType type, hh::mr::CTransform const& startTrans, hh::math::CVector const& targetPos = hh::math::CVector::Zero());
@@ -48,33 +67,6 @@ class CObjWeapon : public Sonic::CGameObject3D
 	, public Sonic::IAnimationContext, public Sonic::CAnimationStateMachine
 {
 public:
-	
-	struct WeaponData
-	{
-		WeaponData
-		(
-			std::string modelName,
-			int spriteIndex,
-			int maxAmmo
-		)
-			: m_modelName(modelName)
-			, m_spriteIndex(spriteIndex)
-			, m_maxAmmo(maxAmmo)
-		{
-			Reset();
-		}
-
-		void Reset()
-		{
-			m_ammo = m_maxAmmo;
-		}
-
-		std::string m_modelName;
-		int const m_spriteIndex = 0;
-		int const m_maxAmmo = 0;
-		int m_ammo = 0;
-	};
-
 	static WeaponType m_type;
 	static std::vector<WeaponData> m_weaponData;
 

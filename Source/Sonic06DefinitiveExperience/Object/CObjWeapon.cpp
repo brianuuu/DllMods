@@ -3,10 +3,18 @@
 #include "Utils/AnimationSetPatcher.h"
 
 WeaponType CObjWeapon::m_type = WT_EggPawnGun; // TODO: default WT_COUNT
-std::vector<CObjWeapon::WeaponData> CObjWeapon::m_weaponData =
+std::vector<WeaponData> CObjWeapon::m_weaponData =
 {
 	// EggPawnGun
-	{ "weapon_eggpawngun", 1, 50 },
+	{ 
+		"weapon_eggpawngun", 
+		50, 50, 1,
+		"ef_eggpanwgun_omen", 0.2f,
+		20.0f, 0.0f, 0.125f,
+		"", "ef_eggpanwgun_bullet",
+		"ef_eggpanwgun_muzzle", "ef_projectile_impact",
+		0, 0, 0
+	},
 };
 
 CObjProjectile::CObjProjectile
@@ -16,26 +24,15 @@ CObjProjectile::CObjProjectile
 	hh::math::CVector const& targetPos
 )
 	: m_type(type)
+	, m_pData(&CObjWeapon::GetWeaponData(type))
 	, m_position(startTrans.m_Position)
 {
-	switch (m_type)
-	{
-	case WT_EggPawnGun:
-	{
-		m_speed = 20.0f;
-		m_radius = 0.125f;
-		m_effectName = "ef_eggpanwgun_bullet";
-		m_muzzleEffectName = "ef_eggpanwgun_muzzle";
-		m_hitEffectName = "ef_projectile_impact";
-		break;
-	}
-	}
 
 	// initial velocity
 	if (targetPos.isZero())
 	{
-		m_velocity = startTrans.m_Rotation * hh::math::CVector::UnitZ() * m_speed;
-		if (m_gravity > 0.0f)
+		m_velocity = startTrans.m_Rotation * hh::math::CVector::UnitZ() * m_pData->m_speed;
+		if (m_pData->m_gravity > 0.0f)
 		{
 			// projectiles with gravity only set initial rotation
 			m_spMatrixNodeTransform->m_Transform.SetRotation(startTrans.m_Rotation);
@@ -46,15 +43,15 @@ CObjProjectile::CObjProjectile
 		hh::math::CVector const dir = (targetPos - m_position).normalized();
 		hh::math::CVector dirXZ = dir; dirXZ.y() = 0.0f;
 
-		if (m_gravity == 0.0f)
+		if (m_pData->m_gravity == 0.0f)
 		{
-			m_velocity = dir * m_speed;
+			m_velocity = dir * m_pData->m_speed;
 		}
 		else
 		{
 			// TODO: calculate initial speed to hit target
 			hh::math::CQuaternion rotation = hh::math::CQuaternion::FromTwoVectors(Hedgehog::Math::CVector::UnitZ(), dirXZ.head<3>()) * startTrans.m_Rotation;
-			m_velocity = rotation * hh::math::CVector::UnitZ() * m_speed;
+			m_velocity = rotation * hh::math::CVector::UnitZ() * m_pData->m_speed;
 
 			// projectiles with gravity only set initial rotation
 			m_spMatrixNodeTransform->m_Transform.SetRotation(rotation);
@@ -73,10 +70,10 @@ void CObjProjectile::AddCallback
 {
 	Sonic::CObjectBase::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
 
-	if (m_shootSfx)
+	if (m_pData->m_shootSfx)
 	{
 		SharedPtrTypeless sfx;
-		Common::ObjectPlaySound(this, m_shootSfx, sfx);
+		Common::ObjectPlaySound(this, m_pData->m_shootSfx, sfx);
 	}
 }
 
@@ -87,29 +84,29 @@ bool CObjProjectile::SetAddRenderables
 )
 {
 	// model
-	if (!m_modelName.empty())
+	if (!m_pData->m_projectileModelName.empty())
 	{
 		hh::mr::CMirageDatabaseWrapper wrapper(in_spDatabase.get());
-		boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData(m_modelName.c_str(), 0);
+		boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData(m_pData->m_projectileModelName.c_str(), 0);
 		m_spModel = boost::make_shared<hh::mr::CSingleElement>(spModelBaseData);
 		m_spModel->BindMatrixNode(m_spMatrixNodeTransform);
 		Sonic::CGameObject::AddRenderable("Object", m_spModel, true);
 	}
 
 	// effect
-	if (!m_effectName.empty())
+	if (!m_pData->m_projectileEffectName.empty())
 	{
-		m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, m_effectName.c_str(), 1.0f);
+		m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, m_pData->m_projectileEffectName.c_str(), 1.0f);
 	}
 
 	// muzzle
-	if (!m_muzzleEffectName.empty())
+	if (!m_pData->m_muzzleEffectName.empty())
 	{
 		auto effectNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
 		effectNode->SetParent(Sonic::CApplicationDocument::GetInstance()->m_pMember->m_spMatrixNodeRoot.get());
 		effectNode->m_Transform.SetPosition(m_spMatrixNodeTransform->m_Transform.m_Position);
 		effectNode->NotifyChanged();
-		m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, effectNode, m_muzzleEffectName.c_str(), 1.0f);
+		m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, effectNode, m_pData->m_muzzleEffectName.c_str(), 1.0f);
 	}
 
 	return true;
@@ -125,7 +122,7 @@ bool CObjProjectile::SetAddColliders
 	uint32_t const typeBreakable = *(uint32_t*)0x1E5E77C;
 	uint32_t const typeTerrain = *(uint32_t*)0x1E5E754;
 	uint64_t const bitfield = (1llu << typeEnemy) | (1llu << typeBreakable) | (1llu << typeTerrain);
-	hk2010_2_0::hkpSphereShape* bodyEventTrigger = new hk2010_2_0::hkpSphereShape(m_radius);
+	hk2010_2_0::hkpSphereShape* bodyEventTrigger = new hk2010_2_0::hkpSphereShape(m_pData->m_radius);
 	AddEventCollision("Attack", bodyEventTrigger, Common::MakeCollisionID(0, bitfield), true, m_spMatrixNodeTransform);
 
 	return true;
@@ -155,15 +152,15 @@ bool CObjProjectile::ProcessMessage
 				)
 			);
 
-			if (m_hitSfx)
+			if (m_pData->m_hitSfx)
 			{
 				SharedPtrTypeless sfx;
-				Common::ObjectPlaySound(this, m_hitSfx, sfx);
+				Common::ObjectPlaySound(this, m_pData->m_hitSfx, sfx);
 			}
 
-			if (!m_hitEffectName.empty())
+			if (!m_pData->m_hitEffectName.empty())
 			{
-				m_pGlitterPlayer->PlayOneshot(m_spMatrixNodeTransform, m_hitEffectName.c_str(), 1.0f, 1);
+				m_pGlitterPlayer->PlayOneshot(m_spMatrixNodeTransform, m_pData->m_hitEffectName.c_str(), 1.0f, 1);
 			}
 
 			Kill();
@@ -179,15 +176,22 @@ void CObjProjectile::UpdateParallel
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
 )
 {
+	m_lifetime += in_rUpdateInfo.DeltaTime;
+	if (m_lifetime > 5.0f)
+	{
+		Kill();
+		return;
+	}
+
 	UpdateTransform(in_rUpdateInfo.DeltaTime);
 }
 
 void CObjProjectile::UpdateTransform(float dt)
 {
-	m_velocity.y() -= m_gravity * dt;
+	m_velocity.y() -= m_pData->m_gravity * dt;
 	m_position += m_velocity * dt;
 
-	if (m_gravity == 0.0f)
+	if (m_pData->m_gravity == 0.0f)
 	{
 		// Rotate spear to correct rotation
 		Hedgehog::Math::CVector const dir = m_velocity.normalized();
@@ -270,7 +274,7 @@ void CObjWeapon::AddCallback
 
 	// model
 	hh::mr::CMirageDatabaseWrapper wrapper(in_spDatabase.get());
-	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData(m_pData->m_modelName.c_str(), 0);
+	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData(m_pData->m_weaponModelName.c_str(), 0);
 	m_spNodeModel = boost::make_shared<Sonic::CMatrixNodeTransform>();
 	m_spNodeModel->SetParent(m_spNodeParent.get());
 	m_spModel = boost::make_shared<hh::mr::CSingleElement>(spModelBaseData);
@@ -278,8 +282,8 @@ void CObjWeapon::AddCallback
 	Sonic::CGameObject::AddRenderable("Object", m_spModel, true);
 
 	// animations
-	std::string const air_l = m_pData->m_modelName + "_air_l";
-	m_spAnimPose = boost::make_shared<Hedgehog::Animation::CAnimationPose>(in_spDatabase, m_pData->m_modelName.c_str());
+	std::string const air_l = m_pData->m_weaponModelName + "_air_l";
+	m_spAnimPose = boost::make_shared<Hedgehog::Animation::CAnimationPose>(in_spDatabase, m_pData->m_weaponModelName.c_str());
 	std::vector<hh::anim::SMotionInfo> entries = std::vector<hh::anim::SMotionInfo>(0, { "","" });
 	entries.push_back(hh::anim::SMotionInfo("AirLoop", air_l.c_str(), 2.0f, hh::anim::eMotionRepeatType_PlayOnce));
 	m_spAnimPose->AddMotionInfo(&entries.front(), entries.size());
