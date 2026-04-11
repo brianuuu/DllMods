@@ -241,7 +241,8 @@ void CustomHUD::SetShadowChaosLevel(uint8_t level, float maturity)
 }
 
 bool gadgetCountWasHidden = false;
-void CustomHUD::SetGadgetMaxCount(int count)
+int gadgetPrevSpriteIndex = 0;
+void CustomHUD::SetGadgetMaxCount(int count, int spriteIndex)
 {
     if (!m_sceneGadgetBar || !m_sceneGadgetBG || !m_sceneGadgetHP || !m_sceneGadgetText)
     {
@@ -269,12 +270,35 @@ void CustomHUD::SetGadgetMaxCount(int count)
         gadgetCountWasHidden = false;
     }
 
-    fnPlayGadget(m_sceneGadgetBar);
-    fnPlayGadget(m_sceneGadgetBG);
-    fnPlayGadget(m_sceneGadgetText, gadgetCountWasHidden);
+    bool const isWeapon = spriteIndex > 0;
+    fnPlayGadget(m_sceneGadgetBG, isWeapon);
 
+    // only play slide in/out animation if it's not a weapon or first use
+    if (gadgetPrevSpriteIndex == 0 || spriteIndex == 0)
+    {
+        fnPlayGadget(m_sceneGadgetBar);
+        fnPlayGadget(m_sceneGadgetText, gadgetCountWasHidden);
+    }
+    gadgetPrevSpriteIndex = spriteIndex;
+
+    m_sceneGadgetBar->GetNode("Cast_0354")->SetHideFlag(isWeapon);
+    m_sceneGadgetBar->GetNode("Cast_0357")->SetHideFlag(isWeapon);
     m_sceneGadgetBar->GetNode("Null_0363")->SetHideFlag(gadgetCountWasHidden);
+    m_sceneGadgetHP->SetHideFlag(isWeapon);
     m_sceneGadgetText->SetHideFlag(gadgetCountWasHidden);
+    m_sceneGadgetText->GetNode("missile")->SetPatternIndex(spriteIndex);
+
+    if (isWeapon)
+    {
+        // adjust weapon ammo position as it has no HP
+        m_sceneGadgetBar->GetNode("Null_0363")->SetPosition(275.0f, 0.0f);
+        m_sceneGadgetText->SetPosition(-23.0f, 42.0f);
+    }
+    else
+    {
+        m_sceneGadgetBar->GetNode("Null_0363")->SetPosition(298.0f, -42.0f);
+        m_sceneGadgetText->SetPosition(0.0f, 0.0f);
+    }
 
     UpdateGadgetHPPosition();
 }
