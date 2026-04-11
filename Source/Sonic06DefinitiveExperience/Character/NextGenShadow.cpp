@@ -328,7 +328,11 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
     else if (Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Weapons)
     {
         CObjWeapon::VerifySpriteIndex();
-        if (!Common::IsPlayerHangOn() && !Common::IsPlayerSuper() && !NextGenShadow::m_weaponSingleton)
+        if (Common::IsPlayerSuper())
+        {
+            CObjWeapon::SetWeaponType(WT_COUNT);
+        }
+        else if (!Common::IsPlayerHangOn() && !NextGenShadow::m_weaponSingleton)
         {
             if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadUp))
             {
