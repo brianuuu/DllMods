@@ -273,13 +273,12 @@ void CustomHUD::SetGadgetMaxCount(int count, int spriteIndex)
     bool const isWeapon = spriteIndex > 0;
     fnPlayGadget(m_sceneGadgetBG, isWeapon);
 
-    // only play slide in/out animation if it's not a weapon or first use
-    if (gadgetPrevSpriteIndex == 0 || spriteIndex == 0)
+    // play animation for in/out, don't play for switching weapon if HUD is already enabled
+    if (gadgetPrevSpriteIndex == 0 || spriteIndex == 0 || count < 0)
     {
         fnPlayGadget(m_sceneGadgetBar);
         fnPlayGadget(m_sceneGadgetText, gadgetCountWasHidden);
     }
-    gadgetPrevSpriteIndex = spriteIndex;
 
     m_sceneGadgetBar->GetNode("Cast_0354")->SetHideFlag(isWeapon);
     m_sceneGadgetBar->GetNode("Cast_0357")->SetHideFlag(isWeapon);
@@ -299,6 +298,9 @@ void CustomHUD::SetGadgetMaxCount(int count, int spriteIndex)
         m_sceneGadgetBar->GetNode("Null_0363")->SetPosition(298.0f, -42.0f);
         m_sceneGadgetText->SetPosition(0.0f, 0.0f);
     }
+
+    // remember if it was weapon when HUD is enabled
+    gadgetPrevSpriteIndex = count > 0 ? spriteIndex : 0;
 
     UpdateGadgetHPPosition();
 }
@@ -324,6 +326,11 @@ void CustomHUD::SetGadgetHP(float hp)
     m_sceneGadgetHP->SetHideFlag(false);
     m_sceneGadgetHP->m_MotionSpeed = 0.0f;
     m_sceneGadgetHP->SetMotionFrame(hp);
+}
+
+int CustomHUD::GetGadgetSpriteIndex()
+{
+    return gadgetPrevSpriteIndex;
 }
 
 void CustomHUD::UpdateGadgetHPPosition()
