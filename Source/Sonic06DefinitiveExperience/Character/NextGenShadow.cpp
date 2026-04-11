@@ -352,6 +352,7 @@ HOOK(int, __fastcall, NextGenShadow_CSonicDestructor, 0x518AF0, uint32_t This, v
 {
     NextGenShadow::m_vehicleSingleton.reset();
     NextGenShadow::m_weaponSingleton.reset();
+    CObjWeapon::SetWeaponType(WT_COUNT);
     CObjWeapon::ResetWeaponData();
     return originalNextGenShadow_CSonicDestructor(This, Edx, a2);
 }
@@ -914,6 +915,7 @@ HOOK(int, __fastcall, NextGenShadow_MsgRestartStage, 0xE76810, Sonic::Player::CP
     NextGenShadow::m_enableAutoRunAction = true;
 
     // Restore ammo
+    CObjWeapon::SetWeaponType(WT_COUNT);
     CObjWeapon::ResetWeaponData();
 
     return result;
