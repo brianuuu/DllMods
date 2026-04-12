@@ -9,11 +9,11 @@ std::vector<WeaponData> CObjWeapon::m_weaponData =
 	{ 
 		"weapon_eggpawngun", 
 		50, 50, 1,
-		"ef_eggpanwgun_omen", 0.2f,
+		"ef_eggpanwgun_omen", 0.2f, 0.3f,
 		20.0f, 0.0f, 0.125f,
 		"", "ef_eggpanwgun_bullet",
 		"ef_eggpanwgun_muzzle", "ef_projectile_impact",
-		0, 0, 0
+		0, 0, 0 // TODO:
 	},
 };
 
@@ -61,22 +61,6 @@ CObjProjectile::CObjProjectile
 	UpdateTransform();
 }
 
-void CObjProjectile::AddCallback
-(
-	const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder,
-	Sonic::CGameDocument* in_pGameDocument,
-	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
-)
-{
-	Sonic::CObjectBase::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
-
-	if (m_pData->m_shootSfx)
-	{
-		SharedPtrTypeless sfx;
-		Common::ObjectPlaySound(this, m_pData->m_shootSfx, sfx);
-	}
-}
-
 bool CObjProjectile::SetAddRenderables
 (
 	Sonic::CGameDocument* in_pGameDocument, 
@@ -99,16 +83,6 @@ bool CObjProjectile::SetAddRenderables
 		m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spMatrixNodeTransform, m_pData->m_projectileEffectName.c_str(), 1.0f);
 	}
 
-	// muzzle
-	if (!m_pData->m_muzzleEffectName.empty())
-	{
-		auto effectNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
-		effectNode->SetParent(Sonic::CApplicationDocument::GetInstance()->m_pMember->m_spMatrixNodeRoot.get());
-		effectNode->m_Transform.SetPosition(m_spMatrixNodeTransform->m_Transform.m_Position);
-		effectNode->NotifyChanged();
-		m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, effectNode, m_pData->m_muzzleEffectName.c_str(), 1.0f);
-	}
-
 	return true;
 }
 
@@ -126,6 +100,22 @@ bool CObjProjectile::SetAddColliders
 	AddEventCollision("Attack", bodyEventTrigger, Common::MakeCollisionID(0, bitfield), true, m_spMatrixNodeTransform);
 
 	return true;
+}
+
+void CObjProjectile::AddCallback
+(
+	const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder,
+	Sonic::CGameDocument* in_pGameDocument,
+	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
+)
+{
+	Sonic::CObjectBase::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
+
+	if (m_pData->m_shootSfx)
+	{
+		SharedPtrTypeless sfx;
+		Common::ObjectPlaySound(this, m_pData->m_shootSfx, sfx);
+	}
 }
 
 bool CObjProjectile::ProcessMessage
@@ -160,7 +150,11 @@ bool CObjProjectile::ProcessMessage
 
 			if (!m_pData->m_hitEffectName.empty())
 			{
-				m_pGlitterPlayer->PlayOneshot(m_spMatrixNodeTransform, m_pData->m_hitEffectName.c_str(), 1.0f, 1);
+				auto effectNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
+				effectNode->SetParent(Sonic::CApplicationDocument::GetInstance()->m_pMember->m_spMatrixNodeRoot.get());
+				effectNode->m_Transform.SetPosition(m_spMatrixNodeTransform->m_Transform.m_Position);
+				effectNode->NotifyChanged();
+				m_pGlitterPlayer->PlayOneshot(effectNode, m_pData->m_hitEffectName.c_str(), 1.0f, 1);
 			}
 
 			Kill();
@@ -224,7 +218,14 @@ void CObjWeapon::VerifySpriteIndex()
 	WeaponData const& data = m_weaponData[m_type];
 	if (S06HUD_API::GetGadgetSpriteIndex() != data.m_spriteIndex)
 	{
-		SetWeaponType(WT_COUNT);
+		// don't call SetWeaponType, we just want to match HUD
+		m_type = WT_COUNT;
+
+		if (NextGenShadow::m_weaponSingleton)
+		{
+			NextGenShadow::m_weaponSingleton->Kill();
+			NextGenShadow::m_weaponSingleton.reset();
+		}
 	}
 }
 
@@ -284,33 +285,23 @@ CObjWeapon::CObjWeapon
 {
 }
 
-void CObjWeapon::Shoot()
+bool CObjWeapon::SetAddRenderables
+(
+	Sonic::CGameDocument* in_pGameDocument, 
+	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
+)
 {
-	if (!CanShoot())
-	{
-		return;
-	}
+	// model
+	hh::mr::CMirageDatabaseWrapper wrapper(in_spDatabase.get());
+	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData(m_pData->m_weaponModelName.c_str(), 0);
+	m_spNodeModel = boost::make_shared<Sonic::CMatrixNodeTransform>();
+	m_spNodeModel->SetParent(m_spNodeParent.get());
+	m_spModel = boost::make_shared<hh::mr::CSingleElement>(spModelBaseData);
+	m_spModel->BindMatrixNode(m_spNodeModel);
+	m_spNodeMuzzle = m_spModel->GetNode("WeaponEffect");
+	Sonic::CGameObject::AddRenderable("Object", m_spModel, true);
 
-	m_pData->m_ammo--;
-	S06HUD_API::SetGadgetCount(m_pData->m_ammo, m_pData->m_maxAmmo);
-	
-	// change animation
-	Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirLoop[m_type]);
-
-	// shoot projectile
-	auto node = m_spModel->GetNode("WeaponEffect");
-	hh::mr::CTransform startTrans;
-	startTrans.m_Rotation = node->GetWorldMatrix().rotation();
-	startTrans.m_Position = node->GetWorldMatrix().translation();
-
-	hh::math::CVector targetPos = hh::math::CVector::Zero();
-	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-	if (context->m_HomingAttackTargetActorID)
-	{
-		SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPos));
-	}
-
-	m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjProjectile>(m_type, startTrans, targetPos));
+	return true;
 }
 
 void CObjWeapon::AddCallback
@@ -320,18 +311,7 @@ void CObjWeapon::AddCallback
 	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
 )
 {
-	Sonic::CGameObject3D::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
-	Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
-	in_pGameDocument->AddUpdateUnit("0", this);
-
-	// model
-	hh::mr::CMirageDatabaseWrapper wrapper(in_spDatabase.get());
-	boost::shared_ptr<hh::mr::CModelData> spModelBaseData = wrapper.GetModelData(m_pData->m_weaponModelName.c_str(), 0);
-	m_spNodeModel = boost::make_shared<Sonic::CMatrixNodeTransform>();
-	m_spNodeModel->SetParent(m_spNodeParent.get());
-	m_spModel = boost::make_shared<hh::mr::CSingleElement>(spModelBaseData);
-	m_spModel->BindMatrixNode(m_spNodeModel);
-	Sonic::CGameObject::AddRenderable("Object", m_spModel, true);
+	Sonic::CObjectBase::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
 
 	// undo -90 X-rotation on Shadow's root
 	hh::math::CQuaternion const rotation = Eigen::AngleAxisf(PI_F * 0.5f, hh::math::CVector::UnitX()) * hh::math::CQuaternion::Identity();
@@ -360,7 +340,7 @@ bool CObjWeapon::ProcessMessage
 		}
 	}
 
-	return Sonic::CGameObject3D::ProcessMessage(message, flag);
+	return Sonic::CObjectBase::ProcessMessage(message, flag);
 }
 
 void CObjWeapon::UpdateParallel
@@ -368,5 +348,127 @@ void CObjWeapon::UpdateParallel
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
 )
 {
+	std::lock_guard<std::mutex> guard(m_mutex);
 
+	// make sure dummy transform follows the model
+	m_spMatrixNodeTransform->m_Transform.SetPosition(m_spNodeModel->GetWorldMatrix().translation());
+	m_spMatrixNodeTransform->NotifyChanged();
+
+	switch (m_state)
+	{
+	case State::AirCharge:
+	{
+		m_chargeTimer -= in_rUpdateInfo.DeltaTime;
+		if (m_chargeTimer < 0.0f)
+		{
+			if (m_chargeID)
+			{
+				m_pGlitterPlayer->StopByID(m_chargeID, false);
+				m_chargeID = 0;
+			}
+
+			m_state = State::AirFire;
+			m_shootTimer = 0.0f;
+		}
+		break;
+	}
+	case State::AirFire:
+	{
+		m_shootTimer -= in_rUpdateInfo.DeltaTime;
+		if (m_shootTimer <= 0.0f)
+		{
+			m_shootTimer = m_pData->m_shootInterval;
+			if (CanShoot())
+			{
+				Shoot();
+			}
+			else
+			{
+				// TODO: no ammo sfx
+			}
+		}
+		break;
+	}
+	}
+}
+
+bool CObjWeapon::IsActive() const
+{
+	std::lock_guard<std::mutex> guard(m_mutex);
+	return m_state != State::Idle;
+}
+
+bool CObjWeapon::CanRelease() const
+{
+	std::lock_guard<std::mutex> guard(m_mutex);
+	return m_chargeTimer <= 0.0f && m_shootTimer > 0.0f;
+}
+
+void CObjWeapon::SetStateIdle()
+{
+	std::lock_guard<std::mutex> guard(m_mutex);
+
+	m_state = State::Idle;
+	if (m_chargeID)
+	{
+		m_pGlitterPlayer->StopByID(m_chargeID, false);
+		m_chargeID = 0;
+	}
+}
+
+void CObjWeapon::SetStateAir()
+{
+	std::lock_guard<std::mutex> guard(m_mutex);
+
+	if (m_pData->m_chargeTime > 0.0f)
+	{
+		m_state = State::AirCharge;
+		m_chargeTimer = m_pData->m_chargeTime;
+
+		if (!m_pData->m_chargeEffectName.empty())
+		{
+			m_chargeID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spNodeMuzzle, m_pData->m_chargeEffectName.c_str(), 1.0f);
+		}
+
+		if (m_pData->m_chargeSfx)
+		{
+			SharedPtrTypeless sfx;
+			Common::ObjectPlaySound(this, m_pData->m_chargeSfx, sfx);
+		}
+
+		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirLoop[m_type]);
+	}
+	else
+	{
+		m_state = State::AirFire;
+	}
+}
+
+void CObjWeapon::Shoot()
+{
+	m_pData->m_ammo--;
+	S06HUD_API::SetGadgetCount(m_pData->m_ammo, m_pData->m_maxAmmo);
+
+	// change animation
+	Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirLoop[m_type]);
+
+	// muzzle
+	if (!m_pData->m_muzzleEffectName.empty())
+	{
+		m_pGlitterPlayer->PlayOneshot(m_spNodeMuzzle, m_pData->m_muzzleEffectName.c_str(), 1.0f, 1);
+	}
+
+	// shoot projectile
+	hh::mr::CTransform startTrans;
+	startTrans.m_Rotation = m_spNodeMuzzle->GetWorldMatrix().rotation();
+	startTrans.m_Position = m_spNodeMuzzle->GetWorldMatrix().translation();
+
+	hh::math::CVector targetPos = hh::math::CVector::Zero();
+	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	if (context->m_HomingAttackTargetActorID)
+	{
+		SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPos));
+	}
+
+	m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjProjectile>(m_type, startTrans, targetPos));
 }

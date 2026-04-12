@@ -23,6 +23,7 @@ struct WeaponData
 	int const m_spriteIndex = 0;
 	std::string const m_chargeEffectName;
 	float const m_chargeTime = 0.0f;
+	float const m_shootInterval = 0.5f;
 
 	float const m_speed = 0.0f;
 	float const m_gravity = 0.0f;
@@ -59,15 +60,15 @@ public:
 	CObjProjectile(WeaponType type, hh::mr::CTransform const& startTrans, hh::math::CVector const& targetPos = hh::math::CVector::Zero());
 
 private:
-	void AddCallback(const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	bool SetAddColliders(const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
+	void AddCallback(const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;
 	void UpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo) override;
 	void UpdateTransform(float dt = 0.0f);
 };
 
-class CObjWeapon : public Sonic::CGameObject3D
+class CObjWeapon : public Sonic::CObjectBase
 {
 public:
 	static WeaponType m_type;
@@ -84,17 +85,38 @@ public:
 
 public:
 	CObjWeapon(boost::shared_ptr<hh::mr::CMatrixNode> parent);
-	void Shoot();
+
+	bool IsActive() const;
+	bool CanRelease() const;
+	void SetStateIdle();
+	void SetStateAir();
 
 private:
 	boost::shared_ptr<hh::mr::CMatrixNode> m_spNodeParent;
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeModel;
+	boost::shared_ptr<hh::mr::CMatrixNodeSingleElementNode> m_spNodeMuzzle;
 
 	WeaponData* m_pData = nullptr;
 
+	float m_chargeTimer = 0.0f;
+	uint32_t m_chargeID = 0;
+	float m_shootTimer = 0.0f;
+
+	enum class State 
+	{
+		Idle,
+		AirCharge,
+		AirFire,
+	} m_state = State::Idle;
+
+	mutable std::mutex m_mutex;
+
 private:
+	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	void AddCallback(const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
 	bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;
 	void UpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo) override;
+
+	void Shoot();
 };

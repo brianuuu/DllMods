@@ -333,7 +333,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
         {
             CObjWeapon::SetWeaponType(WT_COUNT);
         }
-        else if (!Common::IsPlayerHangOn())
+        else if (!Common::IsPlayerHangOn() && (!NextGenShadow::m_weaponSingleton || !NextGenShadow::m_weaponSingleton->IsActive()))
         {
             if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadUp))
             {
@@ -1859,8 +1859,9 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
     }
     case NextGenShadow::OverrideType::SH_WeaponAirLoop:
     {
-        NextGenShadow::m_holdPosition = context->m_spMatrixNode->m_Transform.m_Position;
         // TODO:
+        NextGenShadow::m_holdPosition = context->m_spMatrixNode->m_Transform.m_Position;
+        NextGenShadow::m_weaponSingleton->SetStateAir();
         break;
     }
     }
@@ -2234,11 +2235,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 
         // TODO:
-        if (padState->IsDown(Sonic::EKeyState::eKeyState_X) && NextGenShadow::m_weaponSingleton->CanShoot())
-        {
-            NextGenShadow::m_weaponSingleton->Shoot();
-        }
-        else
+        if (!padState->IsDown(Sonic::EKeyState::eKeyState_X) && NextGenShadow::m_weaponSingleton->CanRelease())
         {
             StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
         }
@@ -2283,6 +2280,11 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::f
         context->StateFlag(eStateFlag_OutOfControl)--;
         context->StateFlag(eStateFlag_NoDamage)--;
         context->m_GravityTimer = 1000.0f;
+        break;
+    }
+    case NextGenShadow::OverrideType::SH_WeaponAirLoop:
+    {
+        NextGenShadow::m_weaponSingleton->SetStateIdle();
         break;
     }
     }
