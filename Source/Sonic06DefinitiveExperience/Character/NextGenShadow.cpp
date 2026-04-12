@@ -22,7 +22,7 @@ void NextGenShadow::setAnimationSpeed_Shadow(NextGenAnimation& data)
     data.run_speedFactor = -1.0f;
     data.dash_playbackSpeed = 1.69f;
     data.dash_speedFactor = -1.0f;
-    data.jet_playbackSpeed = 1.69f;;
+    data.jet_playbackSpeed = 1.69f;
     data.jet_speedFactor = -1.0f;
     data.jetWall_playbackSpeed = 1.17f;
     data.jetWall_speedFactor = -1.0f;
@@ -411,6 +411,10 @@ void PlayChaosSnap()
     {
         context->m_pPlayer->SendMessageImm(context->m_SuperRenderableActorID, boost::make_shared<Sonic::Message::MsgSetVisible>(false));
     }
+    if (NextGenShadow::m_weaponSingleton)
+    {
+        context->m_pPlayer->SendMessageImm(NextGenShadow::m_weaponSingleton->m_ActorID, boost::make_shared<Sonic::Message::MsgSetVisible>(false));
+    }
 
     // Stop in air
     Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
@@ -606,6 +610,10 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateHomingAttackEnd, 0x1231F80, hh::
         if (context->m_SuperRenderableActorID)
         {
             context->m_pPlayer->SendMessageImm(context->m_SuperRenderableActorID, boost::make_shared<Sonic::Message::MsgSetVisible>(true));
+        }
+        if (NextGenShadow::m_weaponSingleton)
+        {
+            context->m_pPlayer->SendMessageImm(NextGenShadow::m_weaponSingleton->m_ActorID, boost::make_shared<Sonic::Message::MsgSetVisible>(true));
         }
         
         // Unfreeze camera

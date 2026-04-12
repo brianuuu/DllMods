@@ -337,6 +337,12 @@ void CObjWeapon::AddCallback
 	hh::math::CQuaternion const rotation = Eigen::AngleAxisf(PI_F * 0.5f, hh::math::CVector::UnitX()) * hh::math::CQuaternion::Identity();
 	m_spNodeModel->m_Transform.SetRotation(rotation);
 	m_spNodeModel->NotifyChanged();
+
+	// spawned during Chaos Snap teleport, hide
+	if (!NextGenShadow::IsModelVisible())
+	{
+		SendMessageImm(m_ActorID, boost::make_shared<Sonic::Message::MsgSetVisible>(false));
+	}
 }
 
 bool CObjWeapon::ProcessMessage
