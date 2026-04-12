@@ -68,7 +68,6 @@ private:
 };
 
 class CObjWeapon : public Sonic::CGameObject3D
-	, public Sonic::IAnimationContext, public Sonic::CAnimationStateMachine
 {
 public:
 	static WeaponType m_type;
@@ -91,18 +90,11 @@ private:
 	boost::shared_ptr<hh::mr::CMatrixNode> m_spNodeParent;
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
 	boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeModel;
-	boost::shared_ptr<hh::anim::CAnimationPose> m_spAnimPose;
 
 	WeaponData* m_pData = nullptr;
 
 private:
 	void AddCallback(const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder, Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;
-	void KillCallback() override;
 	bool ProcessMessage(Hedgehog::Universe::Message& message, bool flag) override;
 	void UpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo) override;
-
-	// from IAnimationContext
-	Hedgehog::Animation::CAnimationPose* GetAnimationPose() override { return m_spAnimPose.get(); }
-	Hedgehog::Math::CVector GetVelocityForAnimationSpeed() override { return hh::math::CVector::Ones(); }
-	Hedgehog::Math::CVector GetVelocityForAnimationChange() override { return hh::math::CVector::Ones(); }
 };

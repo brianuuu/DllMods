@@ -224,8 +224,7 @@ void CObjWeapon::VerifySpriteIndex()
 	WeaponData const& data = m_weaponData[m_type];
 	if (S06HUD_API::GetGadgetSpriteIndex() != data.m_spriteIndex)
 	{
-		// don't call SetWeaponType, we just want to match HUD
-		m_type = WT_COUNT;
+		SetWeaponType(WT_COUNT);
 	}
 }
 
@@ -238,19 +237,30 @@ void CObjWeapon::SetWeaponType(WeaponType type)
 {
 	if (m_type == type) return;
 
+	if (NextGenShadow::m_weaponSingleton)
+	{
+		NextGenShadow::m_weaponSingleton->Kill();
+		NextGenShadow::m_weaponSingleton.reset();
+	}
+
 	if (type == WT_COUNT)
 	{
 		WeaponData const& data = m_weaponData[m_type];
 		S06HUD_API::SetGadgetMaxCount(-1, data.m_spriteIndex);
+		m_type = type;
 	}
 	else
 	{
 		WeaponData const& data = m_weaponData[type];
 		S06HUD_API::SetGadgetMaxCount(data.m_maxAmmo, data.m_spriteIndex);
 		S06HUD_API::SetGadgetCount(data.m_ammo, data.m_maxAmmo);
-	}
+		m_type = type;
 
-	m_type = type;
+		auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+		auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("RightHand");
+		NextGenShadow::m_weaponSingleton = boost::make_shared<CObjWeapon>(attachBone);
+		context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(NextGenShadow::m_weaponSingleton);
+	}
 }
 
 void CObjWeapon::NextGun()
@@ -285,8 +295,6 @@ void CObjWeapon::Shoot()
 	S06HUD_API::SetGadgetCount(m_pData->m_ammo, m_pData->m_maxAmmo);
 	
 	// change animation
-	ChangeState("AirLoop");
-	m_spAnimPose->Update(0.001f); // force update bone position
 	Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirLoop[m_type]);
 
 	// shoot projectile
@@ -325,26 +333,10 @@ void CObjWeapon::AddCallback
 	m_spModel->BindMatrixNode(m_spNodeModel);
 	Sonic::CGameObject::AddRenderable("Object", m_spModel, true);
 
-	// animations
-	std::string const air_l = m_pData->m_weaponModelName + "_air_l";
-	m_spAnimPose = boost::make_shared<Hedgehog::Animation::CAnimationPose>(in_spDatabase, m_pData->m_weaponModelName.c_str());
-	std::vector<hh::anim::SMotionInfo> entries = std::vector<hh::anim::SMotionInfo>(0, { "","" });
-	entries.push_back(hh::anim::SMotionInfo("AirLoop", air_l.c_str(), 2.0f, hh::anim::eMotionRepeatType_PlayOnce));
-	m_spAnimPose->AddMotionInfo(&entries.front(), entries.size());
-	m_spAnimPose->CreateAnimationCache();
-	m_spModel->BindPose(m_spAnimPose);
-
-	// states
-	SetContext(this);
-	AddAnimationState("AirLoop");
-
-	// initial fire
-	Shoot();
-}
-
-void CObjWeapon::KillCallback()
-{
-	NextGenShadow::m_weaponSingleton.reset();
+	// undo -90 X-rotation on Shadow's root
+	hh::math::CQuaternion const rotation = Eigen::AngleAxisf(PI_F * 0.5f, hh::math::CVector::UnitX()) * hh::math::CQuaternion::Identity();
+	m_spNodeModel->m_Transform.SetRotation(rotation);
+	m_spNodeModel->NotifyChanged();
 }
 
 bool CObjWeapon::ProcessMessage
@@ -370,6 +362,5 @@ void CObjWeapon::UpdateParallel
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
 )
 {
-	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
-	Update(in_rUpdateInfo);
+
 }
