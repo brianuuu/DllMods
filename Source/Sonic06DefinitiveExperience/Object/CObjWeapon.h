@@ -90,6 +90,7 @@ public:
 	bool CanRelease() const;
 	void SetStateIdle();
 	void SetStateAir();
+	void UpdateBoneRotation();
 
 private:
 	boost::shared_ptr<hh::mr::CMatrixNode> m_spNodeParent;
@@ -111,6 +112,12 @@ private:
 	} m_state = State::Idle;
 
 	mutable std::mutex m_mutex;
+
+	struct RotateBoneData
+	{
+		uint16_t m_boneID = 0;
+		hh::math::CQuaternion m_addRotation = hh::math::CQuaternion::Identity();
+	} m_rotateBoneData;
 
 private:
 	bool SetAddRenderables(Sonic::CGameDocument* in_pGameDocument, const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase) override;

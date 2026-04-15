@@ -301,6 +301,11 @@ bool CObjWeapon::SetAddRenderables
 	m_spNodeMuzzle = m_spModel->GetNode("WeaponEffect");
 	Sonic::CGameObject::AddRenderable("Object", m_spModel, true);
 
+	// bone rotation for aiming
+	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	FUNCTION_PTR(uint16_t, __thiscall, GetBoneIDFromAnimationPose, 0x6C7CC0, hh::anim::CAnimationPose* pAnimPose, hh::base::CSharedString const& name);
+	m_rotateBoneData.m_boneID = GetBoneIDFromAnimationPose(context->m_pPlayer->m_spAnimationPose.get(), "Spine");
+	
 	return true;
 }
 
@@ -442,6 +447,36 @@ void CObjWeapon::SetStateAir()
 	{
 		m_state = State::AirFire;
 	}
+}
+
+void CObjWeapon::UpdateBoneRotation()
+{
+	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	hh::math::CVector targetPosition = hh::math::CVector::Zero();
+	if (m_state != State::Idle && context->m_HomingAttackTargetActorID)
+	{
+		SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
+	}
+
+	hh::math::CQuaternion targetRotation = hh::math::CQuaternion::Identity();
+	if (!targetPosition.isZero())
+	{
+		//hh::math::CVector dir = (m_spNodeMuzzle->GetWorldMatrix().rotation().conjugate() * (targetPosition - context->m_spMatrixNode->m_Transform.m_Position)).normalized();
+		hh::math::CVector dir = (context->m_spMatrixNode->m_Transform.m_Rotation.conjugate() * (targetPosition - context->m_spMatrixNode->m_Transform.m_Position)).normalized();
+		hh::math::CVector dirXZ = dir; dirXZ.y() = 0.0f; dirXZ.normalize();
+		
+		float yaw = min(acosf(hh::math::CVector::UnitZ().dot(dirXZ)), 80.0f * DEG_TO_RAD);
+		if (dir.dot(Eigen::Vector3f::UnitX()) < 0) yaw = -yaw;
+		float pitch = min(acosf(dir.dot(dirXZ)), PI_F * 0.25f);
+		if (dir.dot(Eigen::Vector3f::UnitY()) < 0) pitch = -pitch;
+
+		targetRotation = Eigen::AngleAxisf(yaw, hh::math::CVector::UnitX()) * Eigen::AngleAxisf(pitch, hh::math::CVector::UnitZ());
+	}
+	m_rotateBoneData.m_addRotation = m_rotateBoneData.m_addRotation.slerp(0.1f, targetRotation);
+
+	FUNCTION_PTR(Hedgehog::Animation::hkQsTransform*, __thiscall, GetHkQsTransform, 0x833390, hh::anim::SAnimData* pAnimData, int id);
+	Hedgehog::Animation::hkQsTransform* pTrans = GetHkQsTransform(context->m_pPlayer->m_spAnimationPose->m_pAnimData, m_rotateBoneData.m_boneID);
+	pTrans->m_Rotation = (m_rotateBoneData.m_addRotation * pTrans->m_Rotation).normalized();
 }
 
 void CObjWeapon::Shoot()

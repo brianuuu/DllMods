@@ -349,6 +349,30 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
     originalNextGenShadow_CSonicUpdate(This, Edx, dt);
 }
 
+void __fastcall NextGenShadow_AimWeaponImpl()
+{
+    if (NextGenShadow::m_weaponSingleton)
+    {
+        NextGenShadow::m_weaponSingleton->UpdateBoneRotation();
+    }
+}
+
+void __declspec(naked) NextGenShadow_AimWeapon()
+{
+    static uint32_t returnAddress = 0x6CCD51;
+    static uint32_t sub_6CCC30 = 0x6CCC30;
+    __asm
+    {
+        call    [sub_6CCC30]
+
+        push    esi
+        call    NextGenShadow_AimWeaponImpl
+        pop     esi
+
+        jmp     [returnAddress]
+    }
+}
+
 HOOK(int, __fastcall, NextGenShadow_CSonicDestructor, 0x518AF0, uint32_t This, void* Edx, bool a2)
 {
     NextGenShadow::m_vehicleSingleton.reset();
@@ -3415,6 +3439,7 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_CSonicUpdate);
     INSTALL_HOOK(NextGenShadow_CSonicDestructor);
     INSTALL_HOOK(NextGenShadow_AssignFootstepFloorCues);
+    WRITE_JUMP(0x6CCD4C, NextGenShadow_AimWeapon);
 
     // HACK: CRASH PREVENTION
     INSTALL_HOOK(NextGenShadow_CRASH);
