@@ -37,4 +37,5 @@
 
 #include <Sonic/CCharacterProxy.h>
 #include <Sonic/CGlitterPlayer.h>
+#include <Sonic/CNPCAimFrame.h>
 #include <Sonic/CShapeCollision.h>
