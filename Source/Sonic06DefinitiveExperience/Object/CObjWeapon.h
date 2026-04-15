@@ -80,7 +80,7 @@ public:
 	static bool CanShoot();
 
 	// switch weapon
-	static void SetWeaponType(WeaponType type);
+	static void SetWeaponType(WeaponType type, bool updateHUD = true);
 	static void NextGun();
 
 public:

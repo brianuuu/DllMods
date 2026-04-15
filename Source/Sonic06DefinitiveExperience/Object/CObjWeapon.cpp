@@ -218,14 +218,7 @@ void CObjWeapon::VerifySpriteIndex()
 	WeaponData const& data = m_weaponData[m_type];
 	if (S06HUD_API::GetGadgetSpriteIndex() != data.m_spriteIndex)
 	{
-		// don't call SetWeaponType, we just want to match HUD
-		m_type = WT_COUNT;
-
-		if (NextGenShadow::m_weaponSingleton)
-		{
-			NextGenShadow::m_weaponSingleton->Kill();
-			NextGenShadow::m_weaponSingleton.reset();
-		}
+		SetWeaponType(WT_COUNT, false);
 	}
 }
 
@@ -234,7 +227,7 @@ bool CObjWeapon::CanShoot()
 	return m_type != WT_COUNT && m_weaponData[m_type].m_ammo > 0;
 }
 
-void CObjWeapon::SetWeaponType(WeaponType type)
+void CObjWeapon::SetWeaponType(WeaponType type, bool updateHUD)
 {
 	if (m_type == type) return;
 
@@ -244,18 +237,32 @@ void CObjWeapon::SetWeaponType(WeaponType type)
 		NextGenShadow::m_weaponSingleton.reset();
 	}
 
+	if (updateHUD)
+	{
+		if (type == WT_COUNT)
+		{
+			WeaponData const& data = m_weaponData[m_type];
+			S06HUD_API::SetGadgetMaxCount(-1, data.m_spriteIndex);
+		}
+		else
+		{
+			WeaponData const& data = m_weaponData[type];
+			S06HUD_API::SetGadgetMaxCount(data.m_maxAmmo, data.m_spriteIndex);
+			S06HUD_API::SetGadgetCount(data.m_ammo, data.m_maxAmmo);
+		}
+	}
+
+	m_type = type;
+
 	if (type == WT_COUNT)
 	{
-		WeaponData const& data = m_weaponData[m_type];
-		S06HUD_API::SetGadgetMaxCount(-1, data.m_spriteIndex);
-		m_type = type;
+		// Revert pulley animation
+		WRITE_MEMORY(0xE4626D, uint8_t, 0xA1, 0xDC, 0x45, 0xA4, 0x01, 0x50);
 	}
 	else
 	{
-		WeaponData const& data = m_weaponData[type];
-		S06HUD_API::SetGadgetMaxCount(data.m_maxAmmo, data.m_spriteIndex);
-		S06HUD_API::SetGadgetCount(data.m_ammo, data.m_maxAmmo);
-		m_type = type;
+		// Set pulley to use UpReel animation
+		WRITE_MEMORY(0xE4626D, uint8_t, 0x68, 0xEC, 0x8A, 0x5F, 0x01, 0x90);
 
 		auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 		auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("RightHand");
