@@ -67,6 +67,7 @@ public:
 	static bool checkUseLightSpeedDash();
 	static void keepConstantHorizontalVelocity(float hSpeed);
 
+	static void toggleBoost(bool enabled);
 	static void setHomingCollisionDistance(float dist = -1.0f);
 };
 

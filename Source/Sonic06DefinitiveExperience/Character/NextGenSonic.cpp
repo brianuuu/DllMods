@@ -844,48 +844,6 @@ bool __fastcall NextGenSonic::applySlidingHorizontalTargetVel(void* context)
 //-------------------------------------------------------
 // Rechargable Shield
 //-------------------------------------------------------
-void __declspec(naked) NextGenSonic_groundBoostSuperSonicOnly()
-{
-    static uint32_t returnAddress = 0xDFF270;
-    static uint32_t failAddress = 0xDFF2CB;
-    __asm
-    {
-        // disable air boost for normal Sonic
-        mov     eax, [ebx + 534h]
-        mov     eax, [eax + 4]
-        cmp     byte ptr[eax + 6Fh], 0
-        jz      jump
-
-        // original function
-        movss   xmm0, dword ptr[ebx + 5BCh]
-        jmp     [returnAddress]
-        
-        jump:
-        jmp     [failAddress]
-    }
-}
-
-void __declspec(naked) NextGenSonic_airBoostSuperSonicOnly()
-{
-    static uint32_t returnAddress = 0xDFE094;
-    static uint32_t failAddress = 0xDFDFE6;
-    __asm
-    {
-        // disable air boost for normal Sonic
-        mov     eax, [esi + 534h]
-        mov     eax, [eax + 4]
-        cmp     byte ptr[eax + 6Fh], 0
-        jz      jump
-
-        // original function
-        movss   xmm0, dword ptr[esi + 5BCh]
-        jmp     [returnAddress]
-        
-        jump:
-        jmp     [failAddress]
-    }
-}
-
 bool NextGenSonic::m_isShield = false;
 SharedPtrTypeless shieldSoundHandle_Elise;
 SharedPtrTypeless shieldPfxHandle_Elise;
@@ -1670,17 +1628,7 @@ void NextGenSonic::ChangeGems(S06HUD_API::SonicGemType oldType, S06HUD_API::Soni
 
     // Blue/No Gem
     DisableGem(S06HUD_API::SonicGemType::SGT_None);
-    if (newType == S06HUD_API::SonicGemType::SGT_None)
-    {
-        WRITE_MEMORY(0xDFF268, uint8_t, 0xF3, 0x0F, 0x10, 0x83, 0xBC);
-        WRITE_MEMORY(0xDFE05F, uint8_t, 0xF3, 0x0F, 0x10, 0x86, 0xBC);
-    }
-    else
-    {
-        // Disable boost for normal Sonic only
-        WRITE_JUMP(0xDFF268, NextGenSonic_groundBoostSuperSonicOnly);
-        WRITE_JUMP(0xDFE05F, NextGenSonic_airBoostSuperSonicOnly);
-    }
+    NextGenPhysics::toggleBoost(newType != S06HUD_API::SonicGemType::SGT_None);
 
     // Red Gem
     DisableGem(S06HUD_API::SonicGemType::SGT_Red);
@@ -2669,8 +2617,7 @@ void NextGenSonic::applyPatches()
         WRITE_MEMORY(0xE6853B, uint8_t, 0xEB);
 
         // Disable boost for normal Sonic only
-        WRITE_JUMP(0xDFF268, NextGenSonic_groundBoostSuperSonicOnly);
-        WRITE_JUMP(0xDFE05F, NextGenSonic_airBoostSuperSonicOnly);
+        NextGenPhysics::toggleBoost(false);
 
         // Disable boost inside Perfect Chaos
         WRITE_MEMORY(0x11A06F7, uint8_t, 0xE9, 0xC1, 0x00, 0x00, 0x00, 0x90);

@@ -135,6 +135,63 @@ void NextGenPhysics::keepConstantHorizontalVelocity(float hSpeed)
     Common::SetPlayerVelocity(velocity);
 }
 
+void __declspec(naked) NextGenPhysics_disableGroundBoost()
+{
+    static uint32_t returnAddress = 0xDFF270;
+    static uint32_t failAddress = 0xDFF2CB;
+    __asm
+    {
+        // disable air boost for normal Sonic
+        mov     eax, [ebx + 534h]
+        mov     eax, [eax + 4]
+        cmp     byte ptr[eax + 6Fh], 0
+        jz      jump
+
+        // original function
+        movss   xmm0, dword ptr[ebx + 5BCh]
+        jmp     [returnAddress]
+
+        jump:
+        jmp     [failAddress]
+    }
+}
+
+void __declspec(naked) NextGenPhysics_disableAirBoost()
+{
+    static uint32_t returnAddress = 0xDFE094;
+    static uint32_t failAddress = 0xDFDFE6;
+    __asm
+    {
+        // disable air boost for normal Sonic
+        mov     eax, [esi + 534h]
+        mov     eax, [eax + 4]
+        cmp     byte ptr[eax + 6Fh], 0
+        jz      jump
+
+        // original function
+        movss   xmm0, dword ptr[esi + 5BCh]
+        jmp     [returnAddress]
+
+        jump:
+        jmp     [failAddress]
+    }
+}
+
+void NextGenPhysics::toggleBoost(bool enabled)
+{
+    if (enabled)
+    {
+        WRITE_MEMORY(0xDFF268, uint8_t, 0xF3, 0x0F, 0x10, 0x83, 0xBC);
+        WRITE_MEMORY(0xDFE05F, uint8_t, 0xF3, 0x0F, 0x10, 0x86, 0xBC);
+    }
+    else
+    {
+        // Disable boost for normal Sonic only
+        WRITE_JUMP(0xDFF268, NextGenPhysics_disableGroundBoost);
+        WRITE_JUMP(0xDFE05F, NextGenPhysics_disableAirBoost);
+    }
+}
+
 FUNCTION_PTR(void, __thiscall, UpdateHomingCollision2D, 0xE642F0, Sonic::Player::CPlayerSpeedContext* This);
 FUNCTION_PTR(void, __thiscall, UpdateHomingCollision3D, 0xE64410, Sonic::Player::CPlayerSpeedContext* This);
 float HomingLockonCollisionFar2DPrev = 0.0f;
