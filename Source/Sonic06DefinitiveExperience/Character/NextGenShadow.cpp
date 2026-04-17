@@ -1711,14 +1711,7 @@ bool NextGenShadow::AirActionCheck()
             return true;
         }
 
-        if (CObjWeapon::m_type != WT_COUNT)
-        {
-            m_overrideType = OverrideType::SH_WeaponAirLoop;
-        }
-        else
-        {
-            m_overrideType = OverrideType::SH_SpearWait;
-        }
+        m_overrideType = OverrideType::SH_SpearWait;
         StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
         return true;
     }
@@ -1739,6 +1732,14 @@ bool NextGenShadow::AirActionCheck()
             StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
             return true;
         }
+    }
+
+    // Weapons
+    if (padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger) && CObjWeapon::m_type != WT_COUNT)
+    {
+        m_overrideType = OverrideType::SH_WeaponAirLoop;
+        StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
+        return true;
     }
 
     return false;
@@ -2262,7 +2263,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 
         // TODO:
-        if (!padState->IsDown(Sonic::EKeyState::eKeyState_X) && NextGenShadow::m_weaponSingleton->CanRelease())
+        if (!padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && NextGenShadow::m_weaponSingleton->CanRelease())
         {
             StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
         }

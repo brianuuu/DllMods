@@ -1,4 +1,5 @@
 #include "CObjWeapon.h"
+#include "Character/NextGenPhysics.h"
 #include "Character/NextGenShadow.h"
 #include "Utils/AnimationSetPatcher.h"
 
@@ -258,11 +259,17 @@ void CObjWeapon::SetWeaponType(WeaponType type, bool updateHUD)
 	{
 		// Revert pulley animation
 		WRITE_MEMORY(0xE4626D, uint8_t, 0xA1, 0xDC, 0x45, 0xA4, 0x01, 0x50);
+
+		// Enable boost
+		NextGenPhysics::toggleBoost(true);
 	}
 	else
 	{
 		// Set pulley to use UpReel animation
 		WRITE_MEMORY(0xE4626D, uint8_t, 0x68, 0xEC, 0x8A, 0x5F, 0x01, 0x90);
+
+		// Disable boost
+		NextGenPhysics::toggleBoost(false);
 
 		auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 		auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("RightHand");
