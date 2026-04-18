@@ -61,7 +61,12 @@ const char* volatile const AnimationSetPatcher::ChaosBlastLoop = "ChaosBlastLoop
 
 const char* volatile const AnimationSetPatcher::WeaponAirLoop[WT_COUNT] =
 {
-    "WeaponEggPawnGunAirLoop",
+    "WeaponGunAirLoop",
+};
+
+const char* volatile const AnimationSetPatcher::WeaponAirFire[WT_COUNT] =
+{
+    "WeaponGunAirFire",
 };
 
 HOOK(bool, __fastcall, CAnimationControlSingle_Debug, 0x6D84F0, uint32_t** This, void* Edx, float a2, int a3)
@@ -638,7 +643,8 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationDataSuper.emplace_back("JeepBLoop", "sh_jeep_back_l", 1.0f, true, nullptr);
 
         // Weapons
-        m_newAnimationData.emplace_back(WeaponAirLoop[0], "wpn_eggpawngun_air_l", 2.0f, false, nullptr);
+        m_newAnimationData.emplace_back(WeaponAirLoop[0], "wpn_gun_air_l", 1.0f, true, nullptr);
+        m_newAnimationData.emplace_back(WeaponAirFire[0], "wpn_gun_air_fire", 1.0f, false, WeaponAirLoop[0]);
     }
 
     if (!m_newAnimationData.empty())

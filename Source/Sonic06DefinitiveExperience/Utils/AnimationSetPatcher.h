@@ -105,5 +105,6 @@ public:
     static const char* volatile const ChaosBlastLoop;
 
     static const char* volatile const WeaponAirLoop[WT_COUNT];
+    static const char* volatile const WeaponAirFire[WT_COUNT];
 };
 
