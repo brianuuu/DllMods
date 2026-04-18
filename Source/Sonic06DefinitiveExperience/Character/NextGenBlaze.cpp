@@ -380,7 +380,6 @@ HOOK(int, __fastcall, NextGenBlaze_CSonicStateSlidingBegin, 0x11D7110, hh::fnd::
     
     // clear lock-on
     Common::SonicContextHudHomingAttackClear(context);
-    context->m_HomingAttackTargetActorID = 0;
 
     // Get current sliding speed
     Eigen::Vector3f playerVelocity;

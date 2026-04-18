@@ -810,7 +810,6 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
                 context->StateFlag(eStateFlag_EnableAirOnceAction) = true;
 
                 Common::SonicContextHudHomingAttackClear(context);
-                context->m_HomingAttackTargetActorID = 0;
 
                 // resume damage
                 if (NextGenShadow::m_chaosSnapNoDamage)
@@ -1855,7 +1854,6 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
     case NextGenShadow::OverrideType::SH_ChaosBoost:
     {
         Common::SonicContextHudHomingAttackClear(context);
-        context->m_HomingAttackTargetActorID = 0;
 
         Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosBoost);
         context->StateFlag(eStateFlag_OutOfControl)++;
@@ -1872,7 +1870,6 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
     case NextGenShadow::OverrideType::SH_ChaosBlastWait:
     {
         Common::SonicContextHudHomingAttackClear(context);
-        context->m_HomingAttackTargetActorID = 0;
 
         Common::SonicContextChangeAnimation(AnimationSetPatcher::ChaosBlastWait);
         context->StateFlag(eStateFlag_OutOfControl)++;
@@ -2341,6 +2338,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::f
     case NextGenShadow::OverrideType::SH_WeaponAir:
     {
         NextGenShadow::m_weaponSingleton->SetStateIdle();
+        Common::SonicContextHudHomingAttackClear(context);
         break;
     }
     }

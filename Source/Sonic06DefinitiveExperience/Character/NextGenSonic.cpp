@@ -2166,7 +2166,6 @@ HOOK(int*, __fastcall, NextGenSonicGems_CSonicStateSquatKickBegin, 0x12526D0, hh
     {
         // clear lock-on
         Common::SonicContextHudHomingAttackClear(context);
-        context->m_HomingAttackTargetActorID = 0;
 
         greenGemShockWaveCreated = false;
         greenGemShockWaveTimer = 0.0f;

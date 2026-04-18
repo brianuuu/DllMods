@@ -2029,6 +2029,7 @@ inline void SonicContextHudHomingAttackClear(Sonic::Player::CPlayerSpeedContext*
 	{
 		FUNCTION_PTR(void, __thiscall, SonicHudHomingAttackClear, 0xDEBC50, Sonic::Player::CSonicHudHomingAttackImpl * This);
 		SonicHudHomingAttackClear(context->m_spSonicHudHomingAttackImpl.get());
+		context->m_HomingAttackTargetActorID = 0;
 	}
 }
 
