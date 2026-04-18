@@ -79,6 +79,7 @@ class CObjWeapon : public Sonic::CObjectBase
 {
 public:
 	static WeaponType m_type;
+	static bool m_infiniteAmmo;
 	static std::vector<WeaponData> m_weaponData;
 
 	static void ResetWeaponData();

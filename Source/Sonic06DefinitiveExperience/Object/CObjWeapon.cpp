@@ -3,7 +3,9 @@
 #include "Character/NextGenShadow.h"
 #include "Utils/AnimationSetPatcher.h"
 
-WeaponType CObjWeapon::m_type = WT_COUNT; // TODO: default WT_COUNT
+WeaponType CObjWeapon::m_type = WT_COUNT;
+bool CObjWeapon::m_infiniteAmmo = true;
+
 std::vector<WeaponData> CObjWeapon::m_weaponData =
 {
 	// EggPawnGun
@@ -283,7 +285,7 @@ void CObjWeapon::SetWeaponType(WeaponType type, bool updateHUD)
 		NextGenPhysics::toggleBoost(false);
 
 		auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-		auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("RightHand");
+		auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("LeftHand");
 		NextGenShadow::m_weaponSingleton = boost::make_shared<CObjWeapon>(attachBone);
 		context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(NextGenShadow::m_weaponSingleton);
 	}
@@ -450,10 +452,10 @@ void CObjWeapon::SetActive(WeaponFireType type)
 {
 	std::lock_guard<std::mutex> guard(m_mutex);
 
-	if (m_pData->m_chargeTime > 0.0f)
+	m_shootTimer = 0.0f;
+	m_chargeTimer = m_pData->m_chargeTime;
+	if (m_chargeTimer > 0.0f)
 	{
-		m_chargeTimer = m_pData->m_chargeTime;
-
 		if (!m_pData->m_chargeEffectName.empty())
 		{
 			m_chargeID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spNodeMuzzle, m_pData->m_chargeEffectName.c_str(), 1.0f);
@@ -511,8 +513,11 @@ void CObjWeapon::UpdateBoneRotation()
 
 void CObjWeapon::Shoot()
 {
-	m_pData->m_ammo--;
-	S06HUD_API::SetGadgetCount(m_pData->m_ammo, m_pData->m_maxAmmo);
+	if (!m_infiniteAmmo)
+	{
+		m_pData->m_ammo--;
+		S06HUD_API::SetGadgetCount(m_pData->m_ammo, m_pData->m_maxAmmo);
+	}
 
 	// muzzle
 	if (!m_pData->m_muzzleEffectName.empty())
@@ -520,13 +525,15 @@ void CObjWeapon::Shoot()
 		m_pGlitterPlayer->PlayOneshot(m_spNodeMuzzle, m_pData->m_muzzleEffectName.c_str(), 1.0f, 1);
 	}
 
+	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirFire[m_type]);
+
 	// shoot projectile
 	hh::mr::CTransform startTrans;
 	startTrans.m_Rotation = context->m_spMatrixNode->m_Transform.m_Rotation;
 	startTrans.m_Position = m_spNodeMuzzle->GetWorldMatrix().translation();
 
 	hh::math::CVector targetPos = hh::math::CVector::Zero();
-	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	if (context->m_HomingAttackTargetActorID)
 	{
 		SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPos));
