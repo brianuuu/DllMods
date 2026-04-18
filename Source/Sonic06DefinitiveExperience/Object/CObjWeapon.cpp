@@ -8,13 +8,24 @@ std::vector<WeaponData> CObjWeapon::m_weaponData =
 {
 	// EggPawnGun
 	{ 
-		"weapon_eggpawngun", 
-		50, 50, 1,
-		"ef_eggpanwgun_omen", 0.2f, 0.3f,
-		20.0f, 0.0f, 0.125f,
-		"", "ef_eggpanwgun_bullet",
-		"ef_eggpanwgun_muzzle", "ef_projectile_impact",
-		0, 0, 0 // TODO:
+		/*m_weaponModelName*/		"weapon_eggpawngun",
+		/*m_projectileModelName*/	"",
+		/*m_projectileEffectName*/	"ef_eggpanwgun_bullet",
+		/*m_chargeEffectName*/		"ef_eggpanwgun_omen",
+		/*m_muzzleEffectName*/		"ef_eggpanwgun_muzzle",
+		/*m_hitEffectName*/			"ef_projectile_impact",
+
+		/*m_maxAmmo*/		50, 50,
+		/*m_spriteIndex*/	1,
+		/*m_chargeTime*/	0.0f,
+		/*m_shootInterval*/	0.15f,
+		/*m_speed*/			30.0f,
+		/*m_gravity*/		0.0f,
+		/*m_radius*/		0.125f,
+
+		/*m_chargeSfx*/	0, 
+		/*m_shootSfx*/	0, 
+		/*m_hitSfx*/	0
 	},
 };
 
@@ -454,13 +465,14 @@ void CObjWeapon::SetStateAir()
 			SharedPtrTypeless sfx;
 			Common::ObjectPlaySound(this, m_pData->m_chargeSfx, sfx);
 		}
-
-		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirLoop[m_type]);
 	}
 	else
 	{
 		m_state = State::AirFire;
 	}
+
+	// change animation
+	Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirLoop[m_type]);
 }
 
 void CObjWeapon::UpdateBoneRotation()
@@ -497,9 +509,6 @@ void CObjWeapon::Shoot()
 {
 	m_pData->m_ammo--;
 	S06HUD_API::SetGadgetCount(m_pData->m_ammo, m_pData->m_maxAmmo);
-
-	// change animation
-	Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirLoop[m_type]);
 
 	// muzzle
 	if (!m_pData->m_muzzleEffectName.empty())

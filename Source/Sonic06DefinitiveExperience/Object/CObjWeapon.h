@@ -17,21 +17,21 @@ enum WeaponType
 
 struct WeaponData
 {
-	std::string m_weaponModelName;
+	std::string const m_weaponModelName;
+	std::string const m_projectileModelName;
+	std::string const m_projectileEffectName;
+	std::string const m_chargeEffectName;
+	std::string const m_muzzleEffectName;
+	std::string const m_hitEffectName;
+
 	int m_ammo = 0;
 	int const m_maxAmmo = 0;
 	int const m_spriteIndex = 0;
-	std::string const m_chargeEffectName;
 	float const m_chargeTime = 0.0f;
 	float const m_shootInterval = 0.5f;
-
 	float const m_speed = 0.0f;
 	float const m_gravity = 0.0f;
 	float const m_radius = 0.1f;
-	std::string const m_projectileModelName;
-	std::string const m_projectileEffectName;
-	std::string const m_muzzleEffectName;
-	std::string const m_hitEffectName;
 
 	uint32_t const m_chargeSfx = 0;
 	uint32_t const m_shootSfx = 0;
