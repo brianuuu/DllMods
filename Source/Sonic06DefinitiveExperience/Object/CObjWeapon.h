@@ -15,6 +15,13 @@ enum WeaponType
 	WT_GunLast = WT_EggPawnGun,
 };
 
+enum WeaponFireType
+{
+	WFT_Stand,
+	WFT_Run,
+	WFT_Air,
+};
+
 struct WeaponData
 {
 	std::string const m_weaponModelName;
@@ -89,7 +96,7 @@ public:
 	bool IsActive() const;
 	bool CanRelease() const;
 	void SetStateIdle();
-	void SetStateAir();
+	void SetActive(WeaponFireType type);
 	void UpdateBoneRotation();
 
 private:

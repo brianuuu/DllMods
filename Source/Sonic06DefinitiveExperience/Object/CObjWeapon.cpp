@@ -446,13 +446,12 @@ void CObjWeapon::SetStateIdle()
 	}
 }
 
-void CObjWeapon::SetStateAir()
+void CObjWeapon::SetActive(WeaponFireType type)
 {
 	std::lock_guard<std::mutex> guard(m_mutex);
 
 	if (m_pData->m_chargeTime > 0.0f)
 	{
-		m_state = State::AirCharge;
 		m_chargeTimer = m_pData->m_chargeTime;
 
 		if (!m_pData->m_chargeEffectName.empty())
@@ -466,13 +465,18 @@ void CObjWeapon::SetStateAir()
 			Common::ObjectPlaySound(this, m_pData->m_chargeSfx, sfx);
 		}
 	}
-	else
-	{
-		m_state = State::AirFire;
-	}
 
-	// change animation
-	Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirLoop[m_type]);
+	switch (type)
+	{
+	case WFT_Stand:
+		// TODO:
+	case WFT_Run:
+		// TODO:
+	case WFT_Air:
+		m_state = m_pData->m_chargeTime > 0.0f ? State::AirCharge : State::AirFire;
+		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirLoop[m_type]);
+		break;
+	}
 }
 
 void CObjWeapon::UpdateBoneRotation()

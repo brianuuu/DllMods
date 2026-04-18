@@ -81,7 +81,7 @@ public:
 		SH_ChaosBoost,
 		SH_ChaosBlastWait,
 		SH_ChaosBlast,
-		SH_WeaponAirLoop,
+		SH_WeaponAir,
 	} m_overrideType;
 
 	// vehicle & weapon
