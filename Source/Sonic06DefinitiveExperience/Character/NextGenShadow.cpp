@@ -1885,6 +1885,13 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
         isChaosControl = false;
         break;
     }
+    case NextGenShadow::OverrideType::SH_WeaponStand:
+    {
+        // TODO: posture
+        Common::SetPlayerVelocity(hh::math::CVector::Zero());
+        NextGenShadow::m_weaponSingleton->SetActive(WFT_Stand);
+        break;
+    }
     case NextGenShadow::OverrideType::SH_WeaponAir:
     {
         // TODO:
@@ -2245,6 +2252,24 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
 
         break;
     }
+    case NextGenShadow::OverrideType::SH_WeaponStand:
+    {
+        if (!context->m_Grounded)
+        {
+            StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
+            return nullptr;
+        }
+
+        originalNextGenShadow_HomingUpdate(context);
+        Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+
+        // TODO:
+        if (!padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && NextGenShadow::m_weaponSingleton->CanRelease())
+        {
+            StateManager::ChangeState(StateAction::Walk, *PLAYER_CONTEXT);
+        }
+        break;
+    }
     case NextGenShadow::OverrideType::SH_WeaponAir:
     {
         if (context->m_Grounded)
@@ -2310,6 +2335,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::f
         context->m_GravityTimer = 1000.0f;
         break;
     }
+    case NextGenShadow::OverrideType::SH_WeaponStand:
     case NextGenShadow::OverrideType::SH_WeaponAir:
     {
         NextGenShadow::m_weaponSingleton->SetStateIdle();
@@ -2554,6 +2580,14 @@ bool NextGenShadow::bActionHandlerImpl()
 
     if (CheckChaosControl())
     {
+        return true;
+    }
+
+    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+    if (padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger) && CObjWeapon::m_type != WT_COUNT)
+    {
+        m_overrideType = OverrideType::SH_WeaponStand;
+        StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
         return true;
     }
 
