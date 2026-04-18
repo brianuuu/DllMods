@@ -522,7 +522,7 @@ void CObjWeapon::Shoot()
 
 	// shoot projectile
 	hh::mr::CTransform startTrans;
-	startTrans.m_Rotation = m_spNodeMuzzle->GetWorldMatrix().rotation();
+	startTrans.m_Rotation = context->m_spMatrixNode->m_Transform.m_Rotation;
 	startTrans.m_Position = m_spNodeMuzzle->GetWorldMatrix().translation();
 
 	hh::math::CVector targetPos = hh::math::CVector::Zero();
