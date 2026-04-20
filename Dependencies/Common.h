@@ -2033,6 +2033,29 @@ inline void SonicContextHudHomingAttackClear(Sonic::Player::CPlayerSpeedContext*
 	}
 }
 
+static void SonicContextPushPosture
+(
+	Sonic::Player::CPlayer* pPlayer,
+	Hedgehog::Base::CSharedString const& name,
+	bool unknown = true
+)
+{
+	static void* const pSonicContextPushPosture = (void*)0xE78C50;
+	__asm
+	{
+		push	unknown
+		mov		ecx, pPlayer
+		mov		eax, name
+		call	[pSonicContextPushPosture]
+	}
+}
+
+inline void SonicContextPopPosture(Sonic::Player::CPlayer* pPlayer, Hedgehog::Base::CSharedString const& name)
+{
+	FUNCTION_PTR(void, __stdcall, fnSonicContextPopPosture, 0xE779A0, Sonic::Player::CPlayer* pPlayer, Hedgehog::Base::CSharedString const& name);
+	fnSonicContextPopPosture(pPlayer, name);
+}
+
 static void CStateSetStringBool
 (
 	hh::fnd::CStateMachineBase::CStateBase* This,
