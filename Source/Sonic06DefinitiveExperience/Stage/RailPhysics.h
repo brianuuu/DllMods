@@ -39,6 +39,7 @@ public:
 
 	static uint32_t* m_pHomingTargetObj;
 	static uint32_t* m_pHomingTargetCEventCollision;
+	static bool m_enabled;
 
 	static float m_grindSpeed;
 	static float m_grindAccelTime;
@@ -46,6 +47,7 @@ public:
 	static void updateHomingTargetPos();
 	static bool getHomingTargetPos(Eigen::Vector3f& pos);
 	static void setHomingTargetPos(Eigen::Vector3f pos);
+	static void setRailLockEnabled(bool enabled);
 
 	// Path data
 	static bool xmlTextToVector3f(std::string str, Eigen::Vector3f& v);

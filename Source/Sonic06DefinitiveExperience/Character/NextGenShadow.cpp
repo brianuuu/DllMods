@@ -3,6 +3,7 @@
 #include "Configuration.h"
 #include "Enemy/EnemyShock.h"
 #include "Stage/CustomCamera.h"
+#include "Stage/RailPhysics.h"
 #include "System/Application.h"
 #include "Utils/AnimationSetPatcher.h"
 
@@ -1849,6 +1850,7 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
             // change homing distance
             NextGenPhysics::setHomingCollisionDistance(cShadow_chaosSpearSuperLockDist);
         }
+        RailPhysics::setRailLockEnabled(false);
         break;
     }
     case NextGenShadow::OverrideType::SH_ChaosBoost:
@@ -1889,6 +1891,7 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
         // TODO: posture
         Common::SetPlayerVelocity(hh::math::CVector::Zero());
         NextGenShadow::m_weaponSingleton->SetActive(WFT_Stand);
+        RailPhysics::setRailLockEnabled(false);
         break;
     }
     case NextGenShadow::OverrideType::SH_WeaponAir:
@@ -1896,6 +1899,7 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
         // TODO:
         NextGenShadow::m_holdPosition = context->m_spMatrixNode->m_Transform.m_Position;
         NextGenShadow::m_weaponSingleton->SetActive(WFT_Air);
+        RailPhysics::setRailLockEnabled(false);
         break;
     }
     }
@@ -2323,6 +2327,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::f
 
         // reset homing distance
         NextGenPhysics::setHomingCollisionDistance();
+        RailPhysics::setRailLockEnabled(true);
         break;
     }
     case NextGenShadow::OverrideType::SH_ChaosBoost:
@@ -2339,6 +2344,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::f
     {
         NextGenShadow::m_weaponSingleton->SetStateIdle();
         Common::SonicContextHudHomingAttackClear(context);
+        RailPhysics::setRailLockEnabled(true);
         break;
     }
     }

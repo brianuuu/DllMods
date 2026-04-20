@@ -6,6 +6,7 @@
 uint32_t m_hasHomingTargetObj = false;
 uint32_t* RailPhysics::m_pHomingTargetObj = nullptr;
 uint32_t* RailPhysics::m_pHomingTargetCEventCollision = nullptr;
+bool RailPhysics::m_enabled = true;
 
 uint32_t m_forceRailCollisionQuery = false;
 std::vector<PathData> RailPhysics::m_pathData;
@@ -370,6 +371,13 @@ void RailPhysics::updateHomingTargetPos()
 {
     if (!RailPhysics::m_pHomingTargetObj) return;
 
+    Eigen::Vector3f lockPos(0, 10000, 0);
+    if (!m_enabled)
+    {
+        setHomingTargetPos(lockPos);
+        return;
+    }
+
     Eigen::Vector3f playerWorldDir;
     if (!Common::GetPlayerWorldDirection(playerWorldDir, true)) return;
     //printf("World Dir: %.3f, %.3f, %.3f\n", playerWorldDir.x(), playerWorldDir.y(), playerWorldDir.z());
@@ -398,7 +406,6 @@ void RailPhysics::updateHomingTargetPos()
 
     // Find the closest lock-on position from the list of paths
     float const rangeSquared = cGrind_lockOnRange * cGrind_lockOnRange;
-    Eigen::Vector3f lockPos(0, 10000, 0);
     float minDistSquared = FLT_MAX;
     for (uint32_t index : closestPathIndices)
     {
@@ -473,6 +480,11 @@ void RailPhysics::setHomingTargetPos(Eigen::Vector3f pos)
         positionPhysics[1] = pos.y();
         positionPhysics[2] = pos.z();
     }
+}
+
+void RailPhysics::setRailLockEnabled(bool enabled)
+{
+    m_enabled = enabled;
 }
 
 bool RailPhysics::xmlTextToVector3f(std::string str, Eigen::Vector3f& v)
