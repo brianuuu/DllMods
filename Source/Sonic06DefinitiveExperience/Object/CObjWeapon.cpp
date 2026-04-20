@@ -435,7 +435,7 @@ void CObjWeapon::UpdateParallel
 	case State::AirCharge:
 	{
 		m_chargeTimer -= in_rUpdateInfo.DeltaTime;
-		if (m_chargeTimer < 0.0f)
+		if (m_chargeTimer <= 0.0f)
 		{
 			if (m_chargeID)
 			{
@@ -519,7 +519,7 @@ void CObjWeapon::SetActive(WeaponFireType type)
 	case WFT_Run:
 		// TODO:
 	case WFT_Air:
-		m_state = m_pData->m_chargeTime > 0.0f ? State::AirCharge : State::AirFire;
+		m_state = State::AirCharge;
 		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirLoop[m_type]);
 		break;
 	}
