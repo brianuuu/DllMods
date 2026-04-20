@@ -537,13 +537,12 @@ void CObjWeapon::UpdateBoneRotation()
 	hh::math::CQuaternion targetRotation = hh::math::CQuaternion::Identity();
 	if (!targetPosition.isZero())
 	{
-		//hh::math::CVector dir = (m_spNodeMuzzle->GetWorldMatrix().rotation().conjugate() * (targetPosition - context->m_spMatrixNode->m_Transform.m_Position)).normalized();
-		hh::math::CVector dir = (context->m_spMatrixNode->m_Transform.m_Rotation.conjugate() * (targetPosition - context->m_spMatrixNode->m_Transform.m_Position)).normalized();
+		hh::math::CVector dir = (context->m_spMatrixNode->m_Transform.m_Rotation.conjugate() * (targetPosition - m_spNodeMuzzle->GetWorldMatrix().translation())).normalized();
 		hh::math::CVector dirXZ = dir; dirXZ.y() = 0.0f; dirXZ.normalize();
 		
 		float yaw = min(acosf(hh::math::CVector::UnitZ().dot(dirXZ)), 80.0f * DEG_TO_RAD);
 		if (dir.dot(Eigen::Vector3f::UnitX()) < 0) yaw = -yaw;
-		float pitch = min(acosf(dir.dot(dirXZ)), PI_F * 0.25f);
+		float pitch = min(acosf(dir.dot(dirXZ)), 70.0f * DEG_TO_RAD);
 		if (dir.dot(Eigen::Vector3f::UnitY()) < 0) pitch = -pitch;
 
 		targetRotation = Eigen::AngleAxisf(yaw, hh::math::CVector::UnitX()) * Eigen::AngleAxisf(pitch, hh::math::CVector::UnitZ());
