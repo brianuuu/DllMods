@@ -973,6 +973,9 @@ void NextGenShadow::SetChaosBoostModelVisible(bool visible, bool allInvisible)
     model->m_spModel->m_NodeGroupModels[0]->m_Visible = !visible && !allInvisible;
     model->m_spModel->m_NodeGroupModels[1]->m_Visible = visible && !allInvisible;
 
+    // refresh hand model visibility
+    CObjWeapon::SetModelVisibility(WT_COUNT, CObjWeapon::m_type);
+
     auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
     context->StateFlag(eStateFlag_DisableGroundSmoke) = allInvisible;
 

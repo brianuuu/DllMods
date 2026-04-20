@@ -27,7 +27,9 @@ std::vector<WeaponData> CObjWeapon::m_weaponData =
 
 		/*m_chargeSfx*/	0, 
 		/*m_shootSfx*/	0, 
-		/*m_hitSfx*/	0
+		/*m_hitSfx*/	0,
+
+		/*m_modelIndices*/	{4},
 	},
 };
 
@@ -266,6 +268,7 @@ void CObjWeapon::SetWeaponType(WeaponType type, bool updateHUD)
 		}
 	}
 
+	SetModelVisibility(m_type, type);
 	m_type = type;
 
 	if (type == WT_COUNT)
@@ -288,6 +291,47 @@ void CObjWeapon::SetWeaponType(WeaponType type, bool updateHUD)
 		auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("LeftHand");
 		NextGenShadow::m_weaponSingleton = boost::make_shared<CObjWeapon>(attachBone);
 		context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(NextGenShadow::m_weaponSingleton);
+	}
+
+}
+
+void CObjWeapon::SetModelVisibility(WeaponType oldType, WeaponType newType)
+{
+	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	if (!context || !context->m_pPlayer->m_spCharacterModel) return;
+
+	auto const& model = context->m_pPlayer->m_spCharacterModel;
+	bool const chaosBoost = NextGenShadow::m_chaosBoostLevel > 0;
+
+	if (oldType != WT_COUNT)
+	{
+		WeaponData const& data = m_weaponData[oldType];
+		for (uint32_t i = 2; i < model->m_spModel->m_NodeGroupModels.size(); i += 2)
+		{
+			bool const showForWeapon = data.m_modelIndices.count(i);
+			model->m_spModel->m_NodeGroupModels[i]->m_Visible = !showForWeapon && !chaosBoost && NextGenShadow::IsModelVisible();
+			model->m_spModel->m_NodeGroupModels[i + 1]->m_Visible = !showForWeapon && chaosBoost && NextGenShadow::IsModelVisible();
+		}
+	}
+
+	if (newType == WT_COUNT)
+	{
+		for (uint32_t i = 2; i < model->m_spModel->m_NodeGroupModels.size(); i += 2)
+		{
+			bool const defaultHand = i == 2;
+			model->m_spModel->m_NodeGroupModels[i]->m_Visible = defaultHand && !chaosBoost && NextGenShadow::IsModelVisible();
+			model->m_spModel->m_NodeGroupModels[i + 1]->m_Visible = defaultHand && chaosBoost && NextGenShadow::IsModelVisible();
+		}
+	}
+	else
+	{
+		WeaponData const& data = m_weaponData[newType];
+		for (uint32_t i = 2; i < model->m_spModel->m_NodeGroupModels.size(); i += 2)
+		{
+			bool const showForWeapon = data.m_modelIndices.count(i);
+			model->m_spModel->m_NodeGroupModels[i]->m_Visible = showForWeapon && !chaosBoost && NextGenShadow::IsModelVisible();
+			model->m_spModel->m_NodeGroupModels[i + 1]->m_Visible = showForWeapon && chaosBoost && NextGenShadow::IsModelVisible();
+		}
 	}
 }
 

@@ -44,6 +44,8 @@ struct WeaponData
 	uint32_t const m_shootSfx = 0;
 	uint32_t const m_hitSfx = 0;
 
+	std::set<uint32_t> m_modelIndices;
+
 	void Reset()
 	{
 		m_ammo = m_maxAmmo;
@@ -89,6 +91,7 @@ public:
 
 	// switch weapon
 	static void SetWeaponType(WeaponType type, bool updateHUD = true);
+	static void SetModelVisibility(WeaponType oldType, WeaponType newType);
 	static void NextGun();
 
 public:
