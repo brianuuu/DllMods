@@ -440,10 +440,6 @@ void PlayChaosSnap()
     {
         context->m_pPlayer->SendMessageImm(context->m_SuperRenderableActorID, boost::make_shared<Sonic::Message::MsgSetVisible>(false));
     }
-    if (NextGenShadow::m_weaponSingleton)
-    {
-        context->m_pPlayer->SendMessageImm(NextGenShadow::m_weaponSingleton->m_ActorID, boost::make_shared<Sonic::Message::MsgSetVisible>(false));
-    }
 
     // Stop in air
     Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
@@ -639,10 +635,6 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateHomingAttackEnd, 0x1231F80, hh::
         if (context->m_SuperRenderableActorID)
         {
             context->m_pPlayer->SendMessageImm(context->m_SuperRenderableActorID, boost::make_shared<Sonic::Message::MsgSetVisible>(true));
-        }
-        if (NextGenShadow::m_weaponSingleton)
-        {
-            context->m_pPlayer->SendMessageImm(NextGenShadow::m_weaponSingleton->m_ActorID, boost::make_shared<Sonic::Message::MsgSetVisible>(true));
         }
         
         // Unfreeze camera
@@ -969,14 +961,19 @@ void NextGenShadow::SetChaosBoostModelVisible(bool visible, bool allInvisible)
 {
     if (!*pModernSonicContext) return;
 
-    auto const& model = Sonic::Player::CPlayerSpeedContext::GetInstance()->m_pPlayer->m_spCharacterModel;
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+    auto const& model = context->m_pPlayer->m_spCharacterModel;
     model->m_spModel->m_NodeGroupModels[0]->m_Visible = !visible && !allInvisible;
     model->m_spModel->m_NodeGroupModels[1]->m_Visible = visible && !allInvisible;
 
     // refresh hand model visibility
     CObjWeapon::SetModelVisibility(WT_COUNT, CObjWeapon::m_type);
+    if (NextGenShadow::m_weaponSingleton)
+    {
+        context->m_pPlayer->SendMessageImm(NextGenShadow::m_weaponSingleton->m_ActorID, boost::make_shared<Sonic::Message::MsgSetVisible>(!allInvisible));
+    }
 
-    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+    // disable ground smoke
     context->StateFlag(eStateFlag_DisableGroundSmoke) = allInvisible;
 
     if (visible && !allInvisible && !Common::IsPlayerSuper())
