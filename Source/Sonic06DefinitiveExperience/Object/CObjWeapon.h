@@ -114,12 +114,14 @@ private:
 	float m_chargeTimer = 0.0f;
 	uint32_t m_chargeID = 0;
 	float m_shootTimer = 0.0f;
+	float m_cooldownTimer = 0.0f;
 
 	enum class State 
 	{
 		Idle,
 		AirCharge,
 		AirFire,
+		Cooldown,
 	} m_state = State::Idle;
 
 	mutable std::mutex m_mutex;

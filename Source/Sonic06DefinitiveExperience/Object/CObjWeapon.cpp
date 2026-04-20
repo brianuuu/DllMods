@@ -107,11 +107,6 @@ bool CObjProjectile::SetAddColliders
 	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
 )
 {
-	// damage to object
-	uint32_t const typeEnemy = *(uint32_t*)0x1E5E7E8;
-	uint32_t const typeBreakable = *(uint32_t*)0x1E5E77C;
-	uint32_t const typeTerrain = *(uint32_t*)0x1E5E754;
-	uint64_t const bitfield = (1llu << typeEnemy) | (1llu << typeBreakable) | (1llu << typeTerrain);
 	hk2010_2_0::hkpSphereShape* bodyEventTrigger = new hk2010_2_0::hkpSphereShape(m_pData->m_radius);
 	AddEventCollision("Damage", bodyEventTrigger, *reinterpret_cast<int*>(0x1E0AF84), true, m_spMatrixNodeTransform); // SpikeAttack
 	AddEventCollision("Terrain", bodyEventTrigger, *reinterpret_cast<int*>(0x1E0AFAC), true, m_spMatrixNodeTransform); // BasicAndTerrainCheck
@@ -431,12 +426,15 @@ void CObjWeapon::UpdateParallel
 	m_spMatrixNodeTransform->m_Transform.SetPosition(m_spNodeModel->GetWorldMatrix().translation());
 	m_spMatrixNodeTransform->NotifyChanged();
 
+	Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+	bool const shouldShoot = padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger);
+
 	switch (m_state)
 	{
 	case State::AirCharge:
 	{
 		m_chargeTimer -= in_rUpdateInfo.DeltaTime;
-		if (m_chargeTimer <= 0.0f)
+		if (m_chargeTimer < 0.0f)
 		{
 			if (m_chargeID)
 			{
@@ -452,9 +450,8 @@ void CObjWeapon::UpdateParallel
 	case State::AirFire:
 	{
 		m_shootTimer -= in_rUpdateInfo.DeltaTime;
-		if (m_shootTimer <= 0.0f)
+		if (m_shootTimer < 0.0f)
 		{
-			m_shootTimer = m_pData->m_shootInterval;
 			if (CanShoot())
 			{
 				Shoot();
@@ -463,6 +460,26 @@ void CObjWeapon::UpdateParallel
 			{
 				// TODO: no ammo sfx
 			}
+
+			if (shouldShoot)
+			{
+				m_shootTimer = m_pData->m_shootInterval;
+			}
+			else
+			{
+				m_state = State::Cooldown;
+				m_cooldownTimer = 0.2f;
+			}
+		}
+		break;
+	}
+	case State::Cooldown:
+	{
+		m_cooldownTimer -= in_rUpdateInfo.DeltaTime;
+		if (shouldShoot)
+		{
+			m_state = State::AirFire;
+			m_shootTimer = 0.0f;
 		}
 		break;
 	}
@@ -478,7 +495,7 @@ bool CObjWeapon::IsActive() const
 bool CObjWeapon::CanRelease() const
 {
 	std::lock_guard<std::mutex> guard(m_mutex);
-	return m_chargeTimer <= 0.0f && m_shootTimer > 0.0f;
+	return m_state == State::Cooldown && m_cooldownTimer < 0.0f;
 }
 
 void CObjWeapon::SetStateIdle()
