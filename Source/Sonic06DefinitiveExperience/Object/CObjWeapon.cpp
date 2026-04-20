@@ -42,6 +42,7 @@ CObjProjectile::CObjProjectile
 	: m_type(type)
 	, m_pData(&CObjWeapon::GetWeaponData(type))
 	, m_position(startTrans.m_Position)
+	, m_positionPrev(startTrans.m_Position)
 {
 
 	// initial velocity
@@ -107,6 +108,12 @@ bool CObjProjectile::SetAddColliders
 	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
 )
 {
+	uint32_t const typeEnemy = *(uint32_t*)0x1E5E7E8;
+	uint32_t const typeBreakable = *(uint32_t*)0x1E5E77C;
+	uint32_t const typeTerrain = *(uint32_t*)0x1E5E754;
+	uint64_t const bitfield = (1llu << typeEnemy) | (1llu << typeBreakable) | (1llu << typeTerrain);
+	m_collisionID = Common::MakeCollisionID(0, bitfield);
+
 	hk2010_2_0::hkpSphereShape* bodyEventTrigger = new hk2010_2_0::hkpSphereShape(m_pData->m_radius);
 	AddEventCollision("Damage", bodyEventTrigger, *reinterpret_cast<int*>(0x1E0AF84), true, m_spMatrixNodeTransform); // SpikeAttack
 	AddEventCollision("Terrain", bodyEventTrigger, *reinterpret_cast<int*>(0x1E0AFAC), true, m_spMatrixNodeTransform); // BasicAndTerrainCheck
@@ -162,6 +169,14 @@ bool CObjProjectile::ProcessMessage
 
 			if (!m_pData->m_hitEffectName.empty())
 			{
+				hh::math::CVector outPos = hh::math::CVector::Zero();
+				hh::math::CVector outNormal = hh::math::CVector::UnitY();
+				if (m_lifetime > 0.0f && Common::fRaycast(m_positionPrev, m_position, outPos, outNormal, m_collisionID))
+				{
+					m_spMatrixNodeTransform->m_Transform.SetPosition(outPos);
+					m_spMatrixNodeTransform->NotifyChanged();
+				}
+
 				auto effectNode = boost::make_shared<Sonic::CMatrixNodeTransform>();
 				effectNode->SetParent(Sonic::CApplicationDocument::GetInstance()->m_pMember->m_spMatrixNodeRoot.get());
 				effectNode->m_Transform.SetPosition(m_spMatrixNodeTransform->m_Transform.m_Position);
@@ -194,6 +209,7 @@ void CObjProjectile::UpdateParallel
 
 void CObjProjectile::UpdateTransform(float dt)
 {
+	m_positionPrev = m_position;
 	m_velocity.y() -= m_pData->m_gravity * dt;
 	m_position += m_velocity * dt;
 
@@ -452,6 +468,7 @@ void CObjWeapon::UpdateParallel
 		m_shootTimer -= in_rUpdateInfo.DeltaTime;
 		if (m_shootTimer < 0.0f)
 		{
+			m_shootTimer = m_pData->m_shootInterval;
 			if (CanShoot())
 			{
 				Shoot();
@@ -461,11 +478,7 @@ void CObjWeapon::UpdateParallel
 				// TODO: no ammo sfx
 			}
 
-			if (shouldShoot)
-			{
-				m_shootTimer = m_pData->m_shootInterval;
-			}
-			else
+			if (!shouldShoot)
 			{
 				m_state = State::Cooldown;
 				m_cooldownTimer = 0.2f;
@@ -475,11 +488,11 @@ void CObjWeapon::UpdateParallel
 	}
 	case State::Cooldown:
 	{
+		m_shootTimer -= in_rUpdateInfo.DeltaTime;
 		m_cooldownTimer -= in_rUpdateInfo.DeltaTime;
 		if (shouldShoot)
 		{
 			m_state = State::AirFire;
-			m_shootTimer = 0.0f;
 		}
 		break;
 	}

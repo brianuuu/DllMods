@@ -59,11 +59,13 @@ private:
 
 	float m_lifetime = 0.0f;
 	hh::math::CVector m_position = hh::math::CVector::Zero();
+	hh::math::CVector m_positionPrev = hh::math::CVector::Zero();
 	hh::math::CVector m_velocity = hh::math::CVector::Zero();
 
 	// Fixed weapon data
 	WeaponType m_type = WT_COUNT;
 	WeaponData* m_pData = nullptr;
+	uint32_t m_collisionID = 0;
 
 public:
 	CObjProjectile(WeaponType type, hh::mr::CTransform const& startTrans, hh::math::CVector const& targetPos = hh::math::CVector::Zero());
