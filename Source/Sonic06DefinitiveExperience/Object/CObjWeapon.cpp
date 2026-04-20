@@ -113,7 +113,8 @@ bool CObjProjectile::SetAddColliders
 	uint32_t const typeTerrain = *(uint32_t*)0x1E5E754;
 	uint64_t const bitfield = (1llu << typeEnemy) | (1llu << typeBreakable) | (1llu << typeTerrain);
 	hk2010_2_0::hkpSphereShape* bodyEventTrigger = new hk2010_2_0::hkpSphereShape(m_pData->m_radius);
-	AddEventCollision("Attack", bodyEventTrigger, Common::MakeCollisionID(0, bitfield), true, m_spMatrixNodeTransform);
+	AddEventCollision("Damage", bodyEventTrigger, *reinterpret_cast<int*>(0x1E0AF84), true, m_spMatrixNodeTransform); // SpikeAttack
+	AddEventCollision("Terrain", bodyEventTrigger, *reinterpret_cast<int*>(0x1E0AFAC), true, m_spMatrixNodeTransform); // BasicAndTerrainCheck
 
 	return true;
 }
