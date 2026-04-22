@@ -68,6 +68,7 @@ float const cShadow_chaosSpearTurnRate = 180.0f * DEG_TO_RAD;
 float const cShadow_chaosSpearSuperTurnRate = 720.0f * DEG_TO_RAD;
 float const cShadow_chaosSpearShockDuration = 8.0f;
 float const cShadow_chaosSpearSuperLockDist = 30.0f;
+float const cShadow_weaponLockDist = 25.0f;
 
 // Chaos Snap
 bool NextGenShadow::m_chaosSnapActivated = false;
@@ -1889,6 +1890,7 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
         Common::SetPlayerVelocity(hh::math::CVector::Zero());
         NextGenShadow::m_weaponSingleton->SetActive(WFT_Stand);
         RailPhysics::setRailLockEnabled(false);
+        NextGenPhysics::setHomingCollisionDistance(cShadow_weaponLockDist);
         break;
     }
     case NextGenShadow::OverrideType::SH_WeaponAir:
@@ -1896,6 +1898,7 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
         NextGenShadow::m_holdPosition = context->m_spMatrixNode->m_Transform.m_Position;
         NextGenShadow::m_weaponSingleton->SetActive(WFT_Air);
         RailPhysics::setRailLockEnabled(false);
+        NextGenPhysics::setHomingCollisionDistance(cShadow_weaponLockDist);
         break;
     }
     }
@@ -2341,6 +2344,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::f
         NextGenShadow::m_weaponSingleton->SetStateIdle();
         Common::SonicContextHudHomingAttackClear(context);
         RailPhysics::setRailLockEnabled(true);
+        NextGenPhysics::setHomingCollisionDistance();
         break;
     }
     }
