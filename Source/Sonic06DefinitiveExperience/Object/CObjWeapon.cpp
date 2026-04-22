@@ -428,7 +428,7 @@ bool CObjWeapon::ProcessMessage
 	{
 		if (message.Is<Sonic::Message::MsgRestartStage>() || message.Is<Sonic::Message::MsgStageClear>())
 		{
-			Kill();
+			SetWeaponType(WT_COUNT);
 			return true;
 		}
 	}
