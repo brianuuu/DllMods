@@ -336,10 +336,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
         {
             CObjWeapon::SetWeaponType(WT_COUNT);
         }
-        else if (!Common::IsPlayerHangOn() 
-            && NextGenShadow::m_overrideType != NextGenShadow::OverrideType::SH_SpearWait
-            && NextGenShadow::m_overrideType != NextGenShadow::OverrideType::SH_SpearShot
-            && (!NextGenShadow::m_weaponSingleton || !NextGenShadow::m_weaponSingleton->IsActive()))
+        else if (!Common::IsPlayerHangOn() && (!NextGenShadow::m_weaponSingleton || !NextGenShadow::m_weaponSingleton->IsActive()))
         {
             if (padState->IsTapped(Sonic::EKeyState::eKeyState_DpadUp))
             {
@@ -1896,7 +1893,6 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
     }
     case NextGenShadow::OverrideType::SH_WeaponAir:
     {
-        // TODO:
         NextGenShadow::m_holdPosition = context->m_spMatrixNode->m_Transform.m_Position;
         NextGenShadow::m_weaponSingleton->SetActive(WFT_Air);
         RailPhysics::setRailLockEnabled(false);
@@ -2267,7 +2263,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 
         // TODO:
-        if (!padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && NextGenShadow::m_weaponSingleton->CanRelease())
+        if (NextGenShadow::m_weaponSingleton->CanRelease())
         {
             StateManager::ChangeState(StateAction::Walk, *PLAYER_CONTEXT);
         }
@@ -2291,7 +2287,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 
         // TODO:
-        if (!padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && NextGenShadow::m_weaponSingleton->CanRelease())
+        if (NextGenShadow::m_weaponSingleton->CanRelease())
         {
             StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
         }

@@ -39,6 +39,7 @@ struct WeaponData
 	float const m_speed = 0.0f;
 	float const m_gravity = 0.0f;
 	float const m_radius = 0.1f;
+	bool const m_autoFire = false;
 
 	uint32_t const m_chargeSfx = 0;
 	uint32_t const m_shootSfx = 0;
@@ -117,6 +118,7 @@ private:
 	uint32_t m_chargeID = 0;
 	float m_shootTimer = 0.0f;
 	float m_cooldownTimer = 0.0f;
+	bool m_shootBuffered = false;
 
 	enum class State 
 	{

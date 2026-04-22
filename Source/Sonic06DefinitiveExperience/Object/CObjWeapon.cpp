@@ -20,14 +20,15 @@ std::vector<WeaponData> CObjWeapon::m_weaponData =
 		/*m_maxAmmo*/		50, 50,
 		/*m_spriteIndex*/	1,
 		/*m_chargeTime*/	0.0f,
-		/*m_shootInterval*/	0.15f,
-		/*m_speed*/			30.0f,
+		/*m_shootInterval*/	0.1f,
+		/*m_speed*/			40.0f,
 		/*m_gravity*/		0.0f,
 		/*m_radius*/		0.125f,
+		/*m_autoFire*/		false,
 
 		/*m_chargeSfx*/	0, 
-		/*m_shootSfx*/	0, 
-		/*m_hitSfx*/	0,
+		/*m_shootSfx*/	200616000,
+		/*m_hitSfx*/	200616001,
 
 		/*m_modelIndices*/	{4},
 	},
@@ -198,7 +199,7 @@ void CObjProjectile::UpdateParallel
 )
 {
 	m_lifetime += in_rUpdateInfo.DeltaTime;
-	if (m_lifetime > 5.0f)
+	if (m_lifetime > 3.0f)
 	{
 		Kill();
 		return;
@@ -298,6 +299,10 @@ void CObjWeapon::SetWeaponType(WeaponType type, bool updateHUD)
 
 		// Disable boost
 		NextGenPhysics::toggleBoost(false);
+
+		// Reload sfx
+		SharedPtrTypeless sfx;
+		Common::PlaySoundStatic(sfx, 200616003);
 
 		auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 		auto attachBone = context->m_pPlayer->m_spCharacterModel->GetNode("LeftHand");
@@ -442,15 +447,12 @@ void CObjWeapon::UpdateParallel
 	m_spMatrixNodeTransform->m_Transform.SetPosition(m_spNodeModel->GetWorldMatrix().translation());
 	m_spMatrixNodeTransform->NotifyChanged();
 
-	Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-	bool const shouldShoot = padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger);
-
 	switch (m_state)
 	{
 	case State::AirCharge:
 	{
 		m_chargeTimer -= in_rUpdateInfo.DeltaTime;
-		if (m_chargeTimer < 0.0f)
+		if (m_chargeTimer <= 0.0f)
 		{
 			if (m_chargeID)
 			{
@@ -465,8 +467,7 @@ void CObjWeapon::UpdateParallel
 	}
 	case State::AirFire:
 	{
-		m_shootTimer -= in_rUpdateInfo.DeltaTime;
-		if (m_shootTimer < 0.0f)
+		if (m_shootTimer <= 0.0f)
 		{
 			m_shootTimer = m_pData->m_shootInterval;
 			if (CanShoot())
@@ -475,14 +476,15 @@ void CObjWeapon::UpdateParallel
 			}
 			else
 			{
-				// TODO: no ammo sfx
+				// no ammo sfx
+				SharedPtrTypeless sfx;
+				Common::ObjectPlaySound(this, 200616002, sfx);
+				m_shootTimer = 0.5f;
 			}
 
-			if (!shouldShoot)
-			{
-				m_state = State::Cooldown;
-				m_cooldownTimer = 0.2f;
-			}
+			m_shootBuffered = false;
+			m_state = State::Cooldown;
+			m_cooldownTimer = 0.2f;
 		}
 		break;
 	}
@@ -490,7 +492,14 @@ void CObjWeapon::UpdateParallel
 	{
 		m_shootTimer -= in_rUpdateInfo.DeltaTime;
 		m_cooldownTimer -= in_rUpdateInfo.DeltaTime;
-		if (shouldShoot)
+
+		Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+		if (!m_pData->m_autoFire && !m_shootBuffered)
+		{
+			m_shootBuffered = padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger);
+		}
+
+		if (m_shootTimer <= 0.0f && ((m_pData->m_autoFire && padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger)) || m_shootBuffered))
 		{
 			m_state = State::AirFire;
 		}
@@ -508,7 +517,7 @@ bool CObjWeapon::IsActive() const
 bool CObjWeapon::CanRelease() const
 {
 	std::lock_guard<std::mutex> guard(m_mutex);
-	return m_state == State::Cooldown && m_cooldownTimer < 0.0f;
+	return m_state == State::Cooldown && m_cooldownTimer <= 0.0f && m_shootTimer <= 0.0f;
 }
 
 void CObjWeapon::SetStateIdle()
