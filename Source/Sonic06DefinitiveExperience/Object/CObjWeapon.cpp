@@ -12,9 +12,9 @@ std::vector<WeaponData> CObjWeapon::m_weaponData =
 	{ 
 		/*m_weaponModelName*/		"weapon_eggpawngun",
 		/*m_projectileModelName*/	"",
-		/*m_projectileEffectName*/	"ef_eggpanwgun_bullet",
-		/*m_chargeEffectName*/		"ef_eggpanwgun_omen",
-		/*m_muzzleEffectName*/		"ef_eggpanwgun_muzzle",
+		/*m_projectileEffectName*/	"ef_wpn_eggpanwgun_bullet",
+		/*m_chargeEffectName*/		"ef_wpn_eggpanwgun_omen",
+		/*m_muzzleEffectName*/		"ef_wpn_eggpanwgun_muzzle",
 		/*m_hitEffectName*/			"ef_projectile_impact",
 
 		/*m_maxAmmo*/		50, 50,
@@ -77,6 +77,14 @@ CObjProjectile::CObjProjectile
 	}
 
 	UpdateTransform();
+}
+
+void CObjProjectile::SetAddUpdateUnit
+(
+	Sonic::CGameDocument* in_pGameDocument
+)
+{
+	in_pGameDocument->AddUpdateUnit("1", this);
 }
 
 bool CObjProjectile::SetAddRenderables
@@ -371,6 +379,14 @@ CObjWeapon::CObjWeapon
 	: m_spNodeParent(parent)
 	, m_pData(&GetWeaponData(m_type))
 {
+}
+
+void CObjWeapon::SetAddUpdateUnit
+(
+	Sonic::CGameDocument* in_pGameDocument
+)
+{
+	in_pGameDocument->AddUpdateUnit("1", this);
 }
 
 bool CObjWeapon::SetAddRenderables
