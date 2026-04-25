@@ -270,8 +270,8 @@ void CustomHUD::SetGadgetMaxCount(int count, int spriteIndex)
         gadgetCountWasHidden = false;
     }
 
-    bool const isWeapon = spriteIndex > 0;
-    fnPlayGadget(m_sceneGadgetBG, isWeapon);
+    bool const hideHP = false;
+    fnPlayGadget(m_sceneGadgetBG);
 
     // play animation for in/out, don't play for switching weapon if HUD is already enabled
     if (gadgetPrevSpriteIndex == 0 || spriteIndex == 0 || count < 0)
@@ -280,14 +280,14 @@ void CustomHUD::SetGadgetMaxCount(int count, int spriteIndex)
         fnPlayGadget(m_sceneGadgetText, gadgetCountWasHidden);
     }
 
-    m_sceneGadgetBar->GetNode("Cast_0354")->SetHideFlag(isWeapon);
-    m_sceneGadgetBar->GetNode("Cast_0357")->SetHideFlag(isWeapon);
+    m_sceneGadgetBar->GetNode("Cast_0354")->SetHideFlag(hideHP);
+    m_sceneGadgetBar->GetNode("Cast_0357")->SetHideFlag(hideHP);
     m_sceneGadgetBar->GetNode("Null_0363")->SetHideFlag(gadgetCountWasHidden);
-    m_sceneGadgetHP->SetHideFlag(isWeapon);
+    m_sceneGadgetHP->SetHideFlag(hideHP);
     m_sceneGadgetText->SetHideFlag(gadgetCountWasHidden);
     m_sceneGadgetText->GetNode("missile")->SetPatternIndex(spriteIndex);
 
-    if (isWeapon)
+    if (hideHP)
     {
         // adjust weapon ammo position as it has no HP
         m_sceneGadgetBar->GetNode("Null_0363")->SetPosition(275.0f, 0.0f);
