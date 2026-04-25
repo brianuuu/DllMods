@@ -1723,7 +1723,7 @@ bool NextGenShadow::AirActionCheck()
     }
 
     // Chaos Blast
-    if (m_chaosBoostLevel == 3)
+    if (m_chaosBoostLevel == 3 || CObjWeapon::m_infiniteAmmo)
     {
         if ((padState->IsTapped(Sonic::EKeyState::eKeyState_LeftBumper) && padState->IsDown(Sonic::EKeyState::eKeyState_RightBumper))
          || (padState->IsTapped(Sonic::EKeyState::eKeyState_RightBumper) && padState->IsDown(Sonic::EKeyState::eKeyState_LeftBumper)))
