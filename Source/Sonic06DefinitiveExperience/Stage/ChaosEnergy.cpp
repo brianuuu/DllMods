@@ -2,6 +2,7 @@
 
 #include "Configuration.h"
 #include "Character/NextGenShadow.h"
+#include "Object/CObjWeapon.h"
 
 float c_chaosEnergyReward = 5.0f;
 
@@ -216,6 +217,9 @@ void __fastcall ChaosEnergy::playChaosEnergyPfx(bool isLightcore)
 
 	// For character that use maturity gauge
 	NextGenShadow::AddChaosMaturity(c_chaosEnergyReward * 2.0f);
+
+	// Shadow weapon
+	CObjWeapon::AddDarkMeter();
 }
 
 void ChaosEnergy::setChaosEnergyRewardOverride(float amount)
