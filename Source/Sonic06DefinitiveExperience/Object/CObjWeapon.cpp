@@ -14,6 +14,7 @@ bool const cWeapon_infiniteAmmoDebug = false;
 float const cWeapon_infiniteAmmoTime = 20.0f;
 float const cWeapon_darkMeterAddAmount = 5.0f;
 float const cWeapon_projectileLifeTime = 3.0f;
+float const cWeapon_boneSlerpRate = 0.2f;
 
 std::vector<WeaponData> CObjWeapon::m_weaponData =
 {
@@ -714,7 +715,7 @@ void CObjWeapon::UpdateBoneRotation()
 		targetRotation = Eigen::AngleAxisf(yaw, yawAxis) * Eigen::AngleAxisf(pitch, hh::math::CVector::UnitZ());
 	}
 
-	m_rotateBoneData.m_addRotation = m_rotateBoneData.m_addRotation.slerp(0.1f, targetRotation);
+	m_rotateBoneData.m_addRotation = m_rotateBoneData.m_addRotation.slerp(cWeapon_boneSlerpRate, targetRotation);
 	pTrans->m_Rotation = (m_rotateBoneData.m_addRotation * pTrans->m_Rotation).normalized();
 }
 
