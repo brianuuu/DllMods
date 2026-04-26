@@ -89,7 +89,10 @@ bool Configuration::load(const std::string& rootPath)
     Sonic::m_run = (RunResultType)reader.GetInteger("Sonic", "nRun", 0);
 
     // --------------Shadow--------------
-    Shadow::m_shaodwDPad = (ShadowDPadType)reader.GetInteger("Shadow", "nShaodwDPad", 0);
+    if (m_characterMoveset)
+    {
+        Shadow::m_shaodwDPad = (ShadowDPadType)reader.GetInteger("Shadow", "nShaodwDPad", 0);
+    }
     Shadow::m_chaosBlastCamera = reader.GetBoolean("Shadow", "bChaosBlastCamera", Shadow::m_chaosBlastCamera);
     Shadow::m_chaosSpearMomentum = reader.GetBoolean("Shadow", "bChaosSpearMomentum", Shadow::m_chaosSpearMomentum);
     Shadow::m_antiGravity = reader.GetBoolean("Shadow", "bAntiGravity", Shadow::m_antiGravity);
