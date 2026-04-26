@@ -188,8 +188,8 @@ HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* 
 
         for (int i = 0; i < WAT_COUNT; i++)
         {
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponIdleFire[i], "Stand", 0.1f);
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponIdleLoop[i], "Stand", 0.1f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponIdleFire[i], "Stand", 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponIdleLoop[i], "Stand", 0.2f);
 
             A2->SetAnimationBlend(AnimationSetPatcher::WeaponIdleFire[i], AnimationSetPatcher::WeaponRunFire[i], 0.2f);
             A2->SetAnimationBlend(AnimationSetPatcher::WeaponIdleFire[i], AnimationSetPatcher::WeaponRunLoop[i], 0.2f);
