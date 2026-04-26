@@ -694,6 +694,7 @@ HOOK(int32_t*, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterBegin, 0x11
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
     if (!context->StateFlag(eStateFlag_EnableHomingAttackOnDiving) && !context->StateFlag(eStateFlag_KeepRunning) && Common::GetCurrentStageID() != SMT_bsl)
     {
+        RailPhysics::setRailLockEnabled(false);
         NextGenShadow::m_holdPosition = context->m_spMatrixNode->m_Transform.m_Position;
         NextGenShadow::m_chaosAttackBuffered = false;
 
@@ -800,6 +801,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
                 context->StateFlag(eStateFlag_EnableAirOnceAction) = true;
 
                 Common::SonicContextHudHomingAttackClear(context);
+                RailPhysics::setRailLockEnabled(true);
 
                 // resume damage
                 if (NextGenShadow::m_chaosSnapNoDamage)
@@ -924,6 +926,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterEnd, 0x11182F0)
     NextGenShadow::m_chaosAttackForced = false;
     NextGenShadow::m_chaosSnapHoldSameTarget = false;
 
+    RailPhysics::setRailLockEnabled(true);
     originalNextGenShadow_CSonicStateHomingAttackAfterEnd();
 }
 
