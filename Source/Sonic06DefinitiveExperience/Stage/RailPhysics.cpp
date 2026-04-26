@@ -329,6 +329,9 @@ void RailPhysics::applyPatches()
 
     // Force normal grinding animation even when holding stick after switching
     INSTALL_HOOK(RailPhysics_CSonicStateGrindBegin);
+    
+    // Fix unable to land on the same rail after leaving it
+    WRITE_MEMORY(0x11D8F4D, uint8_t, 0x00);
 
     if (Configuration::m_physics)
     {
