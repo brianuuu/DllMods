@@ -4,10 +4,13 @@
 #include "Utils/AnimationSetPatcher.h"
 
 WeaponType CObjWeapon::m_type = WT_COUNT;
+WeaponFireType CObjWeapon::m_fireType = WFT_COUNT;
+
 bool CObjWeapon::m_infiniteAmmo = false;
 float CObjWeapon::m_darkMeter = 0.0f;
 SharedPtrTypeless pfxHandle_awakeDark;
 
+bool const cWeapon_infiniteAmmoDebug = false;
 float const cWeapon_infiniteAmmoTime = 20.0f;
 float const cWeapon_darkMeterAddAmount = 5.0f;
 float const cWeapon_projectileLifeTime = 3.0f;
@@ -37,6 +40,7 @@ std::vector<WeaponData> CObjWeapon::m_weaponData =
 		/*m_hitSfx*/	200616001,
 
 		/*m_modelIndices*/	{4},
+		/*m_animationType*/	WAT_Gun,
 	},
 };
 
@@ -291,7 +295,7 @@ void CObjWeapon::ToggleInfiniteAmmo(bool enabled)
 		Common::SonicContextPlayVoice(voiceHandle, 3002036, 20);
 
 		// Refill current weapon to full
-		m_weaponData[m_type].m_ammo = m_weaponData[m_type].m_maxAmmo;
+		m_weaponData[m_type].Reset();
 		S06HUD_API::SetGadgetCount(m_weaponData[m_type].m_ammo, m_weaponData[m_type].m_maxAmmo);
 
 		SharedPtrTypeless sfx;
@@ -548,7 +552,7 @@ void CObjWeapon::UpdateParallel
 
 	switch (m_state)
 	{
-	case State::AirCharge:
+	case State::Charge:
 	{
 		m_chargeTimer -= in_rUpdateInfo.DeltaTime;
 		if (m_chargeTimer <= 0.0f)
@@ -559,12 +563,12 @@ void CObjWeapon::UpdateParallel
 				m_chargeID = 0;
 			}
 
-			m_state = State::AirFire;
+			m_state = State::Fire;
 			m_shootTimer = 0.0f;
 		}
 		break;
 	}
-	case State::AirFire:
+	case State::Fire:
 	{
 		if (m_shootTimer <= 0.0f)
 		{
@@ -600,7 +604,7 @@ void CObjWeapon::UpdateParallel
 
 		if (m_shootTimer <= 0.0f && ((m_pData->m_autoFire && padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger)) || m_shootBuffered))
 		{
-			m_state = State::AirFire;
+			m_state = State::Fire;
 		}
 		break;
 	}
@@ -635,31 +639,38 @@ void CObjWeapon::SetActive(WeaponFireType type)
 {
 	std::lock_guard<std::mutex> guard(m_mutex);
 
-	m_shootTimer = 0.0f;
-	m_chargeTimer = m_pData->m_chargeTime;
-	if (m_chargeTimer > 0.0f)
+	if (m_state == State::Idle)
 	{
-		if (!m_pData->m_chargeEffectName.empty())
+		m_shootTimer = 0.0f;
+		m_chargeTimer = m_pData->m_chargeTime;
+		if (m_chargeTimer > 0.0f)
 		{
-			m_chargeID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spNodeMuzzle, m_pData->m_chargeEffectName.c_str(), 1.0f);
+			if (!m_pData->m_chargeEffectName.empty())
+			{
+				m_chargeID = m_pGlitterPlayer->PlayContinuous(m_pMember->m_pGameDocument, m_spNodeMuzzle, m_pData->m_chargeEffectName.c_str(), 1.0f);
+			}
+
+			if (m_pData->m_chargeSfx)
+			{
+				SharedPtrTypeless sfx;
+				Common::ObjectPlaySound(this, m_pData->m_chargeSfx, sfx);
+			}
 		}
 
-		if (m_pData->m_chargeSfx)
-		{
-			SharedPtrTypeless sfx;
-			Common::ObjectPlaySound(this, m_pData->m_chargeSfx, sfx);
-		}
+		m_state = State::Charge;
 	}
 
-	switch (type)
+	m_fireType = type;
+	switch (m_fireType)
 	{
 	case WFT_Stand:
-		// TODO:
+		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponIdleLoop[m_pData->m_animationType]);
+		break;
 	case WFT_Run:
-		// TODO:
+		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponRunLoop[m_pData->m_animationType]);
+		break;
 	case WFT_Air:
-		m_state = State::AirCharge;
-		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirLoop[m_type]);
+		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirLoop[m_pData->m_animationType]);
 		break;
 	}
 }
@@ -672,6 +683,9 @@ void CObjWeapon::UpdateBoneRotation()
 	{
 		SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
 	}
+	
+	FUNCTION_PTR(Hedgehog::Animation::hkQsTransform*, __thiscall, GetHkQsTransform, 0x833390, hh::anim::SAnimData* pAnimData, int id);
+	Hedgehog::Animation::hkQsTransform* pTrans = GetHkQsTransform(context->m_pPlayer->m_spAnimationPose->m_pAnimData, m_rotateBoneData.m_boneID);
 
 	hh::math::CQuaternion targetRotation = hh::math::CQuaternion::Identity();
 	if (!targetPosition.isZero())
@@ -679,23 +693,34 @@ void CObjWeapon::UpdateBoneRotation()
 		hh::math::CVector dir = (context->m_spMatrixNode->m_Transform.m_Rotation.conjugate() * (targetPosition - m_spNodeMuzzle->GetWorldMatrix().translation())).normalized();
 		hh::math::CVector dirXZ = dir; dirXZ.y() = 0.0f; dirXZ.normalize();
 		
-		float yaw = min(acosf(hh::math::CVector::UnitZ().dot(dirXZ)), 80.0f * DEG_TO_RAD);
+		float dotYaw = hh::math::CVector::UnitZ().dot(dirXZ);
+		Common::ClampFloat(dotYaw, -1.0f, 1.0f);
+		float yaw = acosf(dotYaw);
 		if (dir.dot(Eigen::Vector3f::UnitX()) < 0) yaw = -yaw;
-		float pitch = min(acosf(dir.dot(dirXZ)), 70.0f * DEG_TO_RAD);
+		Common::ClampFloat(yaw, m_rotateBoneData.m_minYaw, m_rotateBoneData.m_maxYaw);
+
+		float dotPitch = dir.dot(dirXZ);
+		Common::ClampFloat(dotPitch, -1.0f, 1.0f);
+		float pitch = acosf(dotPitch);
 		if (dir.dot(Eigen::Vector3f::UnitY()) < 0) pitch = -pitch;
+		Common::ClampFloat(pitch, m_rotateBoneData.m_minPitch, m_rotateBoneData.m_maxPitch);
 
-		targetRotation = Eigen::AngleAxisf(yaw, hh::math::CVector::UnitX()) * Eigen::AngleAxisf(pitch, hh::math::CVector::UnitZ());
+		hh::math::CVector yawAxis = hh::math::CVector::UnitX();
+		if (m_fireType == WFT_Run)
+		{
+			yawAxis = Eigen::AngleAxisf(65 * DEG_TO_RAD, hh::math::CVector::UnitZ()) * yawAxis;
+		}
+
+		targetRotation = Eigen::AngleAxisf(yaw, yawAxis) * Eigen::AngleAxisf(pitch, hh::math::CVector::UnitZ());
 	}
-	m_rotateBoneData.m_addRotation = m_rotateBoneData.m_addRotation.slerp(0.1f, targetRotation);
 
-	FUNCTION_PTR(Hedgehog::Animation::hkQsTransform*, __thiscall, GetHkQsTransform, 0x833390, hh::anim::SAnimData* pAnimData, int id);
-	Hedgehog::Animation::hkQsTransform* pTrans = GetHkQsTransform(context->m_pPlayer->m_spAnimationPose->m_pAnimData, m_rotateBoneData.m_boneID);
+	m_rotateBoneData.m_addRotation = m_rotateBoneData.m_addRotation.slerp(0.1f, targetRotation);
 	pTrans->m_Rotation = (m_rotateBoneData.m_addRotation * pTrans->m_Rotation).normalized();
 }
 
 void CObjWeapon::Shoot()
 {
-	if (!m_infiniteAmmo)
+	if (!m_infiniteAmmo && !cWeapon_infiniteAmmoDebug)
 	{
 		m_pData->m_ammo--;
 		S06HUD_API::SetGadgetCount(m_pData->m_ammo, m_pData->m_maxAmmo);
@@ -708,7 +733,18 @@ void CObjWeapon::Shoot()
 	}
 
 	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-	Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirFire[m_type]);
+	switch (m_fireType)
+	{
+	case WFT_Stand:
+		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponIdleFire[m_pData->m_animationType]);
+		break;
+	case WFT_Run:
+		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponRunFire[m_pData->m_animationType]);
+		break;
+	case WFT_Air:
+		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirFire[m_pData->m_animationType]);
+		break;
+	}
 
 	// shoot projectile
 	hh::mr::CTransform startTrans;

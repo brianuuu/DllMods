@@ -135,14 +135,13 @@ bool NextGenShadow::ShouldPlayJetEffect()
         "Jet", "JetL", "JetR", "JetWallL", "JetWallR",
         "Boost", "BoostL", "BoostR", "BoostWallL", "BoostWallR",
         "AirBoost", "FloatingBoost", "RunQuickStepL", "RunQuickStepR",
-        AnimationSetPatcher::WeaponAirLoop[0],
-        AnimationSetPatcher::WeaponAirFire[0],
     };
 
     alignas(16) MsgGetAnimationInfo message {};
     Common::SonicContextGetAnimationInfo(message);
 
-    return IsModelVisible() && c_jetAnimations.count(message.m_name);
+    bool const isWeapon = std::strstr(message.m_name, "WeaponAir") || std::strstr(message.m_name, "WeaponRun");
+    return IsModelVisible() && (c_jetAnimations.count(message.m_name) || isWeapon);
 }
 
 SharedPtrTypeless jetRightFront;
@@ -1885,18 +1884,30 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
         break;
     }
     case NextGenShadow::OverrideType::SH_WeaponStand:
-    {
-        // TODO: posture
-        Common::SetPlayerVelocity(hh::math::CVector::Zero());
-        NextGenShadow::m_weaponSingleton->SetActive(WFT_Stand);
-        RailPhysics::setRailLockEnabled(false);
-        NextGenPhysics::setHomingCollisionDistance(cShadow_weaponLockDist);
-        break;
-    }
+    case NextGenShadow::OverrideType::SH_WeaponRun:
     case NextGenShadow::OverrideType::SH_WeaponAir:
     {
-        NextGenShadow::m_holdPosition = context->m_spMatrixNode->m_Transform.m_Position;
-        NextGenShadow::m_weaponSingleton->SetActive(WFT_Air);
+        switch (NextGenShadow::m_overrideType)
+        {
+        case NextGenShadow::OverrideType::SH_WeaponStand:
+        {
+            Common::SetPlayerVelocity(hh::math::CVector::Zero());
+            NextGenShadow::m_weaponSingleton->SetActive(WFT_Stand);
+            break;
+        }
+        case NextGenShadow::OverrideType::SH_WeaponRun:
+        {
+            NextGenShadow::m_weaponSingleton->SetActive(WFT_Run);
+            break;
+        }
+        case NextGenShadow::OverrideType::SH_WeaponAir:
+        {
+            NextGenShadow::m_holdPosition = context->m_spMatrixNode->m_Transform.m_Position;
+            NextGenShadow::m_weaponSingleton->SetActive(WFT_Air);
+            break;
+        }
+        }
+
         RailPhysics::setRailLockEnabled(false);
         NextGenPhysics::setHomingCollisionDistance(cShadow_weaponLockDist);
         break;
@@ -2255,6 +2266,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
         break;
     }
     case NextGenShadow::OverrideType::SH_WeaponStand:
+    case NextGenShadow::OverrideType::SH_WeaponRun:
     {
         if (!context->m_Grounded)
         {
@@ -2262,13 +2274,33 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             return nullptr;
         }
 
+        Eigen::Vector3f playerVelocity;
+        Common::GetPlayerVelocity(playerVelocity);
+        bool const moving = playerVelocity.norm() > 0.2f;
+
+        if (NextGenShadow::m_overrideType == NextGenShadow::OverrideType::SH_WeaponStand)
+        {
+            if (moving)
+            {
+                NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_WeaponRun;
+                NextGenShadow::m_weaponSingleton->SetActive(WFT_Run);
+            }
+        }
+        else
+        {
+            if (!moving)
+            {
+                NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_WeaponStand;
+                NextGenShadow::m_weaponSingleton->SetActive(WFT_Stand);
+            }
+        }
+
         originalNextGenShadow_HomingUpdate(context);
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 
-        // TODO:
         if (NextGenShadow::m_weaponSingleton->CanRelease())
         {
-            StateManager::ChangeState(StateAction::Walk, *PLAYER_CONTEXT);
+            StateManager::ChangeState(NextGenShadow::m_overrideType == NextGenShadow::OverrideType::SH_WeaponStand ? StateAction::Stand : StateAction::Walk, *PLAYER_CONTEXT);
         }
         break;
     }
@@ -2289,7 +2321,6 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
         originalNextGenShadow_HomingUpdate(context);
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 
-        // TODO:
         if (NextGenShadow::m_weaponSingleton->CanRelease())
         {
             StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
@@ -2339,8 +2370,14 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::f
         break;
     }
     case NextGenShadow::OverrideType::SH_WeaponStand:
+    case NextGenShadow::OverrideType::SH_WeaponRun:
     case NextGenShadow::OverrideType::SH_WeaponAir:
     {
+        if (NextGenShadow::m_overrideType == NextGenShadow::OverrideType::SH_WeaponStand)
+        {
+            Common::SonicContextChangeAnimation("Stand");
+        }
+
         NextGenShadow::m_weaponSingleton->SetStateIdle();
         Common::SonicContextHudHomingAttackClear(context);
         RailPhysics::setRailLockEnabled(true);
@@ -2585,6 +2622,8 @@ bool NextGenShadow::bActionHandlerImpl()
         return false;
     }
 
+    bool const moving = playerVelocity.norm() > 0.2f;
+
     if (CheckChaosControl())
     {
         return true;
@@ -2593,7 +2632,8 @@ bool NextGenShadow::bActionHandlerImpl()
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
     if (padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger) && CObjWeapon::m_type != WT_COUNT)
     {
-        m_overrideType = OverrideType::SH_WeaponStand;
+
+        m_overrideType = moving ? OverrideType::SH_WeaponRun : OverrideType::SH_WeaponStand;
         StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
         return true;
     }
@@ -2611,7 +2651,6 @@ bool NextGenShadow::bActionHandlerImpl()
         return true;
     }
 
-    bool moving = playerVelocity.norm() > 0.2f;
     bool canUseSpindash = !moving || (!Configuration::Shadow::m_antiGravity && !flags->KeepRunning);
 
     bool bDown, bPressed, bReleased;

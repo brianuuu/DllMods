@@ -82,6 +82,7 @@ public:
 		SH_ChaosBlastWait,
 		SH_ChaosBlast,
 		SH_WeaponStand,
+		SH_WeaponRun,
 		SH_WeaponAir,
 	} m_overrideType;
 

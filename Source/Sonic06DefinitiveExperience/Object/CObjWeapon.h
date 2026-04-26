@@ -20,6 +20,13 @@ enum WeaponFireType
 	WFT_Stand,
 	WFT_Run,
 	WFT_Air,
+	WFT_COUNT,
+};
+
+enum WeaponAnimationType
+{
+	WAT_Gun,
+	WAT_COUNT,
 };
 
 struct WeaponData
@@ -46,6 +53,7 @@ struct WeaponData
 	uint32_t const m_hitSfx = 0;
 
 	std::set<uint32_t> m_modelIndices;
+	WeaponAnimationType m_animationType = WAT_COUNT;
 
 	void Reset()
 	{
@@ -85,6 +93,7 @@ class CObjWeapon : public Sonic::CObjectBase
 {
 public:
 	static WeaponType m_type;
+	static WeaponFireType m_fireType;
 	static bool m_infiniteAmmo;
 	static float m_darkMeter;
 	static std::vector<WeaponData> m_weaponData;
@@ -127,8 +136,8 @@ private:
 	enum class State 
 	{
 		Idle,
-		AirCharge,
-		AirFire,
+		Charge,
+		Fire,
 		Cooldown,
 	} m_state = State::Idle;
 
@@ -138,6 +147,11 @@ private:
 	{
 		uint16_t m_boneID = 0;
 		hh::math::CQuaternion m_addRotation = hh::math::CQuaternion::Identity();
+
+		float m_minYaw = -80.0f;
+		float m_maxYaw = 80.0f;
+		float m_minPitch = -70.0f;
+		float m_maxPitch = 70.0f;
 	} m_rotateBoneData;
 
 private:

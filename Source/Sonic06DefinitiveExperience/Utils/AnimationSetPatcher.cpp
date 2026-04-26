@@ -59,14 +59,32 @@ const char* volatile const AnimationSetPatcher::ChaosBlastWaitLoop = "ChaosBlast
 const char* volatile const AnimationSetPatcher::ChaosBlast = "ChaosBlast";
 const char* volatile const AnimationSetPatcher::ChaosBlastLoop = "ChaosBlastLoop";
 
-const char* volatile const AnimationSetPatcher::WeaponAirLoop[WT_COUNT] =
+const char* volatile const AnimationSetPatcher::WeaponAirLoop[WAT_COUNT] =
 {
-    "WeaponGunAirLoop",
+    "WeaponAirLoopGun",
 };
 
-const char* volatile const AnimationSetPatcher::WeaponAirFire[WT_COUNT] =
+const char* volatile const AnimationSetPatcher::WeaponAirFire[WAT_COUNT] =
 {
-    "WeaponGunAirFire",
+    "WeaponAirFireGun",
+};
+const char* volatile const AnimationSetPatcher::WeaponIdleLoop[WAT_COUNT] =
+{
+    "WeaponIdleLoopGun",
+};
+
+const char* volatile const AnimationSetPatcher::WeaponIdleFire[WAT_COUNT] =
+{
+    "WeaponIdleFireGun",
+};
+const char* volatile const AnimationSetPatcher::WeaponRunLoop[WAT_COUNT] =
+{
+    "WeaponRunLoopGun",
+};
+
+const char* volatile const AnimationSetPatcher::WeaponRunFire[WAT_COUNT] =
+{
+    "WeaponRunFireGun",
 };
 
 HOOK(bool, __fastcall, CAnimationControlSingle_Debug, 0x6D84F0, uint32_t** This, void* Edx, float a2, int a3)
@@ -167,6 +185,22 @@ HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* 
         A2->SetAnimationBlend("JeepBLoop", "Jeep", 0.1f);
         A2->SetAnimationBlend("JeepBLoop", "JeepL", 0.1f);
         A2->SetAnimationBlend("JeepBLoop", "JeepR", 0.1f);
+
+        for (int i = 0; i < WAT_COUNT; i++)
+        {
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponIdleFire[i], "Stand", 0.1f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponIdleLoop[i], "Stand", 0.1f);
+
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponIdleFire[i], AnimationSetPatcher::WeaponRunFire[i], 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponIdleFire[i], AnimationSetPatcher::WeaponRunLoop[i], 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponIdleLoop[i], AnimationSetPatcher::WeaponRunFire[i], 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponIdleLoop[i], AnimationSetPatcher::WeaponRunLoop[i], 0.2f);
+
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponRunFire[i], AnimationSetPatcher::WeaponIdleFire[i], 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponRunFire[i], AnimationSetPatcher::WeaponIdleLoop[i], 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponRunLoop[i], AnimationSetPatcher::WeaponIdleFire[i], 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponRunLoop[i], AnimationSetPatcher::WeaponIdleLoop[i], 0.2f);
+        }
     }
 }
 
@@ -643,8 +677,15 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationDataSuper.emplace_back("JeepBLoop", "sh_jeep_back_l", 1.0f, true, nullptr);
 
         // Weapons
-        m_newAnimationData.emplace_back(WeaponAirLoop[0], "wpn_gun_air_l", 1.0f, true, nullptr);
-        m_newAnimationData.emplace_back(WeaponAirFire[0], "wpn_gun_air_fire", 1.0f, false, WeaponAirLoop[0]);
+        for (int i = 0; i < WAT_COUNT; i++)
+        {
+            m_newAnimationData.emplace_back(WeaponAirLoop[i], "wpn_gun_air_l", 1.0f, true, nullptr);
+            m_newAnimationData.emplace_back(WeaponAirFire[i], "wpn_gun_air_fire", 1.0f, false, WeaponAirLoop[i]);
+            m_newAnimationData.emplace_back(WeaponIdleLoop[i], "wpn_gun_idle_l", 1.0f, true, nullptr);
+            m_newAnimationData.emplace_back(WeaponIdleFire[i], "wpn_gun_idle_fire", 1.0f, false, WeaponIdleLoop[i]);
+            m_newAnimationData.emplace_back(WeaponRunLoop[i], "wpn_gun_run_l", 1.0f, true, nullptr);
+            m_newAnimationData.emplace_back(WeaponRunFire[i], "wpn_gun_run_fire", 1.0f, false, WeaponRunLoop[i]);
+        }
     }
 
     if (!m_newAnimationData.empty())
