@@ -2295,9 +2295,14 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             }
         }
 
-        originalNextGenShadow_HomingUpdate(context);
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+        if (padState->IsDown(Sonic::EKeyState::eKeyState_A))
+        {
+            Common::SonicContextInvokeJumpState(context, "JumpShort");
+            return nullptr;
+        }
 
+        originalNextGenShadow_HomingUpdate(context);
         if (NextGenShadow::m_weaponSingleton->CanRelease())
         {
             StateManager::ChangeState(NextGenShadow::m_overrideType == NextGenShadow::OverrideType::SH_WeaponStand ? StateAction::Stand : StateAction::Walk, *PLAYER_CONTEXT);
@@ -2319,8 +2324,6 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
         }
 
         originalNextGenShadow_HomingUpdate(context);
-        Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-
         if (NextGenShadow::m_weaponSingleton->CanRelease())
         {
             StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);

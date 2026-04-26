@@ -2014,6 +2014,21 @@ static void SonicContextSetInAirData
 	}
 }
 
+static void SonicContextInvokeJumpState
+(
+	void* pContext,
+	hh::base::CSharedString const& stateName
+)
+{
+	static void* const pInvokeJumpState = (void*)0xE5F930;
+	__asm
+	{
+		push	stateName
+		mov		esi, pContext
+		call	[pInvokeJumpState]
+	}
+}
+
 inline void SonicContextHudHomingAttackOutro(Sonic::Player::CPlayerSpeedContext* context)
 {
 	if (context->m_spSonicHudHomingAttackImpl)
