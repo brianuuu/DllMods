@@ -62,7 +62,7 @@ void __declspec(naked) createHomingTargetObj()
     static uint32_t skipAddress = 0x121EE56;
     __asm
     {
-        test    m_hasHomingTargetObj, 0
+        cmp     m_hasHomingTargetObj, 0
         jne     jump
 
         mov     m_hasHomingTargetObj, 1
