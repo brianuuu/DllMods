@@ -3035,9 +3035,19 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateSlidingAdvance, 0x11D69A0, hh::f
     originalNextGenShadow_CSonicStateSlidingAdvance(This);
 
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+    bool const enoughHeight = context->m_Field4A0 >= 1.2f;
 
-    if (context->m_Field4A0 >= 1.2f && NextGenShadow::CheckChaosBoost())
+    if (enoughHeight && NextGenShadow::CheckChaosBoost())
     {
+        return;
+    }
+
+    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+    if (enoughHeight && padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger) && CObjWeapon::m_type != WT_COUNT)
+    {
+
+        NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_WeaponRun;
+        StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
         return;
     }
 
@@ -3051,7 +3061,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateSlidingAdvance, 0x11D69A0, hh::f
             return;
         }
 
-        if (context->m_Field4A0 >= 1.2f) // enough ceiling height
+        if (enoughHeight) // enough ceiling height
         {
             if (NextGenShadow::m_isSpindash)
             {
