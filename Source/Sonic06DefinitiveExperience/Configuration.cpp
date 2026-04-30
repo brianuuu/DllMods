@@ -147,6 +147,12 @@ bool Configuration::load(const std::string& rootPath)
         bb3.addAR("+SonicActionCommon", 1);
         bb3.addAR("+SonicActionCommonHud", 1);
 
+        if (Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Weapons)
+        {
+            bb3.addReplace("+#Application.ar.00", "06Shadow\\+#ApplicationWeapon.ar.00");
+            bb3.addReplace("+#Application.arl", "06Shadow\\+#ApplicationWeapon.arl");
+        }
+
         // stage animations
         str = "SonicBatabata";
         bbWriter::applyModel(str, m_model);
