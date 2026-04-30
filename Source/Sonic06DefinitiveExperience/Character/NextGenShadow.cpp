@@ -3748,6 +3748,20 @@ void NextGenShadow::applyPatches()
         {
             // refill ammo
             CObjWeapon::ResetWeaponData();
+
+            // Add Time_Break to list of unsaved musics
+            static char const* c_noSaveMusic[] =
+            {
+                (char*)0x15C8E08,
+                (char*)0x15C8E18,
+                (char*)0x15C8E30,
+                (char*)0x15C8E48,
+                (char*)0x15C8E54,
+                (char*)0x15C8E60,
+                "Time_Break"
+            };
+            WRITE_MEMORY(0xD60937, char**, c_noSaveMusic);
+            WRITE_MEMORY(0xD60965, uint8_t, sizeof(c_noSaveMusic));
             break;
         }
         }

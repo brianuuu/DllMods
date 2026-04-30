@@ -292,8 +292,9 @@ void CObjWeapon::AddDarkMeter()
 
 void CObjWeapon::ToggleInfiniteAmmo(bool enabled)
 {
-	if (enabled && m_type != WT_COUNT)
+	if (enabled && !m_infiniteAmmo && m_type != WT_COUNT)
 	{
+		Common::PlayBGM("Time_Break", 0.0f); 
 		m_infiniteAmmo = true;
 
 		SharedPtrTypeless voiceHandle;
@@ -309,8 +310,9 @@ void CObjWeapon::ToggleInfiniteAmmo(bool enabled)
 		void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
 		Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle_awakeDark, matrixNode, "ef_ch_sh_awakedark", 1);
 	}
-	else
+	else if (!enabled && m_infiniteAmmo)
 	{
+		Common::StopBGM("Time_Break", 0.0f);
 		m_infiniteAmmo = false;
 		if (pfxHandle_awakeDark)
 		{
@@ -541,7 +543,8 @@ void CObjWeapon::UpdateParallel
 		m_darkMeter = max(0.0f, m_darkMeter - 100.0f * in_rUpdateInfo.DeltaTime / cWeapon_infiniteAmmoTime);
 		S06HUD_API::SetGadgetHP(m_darkMeter);
 
-		if (m_darkMeter == 0.0f || NextGenShadow::m_chaosBoostLevel == 0)
+		CSonicStateFlags const* flags = Common::GetSonicStateFlags();
+		if (flags->Dead || m_darkMeter == 0.0f || NextGenShadow::m_chaosBoostLevel == 0)
 		{
 			ToggleInfiniteAmmo(false);
 		}
