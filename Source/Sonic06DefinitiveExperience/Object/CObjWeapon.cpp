@@ -1,4 +1,6 @@
 #include "CObjWeapon.h"
+
+#include "Configuration.h"
 #include "Character/NextGenPhysics.h"
 #include "Character/NextGenShadow.h"
 #include "Utils/AnimationSetPatcher.h"
@@ -15,6 +17,7 @@ float const cWeapon_infiniteAmmoTime = 20.0f;
 float const cWeapon_darkMeterAddAmount = 5.0f;
 float const cWeapon_projectileLifeTime = 3.0f;
 float const cWeapon_boneSlerpRate = 0.2f;
+float const cWeapon_noPhysicsSpeedAdd = 40.0f;
 
 std::vector<WeaponData> CObjWeapon::m_weaponData =
 {
@@ -56,11 +59,12 @@ CObjProjectile::CObjProjectile
 	, m_position(startTrans.m_Position)
 	, m_positionPrev(startTrans.m_Position)
 {
+	float const maxSpeed = m_pData->m_speed + (Configuration::m_physics ? 0.0f : cWeapon_noPhysicsSpeedAdd);
 
 	// initial velocity
 	if (targetPos.isZero())
 	{
-		m_velocity = startTrans.m_Rotation * hh::math::CVector::UnitZ() * m_pData->m_speed;
+		m_velocity = startTrans.m_Rotation * hh::math::CVector::UnitZ() * maxSpeed;
 		if (m_pData->m_gravity > 0.0f)
 		{
 			// projectiles with gravity only set initial rotation
@@ -80,7 +84,7 @@ CObjProjectile::CObjProjectile
 		{
 			// TODO: calculate initial speed to hit target
 			hh::math::CQuaternion rotation = hh::math::CQuaternion::FromTwoVectors(Hedgehog::Math::CVector::UnitZ(), dirXZ.head<3>()) * startTrans.m_Rotation;
-			m_velocity = rotation * hh::math::CVector::UnitZ() * m_pData->m_speed;
+			m_velocity = rotation * hh::math::CVector::UnitZ() * maxSpeed;
 
 			// projectiles with gravity only set initial rotation
 			m_spMatrixNodeTransform->m_Transform.SetRotation(rotation);
