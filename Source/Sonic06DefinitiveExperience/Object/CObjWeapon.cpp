@@ -538,6 +538,7 @@ void CObjWeapon::UpdateParallel
 {
 	std::lock_guard<std::mutex> guard(m_mutex);
 
+	CSonicStateFlags const* flags = Common::GetSonicStateFlags();
 	if (m_infiniteAmmo)
 	{
 		m_darkMeter = max(0.0f, m_darkMeter - 100.0f * in_rUpdateInfo.DeltaTime / cWeapon_infiniteAmmoTime);
@@ -550,6 +551,7 @@ void CObjWeapon::UpdateParallel
 		}
 	}
 	else if (m_darkMeter == 100.0f && NextGenShadow::m_chaosBoostLevel > 0)
+	else if (m_darkMeter == 100.0f && NextGenShadow::m_chaosBoostLevel > 0 && !flags->Dead)
 	{
 		ToggleInfiniteAmmo(true);
 	}
