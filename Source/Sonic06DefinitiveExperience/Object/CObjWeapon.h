@@ -19,6 +19,7 @@ enum WeaponFireType
 {
 	WFT_Stand,
 	WFT_Run,
+	WFT_Grind,
 	WFT_Air,
 	WFT_COUNT,
 };

@@ -77,6 +77,7 @@ const char* volatile const AnimationSetPatcher::WeaponIdleFire[WAT_COUNT] =
 {
     "WeaponIdleFireGun",
 };
+
 const char* volatile const AnimationSetPatcher::WeaponRunLoop[WAT_COUNT] =
 {
     "WeaponRunLoopGun",
@@ -85,6 +86,16 @@ const char* volatile const AnimationSetPatcher::WeaponRunLoop[WAT_COUNT] =
 const char* volatile const AnimationSetPatcher::WeaponRunFire[WAT_COUNT] =
 {
     "WeaponRunFireGun",
+};
+
+const char* volatile const AnimationSetPatcher::WeaponGrindLoop[WAT_COUNT] =
+{
+    "WeaponGrindLoopGun",
+};
+
+const char* volatile const AnimationSetPatcher::WeaponGrindFire[WAT_COUNT] =
+{
+    "WeaponGrindFireGun",
 };
 
 HOOK(bool, __fastcall, CAnimationControlSingle_Debug, 0x6D84F0, uint32_t** This, void* Edx, float a2, int a3)
@@ -685,6 +696,8 @@ void AnimationSetPatcher::applyPatches()
             m_newAnimationData.emplace_back(WeaponIdleFire[i], "wpn_gun_idle_fire", 1.0f, false, WeaponIdleLoop[i]);
             m_newAnimationData.emplace_back(WeaponRunLoop[i], "wpn_gun_run_l", 1.0f, true, nullptr);
             m_newAnimationData.emplace_back(WeaponRunFire[i], "wpn_gun_run_fire", 1.0f, false, WeaponRunLoop[i]);
+            m_newAnimationData.emplace_back(WeaponGrindLoop[i], "wpn_gun_grind_l", 1.0f, true, nullptr);
+            m_newAnimationData.emplace_back(WeaponGrindFire[i], "wpn_gun_grind_fire", 1.0f, false, WeaponGrindLoop[i]);
         }
     }
 

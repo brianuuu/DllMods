@@ -110,5 +110,7 @@ public:
     static const char* volatile const WeaponIdleFire[WAT_COUNT];
     static const char* volatile const WeaponRunLoop[WAT_COUNT];
     static const char* volatile const WeaponRunFire[WAT_COUNT];
+    static const char* volatile const WeaponGrindLoop[WAT_COUNT];
+    static const char* volatile const WeaponGrindFire[WAT_COUNT];
 };
 

@@ -1888,6 +1888,7 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
     }
     case NextGenShadow::OverrideType::SH_WeaponStand:
     case NextGenShadow::OverrideType::SH_WeaponRun:
+    case NextGenShadow::OverrideType::SH_WeaponGrind:
     case NextGenShadow::OverrideType::SH_WeaponAir:
     {
         switch (NextGenShadow::m_overrideType)
@@ -1901,6 +1902,11 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
         case NextGenShadow::OverrideType::SH_WeaponRun:
         {
             NextGenShadow::m_weaponSingleton->SetActive(WFT_Run);
+            break;
+        }
+        case NextGenShadow::OverrideType::SH_WeaponGrind:
+        {
+            NextGenShadow::m_weaponSingleton->SetActive(WFT_Grind);
             break;
         }
         case NextGenShadow::OverrideType::SH_WeaponAir:
@@ -2312,6 +2318,23 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
         }
         break;
     }
+    case NextGenShadow::OverrideType::SH_WeaponGrind:
+    {
+        // Note: posture already handle Fall state change at end of path
+        Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+        if (padState->IsDown(Sonic::EKeyState::eKeyState_A))
+        {
+            Common::SonicContextInvokeJumpState(context, "GrindJumpShort");
+            return nullptr;
+        }
+
+        originalNextGenShadow_HomingUpdate(context);
+        if (NextGenShadow::m_weaponSingleton->CanRelease())
+        {
+            StateManager::ChangeState(StateAction::Grind, *PLAYER_CONTEXT);
+        }
+        break;
+    }
     case NextGenShadow::OverrideType::SH_WeaponAir:
     {
         if (context->m_Grounded)
@@ -2377,11 +2400,21 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::f
     }
     case NextGenShadow::OverrideType::SH_WeaponStand:
     case NextGenShadow::OverrideType::SH_WeaponRun:
+    case NextGenShadow::OverrideType::SH_WeaponGrind:
     case NextGenShadow::OverrideType::SH_WeaponAir:
     {
         if (NextGenShadow::m_overrideType == NextGenShadow::OverrideType::SH_WeaponStand)
         {
             Common::SonicContextChangeAnimation("Stand");
+        }
+        else if (NextGenShadow::m_overrideType == NextGenShadow::OverrideType::SH_WeaponGrind)
+        {
+            // if next state doesn't have grind flag, clear data
+            if (!This->m_spNextState || (*(uint32_t*)((uint32_t)This->m_spNextState.get() + 0x60) & 1) == 0)
+            {
+                FUNCTION_PTR(void, __thiscall, EndGrindState, 0xE64530, void* context, bool isFall, bool keepPath);
+                EndGrindState(context, false, false);
+            }
         }
 
         NextGenShadow::m_weaponSingleton->SetStateIdle();
@@ -3436,6 +3469,9 @@ HOOK(bool, __fastcall, NextGenShadow_CSonicStateStartCrouchingEnd, 0xDEF0A0, hh:
     return originalNextGenShadow_CSonicStateStartCrouchingEnd(This);
 }
 
+//---------------------------------------------------
+// D-Pad extras
+//---------------------------------------------------
 void __declspec(naked) NextGenShadow_fixExternalControlBobbing()
 {
     static uint32_t successAddress = 0x11DD001;
@@ -3454,6 +3490,36 @@ void __declspec(naked) NextGenShadow_fixExternalControlBobbing()
         success:
         jmp     [successAddress]
     }
+}
+
+HOOK(void, __fastcall, NextGenShadow_CSonicStateGrindAdvance, 0xDF2890, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+    if (padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger) && CObjWeapon::m_type != WT_COUNT)
+    {
+
+        NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_WeaponGrind;
+        StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
+        return;
+    }
+
+    originalNextGenShadow_CSonicStateGrindAdvance(This);
+}
+
+HOOK(void, __fastcall, NextGenShadow_CSonicStateGrindEnd, 0xDF2630, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    bool const isGrindState = NextGenShadow::m_overrideType == NextGenShadow::OverrideType::SH_WeaponGrind;
+    if (isGrindState)
+    {
+        // disable removing Grind posture
+        WRITE_MEMORY(0xDF264E, uint8_t, 0xEB);
+    }
+    else
+    {
+        WRITE_MEMORY(0xDF264E, uint8_t, 0x74);
+    }
+
+    originalNextGenShadow_CSonicStateGrindEnd(This);
 }
 
 //---------------------------------------------------
@@ -3748,6 +3814,10 @@ void NextGenShadow::applyPatches()
         {
             // refill ammo
             CObjWeapon::ResetWeaponData();
+
+            // Extra states that fires weapon
+            INSTALL_HOOK(NextGenShadow_CSonicStateGrindAdvance);
+            INSTALL_HOOK(NextGenShadow_CSonicStateGrindEnd);
 
             // Add Time_Break to list of unsaved musics
             static char const* c_noSaveMusic[] =

@@ -544,13 +544,11 @@ void CObjWeapon::UpdateParallel
 		m_darkMeter = max(0.0f, m_darkMeter - 100.0f * in_rUpdateInfo.DeltaTime / cWeapon_infiniteAmmoTime);
 		S06HUD_API::SetGadgetHP(m_darkMeter);
 
-		CSonicStateFlags const* flags = Common::GetSonicStateFlags();
 		if (flags->Dead || m_darkMeter == 0.0f || NextGenShadow::m_chaosBoostLevel == 0)
 		{
 			ToggleInfiniteAmmo(false);
 		}
 	}
-	else if (m_darkMeter == 100.0f && NextGenShadow::m_chaosBoostLevel > 0)
 	else if (m_darkMeter == 100.0f && NextGenShadow::m_chaosBoostLevel > 0 && !flags->Dead)
 	{
 		ToggleInfiniteAmmo(true);
@@ -679,6 +677,9 @@ void CObjWeapon::SetActive(WeaponFireType type)
 	case WFT_Run:
 		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponRunLoop[m_pData->m_animationType]);
 		break;
+	case WFT_Grind:
+		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponGrindLoop[m_pData->m_animationType]);
+		break;
 	case WFT_Air:
 		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirLoop[m_pData->m_animationType]);
 		break;
@@ -750,6 +751,9 @@ void CObjWeapon::Shoot()
 		break;
 	case WFT_Run:
 		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponRunFire[m_pData->m_animationType]);
+		break;
+	case WFT_Grind:
+		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponGrindFire[m_pData->m_animationType]);
 		break;
 	case WFT_Air:
 		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirFire[m_pData->m_animationType]);
