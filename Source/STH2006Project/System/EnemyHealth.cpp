@@ -299,6 +299,18 @@ HOOK(void, __stdcall, EnemyHealth_CEnemyEggRobo_CStateReviveBegin, 0x602AF0, uin
     originalEnemyHealth_CEnemyEggRobo_CStateReviveBegin(pCEnemyBase);
 }
 
+HOOK(void, __stdcall, EnemyHealth_CEnemyTaker_CStateDeflectionBegin, 0x606A70, uint32_t pCEnemyBase)
+{
+    *(uint8_t*)(pCEnemyBase + 0x16F) = EnemyHealth::GetMaxHealth(pCEnemyBase);
+    originalEnemyHealth_CEnemyTaker_CStateDeflectionBegin(pCEnemyBase);
+}
+
+HOOK(void, __stdcall, EnemyHealth_CEnemyBeetle_CStateFakeDeadEnd, 0xBA4310, uint32_t pCEnemyBase)
+{
+    *(uint8_t*)(pCEnemyBase + 0x16F) = EnemyHealth::GetMaxHealth(pCEnemyBase);
+    originalEnemyHealth_CEnemyBeetle_CStateFakeDeadEnd(pCEnemyBase);
+}
+
 #define HOOK_ENEMY_PROCESS_MESSAGE(enemyName, address) \
 HOOK(bool, __fastcall, EnemyHealth_##enemyName##_ProcessMessage, address, hh::fnd::CMessageActor* This, void* Edx, hh::fnd::Message& message, bool flag) \
 { \
@@ -349,6 +361,8 @@ void EnemyHealth::applyPatches()
     // Reset health for FakeDead enemies
     INSTALL_HOOK(EnemyHealth_CEnemyBeeton_CStateReviveWaitEnd);
     INSTALL_HOOK(EnemyHealth_CEnemyEggRobo_CStateReviveBegin);
+    INSTALL_HOOK(EnemyHealth_CEnemyTaker_CStateDeflectionBegin);
+    INSTALL_HOOK(EnemyHealth_CEnemyBeetle_CStateFakeDeadEnd);
 
     // Replace enemy's interactionType to regular enemy lock-on
     WRITE_MEMORY(0xBAF7EC, uint32_t, 0x1E0AF24); // CEnemyEggRobo
