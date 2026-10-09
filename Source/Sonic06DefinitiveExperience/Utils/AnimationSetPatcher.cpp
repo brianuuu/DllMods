@@ -58,44 +58,56 @@ const char* volatile const AnimationSetPatcher::ChaosBlastWait = "ChaosBlastWait
 const char* volatile const AnimationSetPatcher::ChaosBlastWaitLoop = "ChaosBlastWaitLoop";
 const char* volatile const AnimationSetPatcher::ChaosBlast = "ChaosBlast";
 const char* volatile const AnimationSetPatcher::ChaosBlastLoop = "ChaosBlastLoop";
+const char* volatile const AnimationSetPatcher::UpReelRightStart = "UpReelRightStart";
+const char* volatile const AnimationSetPatcher::UpReelRightLoop = "UpReelRightLoop";
 
-const char* volatile const AnimationSetPatcher::WeaponAirLoop[WAT_COUNT] =
+static_assert(WAT_COUNT == 1, "Weapon count changed");
+const char* volatile const AnimationSetPatcher::WeaponLoop[WFT_COUNT][WAT_COUNT] =
 {
-    "WeaponAirLoopGun",
+    {
+        "WeaponAirLoopGun",
+    },
+    {
+        "WeaponIdleLoopGun",
+    },
+    {
+        "WeaponRunLoopGun",
+    },
+    {
+        "WeaponGrindLoopGun",
+    },
+    {
+        "WeaponHangLoopGun",
+    },
 };
 
-const char* volatile const AnimationSetPatcher::WeaponAirFire[WAT_COUNT] =
+const char* volatile const AnimationSetPatcher::WeaponFire[WFT_COUNT][WAT_COUNT] =
 {
-    "WeaponAirFireGun",
-};
-const char* volatile const AnimationSetPatcher::WeaponIdleLoop[WAT_COUNT] =
-{
-    "WeaponIdleLoopGun",
-};
-
-const char* volatile const AnimationSetPatcher::WeaponIdleFire[WAT_COUNT] =
-{
-    "WeaponIdleFireGun",
-};
-
-const char* volatile const AnimationSetPatcher::WeaponRunLoop[WAT_COUNT] =
-{
-    "WeaponRunLoopGun",
-};
-
-const char* volatile const AnimationSetPatcher::WeaponRunFire[WAT_COUNT] =
-{
-    "WeaponRunFireGun",
+    {
+        "WeaponAirFireGun",
+    },
+    {
+        "WeaponIdleFireGun",
+    },
+    {
+        "WeaponRunFireGun",
+    },
+    {
+        "WeaponGrindFireGun",
+    },
+    {
+        "WeaponHangFireGun",
+    },
 };
 
-const char* volatile const AnimationSetPatcher::WeaponGrindLoop[WAT_COUNT] =
+const char* volatile const AnimationSetPatcher::WeaponHangStart[WAT_COUNT] =
 {
-    "WeaponGrindLoopGun",
+    "WeaponHangStartGun",
 };
 
-const char* volatile const AnimationSetPatcher::WeaponGrindFire[WAT_COUNT] =
+const char* volatile const AnimationSetPatcher::WeaponHangDown[WAT_COUNT] =
 {
-    "WeaponGrindFireGun",
+    "WeaponHangDownGun",
 };
 
 HOOK(bool, __fastcall, CAnimationControlSingle_Debug, 0x6D84F0, uint32_t** This, void* Edx, float a2, int a3)
@@ -199,18 +211,24 @@ HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* 
 
         for (int i = 0; i < WAT_COUNT; i++)
         {
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponIdleFire[i], "Stand", 0.2f);
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponIdleLoop[i], "Stand", 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Stand][i], "Stand", 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Stand][i], "Stand", 0.2f);
 
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponIdleFire[i], AnimationSetPatcher::WeaponRunFire[i], 0.2f);
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponIdleFire[i], AnimationSetPatcher::WeaponRunLoop[i], 0.2f);
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponIdleLoop[i], AnimationSetPatcher::WeaponRunFire[i], 0.2f);
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponIdleLoop[i], AnimationSetPatcher::WeaponRunLoop[i], 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Stand][i], AnimationSetPatcher::WeaponFire[WFT_Run][i], 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Stand][i], AnimationSetPatcher::WeaponLoop[WFT_Run][i], 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Stand][i], AnimationSetPatcher::WeaponFire[WFT_Run][i], 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Stand][i], AnimationSetPatcher::WeaponLoop[WFT_Run][i], 0.2f);
 
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponRunFire[i], AnimationSetPatcher::WeaponIdleFire[i], 0.2f);
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponRunFire[i], AnimationSetPatcher::WeaponIdleLoop[i], 0.2f);
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponRunLoop[i], AnimationSetPatcher::WeaponIdleFire[i], 0.2f);
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponRunLoop[i], AnimationSetPatcher::WeaponIdleLoop[i], 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Run][i], AnimationSetPatcher::WeaponFire[WFT_Stand][i], 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Run][i], AnimationSetPatcher::WeaponLoop[WFT_Stand][i], 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Run][i], AnimationSetPatcher::WeaponFire[WFT_Stand][i], 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Run][i], AnimationSetPatcher::WeaponLoop[WFT_Stand][i], 0.2f);
+
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Hang][i], AnimationSetPatcher::WeaponLoop[WFT_Hang][i], 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Hang][i], AnimationSetPatcher::UpReelRightStart, 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Hang][i], AnimationSetPatcher::UpReelRightLoop, 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Hang][i], AnimationSetPatcher::UpReelRightStart, 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Hang][i], AnimationSetPatcher::UpReelRightLoop, 0.2f);
         }
     }
 }
@@ -687,17 +705,25 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationDataSuper.emplace_back("JeepB", "sh_jeep_back", 1.0f, false, "JeepBLoop");
         m_newAnimationDataSuper.emplace_back("JeepBLoop", "sh_jeep_back_l", 1.0f, true, nullptr);
 
-        // Weapons
-        for (int i = 0; i < WAT_COUNT; i++)
+        if (Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Weapons)
         {
-            m_newAnimationData.emplace_back(WeaponAirLoop[i], "wpn_gun_air_l", 1.0f, true, nullptr);
-            m_newAnimationData.emplace_back(WeaponAirFire[i], "wpn_gun_air_fire", 1.0f, false, WeaponAirLoop[i]);
-            m_newAnimationData.emplace_back(WeaponIdleLoop[i], "wpn_gun_idle_l", 1.0f, true, nullptr);
-            m_newAnimationData.emplace_back(WeaponIdleFire[i], "wpn_gun_idle_fire", 1.0f, false, WeaponIdleLoop[i]);
-            m_newAnimationData.emplace_back(WeaponRunLoop[i], "wpn_gun_run_l", 1.0f, true, nullptr);
-            m_newAnimationData.emplace_back(WeaponRunFire[i], "wpn_gun_run_fire", 1.0f, false, WeaponRunLoop[i]);
-            m_newAnimationData.emplace_back(WeaponGrindLoop[i], "wpn_gun_grind_l", 1.0f, true, nullptr);
-            m_newAnimationData.emplace_back(WeaponGrindFire[i], "wpn_gun_grind_fire", 1.0f, false, WeaponGrindLoop[i]);
+            m_newAnimationData.emplace_back(UpReelRightStart, "sh_pulley_r_s", 1.0f, false, UpReelRightLoop);
+            m_newAnimationData.emplace_back(UpReelRightLoop, "sh_pulley_r_loop", 1.0f, true, nullptr);
+
+            // Weapons
+            for (int i = 0; i < WAT_COUNT; i++)
+            {
+                m_newAnimationData.emplace_back(WeaponLoop[WFT_Air][i], "wpn_gun_air_l", 1.0f, true, nullptr);
+                m_newAnimationData.emplace_back(WeaponFire[WFT_Air][i], "wpn_gun_air_fire", 1.0f, false, WeaponLoop[WFT_Air][i]);
+                m_newAnimationData.emplace_back(WeaponLoop[WFT_Stand][i], "wpn_gun_idle_l", 1.0f, true, nullptr);
+                m_newAnimationData.emplace_back(WeaponFire[WFT_Stand][i], "wpn_gun_idle_fire", 1.0f, false, WeaponLoop[WFT_Stand][i]);
+                m_newAnimationData.emplace_back(WeaponLoop[WFT_Run][i], "wpn_gun_run_l", 1.0f, true, nullptr);
+                m_newAnimationData.emplace_back(WeaponFire[WFT_Run][i], "wpn_gun_run_fire", 1.0f, false, WeaponLoop[WFT_Run][i]);
+                m_newAnimationData.emplace_back(WeaponLoop[WFT_Grind][i], "wpn_gun_grind_l", 1.0f, true, nullptr);
+                m_newAnimationData.emplace_back(WeaponFire[WFT_Grind][i], "wpn_gun_grind_fire", 1.0f, false, WeaponLoop[WFT_Grind][i]);
+                m_newAnimationData.emplace_back(WeaponLoop[WFT_Hang][i], "wpn_gun_hang_l", 1.0f, true, nullptr);
+                m_newAnimationData.emplace_back(WeaponFire[WFT_Hang][i], "wpn_gun_hang_fire", 1.0f, false, WeaponLoop[WFT_Hang][i]);
+            }
         }
     }
 

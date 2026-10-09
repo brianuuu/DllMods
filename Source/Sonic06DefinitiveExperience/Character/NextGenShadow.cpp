@@ -2671,7 +2671,6 @@ bool NextGenShadow::bActionHandlerImpl()
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
     if (padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger) && CObjWeapon::m_type != WT_COUNT)
     {
-
         m_overrideType = moving ? OverrideType::SH_WeaponRun : OverrideType::SH_WeaponStand;
         StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
         return true;
@@ -3081,7 +3080,6 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateSlidingAdvance, 0x11D69A0, hh::f
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
     if (enoughHeight && padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger) && CObjWeapon::m_type != WT_COUNT)
     {
-
         NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_WeaponRun;
         StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
         return;
@@ -3497,7 +3495,6 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateGrindAdvance, 0xDF2890, hh::fnd:
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
     if (padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger) && CObjWeapon::m_type != WT_COUNT)
     {
-
         NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_WeaponGrind;
         StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
         return;
@@ -3520,6 +3517,57 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateGrindEnd, 0xDF2630, hh::fnd::CSt
     }
 
     originalNextGenShadow_CSonicStateGrindEnd(This);
+}
+
+HOOK(void*, __fastcall, NextGenShadow_CPlayerSpeedStateHangOnBegin, 0xE47390, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    // TODO: disable weapon on unsupported HangOn animations
+    RailPhysics::setRailLockEnabled(false);
+    NextGenPhysics::setHomingCollisionDistance(cShadow_weaponLockDist);
+
+    return originalNextGenShadow_CPlayerSpeedStateHangOnBegin(This);
+}
+
+HOOK(void*, __fastcall, NextGenShadow_CPlayerSpeedStateHangOnAdvance, 0xE47680, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    // TODO: start end change homing distance
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+
+    if (CObjWeapon::m_type != WT_COUNT)
+    {
+        if (NextGenShadow::m_weaponSingleton->IsActive())
+        {
+            originalNextGenShadow_HomingUpdate(context);
+            if (NextGenShadow::m_weaponSingleton->CanRelease())
+            {
+                Common::SonicContextChangeAnimation(AnimationSetPatcher::UpReelRightLoop);
+                Common::SonicContextHudHomingAttackClear(context);
+                NextGenShadow::m_weaponSingleton->SetStateIdle();
+            }
+        }
+        else
+        {
+            Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+            if (padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger))
+            {
+                NextGenShadow::m_weaponSingleton->SetActive(WFT_Hang);
+            }
+        }
+    }
+
+    return originalNextGenShadow_CPlayerSpeedStateHangOnAdvance(This);
+}
+
+HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStateHangOnEnd, 0xE46A10, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
+
+    NextGenShadow::m_weaponSingleton->SetStateIdle();
+    Common::SonicContextHudHomingAttackClear(context);
+    RailPhysics::setRailLockEnabled(true);
+    NextGenPhysics::setHomingCollisionDistance();
+
+    originalNextGenShadow_CPlayerSpeedStateHangOnEnd(This);
 }
 
 //---------------------------------------------------
@@ -3818,6 +3866,10 @@ void NextGenShadow::applyPatches()
             // Extra states that fires weapon
             INSTALL_HOOK(NextGenShadow_CSonicStateGrindAdvance);
             INSTALL_HOOK(NextGenShadow_CSonicStateGrindEnd);
+
+            INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateHangOnBegin);
+            INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateHangOnAdvance);
+            INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateHangOnEnd);
 
             // Add Time_Break to list of unsaved musics
             static char const* c_noSaveMusic[] =

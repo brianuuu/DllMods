@@ -354,6 +354,7 @@ void CObjWeapon::SetWeaponType(WeaponType type, bool updateHUD)
 	if (type == WT_COUNT)
 	{
 		// Revert pulley animation
+		WRITE_MEMORY(0xE46239, uint32_t, 0x15F8AEC);
 		WRITE_MEMORY(0xE4626D, uint8_t, 0xA1, 0xDC, 0x45, 0xA4, 0x01, 0x50);
 
 		// Enable boost
@@ -364,8 +365,11 @@ void CObjWeapon::SetWeaponType(WeaponType type, bool updateHUD)
 	}
 	else
 	{
-		// Set pulley to use UpReel animation
-		WRITE_MEMORY(0xE4626D, uint8_t, 0x68, 0xEC, 0x8A, 0x5F, 0x01, 0x90);
+		// Set pulley/upreel to use right hand
+		WRITE_MEMORY(0xE46239, char*, AnimationSetPatcher::UpReelRightStart);
+		WRITE_MEMORY(0xE4626D, uint8_t, 0x68); // push
+		WRITE_MEMORY(0xE4626E, char*, AnimationSetPatcher::UpReelRightStart);
+		WRITE_NOP(0xE46272, 1);
 
 		// Disable boost
 		NextGenPhysics::toggleBoost(false);
@@ -669,21 +673,7 @@ void CObjWeapon::SetActive(WeaponFireType type)
 	}
 
 	m_fireType = type;
-	switch (m_fireType)
-	{
-	case WFT_Stand:
-		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponIdleLoop[m_pData->m_animationType]);
-		break;
-	case WFT_Run:
-		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponRunLoop[m_pData->m_animationType]);
-		break;
-	case WFT_Grind:
-		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponGrindLoop[m_pData->m_animationType]);
-		break;
-	case WFT_Air:
-		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirLoop[m_pData->m_animationType]);
-		break;
-	}
+	Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponLoop[m_fireType][m_pData->m_animationType]);
 }
 
 void CObjWeapon::UpdateBoneRotation()
@@ -698,6 +688,7 @@ void CObjWeapon::UpdateBoneRotation()
 	FUNCTION_PTR(Hedgehog::Animation::hkQsTransform*, __thiscall, GetHkQsTransform, 0x833390, hh::anim::SAnimData* pAnimData, int id);
 	Hedgehog::Animation::hkQsTransform* pTrans = GetHkQsTransform(context->m_pPlayer->m_spAnimationPose->m_pAnimData, m_rotateBoneData.m_boneID);
 
+	// TODO: hang
 	hh::math::CQuaternion targetRotation = hh::math::CQuaternion::Identity();
 	if (!targetPosition.isZero())
 	{
@@ -744,21 +735,7 @@ void CObjWeapon::Shoot()
 	}
 
 	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-	switch (m_fireType)
-	{
-	case WFT_Stand:
-		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponIdleFire[m_pData->m_animationType]);
-		break;
-	case WFT_Run:
-		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponRunFire[m_pData->m_animationType]);
-		break;
-	case WFT_Grind:
-		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponGrindFire[m_pData->m_animationType]);
-		break;
-	case WFT_Air:
-		Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponAirFire[m_pData->m_animationType]);
-		break;
-	}
+	Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponFire[m_fireType][m_pData->m_animationType]);
 
 	// shoot projectile
 	hh::mr::CTransform startTrans;

@@ -21,6 +21,7 @@ enum WeaponFireType
 	WFT_Run,
 	WFT_Grind,
 	WFT_Air,
+	WFT_Hang,
 	WFT_COUNT,
 };
 
