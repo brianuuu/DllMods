@@ -474,7 +474,8 @@ bool CObjWeapon::SetAddRenderables
 	// bone rotation for aiming
 	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	FUNCTION_PTR(uint16_t, __thiscall, GetBoneIDFromAnimationPose, 0x6C7CC0, hh::anim::CAnimationPose* pAnimPose, hh::base::CSharedString const& name);
-	m_rotateBoneData.m_boneID = GetBoneIDFromAnimationPose(context->m_pPlayer->m_spAnimationPose.get(), "Spine");
+	m_rotateBoneSpineData.m_boneID = GetBoneIDFromAnimationPose(context->m_pPlayer->m_spAnimationPose.get(), "Spine");
+	m_rotateBoneLeftArmData.m_boneID = GetBoneIDFromAnimationPose(context->m_pPlayer->m_spAnimationPose.get(), "LeftArm");
 	
 	return true;
 }
@@ -672,11 +673,28 @@ void CObjWeapon::SetActive(WeaponFireType type)
 		m_state = State::Charge;
 	}
 
+	if (type == WFT_Hang)
+	{
+		m_rotateBoneSpineData.m_enabled = false;
+		m_rotateBoneLeftArmData.m_enabled = true;
+	}
+	else
+	{
+		m_rotateBoneSpineData.m_enabled = true;
+		m_rotateBoneLeftArmData.m_enabled = false;
+	}
+
 	m_fireType = type;
 	Common::SonicContextChangeAnimation(AnimationSetPatcher::WeaponLoop[m_fireType][m_pData->m_animationType]);
 }
 
-void CObjWeapon::UpdateBoneRotation()
+void CObjWeapon::UpdateBoneRotations()
+{
+	UpdateBoneRotation(m_rotateBoneSpineData);
+	UpdateBoneRotation(m_rotateBoneLeftArmData);
+}
+
+void CObjWeapon::UpdateBoneRotation(RotateBoneData& data)
 {
 	auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	hh::math::CVector targetPosition = hh::math::CVector::Zero();
@@ -686,11 +704,10 @@ void CObjWeapon::UpdateBoneRotation()
 	}
 	
 	FUNCTION_PTR(Hedgehog::Animation::hkQsTransform*, __thiscall, GetHkQsTransform, 0x833390, hh::anim::SAnimData* pAnimData, int id);
-	Hedgehog::Animation::hkQsTransform* pTrans = GetHkQsTransform(context->m_pPlayer->m_spAnimationPose->m_pAnimData, m_rotateBoneData.m_boneID);
+	Hedgehog::Animation::hkQsTransform* pTrans = GetHkQsTransform(context->m_pPlayer->m_spAnimationPose->m_pAnimData, data.m_boneID);
 
-	// TODO: hang
 	hh::math::CQuaternion targetRotation = hh::math::CQuaternion::Identity();
-	if (!targetPosition.isZero())
+	if (!targetPosition.isZero() && data.m_enabled)
 	{
 		hh::math::CVector dir = (context->m_spMatrixNode->m_Transform.m_Rotation.conjugate() * (targetPosition - m_spNodeMuzzle->GetWorldMatrix().translation())).normalized();
 		hh::math::CVector dirXZ = dir; dirXZ.y() = 0.0f; dirXZ.normalize();
@@ -699,25 +716,38 @@ void CObjWeapon::UpdateBoneRotation()
 		Common::ClampFloat(dotYaw, -1.0f, 1.0f);
 		float yaw = acosf(dotYaw);
 		if (dir.dot(Eigen::Vector3f::UnitX()) < 0) yaw = -yaw;
-		Common::ClampFloat(yaw, m_rotateBoneData.m_minYaw, m_rotateBoneData.m_maxYaw);
+		Common::ClampFloat(yaw, data.m_minYaw, data.m_maxYaw);
 
 		float dotPitch = dir.dot(dirXZ);
 		Common::ClampFloat(dotPitch, -1.0f, 1.0f);
 		float pitch = acosf(dotPitch);
 		if (dir.dot(Eigen::Vector3f::UnitY()) < 0) pitch = -pitch;
-		Common::ClampFloat(pitch, m_rotateBoneData.m_minPitch, m_rotateBoneData.m_maxPitch);
+		Common::ClampFloat(pitch, data.m_minPitch, data.m_maxPitch);
+
+		// Test axis
+		// static float test = 0.0f;
+		// test += 0.05f;
+		// if (test >= 2.f * PI_F) test -= 2.f * PI_F;
+		// pitch = 0.0f;
+		// yaw = test;
 
 		hh::math::CVector yawAxis = hh::math::CVector::UnitX();
+		hh::math::CVector pitchAxis = hh::math::CVector::UnitZ();
 		if (m_fireType == WFT_Run)
 		{
 			yawAxis = Eigen::AngleAxisf(65 * DEG_TO_RAD, hh::math::CVector::UnitZ()) * yawAxis;
 		}
+		else if (m_fireType == WFT_Hang)
+		{
+			yawAxis = hh::math::CVector(-0.5f , 0.f, -1.0f).normalized();
+			pitchAxis = hh::math::CVector(-1.0f, 0.f, 0.5f).normalized();
+		}
 
-		targetRotation = Eigen::AngleAxisf(yaw, yawAxis) * Eigen::AngleAxisf(pitch, hh::math::CVector::UnitZ());
+		targetRotation = Eigen::AngleAxisf(yaw, yawAxis) * Eigen::AngleAxisf(pitch, pitchAxis);
 	}
 
-	m_rotateBoneData.m_addRotation = m_rotateBoneData.m_addRotation.slerp(cWeapon_boneSlerpRate, targetRotation);
-	pTrans->m_Rotation = (m_rotateBoneData.m_addRotation * pTrans->m_Rotation).normalized();
+	data.m_addRotation = data.m_addRotation.slerp(cWeapon_boneSlerpRate, targetRotation);
+	pTrans->m_Rotation = (data.m_addRotation * pTrans->m_Rotation).normalized();
 }
 
 void CObjWeapon::Shoot()

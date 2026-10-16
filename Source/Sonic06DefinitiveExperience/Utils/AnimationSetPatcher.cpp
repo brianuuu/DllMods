@@ -65,9 +65,6 @@ static_assert(WAT_COUNT == 1, "Weapon count changed");
 const char* volatile const AnimationSetPatcher::WeaponLoop[WFT_COUNT][WAT_COUNT] =
 {
     {
-        "WeaponAirLoopGun",
-    },
-    {
         "WeaponIdleLoopGun",
     },
     {
@@ -77,15 +74,15 @@ const char* volatile const AnimationSetPatcher::WeaponLoop[WFT_COUNT][WAT_COUNT]
         "WeaponGrindLoopGun",
     },
     {
+        "WeaponAirLoopGun",
+    },
+    {
         "WeaponHangLoopGun",
     },
 };
 
 const char* volatile const AnimationSetPatcher::WeaponFire[WFT_COUNT][WAT_COUNT] =
 {
-    {
-        "WeaponAirFireGun",
-    },
     {
         "WeaponIdleFireGun",
     },
@@ -94,6 +91,9 @@ const char* volatile const AnimationSetPatcher::WeaponFire[WFT_COUNT][WAT_COUNT]
     },
     {
         "WeaponGrindFireGun",
+    },
+    {
+        "WeaponAirFireGun",
     },
     {
         "WeaponHangFireGun",

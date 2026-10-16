@@ -112,6 +112,18 @@ public:
 	static void SetModelVisibility(WeaponType oldType, WeaponType newType);
 	static void NextGun();
 
+	struct RotateBoneData
+	{
+		uint16_t m_boneID = 0;
+		bool m_enabled = true;
+		hh::math::CQuaternion m_addRotation = hh::math::CQuaternion::Identity();
+
+		float m_minYaw = -80.0f * DEG_TO_RAD;
+		float m_maxYaw = 80.0f * DEG_TO_RAD;
+		float m_minPitch = -70.0f * DEG_TO_RAD;
+		float m_maxPitch = 70.0f * DEG_TO_RAD;
+	};
+
 public:
 	CObjWeapon(boost::shared_ptr<hh::mr::CMatrixNode> parent);
 
@@ -119,7 +131,7 @@ public:
 	bool CanRelease() const;
 	void SetStateIdle();
 	void SetActive(WeaponFireType type);
-	void UpdateBoneRotation();
+	void UpdateBoneRotations();
 
 private:
 	boost::shared_ptr<hh::mr::CMatrixNode> m_spNodeParent;
@@ -143,18 +155,10 @@ private:
 		Cooldown,
 	} m_state = State::Idle;
 
+	RotateBoneData m_rotateBoneSpineData;
+	RotateBoneData m_rotateBoneLeftArmData;
+
 	mutable std::mutex m_mutex;
-
-	struct RotateBoneData
-	{
-		uint16_t m_boneID = 0;
-		hh::math::CQuaternion m_addRotation = hh::math::CQuaternion::Identity();
-
-		float m_minYaw = -80.0f;
-		float m_maxYaw = 80.0f;
-		float m_minPitch = -70.0f;
-		float m_maxPitch = 70.0f;
-	} m_rotateBoneData;
 
 private:
 	void SetAddUpdateUnit(Sonic::CGameDocument* in_pGameDocument) override;
@@ -164,4 +168,5 @@ private:
 	void UpdateParallel(const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo) override;
 
 	void Shoot();
+	void UpdateBoneRotation(RotateBoneData& data);
 };

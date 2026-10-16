@@ -356,7 +356,7 @@ void __fastcall NextGenShadow_AimWeaponImpl()
 {
     if (NextGenShadow::m_weaponSingleton)
     {
-        NextGenShadow::m_weaponSingleton->UpdateBoneRotation();
+        NextGenShadow::m_weaponSingleton->UpdateBoneRotations();
     }
 }
 
@@ -3519,11 +3519,25 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateGrindEnd, 0xDF2630, hh::fnd::CSt
     originalNextGenShadow_CSonicStateGrindEnd(This);
 }
 
+HOOK(void*, __stdcall, NextGenShadow_CPlayerSpeedStateHangOnCtor, 0xE47580, void* This, uint32_t address)
+{
+    // address points to matrix in MsgStartHangOn
+    uint32_t type = *(uint32_t*)(address - 4);
+    if (type > 1)
+    {
+        CObjWeapon::SetWeaponType(WT_COUNT);
+    }
+
+    return originalNextGenShadow_CPlayerSpeedStateHangOnCtor(This, address);
+}
+
 HOOK(void*, __fastcall, NextGenShadow_CPlayerSpeedStateHangOnBegin, 0xE47390, hh::fnd::CStateMachineBase::CStateBase* This)
 {
-    // TODO: disable weapon on unsupported HangOn animations
-    RailPhysics::setRailLockEnabled(false);
-    NextGenPhysics::setHomingCollisionDistance(cShadow_weaponLockDist);
+    if (CObjWeapon::m_type != WT_COUNT)
+    {
+        RailPhysics::setRailLockEnabled(false);
+        NextGenPhysics::setHomingCollisionDistance(cShadow_weaponLockDist);
+    }
 
     return originalNextGenShadow_CPlayerSpeedStateHangOnBegin(This);
 }
@@ -3562,7 +3576,10 @@ HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStateHangOnEnd, 0xE46A10, hh::f
 {
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
 
-    NextGenShadow::m_weaponSingleton->SetStateIdle();
+    if (NextGenShadow::m_weaponSingleton)
+    {
+        NextGenShadow::m_weaponSingleton->SetStateIdle();
+    }
     Common::SonicContextHudHomingAttackClear(context);
     RailPhysics::setRailLockEnabled(true);
     NextGenPhysics::setHomingCollisionDistance();
@@ -3867,6 +3884,7 @@ void NextGenShadow::applyPatches()
             INSTALL_HOOK(NextGenShadow_CSonicStateGrindAdvance);
             INSTALL_HOOK(NextGenShadow_CSonicStateGrindEnd);
 
+            INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateHangOnCtor);
             INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateHangOnBegin);
             INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateHangOnAdvance);
             INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateHangOnEnd);
