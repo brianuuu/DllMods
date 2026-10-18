@@ -60,6 +60,7 @@ public:
 	static bool CheckChaosBoost();
 	static bool CheckChaosControl();
 	static bool CheckChaosSnapTarget();
+	static bool CanChaosSnap();
 	static void AddChaosMaturity(float amount);
 	static bool AirActionCheck();
 

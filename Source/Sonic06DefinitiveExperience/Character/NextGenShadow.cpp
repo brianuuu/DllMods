@@ -514,7 +514,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
 
     // hold duration for auto target
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-    if (padState->IsDown(Sonic::EKeyState::eKeyState_A))
+    if (padState->IsDown(Sonic::EKeyState::eKeyState_A) && Configuration::Shadow::m_moveset != Configuration::ShadowMovesetType::Gens)
     {
         chaosSnapHoldDuration += This->GetDeltaTime();
     }
@@ -524,7 +524,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
     }
 
     // Chaos Snap
-    if (NextGenShadow::m_chaosBoostLevel > 0 && !hasChaosSnapTeleported)
+    if (NextGenShadow::CanChaosSnap() && !hasChaosSnapTeleported)
     {
         // teleport after 0.1s
         if (hasChaosSnapHiddenModel && This->m_Time >= cShadow_chaosSnapWaitTime)
@@ -581,7 +581,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
     }
 
     // check if somehow gone behind target
-    if (NextGenShadow::m_chaosBoostLevel > 0 && hasChaosSnapTeleported)
+    if (NextGenShadow::CanChaosSnap() && hasChaosSnapTeleported)
     {
         hh::math::CVector direction = context->m_spMatrixNode->m_Transform.m_Rotation * hh::math::CVector::UnitZ();
         hh::math::CVector playerPosition = context->m_spMatrixNode->m_Transform.m_Position;
@@ -692,7 +692,8 @@ HOOK(int32_t*, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterBegin, 0x11
 
     // handle Shadow stopping for chaos attack
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
-    if (!context->StateFlag(eStateFlag_EnableHomingAttackOnDiving) && !context->StateFlag(eStateFlag_KeepRunning) && Common::GetCurrentStageID() != SMT_bsl)
+    if (!context->StateFlag(eStateFlag_EnableHomingAttackOnDiving) && !context->StateFlag(eStateFlag_KeepRunning) && Common::GetCurrentStageID() != SMT_bsl
+        && Configuration::Shadow::m_moveset != Configuration::ShadowMovesetType::Gens)
     {
         NextGenShadow::SetLockOnFilter(LockOnType::Enemy);
         NextGenShadow::m_holdPosition = context->m_spMatrixNode->m_Transform.m_Position;
@@ -1041,6 +1042,16 @@ void NextGenShadow::SetChaosBoostLevel(uint8_t level, bool notifyHUD)
 
 bool NextGenShadow::CheckChaosBoost()
 {
+    if (NextGenShadow::CheckChaosControl())
+    {
+        return true;
+    }
+
+    if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
+    {
+        return false;
+    }
+
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
     if (!padState->IsTapped(Sonic::EKeyState::eKeyState_B))
     {
@@ -1063,12 +1074,6 @@ bool NextGenShadow::CheckChaosBoost()
         return false;
     }
 
-    if (m_chaosBoostLevel == 3 && !isChaosControl)
-    {
-        Common::SonicContextAddPlugin("TimeBreak");
-        return true;
-    }
-
     if (m_chaosBoostLevel < m_chaosBoostMaxLevel)
     {
         m_overrideType = OverrideType::SH_ChaosBoost;
@@ -1082,18 +1087,22 @@ bool NextGenShadow::CheckChaosBoost()
 
 bool NextGenShadow::CheckChaosControl()
 {
+    Sonic::EKeyState key = (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
+        ? Sonic::EKeyState::eKeyState_LeftTrigger
+        : Sonic::EKeyState::eKeyState_B;
+
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-    if (!padState->IsTapped(Sonic::EKeyState::eKeyState_B))
+    if (!padState->IsTapped(key))
     {
         return false;
     }
 
-    if (*Common::GetPlayerBoost() == 0.0f || m_chaosMaturity < 100.0f)
+    if (m_chaosMaturity < 100.0f)
     {
         return false;
     }
 
-    if (m_chaosBoostLevel == 3 && !isChaosControl)
+    if ((m_chaosBoostLevel == 3 || Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens) && !isChaosControl)
     {
         Common::SonicContextAddPlugin("TimeBreak");
         return true;
@@ -1104,7 +1113,7 @@ bool NextGenShadow::CheckChaosControl()
 
 bool NextGenShadow::CheckChaosSnapTarget()
 {
-    if (NextGenShadow::m_chaosBoostLevel == 0)
+    if (!CanChaosSnap())
     {
         return false;
     }
@@ -1130,11 +1139,22 @@ bool NextGenShadow::CheckChaosSnapTarget()
     return false;
 }
 
+bool NextGenShadow::CanChaosSnap()
+{
+    return NextGenShadow::m_chaosBoostLevel > 0 || Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens;
+}
+
 void NextGenShadow::AddChaosMaturity(float amount)
 {
     if (!Configuration::m_characterMoveset) return;
     if (Configuration::m_model != Configuration::ModelType::Shadow) return;
     if (m_chaosBoostMaxLevel < 3 && m_chaosBoostLevel == m_chaosBoostMaxLevel) return;
+
+    // Shadow Gen need 5 instead of 10 to be full, Chaos Control is also half as long
+    if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
+    {
+        amount *= 2.0f;
+    }
 
     float maturity = m_chaosMaturity;
     m_chaosMaturity = max(0.0f, min(100.0f, maturity + amount));
@@ -3747,8 +3767,15 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_CSonicStateHomingAttackEnd);
 
     // Handle homing attack voice ourselves
-    WRITE_MEMORY(0x11184E4, int, -1);
-    WRITE_MEMORY(0x1118512, int, -1);
+    if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
+    {
+        WRITE_MEMORY(0x11184E4, int, 3002014);
+    }
+    else
+    {
+        WRITE_MEMORY(0x11184E4, int, -1);
+        WRITE_MEMORY(0x1118512, int, -1);
+    }
 
     INSTALL_HOOK(NextGenShadow_CSonicStateHomingAttackAfterBegin);
     INSTALL_HOOK(NextGenShadow_CSonicStateHomingAttackAfterAdvance);

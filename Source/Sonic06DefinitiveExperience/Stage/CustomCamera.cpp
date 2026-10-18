@@ -117,6 +117,7 @@ HOOK(int, __fastcall, CPlayer3DNormalCameraAdvance, 0x010EC7E0, int* This)
 
     float const dt = 1.0f / 60.0f; // this always run at 60fps
     bool isReset = !Common::IsPlayerControlLocked() && padState->IsTapped(Sonic::EKeyState::eKeyState_LeftTrigger);
+    isReset &= Configuration::m_model != Configuration::ModelType::Shadow || Configuration::Shadow::m_moveset != Configuration::ShadowMovesetType::Gens;
     isReset |= NextGenSonic::m_skyGemEnabled && !NextGenSonic::m_skyGemLaunched && m_skyGemCameraFactor >= 1.0f;
     isReset |= m_chaosBlastCameraFactor >= 1.0f;
 
