@@ -658,16 +658,19 @@ void NextGenPhysics::applyPatches()
         WRITE_JUMP(0xDFDDCB, lightDashHigherPriority);
 
         // X actions
-        WRITE_MEMORY(0xDFDDBD, uint32_t, 4);    // Stomping
-        WRITE_MEMORY(0xDFDE7F, uint32_t, 4);    // Unknown B hold
-        WRITE_MEMORY(0xDFDEBA, uint32_t, 4);    // GrindSquat start
-        WRITE_MEMORY(0xDFF6E5, uint32_t, 4);    // Stomp, slide, squat start
-        WRITE_MEMORY(0xDFFD5F, uint32_t, 4);    // LightSpeedDashReady
-        WRITE_MEMORY(0xE4910E, uint8_t, 4);     // Board Squat
-        WRITE_MEMORY(0x111761A, uint32_t, 4);   // LightSpeedDash
-        WRITE_MEMORY(0x1118970, uint32_t, 4);   // GrindSquat end
-        WRITE_MEMORY(0x11D6B03, uint32_t, 4);   // Sliding end
-        WRITE_MEMORY(0x1230BB6, uint32_t, 4);   // Squat end
+        if (Configuration::m_model != Configuration::ModelType::Shadow || Configuration::Shadow::m_moveset != Configuration::ShadowMovesetType::Gens)
+        {
+            WRITE_MEMORY(0xDFDDBD, uint32_t, 4);    // Stomping
+            WRITE_MEMORY(0xDFDE7F, uint32_t, 4);    // Unknown B hold
+            WRITE_MEMORY(0xDFDEBA, uint32_t, 4);    // GrindSquat start
+            WRITE_MEMORY(0xDFF6E5, uint32_t, 4);    // Stomp, slide, squat start
+            WRITE_MEMORY(0xDFFD5F, uint32_t, 4);    // LightSpeedDashReady
+            WRITE_MEMORY(0xE4910E, uint8_t, 4);     // Board Squat
+            WRITE_MEMORY(0x111761A, uint32_t, 4);   // LightSpeedDash
+            WRITE_MEMORY(0x1118970, uint32_t, 4);   // GrindSquat end
+            WRITE_MEMORY(0x11D6B03, uint32_t, 4);   // Sliding end
+            WRITE_MEMORY(0x1230BB6, uint32_t, 4);   // Squat end
+        }
 
         // R2 actions
         WRITE_MEMORY(0xDFF25B, uint32_t, 32);   // Begin Boost

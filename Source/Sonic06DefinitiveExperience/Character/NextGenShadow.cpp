@@ -2743,6 +2743,17 @@ HOOK(void, __fastcall, NextGenShadow_MsgNotifyObjectEvent, 0xEA4F50, void* This,
 
 bool NextGenShadow::bActionHandlerImpl()
 {
+    if (CheckChaosControl())
+    {
+        return true;
+    }
+
+    if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
+    {
+        // no spin kick or spindash
+        return false;
+    }
+    
     Eigen::Vector3f playerVelocity;
     if (!Common::GetPlayerVelocity(playerVelocity))
     {
@@ -2750,11 +2761,6 @@ bool NextGenShadow::bActionHandlerImpl()
     }
 
     bool const moving = playerVelocity.norm() > 0.2f;
-
-    if (CheckChaosControl())
-    {
-        return true;
-    }
 
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
     if (padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger) && CObjWeapon::m_type != WT_COUNT)
@@ -3556,7 +3562,7 @@ HOOK(bool, __fastcall, NextGenShadow_CSonicStateStartCrouchingEnd, 0xDEF0A0, hh:
 }
 
 //---------------------------------------------------
-// D-Pad extras
+// Moveset extras
 //---------------------------------------------------
 void __declspec(naked) NextGenShadow_fixExternalControlBobbing()
 {
@@ -3675,6 +3681,20 @@ HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStateHangOnEnd, 0xE46A10, hh::f
     originalNextGenShadow_CPlayerSpeedStateHangOnEnd(This);
 }
 
+HOOK(bool, __stdcall, NextGenShadow_CheckStartDrift, 0xDFF510, Sonic::Player::CPlayerSpeedContext* context)
+{
+    if (!Common::IsPlayerOnBoard())
+    {
+        return false;
+    }
+    return originalNextGenShadow_CheckStartDrift(context);
+}
+
+HOOK(bool, __fastcall, NextGenShadow_CheckBoardSquat, 0xE490E0, void* This, void* Edx, void* a2)
+{
+    return false;
+}
+
 //---------------------------------------------------
 // APIs
 //---------------------------------------------------
@@ -3769,11 +3789,14 @@ void NextGenShadow::applyPatches()
     WRITE_MEMORY(0xE33AC7, uint8_t, 0xEB);
 
     // Disable stomping
-    WRITE_MEMORY(0xDFDDB3, uint8_t, 0xEB);
+    if (Configuration::Shadow::m_moveset != Configuration::ShadowMovesetType::Gens)
+    {
+        WRITE_MEMORY(0xDFDDB3, uint8_t, 0xEB);
 
-    // Allow pushing down CObjCscLavaRide without stomp
-    WRITE_NOP(0xF1D7F4, 6);
-    WRITE_MEMORY(0xF1D7FE, uint16_t, 0x1C0);
+        // Allow pushing down CObjCscLavaRide without stomp
+        WRITE_NOP(0xF1D7F4, 6);
+        WRITE_MEMORY(0xF1D7FE, uint16_t, 0x1C0);
+    }
 
     // Start teleport animations
     INSTALL_HOOK(NextGenShadow_CSonicStateStartDashAdvance);
@@ -3855,108 +3878,123 @@ void NextGenShadow::applyPatches()
     //-------------------------------------------------------
     // X-Action State handling
     //-------------------------------------------------------
-    // Return 0 for Squat and Sliding, handle them ourselves
-    WRITE_MEMORY(0xDFF8D5, uint8_t, 0xEB, 0x05);
-    WRITE_MEMORY(0xDFF856, uint8_t, 0xE9, 0x81, 0x00, 0x00, 0x00);
+    if (Configuration::Shadow::m_moveset != Configuration::ShadowMovesetType::Gens)
+    {
+        // Return 0 for Squat and Sliding, handle them ourselves
+        WRITE_MEMORY(0xDFF8D5, uint8_t, 0xEB, 0x05);
+        WRITE_MEMORY(0xDFF856, uint8_t, 0xE9, 0x81, 0x00, 0x00, 0x00);
+    }
     INSTALL_HOOK(NextGenShadow_BActionHandler);
     INSTALL_HOOK(NextGenShadow_MsgNotifyObjectEvent);
 
     //-------------------------------------------------------
     // Brake Flip
     //-------------------------------------------------------
-    INSTALL_HOOK(NextGenShadow_CSonicStateSlidingEndBegin);
-    INSTALL_HOOK(NextGenShadow_CSonicStateSlidingEndAdvance);
-    INSTALL_HOOK(NextGenShadow_CSonicStateSlidingEndEnd);
+    if (Configuration::Shadow::m_moveset != Configuration::ShadowMovesetType::Gens)
+    {
+        INSTALL_HOOK(NextGenShadow_CSonicStateSlidingEndBegin);
+        INSTALL_HOOK(NextGenShadow_CSonicStateSlidingEndAdvance);
+        INSTALL_HOOK(NextGenShadow_CSonicStateSlidingEndEnd);
+    }
 
     //-------------------------------------------------------
     // Sweep Kick
     //-------------------------------------------------------
-    INSTALL_HOOK(NextGenShadow_CSonicStateSquatKickBegin);
-    INSTALL_HOOK(NextGenShadow_CSonicStateSquatKickAdvance);
-    WRITE_JUMP(0x125291F, NextGenShadow_CSonicStateSquatKickAdvanceTransitionOut);
-    INSTALL_HOOK(NextGenShadow_CSonicStateSquatKickEnd);
-
-    // Don't transition out to Stand, only Walk and Fall
-    WRITE_MEMORY(0x1252905, uint32_t, 0x15F4FE8);
-
-    // Enable sweep kick attack collision immediately
-    static double const c_sweepKickActivateTime = 0.0;
-    WRITE_MEMORY(0x125299E, double*, &c_sweepKickActivateTime);
-
-    // Change SquatKick's collision the same as sliding
-    WRITE_MEMORY(0xDFCD6D, uint8_t, 0x5); // switch 6 cases
-    static uint32_t const collisionSwitchTable[6] =
+    if (Configuration::Shadow::m_moveset != Configuration::ShadowMovesetType::Gens)
     {
-        0xDFCD7B, // normal
-        0xDFCDC0, // slide
-        0xDFCD7B, // boost
-        0xDFCD7B,
-        0xDFCDFA, // unused
-        0xDFCDC0  // squat kick
-    };
-    WRITE_MEMORY(0xDFCD77, uint32_t*, collisionSwitchTable);
+        INSTALL_HOOK(NextGenShadow_CSonicStateSquatKickBegin);
+        INSTALL_HOOK(NextGenShadow_CSonicStateSquatKickAdvance);
+        WRITE_JUMP(0x125291F, NextGenShadow_CSonicStateSquatKickAdvanceTransitionOut);
+        INSTALL_HOOK(NextGenShadow_CSonicStateSquatKickEnd);
 
-    // Change "Stomping" type object physics to "Normal"
-    WRITE_MEMORY(0xE9FFC9, uint32_t, 5);
+        // Don't transition out to Stand, only Walk and Fall
+        WRITE_MEMORY(0x1252905, uint32_t, 0x15F4FE8);
 
-    // Play chaos attack voice
-    WRITE_MEMORY(0x1252740, uint32_t, 3002032);
+        // Enable sweep kick attack collision immediately
+        static double const c_sweepKickActivateTime = 0.0;
+        WRITE_MEMORY(0x125299E, double*, &c_sweepKickActivateTime);
+
+        // Change SquatKick's collision the same as sliding
+        WRITE_MEMORY(0xDFCD6D, uint8_t, 0x5); // switch 6 cases
+        static uint32_t const collisionSwitchTable[6] =
+        {
+            0xDFCD7B, // normal
+            0xDFCDC0, // slide
+            0xDFCD7B, // boost
+            0xDFCD7B,
+            0xDFCDFA, // unused
+            0xDFCDC0  // squat kick
+        };
+        WRITE_MEMORY(0xDFCD77, uint32_t*, collisionSwitchTable);
+
+        // Change "Stomping" type object physics to "Normal"
+        WRITE_MEMORY(0xE9FFC9, uint32_t, 5);
+
+        // Play chaos attack voice
+        WRITE_MEMORY(0x1252740, uint32_t, 3002032);
+    }
 
     //-------------------------------------------------------
     // Anti-Gravity
     //-------------------------------------------------------
-    // Change slide to hit enemy as if you're squat kicking (TypeSonicSquatKick)
-    WRITE_MEMORY(0x11D72F3, uint32_t, SonicCollision::TypeSonicSquatKick);
-    WRITE_MEMORY(0x11D7090, uint32_t, SonicCollision::TypeSonicSquatKick);
+    if (Configuration::Shadow::m_moveset != Configuration::ShadowMovesetType::Gens)
+    {
+        // Change slide to hit enemy as if you're squat kicking (TypeSonicSquatKick)
+        WRITE_MEMORY(0x11D72F3, uint32_t, SonicCollision::TypeSonicSquatKick);
+        WRITE_MEMORY(0x11D7090, uint32_t, SonicCollision::TypeSonicSquatKick);
 
-    // Disable all Sliding transition out, handle them outselves
-    WRITE_MEMORY(0x11D6B7D, uint8_t, 0xEB);
-    WRITE_MEMORY(0x11D6CA2, uint8_t, 0xEB);
-    WRITE_MEMORY(0x11D6F82, uint8_t, 0x90, 0xE9);
+        // Disable all Sliding transition out, handle them outselves
+        WRITE_MEMORY(0x11D6B7D, uint8_t, 0xEB);
+        WRITE_MEMORY(0x11D6CA2, uint8_t, 0xEB);
+        WRITE_MEMORY(0x11D6F82, uint8_t, 0x90, 0xE9);
 
-    // Change sliding animation if we are spindashing, handle transition out
-    INSTALL_HOOK(NextGenShadow_CSonicStateSlidingBegin);
-    INSTALL_HOOK(NextGenShadow_CSonicStateSlidingAdvance);
-    WRITE_JUMP(0x11D7027, NextGenShadow_CSonicStateSlidingEnd);
+        // Change sliding animation if we are spindashing, handle transition out
+        INSTALL_HOOK(NextGenShadow_CSonicStateSlidingBegin);
+        INSTALL_HOOK(NextGenShadow_CSonicStateSlidingAdvance);
+        WRITE_JUMP(0x11D7027, NextGenShadow_CSonicStateSlidingEnd);
 
-    // Set constant sliding speed
-    WRITE_JUMP(0x11D989B, NextGenShadow_slidingHorizontalTargetVel2D);
-    WRITE_JUMP(0x11D98A7, NextGenShadow_slidingHorizontalTargetVel2D);
-    WRITE_JUMP(0x11D9532, NextGenShadow_slidingHorizontalTargetVel3D);
+        // Set constant sliding speed
+        WRITE_JUMP(0x11D989B, NextGenShadow_slidingHorizontalTargetVel2D);
+        WRITE_JUMP(0x11D98A7, NextGenShadow_slidingHorizontalTargetVel2D);
+        WRITE_JUMP(0x11D9532, NextGenShadow_slidingHorizontalTargetVel3D);
 
-    // Do not use sliding fail pfx
-    WRITE_NOP(0x11D6A6D, 2);
+        // Do not use sliding fail pfx
+        WRITE_NOP(0x11D6A6D, 2);
 
-    // Increase turn rate for Spindash and Anti-Gravity
-    static float slideTurnRate = 100.0f;
-    WRITE_MEMORY(0x11D9441, float*, &slideTurnRate);
+        // Increase turn rate for Spindash and Anti-Gravity
+        static float slideTurnRate = 100.0f;
+        WRITE_MEMORY(0x11D9441, float*, &slideTurnRate);
+    }
 
     //-------------------------------------------------------
     // Spindashing
     //-------------------------------------------------------
-    // Spin animation for Squat
-    WRITE_MEMORY(0x1230A85, char*, AnimationSetPatcher::SpinFast); // slide begin animation
-    WRITE_MEMORY(0x1230A9F, char*, AnimationSetPatcher::SpinFast); // slide begin animation
-    WRITE_MEMORY(0x1230D74, char*, AnimationSetPatcher::SpinFast); // slide hold animation
+    if (Configuration::Shadow::m_moveset != Configuration::ShadowMovesetType::Gens)
+    {
+        // Spin animation for Squat
+        WRITE_MEMORY(0x1230A85, char*, AnimationSetPatcher::SpinFast); // slide begin animation
+        WRITE_MEMORY(0x1230A9F, char*, AnimationSetPatcher::SpinFast); // slide begin animation
+        WRITE_MEMORY(0x1230D74, char*, AnimationSetPatcher::SpinFast); // slide hold animation
 
-    // Use spindash when release button
-    WRITE_JUMP(0x1230BDB, NextGenShadow_startSpindash);
-    WRITE_MEMORY(0x1230C3A, uint32_t, 0x15F5108); // change state to sliding
+        // Use spindash when release button
+        WRITE_JUMP(0x1230BDB, NextGenShadow_startSpindash);
+        WRITE_MEMORY(0x1230C3A, uint32_t, 0x15F5108); // change state to sliding
 
-    // If in tight spaces, still allow Sonic to unduck (aka use spindash)
-    WRITE_NOP(0x1230BCB, 0x2);
+        // If in tight spaces, still allow Sonic to unduck (aka use spindash)
+        WRITE_NOP(0x1230BCB, 0x2);
 
-    // Don't allow stick move start sliding from squat
-    WRITE_MEMORY(0x1230D62, uint8_t, 0xEB);
-    WRITE_MEMORY(0x1230DA9, uint8_t, 0xE9, 0xA8, 0x00, 0x00, 0x00, 0x90);
+        // Don't allow stick move start sliding from squat
+        WRITE_MEMORY(0x1230D62, uint8_t, 0xEB);
+        WRITE_MEMORY(0x1230DA9, uint8_t, 0xE9, 0xA8, 0x00, 0x00, 0x00, 0x90);
 
-    // Play spindash sfx
-    INSTALL_HOOK(NextGenShadow_CSonicStateSquatBegin);
-    INSTALL_HOOK(NextGenShadow_CSonicStateSquatAdvance);
-    INSTALL_HOOK(NextGenShadow_CSonicStateSquatEnd);
+        // Play spindash sfx
+        INSTALL_HOOK(NextGenShadow_CSonicStateSquatBegin);
+        INSTALL_HOOK(NextGenShadow_CSonicStateSquatAdvance);
+        INSTALL_HOOK(NextGenShadow_CSonicStateSquatEnd);
+    }
 
     //-------------------------------------------------------
-    // D-Pad mode 
+    // Moveset type
     //-------------------------------------------------------
     switch (Configuration::Shadow::m_moveset)
     {
@@ -4002,6 +4040,14 @@ void NextGenShadow::applyPatches()
         };
         WRITE_MEMORY(0xD60937, char**, c_noSaveMusic);
         WRITE_MEMORY(0xD60965, uint8_t, sizeof(c_noSaveMusic));
+        break;
+    }
+    case Configuration::ShadowMovesetType::Gens:
+    {
+        // Disable drift
+        INSTALL_HOOK(NextGenShadow_CheckStartDrift);
+        INSTALL_HOOK(NextGenShadow_CheckBoardSquat);
+        WRITE_JUMP(0xDFF73F, (void*)0xDFF838);
         break;
     }
     }
