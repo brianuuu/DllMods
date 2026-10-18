@@ -3,7 +3,6 @@
 #include "Configuration.h"
 #include "Enemy/EnemyShock.h"
 #include "Stage/CustomCamera.h"
-#include "Stage/RailPhysics.h"
 #include "System/Application.h"
 #include "Utils/AnimationSetPatcher.h"
 
@@ -54,6 +53,7 @@ float const cShadow_tripleKickShockWaveRadius = 4.0f;
 
 // Chaos Spear
 std::vector<NextGenShadow::TargetData> NextGenShadow::m_targetData;
+uint32_t NextGenShadow::m_lockOnFilter = 0;
 uint8_t const cShadow_chaosSpearMaxCount = 5;
 uint8_t const cShadow_chaosSpearSuperMaxCount = 8;
 float const cShadow_chaosSpearSpeed = 50.0f;
@@ -560,7 +560,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
         else if (!hasChaosSnapHiddenModel && chaosSnapHoldDuration >= cShadow_chaosSnapStartHold)
         {
             // try to find target if not teleported
-            originalNextGenShadow_HomingUpdate(context);
+            NextGenShadow::HomingUpdateGetAll();
 
             // always allow Chaos Snap if holding A
             if (context->m_HomingAttackTargetActorID)
@@ -694,7 +694,7 @@ HOOK(int32_t*, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterBegin, 0x11
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
     if (!context->StateFlag(eStateFlag_EnableHomingAttackOnDiving) && !context->StateFlag(eStateFlag_KeepRunning) && Common::GetCurrentStageID() != SMT_bsl)
     {
-        RailPhysics::setRailLockEnabled(false);
+        NextGenShadow::SetLockOnFilter(LockOnType::Enemy);
         NextGenShadow::m_holdPosition = context->m_spMatrixNode->m_Transform.m_Position;
         NextGenShadow::m_chaosAttackBuffered = false;
 
@@ -773,7 +773,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
 
             if (isChaosSnapSearch)
             {
-                originalNextGenShadow_HomingUpdate(context);
+                NextGenShadow::HomingUpdateGetAll();
             }
             else if (nextAttackNotBuffered && (isTimeout || NextGenShadow::m_chaosAttackCount > 0))
             {
@@ -801,7 +801,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
                 context->StateFlag(eStateFlag_EnableAirOnceAction) = true;
 
                 Common::SonicContextHudHomingAttackClear(context);
-                RailPhysics::setRailLockEnabled(true);
+                NextGenShadow::SetLockOnFilter(0);
 
                 // resume damage
                 if (NextGenShadow::m_chaosSnapNoDamage)
@@ -889,7 +889,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
 
             if (NextGenShadow::m_chaosAttackCount < 5)
             {
-                originalNextGenShadow_HomingUpdate(context);
+                NextGenShadow::HomingUpdateGetAll();
             }
         }
     }
@@ -926,7 +926,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterEnd, 0x11182F0)
     NextGenShadow::m_chaosAttackForced = false;
     NextGenShadow::m_chaosSnapHoldSameTarget = false;
 
-    RailPhysics::setRailLockEnabled(true);
+    NextGenShadow::SetLockOnFilter(0);
     originalNextGenShadow_CSonicStateHomingAttackAfterEnd();
 }
 
@@ -1747,16 +1747,31 @@ bool NextGenShadow::AirActionCheck()
     return false;
 }
 
-void NextGenShadow::AddTargetData(uint32_t actorID, float dist, uint32_t priority)
+bool NextGenShadow::AddTargetData(uint32_t actorID, float dist, uint32_t priority)
 {
+    if (m_lockOnFilter > 0)
+    {
+        auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+
+        uint32_t lockOnType = 0u;
+        context->m_pPlayer->SendMessageImm(actorID, boost::make_shared<Sonic::Message::MsgGetLockOnType>(lockOnType));
+    
+        if ((lockOnType & m_lockOnFilter) == 0)
+        {
+            return false;
+        }
+    }
+
     for (TargetData const& data : m_targetData)
     {
         if (data.m_actorID == actorID)
         {
-            return;
+            return false;
         }
     }
+
     m_targetData.push_back(TargetData{ actorID, dist, priority });
+    return true;
 }
 
 HOOK(bool, __fastcall, NextGenShadow_AirAction, 0xDFFE30, Sonic::Player::CPlayerSpeedContext* context, void* Edx, int a2)
@@ -1803,6 +1818,7 @@ void __declspec(naked) NextGenShadow_AirActionAfterFlag()
 void __declspec(naked) NextGenShadow_GetAllHomingTargets()
 {
     static uint32_t returnAddress = 0xE7484F;
+    static uint32_t failAddress = 0xE7487B;
     __asm
     {
         fstp    [esp + 14h]
@@ -1817,10 +1833,49 @@ void __declspec(naked) NextGenShadow_GetAllHomingTargets()
         call    NextGenShadow::AddTargetData
         add     esp, 0xC
 
+        // fail lock-on filter
+        test    al, al
+        jnz     jump
+        jmp     [failAddress]
+
         // original function
+        jump:
         fld     [esp + 14h]
         jmp     [returnAddress]
     }
+}
+
+void NextGenShadow::HomingUpdateGetAll()
+{
+    // Ignore priority comparison
+    WRITE_NOP(0xE74593, 6);
+    WRITE_JUMP(0xE74847, NextGenShadow_GetAllHomingTargets);
+
+    NextGenShadow::m_targetData.clear();
+    originalNextGenShadow_HomingUpdate(Sonic::Player::CPlayerSpeedContext::GetInstance());
+
+    // Resume
+    WRITE_MEMORY(0xE74593, uint8_t, 0x0F, 0x8C, 0xE5, 0x02, 0x00, 0x00);
+    WRITE_MEMORY(0xE74847, uint8_t, 0xD9, 0x5C, 0x24, 0x14, 0xD9);
+}
+
+void NextGenShadow::SetLockOnFilter(uint32_t filter)
+{
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+    
+    // allow keeping previous target if it's in the new filter list
+    if (filter > 0 && context->m_HomingAttackTargetActorID)
+    {
+        uint32_t lockOnType = 0u;
+        context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetLockOnType>(lockOnType));
+
+        if ((lockOnType & filter) == 0)
+        {
+            Common::SonicContextHudHomingAttackClear(context);
+        }
+    }
+
+    m_lockOnFilter = filter;
 }
 
 static SharedPtrTypeless soundHandle_TrickAttack;
@@ -1850,7 +1905,8 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
             // change homing distance
             NextGenPhysics::setHomingCollisionDistance(cShadow_chaosSpearSuperLockDist);
         }
-        RailPhysics::setRailLockEnabled(false);
+
+        NextGenShadow::SetLockOnFilter(LockOnType::ChaosSpear);
         break;
     }
     case NextGenShadow::OverrideType::SH_ChaosBoost:
@@ -1917,7 +1973,7 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
         }
         }
 
-        RailPhysics::setRailLockEnabled(false);
+        NextGenShadow::SetLockOnFilter(LockOnType::Enemy);
         NextGenPhysics::setHomingCollisionDistance(cShadow_weaponLockDist);
         break;
     }
@@ -1948,16 +2004,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             Common::SetPlayerPosition(NextGenShadow::m_holdPosition);
         }
 
-        // Ignore priority comparison
-        WRITE_NOP(0xE74593, 6);
-        WRITE_JUMP(0xE74847, NextGenShadow_GetAllHomingTargets);
-
-        NextGenShadow::m_targetData.clear();
-        originalNextGenShadow_HomingUpdate(context);
-
-        // Resume
-        WRITE_MEMORY(0xE74593, uint8_t, 0x0F, 0x8C, 0xE5, 0x02, 0x00, 0x00);
-        WRITE_MEMORY(0xE74847, uint8_t, 0xD9, 0x5C, 0x24, 0x14, 0xD9);
+        NextGenShadow::HomingUpdateGetAll();
 
         // handle multiple lock-on targets and HUD
         uint8_t const spearMaxCount = Common::IsPlayerSuper() ? cShadow_chaosSpearSuperMaxCount : cShadow_chaosSpearMaxCount;
@@ -2311,7 +2358,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             return nullptr;
         }
 
-        originalNextGenShadow_HomingUpdate(context);
+        NextGenShadow::HomingUpdateGetAll();
         if (NextGenShadow::m_weaponSingleton->CanRelease())
         {
             StateManager::ChangeState(NextGenShadow::m_overrideType == NextGenShadow::OverrideType::SH_WeaponStand ? StateAction::Stand : StateAction::Walk, *PLAYER_CONTEXT);
@@ -2328,7 +2375,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             return nullptr;
         }
 
-        originalNextGenShadow_HomingUpdate(context);
+        NextGenShadow::HomingUpdateGetAll();
         if (NextGenShadow::m_weaponSingleton->CanRelease())
         {
             StateManager::ChangeState(StateAction::Grind, *PLAYER_CONTEXT);
@@ -2349,7 +2396,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             Common::SetPlayerPosition(NextGenShadow::m_holdPosition);
         }
 
-        originalNextGenShadow_HomingUpdate(context);
+        NextGenShadow::HomingUpdateGetAll();
         if (NextGenShadow::m_weaponSingleton->CanRelease())
         {
             StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
@@ -2386,7 +2433,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::f
 
         // reset homing distance
         NextGenPhysics::setHomingCollisionDistance();
-        RailPhysics::setRailLockEnabled(true);
+        NextGenShadow::SetLockOnFilter(0);
         break;
     }
     case NextGenShadow::OverrideType::SH_ChaosBoost:
@@ -2419,7 +2466,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::f
 
         NextGenShadow::m_weaponSingleton->SetStateIdle();
         Common::SonicContextHudHomingAttackClear(context);
-        RailPhysics::setRailLockEnabled(true);
+        NextGenShadow::SetLockOnFilter(0);
         NextGenPhysics::setHomingCollisionDistance();
         break;
     }
@@ -3522,6 +3569,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateGrindEnd, 0xDF2630, hh::fnd::CSt
 HOOK(void*, __stdcall, NextGenShadow_CPlayerSpeedStateHangOnCtor, 0xE47580, void* This, uint32_t address)
 {
     // address points to matrix in MsgStartHangOn
+    // disable weapon on unsupported HangOn
     uint32_t type = *(uint32_t*)(address - 4);
     if (type > 1)
     {
@@ -3535,7 +3583,7 @@ HOOK(void*, __fastcall, NextGenShadow_CPlayerSpeedStateHangOnBegin, 0xE47390, hh
 {
     if (CObjWeapon::m_type != WT_COUNT)
     {
-        RailPhysics::setRailLockEnabled(false);
+        NextGenShadow::SetLockOnFilter(LockOnType::Enemy);
         NextGenPhysics::setHomingCollisionDistance(cShadow_weaponLockDist);
     }
 
@@ -3544,14 +3592,13 @@ HOOK(void*, __fastcall, NextGenShadow_CPlayerSpeedStateHangOnBegin, 0xE47390, hh
 
 HOOK(void*, __fastcall, NextGenShadow_CPlayerSpeedStateHangOnAdvance, 0xE47680, hh::fnd::CStateMachineBase::CStateBase* This)
 {
-    // TODO: start end change homing distance
     auto* context = (Sonic::Player::CPlayerSpeedContext*)This->GetContextBase();
 
     if (CObjWeapon::m_type != WT_COUNT)
     {
         if (NextGenShadow::m_weaponSingleton->IsActive())
         {
-            originalNextGenShadow_HomingUpdate(context);
+            NextGenShadow::HomingUpdateGetAll();
             if (NextGenShadow::m_weaponSingleton->CanRelease())
             {
                 Common::SonicContextChangeAnimation(AnimationSetPatcher::UpReelRightLoop);
@@ -3581,7 +3628,7 @@ HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStateHangOnEnd, 0xE46A10, hh::f
         NextGenShadow::m_weaponSingleton->SetStateIdle();
     }
     Common::SonicContextHudHomingAttackClear(context);
-    RailPhysics::setRailLockEnabled(true);
+    NextGenShadow::SetLockOnFilter(0);
     NextGenPhysics::setHomingCollisionDistance();
 
     originalNextGenShadow_CPlayerSpeedStateHangOnEnd(This);
