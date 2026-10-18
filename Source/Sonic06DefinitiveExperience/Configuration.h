@@ -68,7 +68,6 @@ public:
     {
         static ShadowMovesetType m_moveset;
         static bool m_chaosBlastCamera;
-        static bool m_chaosSpearMomentum;
         static bool m_antiGravity;
         static bool m_floatBoost;
         static bool m_gliderInvert;

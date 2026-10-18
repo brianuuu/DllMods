@@ -1779,18 +1779,18 @@ HOOK(bool, __fastcall, NextGenShadow_AirAction, 0xDFFE30, Sonic::Player::CPlayer
     // Handle air action that ignores various flag checks
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 
-    // Chaos Spear
-    if (Configuration::Shadow::m_chaosSpearMomentum && !context->StateFlag(eStateFlag_EnableGravityControl) && padState->IsTapped(Sonic::EKeyState::eKeyState_X))
-    {
-        if (NextGenPhysics::checkUseLightSpeedDash())
-        {
-            return true;
-        }
-
-        NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_SpearWait;
-        StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
-        return true;
-    }
+    // TODO: Chaos Spear (Shadow Gens)
+    //if (Configuration::Shadow::m_chaosSpearMomentum && !context->StateFlag(eStateFlag_EnableGravityControl) && padState->IsTapped(Sonic::EKeyState::eKeyState_X))
+    //{
+    //    if (NextGenPhysics::checkUseLightSpeedDash())
+    //    {
+    //        return true;
+    //    }
+    //
+    //    NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_SpearWait;
+    //    StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
+    //    return true;
+    //}
 
     return originalNextGenShadow_AirAction(context, Edx, a2);
 }
@@ -1998,7 +1998,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             return nullptr;
         }
 
-        if (!Configuration::Shadow::m_chaosSpearMomentum && !context->StateFlag(eStateFlag_StopPositionCount))
+        if (!context->StateFlag(eStateFlag_StopPositionCount))
         {
             Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
             Common::SetPlayerPosition(NextGenShadow::m_holdPosition);
@@ -2232,12 +2232,9 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             This->m_Time = 0.0f;
 
             // Set OutOfControl
-            if (!Configuration::Shadow::m_chaosSpearMomentum)
-            {
-                FUNCTION_PTR(int, __stdcall, SetOutOfControl, 0xE5AC00, CSonicContext * context, float duration);
-                SetOutOfControl(*pModernSonicContext, (Common::IsPlayerSuper() ? cShadow_chaosSpearSuperStiffening : cShadow_chaosSpearStiffening));
-                context->m_GravityTimer = -100000000.0f;
-            }
+            FUNCTION_PTR(int, __stdcall, SetOutOfControl, 0xE5AC00, CSonicContext * context, float duration);
+            SetOutOfControl(*pModernSonicContext, (Common::IsPlayerSuper() ? cShadow_chaosSpearSuperStiffening : cShadow_chaosSpearStiffening));
+            context->m_GravityTimer = -100000000.0f;
             break;
         }
 
@@ -2253,7 +2250,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
 
         if (This->m_Time >= (Common::IsPlayerSuper() ? cShadow_chaosSpearSuperStiffening : cShadow_chaosSpearStiffening))
         {
-            if (!Configuration::Shadow::m_chaosSpearMomentum && !Common::IsPlayerSuper())
+            if (!Common::IsPlayerSuper())
             {
                 Common::SonicContextPlaySound(soundHandle, 2002027, 1);
                 Common::SonicContextPlaySound(voiceHandle, 3002000, 0);
