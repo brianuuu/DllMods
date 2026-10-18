@@ -13,6 +13,7 @@
 #include <Sonic/Message/MsgFinishExternalControl.h>
 #include <Sonic/Message/MsgGetEnemyType.h>
 #include <Sonic/Message/MsgGetItemType.h>
+#include <Sonic/Message/MsgGetLockOnType.h>
 #include <Sonic/Message/MsgGetPlayerType.h>
 #include <Sonic/Message/MsgHitEventCollision.h>
 #include <Sonic/Message/MsgIsExternalControl.h>
