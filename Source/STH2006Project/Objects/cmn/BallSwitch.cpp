@@ -276,6 +276,13 @@ bool BallSwitch::ProcessMessage
 		}
 	}
 
+	if (std::strstr(message.GetType(), "MsgGetLockOnType"))
+	{
+		auto& msg = static_cast<Sonic::Message::MsgGetLockOnType&>(message);
+		*msg.m_pType = LockOnType::ChaosSpear;
+		return true;
+	}
+
 	return Sonic::CObjectBase::ProcessMessage(message, flag);
 }
 
