@@ -2614,10 +2614,34 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateFloatingBoostAdvance, 0x123FCD0,
     originalNextGenShadow_CSonicStateFloatingBoostAdvance(This);
 }
 
-HOOK(void, __fastcall, NextGenShadow_CSonicStateGrindBegin, 0xDF2890, void* This)
+HOOK(void*, __fastcall, NextGenShadow_CSonicStateBoardWalkAdvance, 0xE492A0, int This)
 {
     NextGenShadow::CheckChaosControl();
-    originalNextGenShadow_CSonicStateGrindBegin(This);
+    return originalNextGenShadow_CSonicStateBoardWalkAdvance(This);
+}
+
+HOOK(void, __fastcall, NextGenShadow_CSonicStateBoardFallAdvance, 0x111D7B0, int This)
+{
+    NextGenShadow::CheckChaosControl();
+    originalNextGenShadow_CSonicStateBoardFallAdvance(This);
+}
+
+HOOK(bool, __fastcall, NextGenShadow_CSonicStateBoardGrindAdvance, 0x1252F20, int This)
+{
+    NextGenShadow::CheckChaosControl();
+    return originalNextGenShadow_CSonicStateBoardGrindAdvance(This);
+}
+
+HOOK(void, __fastcall, NextGenShadow_CSonicStateBoardDriftAdvance, 0x11194F0, void* This)
+{
+    NextGenShadow::CheckChaosControl();
+    originalNextGenShadow_CSonicStateBoardDriftAdvance(This);
+}
+
+HOOK(void, __fastcall, NextGenShadow_CSonicStateGrindAdvance, 0xDF2890, void* This)
+{
+    NextGenShadow::CheckChaosControl();
+    originalNextGenShadow_CSonicStateGrindAdvance(This);
 }
 
 HOOK(int, __fastcall, NextGenShadow_MsgPlayerGoal, 0xE6C2C0, Sonic::Player::CPlayer* player, void* Edx, void* message)
@@ -3554,7 +3578,7 @@ void __declspec(naked) NextGenShadow_fixExternalControlBobbing()
     }
 }
 
-HOOK(void, __fastcall, NextGenShadow_CSonicStateGrindAdvance, 0xDF2890, hh::fnd::CStateMachineBase::CStateBase* This)
+HOOK(void, __fastcall, NextGenShadow_CSonicStateGrindAdvance_Weapon, 0xDF2890, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
     if (padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger) && CObjWeapon::m_type != WT_COUNT)
@@ -3564,7 +3588,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateGrindAdvance, 0xDF2890, hh::fnd:
         return;
     }
 
-    originalNextGenShadow_CSonicStateGrindAdvance(This);
+    originalNextGenShadow_CSonicStateGrindAdvance_Weapon(This);
 }
 
 HOOK(void, __fastcall, NextGenShadow_CSonicStateGrindEnd, 0xDF2630, hh::fnd::CStateMachineBase::CStateBase* This)
@@ -3811,7 +3835,11 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_CSonicStateDivingDiveAdvance);
     INSTALL_HOOK(NextGenShadow_CSonicStateDivingFloatAdvance);
     INSTALL_HOOK(NextGenShadow_CSonicStateFloatingBoostAdvance);
-    INSTALL_HOOK(NextGenShadow_CSonicStateGrindBegin);
+    INSTALL_HOOK(NextGenShadow_CSonicStateBoardWalkAdvance);
+    INSTALL_HOOK(NextGenShadow_CSonicStateBoardFallAdvance);
+    INSTALL_HOOK(NextGenShadow_CSonicStateBoardGrindAdvance);
+    INSTALL_HOOK(NextGenShadow_CSonicStateBoardDriftAdvance);
+    INSTALL_HOOK(NextGenShadow_CSonicStateGrindAdvance);
 
     // Situation that stops Chaos Control
     INSTALL_HOOK(NextGenShadow_MsgPlayerGoal);
@@ -3953,7 +3981,7 @@ void NextGenShadow::applyPatches()
         CObjWeapon::ResetWeaponData();
 
         // Extra states that fires weapon
-        INSTALL_HOOK(NextGenShadow_CSonicStateGrindAdvance);
+        INSTALL_HOOK(NextGenShadow_CSonicStateGrindAdvance_Weapon);
         INSTALL_HOOK(NextGenShadow_CSonicStateGrindEnd);
 
         INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateHangOnCtor);
