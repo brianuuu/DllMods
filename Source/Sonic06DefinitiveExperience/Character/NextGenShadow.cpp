@@ -275,7 +275,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
 
     CSonicStateFlags const* flags = Common::GetSonicStateFlags();
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
-    if (Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Vehicles)
+    if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Vehicles)
     {
         if (!flags->KeepRunning && !flags->OutOfControl && !flags->Diving && !flags->InvokeSkateBoard
          && !context->m_spGrindPathController && !context->m_Is2DMode
@@ -328,7 +328,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
             }
         }
     }
-    else if (Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Weapons)
+    else if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Weapons)
     {
         // TODO:
         CObjWeapon::VerifySpriteIndex();
@@ -3906,51 +3906,51 @@ void NextGenShadow::applyPatches()
     //-------------------------------------------------------
     // D-Pad mode 
     //-------------------------------------------------------
-    if (Configuration::Shadow::m_shaodwDPad != Configuration::ShadowDPadType::Normal)
+    switch (Configuration::Shadow::m_moveset)
+    {
+    case Configuration::ShadowMovesetType::Vehicles:
     {
         // Ignore D-pad input for Shadow's control
         WRITE_JUMP(0xD97B56, (void*)0xD97B9E);
 
-        switch (Configuration::Shadow::m_shaodwDPad)
+        // Fix external control bobbing up and down at sea level
+        WRITE_JUMP(0x11DCFF8, NextGenShadow_fixExternalControlBobbing);
+
+        // vehicle patches
+        GadgetGlider::applyPatches();
+        break;
+    }
+    case Configuration::ShadowMovesetType::Weapons:
+    {
+        // Ignore D-pad input for Shadow's control
+        WRITE_JUMP(0xD97B56, (void*)0xD97B9E);
+
+        // refill ammo
+        CObjWeapon::ResetWeaponData();
+
+        // Extra states that fires weapon
+        INSTALL_HOOK(NextGenShadow_CSonicStateGrindAdvance);
+        INSTALL_HOOK(NextGenShadow_CSonicStateGrindEnd);
+
+        INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateHangOnCtor);
+        INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateHangOnBegin);
+        INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateHangOnAdvance);
+        INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateHangOnEnd);
+
+        // Add Time_Break to list of unsaved musics
+        static char const* c_noSaveMusic[] =
         {
-        case Configuration::ShadowDPadType::Vehicles:
-        {
-            // Fix external control bobbing up and down at sea level
-            WRITE_JUMP(0x11DCFF8, NextGenShadow_fixExternalControlBobbing);
-
-            // vehicle patches
-            GadgetGlider::applyPatches();
-            break;
-        }
-        case Configuration::ShadowDPadType::Weapons:
-        {
-            // refill ammo
-            CObjWeapon::ResetWeaponData();
-
-            // Extra states that fires weapon
-            INSTALL_HOOK(NextGenShadow_CSonicStateGrindAdvance);
-            INSTALL_HOOK(NextGenShadow_CSonicStateGrindEnd);
-
-            INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateHangOnCtor);
-            INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateHangOnBegin);
-            INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateHangOnAdvance);
-            INSTALL_HOOK(NextGenShadow_CPlayerSpeedStateHangOnEnd);
-
-            // Add Time_Break to list of unsaved musics
-            static char const* c_noSaveMusic[] =
-            {
-                (char*)0x15C8E08,
-                (char*)0x15C8E18,
-                (char*)0x15C8E30,
-                (char*)0x15C8E48,
-                (char*)0x15C8E54,
-                (char*)0x15C8E60,
-                "Time_Break"
-            };
-            WRITE_MEMORY(0xD60937, char**, c_noSaveMusic);
-            WRITE_MEMORY(0xD60965, uint8_t, sizeof(c_noSaveMusic));
-            break;
-        }
-        }
+            (char*)0x15C8E08,
+            (char*)0x15C8E18,
+            (char*)0x15C8E30,
+            (char*)0x15C8E48,
+            (char*)0x15C8E54,
+            (char*)0x15C8E60,
+            "Time_Break"
+        };
+        WRITE_MEMORY(0xD60937, char**, c_noSaveMusic);
+        WRITE_MEMORY(0xD60965, uint8_t, sizeof(c_noSaveMusic));
+        break;
+    }
     }
 }

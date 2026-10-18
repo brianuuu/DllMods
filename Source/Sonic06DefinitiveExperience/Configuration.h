@@ -30,11 +30,12 @@ public:
         Custom
     };
 
-    enum ShadowDPadType
+    enum ShadowMovesetType
     {
         Normal = 0,
         Vehicles,
         Weapons,
+        Gens,
     };
 
     // General
@@ -65,7 +66,7 @@ public:
     // Shadow
     struct Shadow
     {
-        static ShadowDPadType m_shaodwDPad;
+        static ShadowMovesetType m_moveset;
         static bool m_chaosBlastCamera;
         static bool m_chaosSpearMomentum;
         static bool m_antiGravity;

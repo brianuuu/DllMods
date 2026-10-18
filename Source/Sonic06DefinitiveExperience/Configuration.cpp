@@ -19,7 +19,7 @@ vector<string> Configuration::Sonic::m_runStages = {};
 bool Configuration::Sonic::m_unlimitedGauge = false;
 bool Configuration::Sonic::m_gemsEnabled = false;
 
-Configuration::ShadowDPadType Configuration::Shadow::m_shaodwDPad = Configuration::ShadowDPadType::Normal;
+Configuration::ShadowMovesetType Configuration::Shadow::m_moveset = Configuration::ShadowMovesetType::Normal;
 bool Configuration::Shadow::m_chaosBlastCamera = true;
 bool Configuration::Shadow::m_chaosSpearMomentum = false;
 bool Configuration::Shadow::m_antiGravity = false;
@@ -91,7 +91,7 @@ bool Configuration::load(const std::string& rootPath)
     // --------------Shadow--------------
     if (m_characterMoveset)
     {
-        Shadow::m_shaodwDPad = (ShadowDPadType)reader.GetInteger("Shadow", "nShaodwDPad", 0);
+        Shadow::m_moveset = (ShadowMovesetType)reader.GetInteger("Shadow", "nShadowMovesetType", 0);
     }
     Shadow::m_chaosBlastCamera = reader.GetBoolean("Shadow", "bChaosBlastCamera", Shadow::m_chaosBlastCamera);
     Shadow::m_chaosSpearMomentum = reader.GetBoolean("Shadow", "bChaosSpearMomentum", Shadow::m_chaosSpearMomentum);
@@ -147,7 +147,7 @@ bool Configuration::load(const std::string& rootPath)
         bb3.addAR("+SonicActionCommon", 1);
         bb3.addAR("+SonicActionCommonHud", 1);
 
-        if (m_model == ModelType::Shadow && Shadow::m_shaodwDPad == ShadowDPadType::Weapons)
+        if (m_model == ModelType::Shadow && Shadow::m_moveset == ShadowMovesetType::Weapons)
         {
             bb3.addReplace("+#Application.ar.00", "06Shadow\\+#ApplicationWeapon.ar.00");
             bb3.addReplace("+#Application.arl", "06Shadow\\+#ApplicationWeapon.arl");

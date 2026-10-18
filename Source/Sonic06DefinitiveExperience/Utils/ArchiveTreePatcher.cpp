@@ -63,12 +63,12 @@ void ArchiveTreePatcher::applyPatches()
 
     if (Configuration::m_model == Configuration::ModelType::Shadow)
     {
-        switch (Configuration::Shadow::m_shaodwDPad)
+        switch (Configuration::Shadow::m_moveset)
         {
-        case Configuration::ShadowDPadType::Vehicles:
+        case Configuration::ShadowMovesetType::Vehicles:
             m_archiveDependencies.push_back(ArchiveDependency("ShadowVehicle", { "SonicActionCommon" }));
             break;
-        case Configuration::ShadowDPadType::Weapons:
+        case Configuration::ShadowMovesetType::Weapons:
             m_archiveDependencies.push_back(ArchiveDependency("ShadowWeapon", { "SonicActionCommon" }));
             break;
         default:

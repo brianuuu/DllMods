@@ -705,7 +705,7 @@ void AnimationSetPatcher::applyPatches()
         m_newAnimationDataSuper.emplace_back("JeepB", "sh_jeep_back", 1.0f, false, "JeepBLoop");
         m_newAnimationDataSuper.emplace_back("JeepBLoop", "sh_jeep_back_l", 1.0f, true, nullptr);
 
-        if (Configuration::Shadow::m_shaodwDPad == Configuration::ShadowDPadType::Weapons)
+        if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Weapons)
         {
             m_newAnimationData.emplace_back(UpReelRightStart, "sh_pulley_r_s", 1.0f, false, UpReelRightLoop);
             m_newAnimationData.emplace_back(UpReelRightLoop, "sh_pulley_r_loop", 1.0f, true, nullptr);
