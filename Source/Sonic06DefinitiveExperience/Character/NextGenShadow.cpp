@@ -1906,7 +1906,7 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
             NextGenPhysics::setHomingCollisionDistance(cShadow_chaosSpearSuperLockDist);
         }
 
-        NextGenShadow::SetLockOnFilter(LockOnType::ChaosSpear);
+        NextGenShadow::SetLockOnFilter(LockOnType::Enemy | LockOnType::ChaosSpear);
         break;
     }
     case NextGenShadow::OverrideType::SH_ChaosBoost:

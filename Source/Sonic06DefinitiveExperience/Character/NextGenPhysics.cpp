@@ -425,7 +425,7 @@ HOOK(bool, __fastcall, NextGenPhysics_CEnemyBaseProcessMessage, 0xBE0790, hh::fn
     if (flag && message.Is<Sonic::Message::MsgGetLockOnType>())
     {
         auto& msg = static_cast<Sonic::Message::MsgGetLockOnType&>(message);
-        *msg.m_pType = LockOnType::Enemy | LockOnType::ChaosSpear;
+        *msg.m_pType = LockOnType::Enemy;
         return true;
     }
 

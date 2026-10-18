@@ -13,7 +13,17 @@ namespace Sonic::Message
     class MsgGetLockOnType : public Hedgehog::Universe::MessageTypeSet
     {
     public:
-        HH_FND_MSG_MAKE_TYPE("MsgGetLockOnType");
+        static constexpr const char* ms_pType = "MsgGetLockOnType";
+
+        bool IsOfType(const char* in_pType) const override
+        {
+            return strcmp(in_pType, ms_pType) == 0;
+        }
+           
+        const char* GetType() const override
+        {
+            return ms_pType;
+        }
 		
 		uint32_t* m_pType;
 

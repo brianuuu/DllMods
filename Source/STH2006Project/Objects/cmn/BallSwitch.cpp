@@ -276,7 +276,7 @@ bool BallSwitch::ProcessMessage
 		}
 	}
 
-	if (std::strstr(message.GetType(), "MsgGetLockOnType"))
+	if (message.Is<Sonic::Message::MsgGetLockOnType>())
 	{
 		auto& msg = static_cast<Sonic::Message::MsgGetLockOnType&>(message);
 		*msg.m_pType = LockOnType::ChaosSpear;
