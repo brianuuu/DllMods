@@ -193,6 +193,13 @@ void ChaosEnergy::applyPatches()
 		// Award 5 boost when chaos energy reach Sonic
 		WRITE_JUMP(0x1124594, addBoostFromChaosEnergy);
 	}
+
+	if (Configuration::m_characterMoveset && Configuration::m_model == Configuration::ModelType::Shadow && Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
+	{
+		// Board trick jump no award boost
+		WRITE_MEMORY(0x11A128F, uint8_t, 0x83, 0xC4, 0x04, 0x90, 0x90);
+		WRITE_MEMORY(0x11A12E4, uint8_t, 0);
+	}
 }
 
 uint32_t __fastcall ChaosEnergy::getEnemyChaosEnergyTypeImpl(uint32_t pCEnemyBase, uint32_t amount)
