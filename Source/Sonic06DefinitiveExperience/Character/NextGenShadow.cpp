@@ -1029,6 +1029,7 @@ void NextGenShadow::SetChaosBoostModelVisible(bool visible, bool allInvisible)
 void NextGenShadow::SetChaosBoostLevel(uint8_t level, bool notifyHUD)
 {
     if (!Configuration::m_characterMoveset && level > 0) return;
+    if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens) return;
 
     m_chaosBoostLevel = level;
     m_chaosMaturity = 0.0f; // change level always resets maturity
@@ -2516,6 +2517,12 @@ HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStatePluginTimeBreakBegin, 0x11
 
     // don't use state time to quit
     WRITE_JUMP(0x111B03D, (void*)0x111B0F3);
+
+    // Shadow Gen physics max boost
+    if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
+    {
+        *Common::GetPlayerBoost() = 100.0f;
+    }
 
     originalNextGenShadow_CPlayerSpeedStatePluginTimeBreakBegin(This);
 }
