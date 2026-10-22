@@ -1628,7 +1628,7 @@ void NextGenSonic::ChangeGems(S06HUD_API::SonicGemType oldType, S06HUD_API::Soni
 
     // Blue/No Gem
     DisableGem(S06HUD_API::SonicGemType::SGT_None);
-    NextGenPhysics::toggleBoost(newType != S06HUD_API::SonicGemType::SGT_None);
+    NextGenPhysics::toggleBoost(newType == S06HUD_API::SonicGemType::SGT_None);
 
     // Red Gem
     DisableGem(S06HUD_API::SonicGemType::SGT_Red);
