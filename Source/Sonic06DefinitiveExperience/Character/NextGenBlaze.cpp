@@ -56,11 +56,6 @@ char const* ef_ch_bl_axeljump = "ef_ch_bl_axeljump";
 //-------------------------------------------------------
 // Double Jump/Homing Attack
 //-------------------------------------------------------
-HOOK(int, __stdcall, NextGenBlaze_HomingUpdate, 0xE5FF10, CSonicContext* context)
-{
-    return originalNextGenBlaze_HomingUpdate(context);
-}
-
 HOOK(bool, __fastcall, NextGenBlaze_HomingAttackCheck, 0xDFFE30, CSonicContext* context, void* Edx, int a2)
 {
     // Cannot use homing attack after double jump
@@ -322,7 +317,7 @@ HOOK(bool, __stdcall, NextGenBlaze_BActionHandler, 0xDFF660, CSonicContext* cont
     if (!Common::GetSonicStateFlags()->EnableGravityControl)
     {
         WRITE_MEMORY(0xDEBAA0, uint8_t, 0xEB);
-        originalNextGenBlaze_HomingUpdate(context);
+        NextGenPhysics::homingUpdate();
     }
 
     return NextGenBlaze::bActionHandlerImpl();

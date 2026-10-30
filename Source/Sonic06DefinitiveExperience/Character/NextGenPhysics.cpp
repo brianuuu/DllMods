@@ -246,6 +246,110 @@ void NextGenPhysics::setHomingCollisionDistance(float dist)
     }
 }
 
+void NextGenPhysics::setLockOnFilter(uint32_t filter)
+{
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+
+    // allow keeping previous target if it's in the new filter list
+    if (filter > 0 && context->m_HomingAttackTargetActorID)
+    {
+        uint32_t lockOnType = 0u;
+        context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetLockOnType>(lockOnType));
+
+        if ((lockOnType & filter) == 0)
+        {
+            Common::SonicContextHudHomingAttackClear(context);
+        }
+    }
+
+    m_lockOnFilter = filter;
+}
+
+std::vector<NextGenPhysics::TargetData> NextGenPhysics::m_targetData;
+uint32_t NextGenPhysics::m_lockOnFilter = 0;
+
+HOOK(int, __stdcall, NextGenPhysics_HomingUpdate, 0xE5FF10, Sonic::Player::CPlayerSpeedContext* context)
+{
+    return originalNextGenPhysics_HomingUpdate(context);
+}
+
+bool NextGenPhysics::addTargetData(uint32_t actorID, float dist, uint32_t priority)
+{
+    if (m_lockOnFilter > 0)
+    {
+        auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+
+        uint32_t lockOnType = 0u;
+        context->m_pPlayer->SendMessageImm(actorID, boost::make_shared<Sonic::Message::MsgGetLockOnType>(lockOnType));
+
+        if ((lockOnType & m_lockOnFilter) == 0)
+        {
+            return false;
+        }
+    }
+
+    for (TargetData const& data : m_targetData)
+    {
+        if (data.m_actorID == actorID)
+        {
+            return false;
+        }
+    }
+
+    m_targetData.push_back(TargetData{ actorID, dist, priority });
+    return true;
+}
+
+void __declspec(naked) NextGenPhysics_GetAllHomingTargets()
+{
+    static uint32_t returnAddress = 0xE7484F;
+    static uint32_t failAddress = 0xE7487B;
+    __asm
+    {
+        fstp    [esp + 14h]
+        
+        mov     esi, [esp + 18h]
+        mov     ecx, [esp + 14h]
+        mov     eax, [esp + 34h]
+
+        push    esi
+        push    ecx
+        push    eax
+        call    NextGenPhysics::addTargetData
+        add     esp, 0xC
+
+        // fail lock-on filter
+        test    al, al
+        jnz     jump
+        jmp     [failAddress]
+
+        // original function
+        jump:
+        fld     [esp + 14h]
+        jmp     [returnAddress]
+    }
+}
+
+void NextGenPhysics::homingUpdate(bool getAll)
+{
+    if (getAll)
+    {
+        // Ignore priority comparison
+        WRITE_NOP(0xE74593, 6);
+        WRITE_JUMP(0xE74847, NextGenPhysics_GetAllHomingTargets);
+    }
+
+    m_targetData.clear();
+    originalNextGenPhysics_HomingUpdate(Sonic::Player::CPlayerSpeedContext::GetInstance());
+
+    if (getAll)
+    {
+        // Resume
+        WRITE_MEMORY(0xE74593, uint8_t, 0x0F, 0x8C, 0xE5, 0x02, 0x00, 0x00);
+        WRITE_MEMORY(0xE74847, uint8_t, 0xD9, 0x5C, 0x24, 0x14, 0xD9);
+    }
+}
+
 //---------------------------------------------------
 // CSonicSetMaxSpeed
 //---------------------------------------------------

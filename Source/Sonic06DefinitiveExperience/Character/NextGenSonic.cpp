@@ -1968,11 +1968,6 @@ HOOK(int, __fastcall, NextGenSonicGems_CPlayerSpeedStatePluginThunderBarrierEnd,
     return originalNextGenSonicGems_CPlayerSpeedStatePluginThunderBarrierEnd(This);
 }
 
-HOOK(int, __stdcall, NextGenSonicGems_HomingUpdate, 0xE5FF10, Sonic::Player::CPlayerSpeedContext* context)
-{
-    return originalNextGenSonicGems_HomingUpdate(context);
-}
-
 bool whiteGemHomingAttack = false;
 HOOK(int, __fastcall, NextGenSonicGems_CSonicStateHomingAttackBegin, 0x1232040, hh::fnd::CStateMachineBase::CStateBase* This)
 {
@@ -2040,7 +2035,7 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAdvance, 0x1231C6
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
         if (padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger) && !context->StateFlag(eStateFlag_StopPositionCount))
         {
-            originalNextGenSonicGems_HomingUpdate(context);
+            NextGenPhysics::homingUpdate();
 
             Common::SetPlayerVelocity(Eigen::Vector3f::Zero());
             Common::SetPlayerPosition(NextGenSonic::m_gemHoldPosition);
@@ -2141,7 +2136,7 @@ HOOK(void, __fastcall, NextGenSonicGems_CSonicStateHomingAttackAfterAdvance, 0x1
         Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
         if (padState->IsDown(Sonic::EKeyState::eKeyState_RightTrigger))
         {
-            originalNextGenSonicGems_HomingUpdate(context);
+            NextGenPhysics::homingUpdate();
             if (context->m_HomingAttackTargetActorID)
             {
                 context->m_ChaosEnergy -= cSonic_blueGemCost;

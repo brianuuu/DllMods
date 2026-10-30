@@ -52,8 +52,6 @@ float const cShadow_tripleKickShockWaveHeight = 1.0f;
 float const cShadow_tripleKickShockWaveRadius = 4.0f;
 
 // Chaos Spear
-std::vector<NextGenShadow::TargetData> NextGenShadow::m_targetData;
-uint32_t NextGenShadow::m_lockOnFilter = 0;
 uint8_t const cShadow_chaosSpearMaxCount = 5;
 uint8_t const cShadow_chaosSpearSuperMaxCount = 8;
 float const cShadow_chaosSpearSpeed = 50.0f;
@@ -409,11 +407,6 @@ HOOK(bool, __fastcall, NextGenShadow_CSonicSpRenderableSsnUpdate, 0xE71510, uint
 //---------------------------------------------------
 // Chaos Attack/Chaos Snap
 //---------------------------------------------------
-HOOK(int, __stdcall, NextGenShadow_HomingUpdate, 0xE5FF10, CSonicContext* context)
-{
-    return originalNextGenShadow_HomingUpdate(context);
-}
-
 bool hasChaosSnapHiddenModel = false;
 bool hasChaosSnapTeleported = false;
 void PlayChaosSnap()
@@ -560,7 +553,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAdvance, 0x1231C60, 
         else if (!hasChaosSnapHiddenModel && chaosSnapHoldDuration >= cShadow_chaosSnapStartHold)
         {
             // try to find target if not teleported
-            NextGenShadow::HomingUpdateGetAll();
+            NextGenPhysics::homingUpdate(true);
 
             // always allow Chaos Snap if holding A
             if (context->m_HomingAttackTargetActorID)
@@ -695,7 +688,7 @@ HOOK(int32_t*, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterBegin, 0x11
     if (!context->StateFlag(eStateFlag_EnableHomingAttackOnDiving) && !context->StateFlag(eStateFlag_KeepRunning) && Common::GetCurrentStageID() != SMT_bsl
         && Configuration::Shadow::m_moveset != Configuration::ShadowMovesetType::Gens)
     {
-        NextGenShadow::SetLockOnFilter(LockOnType::Enemy);
+        NextGenPhysics::setLockOnFilter(LockOnType::Enemy);
         NextGenShadow::m_holdPosition = context->m_spMatrixNode->m_Transform.m_Position;
         NextGenShadow::m_chaosAttackBuffered = false;
 
@@ -774,7 +767,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
 
             if (isChaosSnapSearch)
             {
-                NextGenShadow::HomingUpdateGetAll();
+                NextGenPhysics::homingUpdate(true);
             }
             else if (nextAttackNotBuffered && (isTimeout || NextGenShadow::m_chaosAttackCount > 0))
             {
@@ -802,7 +795,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
                 context->StateFlag(eStateFlag_EnableAirOnceAction) = true;
 
                 Common::SonicContextHudHomingAttackClear(context);
-                NextGenShadow::SetLockOnFilter(0);
+                NextGenPhysics::setLockOnFilter();
 
                 // resume damage
                 if (NextGenShadow::m_chaosSnapNoDamage)
@@ -890,7 +883,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterAdvance, 0x1118
 
             if (NextGenShadow::m_chaosAttackCount < 5)
             {
-                NextGenShadow::HomingUpdateGetAll();
+                NextGenPhysics::homingUpdate(true);
             }
         }
     }
@@ -927,7 +920,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterEnd, 0x11182F0)
     NextGenShadow::m_chaosAttackForced = false;
     NextGenShadow::m_chaosSnapHoldSameTarget = false;
 
-    NextGenShadow::SetLockOnFilter(0);
+    NextGenPhysics::setLockOnFilter();
     originalNextGenShadow_CSonicStateHomingAttackAfterEnd();
 }
 
@@ -1768,33 +1761,6 @@ bool NextGenShadow::AirActionCheck()
     return false;
 }
 
-bool NextGenShadow::AddTargetData(uint32_t actorID, float dist, uint32_t priority)
-{
-    if (m_lockOnFilter > 0)
-    {
-        auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-
-        uint32_t lockOnType = 0u;
-        context->m_pPlayer->SendMessageImm(actorID, boost::make_shared<Sonic::Message::MsgGetLockOnType>(lockOnType));
-    
-        if ((lockOnType & m_lockOnFilter) == 0)
-        {
-            return false;
-        }
-    }
-
-    for (TargetData const& data : m_targetData)
-    {
-        if (data.m_actorID == actorID)
-        {
-            return false;
-        }
-    }
-
-    m_targetData.push_back(TargetData{ actorID, dist, priority });
-    return true;
-}
-
 HOOK(bool, __fastcall, NextGenShadow_AirAction, 0xDFFE30, Sonic::Player::CPlayerSpeedContext* context, void* Edx, int a2)
 {
     // Handle air action that ignores various flag checks
@@ -1836,69 +1802,6 @@ void __declspec(naked) NextGenShadow_AirActionAfterFlag()
     }
 }
 
-void __declspec(naked) NextGenShadow_GetAllHomingTargets()
-{
-    static uint32_t returnAddress = 0xE7484F;
-    static uint32_t failAddress = 0xE7487B;
-    __asm
-    {
-        fstp    [esp + 14h]
-        
-        mov     esi, [esp + 18h]
-        mov     ecx, [esp + 14h]
-        mov     eax, [esp + 34h]
-
-        push    esi
-        push    ecx
-        push    eax
-        call    NextGenShadow::AddTargetData
-        add     esp, 0xC
-
-        // fail lock-on filter
-        test    al, al
-        jnz     jump
-        jmp     [failAddress]
-
-        // original function
-        jump:
-        fld     [esp + 14h]
-        jmp     [returnAddress]
-    }
-}
-
-void NextGenShadow::HomingUpdateGetAll()
-{
-    // Ignore priority comparison
-    WRITE_NOP(0xE74593, 6);
-    WRITE_JUMP(0xE74847, NextGenShadow_GetAllHomingTargets);
-
-    NextGenShadow::m_targetData.clear();
-    originalNextGenShadow_HomingUpdate(Sonic::Player::CPlayerSpeedContext::GetInstance());
-
-    // Resume
-    WRITE_MEMORY(0xE74593, uint8_t, 0x0F, 0x8C, 0xE5, 0x02, 0x00, 0x00);
-    WRITE_MEMORY(0xE74847, uint8_t, 0xD9, 0x5C, 0x24, 0x14, 0xD9);
-}
-
-void NextGenShadow::SetLockOnFilter(uint32_t filter)
-{
-    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-    
-    // allow keeping previous target if it's in the new filter list
-    if (filter > 0 && context->m_HomingAttackTargetActorID)
-    {
-        uint32_t lockOnType = 0u;
-        context->m_pPlayer->SendMessageImm(context->m_HomingAttackTargetActorID, boost::make_shared<Sonic::Message::MsgGetLockOnType>(lockOnType));
-
-        if ((lockOnType & filter) == 0)
-        {
-            Common::SonicContextHudHomingAttackClear(context);
-        }
-    }
-
-    m_lockOnFilter = filter;
-}
-
 static SharedPtrTypeless soundHandle_TrickAttack;
 static SharedPtrTypeless pfxHandle_TrickAttack;
 std::map<uint32_t, boost::shared_ptr<CObjChaosLockonCursor>> m_spLockonCursors;
@@ -1927,7 +1830,7 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
             NextGenPhysics::setHomingCollisionDistance(cShadow_chaosSpearSuperLockDist);
         }
 
-        NextGenShadow::SetLockOnFilter(LockOnType::Enemy | LockOnType::ChaosSpear);
+        NextGenPhysics::setLockOnFilter(LockOnType::Enemy | LockOnType::ChaosSpear);
         break;
     }
     case NextGenShadow::OverrideType::SH_ChaosBoost:
@@ -1994,7 +1897,7 @@ HOOK(int, __fastcall, NextGenShadow_CSonicStateTrickAttackBegin, 0x1202270, hh::
         }
         }
 
-        NextGenShadow::SetLockOnFilter(LockOnType::Enemy);
+        NextGenPhysics::setLockOnFilter(LockOnType::Enemy);
         NextGenPhysics::setHomingCollisionDistance(cShadow_weaponLockDist);
         break;
     }
@@ -2025,7 +1928,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             Common::SetPlayerPosition(NextGenShadow::m_holdPosition);
         }
 
-        NextGenShadow::HomingUpdateGetAll();
+        NextGenPhysics::homingUpdate(true);
 
         // handle multiple lock-on targets and HUD
         uint8_t const spearMaxCount = Common::IsPlayerSuper() ? cShadow_chaosSpearSuperMaxCount : cShadow_chaosSpearMaxCount;
@@ -2036,7 +1939,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
 
             // main lock-on target may or may not in the list
             bool foundMainTarget = false;
-            for (NextGenShadow::TargetData const& data : NextGenShadow::m_targetData)
+            for (NextGenPhysics::TargetData const& data : NextGenPhysics::m_targetData)
             {
                 if (context->m_HomingAttackTargetActorID == data.m_actorID)
                 {
@@ -2046,18 +1949,18 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             }
             if (context->m_HomingAttackTargetActorID && !foundMainTarget)
             {
-                NextGenShadow::m_targetData.push_back(NextGenShadow::TargetData{ context->m_HomingAttackTargetActorID, 0.0f, 100 });
+                NextGenPhysics::m_targetData.push_back(NextGenPhysics::TargetData{ context->m_HomingAttackTargetActorID, 0.0f, 100 });
             }
 
             // super will only fire one spear straight if no target found
-            if (Common::IsPlayerSuper() && NextGenShadow::m_targetData.empty())
+            if (Common::IsPlayerSuper() && NextGenPhysics::m_targetData.empty())
             {
                 currentTargetCount = 1u;
             }
 
             // sort by priority then distance
-            std::sort(NextGenShadow::m_targetData.begin(), NextGenShadow::m_targetData.end(),
-                [](NextGenShadow::TargetData const& a, NextGenShadow::TargetData const& b)
+            std::sort(NextGenPhysics::m_targetData.begin(), NextGenPhysics::m_targetData.end(),
+                [](NextGenPhysics::TargetData const& a, NextGenPhysics::TargetData const& b)
                 {
                     return a.m_priority > b.m_priority || (a.m_priority == b.m_priority && a.m_dist < b.m_dist);
                 }
@@ -2065,7 +1968,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
 
             // record new targets (except for main target)
             std::set<uint32_t> lockonActors;
-            for (NextGenShadow::TargetData const& data : NextGenShadow::m_targetData)
+            for (NextGenPhysics::TargetData const& data : NextGenPhysics::m_targetData)
             {
                 if (data.m_actorID != context->m_HomingAttackTargetActorID && lockonActors.size() < currentTargetCount - 1)
                 {
@@ -2074,29 +1977,29 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             }
 
             // clean unused targets
-            if (currentTargetCount < NextGenShadow::m_targetData.size())
+            if (currentTargetCount < NextGenPhysics::m_targetData.size())
             {
-                NextGenShadow::m_targetData.resize(currentTargetCount);
+                NextGenPhysics::m_targetData.resize(currentTargetCount);
             }
 
-            if (Common::IsPlayerSuper() && !NextGenShadow::m_targetData.empty())
+            if (Common::IsPlayerSuper() && !NextGenPhysics::m_targetData.empty())
             {
                 // super can fire at the same target
-                int const repeatTargetSize = NextGenShadow::m_targetData.size();
+                int const repeatTargetSize = NextGenPhysics::m_targetData.size();
                 int i = 0;
-                while (NextGenShadow::m_targetData.size() < currentTargetCount)
+                while (NextGenPhysics::m_targetData.size() < currentTargetCount)
                 {
-                    NextGenShadow::m_targetData.push_back(NextGenShadow::m_targetData.at(i++));
+                    NextGenPhysics::m_targetData.push_back(NextGenPhysics::m_targetData.at(i++));
                     if (i >= repeatTargetSize)
                     {
                         i = 0;
                     }
                 }
             }
-            else if (NextGenShadow::m_targetData.empty())
+            else if (NextGenPhysics::m_targetData.empty())
             {
                 // push dummy targets
-                NextGenShadow::m_targetData.resize(currentTargetCount);
+                NextGenPhysics::m_targetData.resize(currentTargetCount);
             }
 
             if (!Configuration::m_noCursor)
@@ -2156,14 +2059,14 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             if (This->m_Time < accumulateStartTime)
             {
                 // m_HomingAttackTargetActorID can be 0
-                NextGenShadow::m_targetData.clear();
-                NextGenShadow::m_targetData.push_back(NextGenShadow::TargetData{ context->m_HomingAttackTargetActorID, 0.0f, 0 });
+                NextGenPhysics::m_targetData.clear();
+                NextGenPhysics::m_targetData.push_back(NextGenPhysics::TargetData{ context->m_HomingAttackTargetActorID, 0.0f, 0 });
             }
 
             int noTargetCount = 0;
-            for (uint8_t i = 0; i < NextGenShadow::m_targetData.size() && i < spearMaxCount; i++)
+            for (uint8_t i = 0; i < NextGenPhysics::m_targetData.size() && i < spearMaxCount; i++)
             {
-                NextGenShadow::TargetData const& data = NextGenShadow::m_targetData[i];
+                NextGenPhysics::TargetData const& data = NextGenPhysics::m_targetData[i];
 
                 // get initial target position
                 hh::math::CVector targetPosition = hh::math::CVector::Zero();
@@ -2186,15 +2089,15 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
                 Hedgehog::Math::CVector playerDir = context->m_HorizontalRotation * Hedgehog::Math::CVector::UnitZ();
                 if (Common::IsPlayerSuper())
                 {
-                    if (NextGenShadow::m_targetData.size() <= 1u)
+                    if (NextGenPhysics::m_targetData.size() <= 1u)
                     {
                         // single or no target, fire straight
                         targetDir = playerDir;
                     }
                     else
                     {
-                        float angle = (360.0f * (i + 1)) * DEG_TO_RAD / (float)NextGenShadow::m_targetData.size();
-                        if (NextGenShadow::m_targetData.size() == 2)
+                        float angle = (360.0f * (i + 1)) * DEG_TO_RAD / (float)NextGenPhysics::m_targetData.size();
+                        if (NextGenPhysics::m_targetData.size() == 2)
                         {
                             // if only 2 shoot sideways
                             angle -= 90 * DEG_TO_RAD;
@@ -2224,7 +2127,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
                     }
 
                     // make shots symmetric
-                    if (NextGenShadow::m_targetData.size() % 2 == 0)
+                    if (NextGenPhysics::m_targetData.size() % 2 == 0)
                     {
                         yawAngle -= 5.0f *DEG_TO_RAD;
                     }
@@ -2249,7 +2152,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             // only play one sound, not per spear
             soundHandle_TrickAttack.reset();
             Common::fCGlitterEnd(*PLAYER_CONTEXT, pfxHandle_TrickAttack, true);
-            Common::SonicContextPlaySound(soundHandle, Common::IsPlayerSuper() && NextGenShadow::m_targetData.size() > 1 ? 80041044 : 80041032, 1);
+            Common::SonicContextPlaySound(soundHandle, Common::IsPlayerSuper() && NextGenPhysics::m_targetData.size() > 1 ? 80041044 : 80041032, 1);
             This->m_Time = 0.0f;
 
             // Set OutOfControl
@@ -2376,7 +2279,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             return nullptr;
         }
 
-        NextGenShadow::HomingUpdateGetAll();
+        NextGenPhysics::homingUpdate(true);
         if (NextGenShadow::m_weaponSingleton->CanRelease())
         {
             StateManager::ChangeState(NextGenShadow::m_overrideType == NextGenShadow::OverrideType::SH_WeaponStand ? StateAction::Stand : StateAction::Walk, *PLAYER_CONTEXT);
@@ -2393,7 +2296,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             return nullptr;
         }
 
-        NextGenShadow::HomingUpdateGetAll();
+        NextGenPhysics::homingUpdate(true);
         if (NextGenShadow::m_weaponSingleton->CanRelease())
         {
             StateManager::ChangeState(StateAction::Grind, *PLAYER_CONTEXT);
@@ -2414,7 +2317,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
             Common::SetPlayerPosition(NextGenShadow::m_holdPosition);
         }
 
-        NextGenShadow::HomingUpdateGetAll();
+        NextGenPhysics::homingUpdate(true);
         if (NextGenShadow::m_weaponSingleton->CanRelease())
         {
             StateManager::ChangeState(StateAction::Fall, *PLAYER_CONTEXT);
@@ -2451,7 +2354,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::f
 
         // reset homing distance
         NextGenPhysics::setHomingCollisionDistance();
-        NextGenShadow::SetLockOnFilter(0);
+        NextGenPhysics::setLockOnFilter();
         break;
     }
     case NextGenShadow::OverrideType::SH_ChaosBoost:
@@ -2484,7 +2387,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::f
 
         NextGenShadow::m_weaponSingleton->SetStateIdle();
         Common::SonicContextHudHomingAttackClear(context);
-        NextGenShadow::SetLockOnFilter(0);
+        NextGenPhysics::setLockOnFilter(0);
         NextGenPhysics::setHomingCollisionDistance();
         break;
     }
@@ -3637,7 +3540,7 @@ HOOK(void*, __fastcall, NextGenShadow_CPlayerSpeedStateHangOnBegin, 0xE47390, hh
 {
     if (CObjWeapon::m_type != WT_COUNT)
     {
-        NextGenShadow::SetLockOnFilter(LockOnType::Enemy);
+        NextGenPhysics::setLockOnFilter(LockOnType::Enemy);
         NextGenPhysics::setHomingCollisionDistance(cShadow_weaponLockDist);
     }
 
@@ -3652,7 +3555,7 @@ HOOK(void*, __fastcall, NextGenShadow_CPlayerSpeedStateHangOnAdvance, 0xE47680, 
     {
         if (NextGenShadow::m_weaponSingleton->IsActive())
         {
-            NextGenShadow::HomingUpdateGetAll();
+            NextGenPhysics::homingUpdate(true);
             if (NextGenShadow::m_weaponSingleton->CanRelease())
             {
                 Common::SonicContextChangeAnimation(AnimationSetPatcher::UpReelRightLoop);
@@ -3682,7 +3585,7 @@ HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStateHangOnEnd, 0xE46A10, hh::f
         NextGenShadow::m_weaponSingleton->SetStateIdle();
     }
     Common::SonicContextHudHomingAttackClear(context);
-    NextGenShadow::SetLockOnFilter(0);
+    NextGenPhysics::setLockOnFilter();
     NextGenPhysics::setHomingCollisionDistance();
 
     originalNextGenShadow_CPlayerSpeedStateHangOnEnd(This);

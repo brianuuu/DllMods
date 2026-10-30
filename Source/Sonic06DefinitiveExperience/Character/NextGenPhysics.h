@@ -68,6 +68,19 @@ public:
 	static void keepConstantHorizontalVelocity(float hSpeed);
 
 	static void toggleBoost(bool enabled);
+
+	struct TargetData
+	{
+		uint32_t m_actorID;
+		float m_dist;
+		uint32_t m_priority;
+	};
+	static uint32_t m_lockOnFilter;
+	static std::vector<TargetData> m_targetData;
+
 	static void setHomingCollisionDistance(float dist = -1.0f);
+	static void setLockOnFilter(uint32_t filter = 0);
+	static bool addTargetData(uint32_t actorID, float dist, uint32_t priority);
+	static void homingUpdate(bool getAll = false);
 };
 

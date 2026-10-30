@@ -64,19 +64,6 @@ public:
 	static void AddChaosMaturity(float amount);
 	static bool AirActionCheck();
 
-	// Chaos Spear
-	struct TargetData
-	{
-		uint32_t m_actorID;
-		float m_dist;
-		uint32_t m_priority;
-	};
-	static uint32_t m_lockOnFilter;
-	static std::vector<TargetData> m_targetData;
-	static bool AddTargetData(uint32_t actorID, float dist, uint32_t priority);
-	static void HomingUpdateGetAll();
-	static void SetLockOnFilter(uint32_t filter);
-
 	static enum class OverrideType
 	{
 		SH_None,
