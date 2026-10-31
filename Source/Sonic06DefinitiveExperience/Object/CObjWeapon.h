@@ -97,15 +97,12 @@ public:
 	static WeaponType m_type;
 	static WeaponFireType m_fireType;
 	static bool m_infiniteAmmo;
-	static float m_darkMeter;
 	static std::vector<WeaponData> m_weaponData;
 
 	static void ResetWeaponData();
 	static WeaponData& GetWeaponData(WeaponType type) { return m_weaponData[type]; }
 	static void VerifySpriteIndex();
 	static bool CanShoot();
-	static void AddDarkMeter();
-	static void ToggleInfiniteAmmo(bool enabled);
 
 	// switch weapon
 	static void SetWeaponType(WeaponType type, bool updateHUD = true);

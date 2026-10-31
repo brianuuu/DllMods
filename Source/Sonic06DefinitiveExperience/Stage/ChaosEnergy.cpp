@@ -224,10 +224,7 @@ void __fastcall ChaosEnergy::playChaosEnergyPfx(bool isLightcore)
 	Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle, matrixNode, isLightcore ? "ef_if_hud_yh1_lightcore_get" : "ef_if_hud_yh1_boostenergy_get" , 1);
 
 	// For character that use maturity gauge
-	NextGenShadow::AddChaosMaturity(c_chaosEnergyReward * 2.0f);
-
-	// Shadow weapon
-	CObjWeapon::AddDarkMeter();
+	NextGenShadow::AddChaosMaturity(c_chaosEnergyReward);
 }
 
 void ChaosEnergy::setChaosEnergyRewardOverride(float amount)

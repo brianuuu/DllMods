@@ -2,6 +2,7 @@
 
 #include "Configuration.h"
 #include "Enemy/EnemyShock.h"
+#include "Stage/ChaosEnergy.h"
 #include "Stage/CustomCamera.h"
 #include "System/Application.h"
 #include "Utils/AnimationSetPatcher.h"
@@ -84,7 +85,7 @@ float const cShadow_chaosBlastVelocityObjPhy = 30.0f;
 float const cShadow_chaosBlastVelocityEnemy = 15.0f;
 
 // Chaos Control
-float const cShadow_chaosControlDuration = 10.0f;
+float const cShadow_chaosControlDuration = 20.0f;
 float const cShadow_chaosControlSlowScale = 0.1f;
 float const cShadow_chaosControlSlowTime = 0.5f;
 bool isChaosControl = false;
@@ -253,7 +254,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
     }
 
     // chaos boost drain
-    if (NextGenShadow::m_chaosBoostLevel > 0 && !Common::IsPlayerSuper())
+    if (NextGenShadow::m_chaosBoostLevel > 0 && !Common::IsPlayerSuper() && Configuration::Shadow::m_moveset != Configuration::ShadowMovesetType::Weapons)
     {
         float* currentBoost = Common::GetPlayerBoost();
         float const previousBoost = *currentBoost;
@@ -952,6 +953,7 @@ SharedPtrTypeless chaosBoostLeftHand;
 SharedPtrTypeless chaosBoostRightHand;
 SharedPtrTypeless chaosBoostLeftFoot;
 SharedPtrTypeless chaosBoostRightFoot;
+SharedPtrTypeless pfxHandle_awakeDark;
 void NextGenShadow::SetChaosBoostModelVisible(bool visible, bool allInvisible)
 {
     if (!*pModernSonicContext) return;
@@ -966,6 +968,18 @@ void NextGenShadow::SetChaosBoostModelVisible(bool visible, bool allInvisible)
     if (NextGenShadow::m_weaponSingleton)
     {
         context->m_pPlayer->SendMessageImm(NextGenShadow::m_weaponSingleton->m_ActorID, boost::make_shared<Sonic::Message::MsgSetVisible>(!allInvisible));
+    }
+    if (pfxHandle_awakeDark && allInvisible)
+    {
+        // hide awakeDark effect immediately
+        Common::fCGlitterEnd(*PLAYER_CONTEXT, pfxHandle_awakeDark, true);
+        pfxHandle_awakeDark = nullptr;
+    }
+    else if (CObjWeapon::m_infiniteAmmo && !pfxHandle_awakeDark && !allInvisible)
+    {
+        // resume awakeDark effect but without initial flare
+        void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
+        Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle_awakeDark, matrixNode, "ef_ch_sh_awakedark_loop", 1);
     }
 
     // disable ground smoke
@@ -1144,20 +1158,57 @@ void NextGenShadow::AddChaosMaturity(float amount)
     if (Configuration::m_model != Configuration::ModelType::Shadow) return;
     if (m_chaosBoostMaxLevel < 3 && m_chaosBoostLevel == m_chaosBoostMaxLevel) return;
 
-    // Shadow Gen need 5 instead of 10 to be full, Chaos Control is also half as long
-    if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
+    bool const triggerInfiniteAmmo = Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Weapons && !Common::IsPlayerSuper();
+    float maturity = m_chaosMaturity;
+    if (amount == 100.0f)
     {
-        amount *= 2.0f;
+        m_chaosMaturity = 100.0f;
+    }
+    else
+    {
+        if (CObjWeapon::m_infiniteAmmo)
+        {
+            // Angry mode should last 20s
+        }
+        else if (ChaosEnergy::hasChaosEnergyRewardOverride())
+        {
+            // respect override, same as default
+            amount *= 2.0f;
+        }
+        else if (triggerInfiniteAmmo)
+        {
+            // Dark meter in 05 needs 20 to full, same as boost
+        }
+        else if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
+        {
+            // Shadow Gen only need 5 to be full, Chaos Control only last 5s instead of 10s
+            amount *= 4.0f;
+        }
+        else
+        {
+            // default twice as fast than boost (10 to full)
+            amount *= 2.0f;
+        }
+
+        m_chaosMaturity = max(0.0f, min(100.0f, maturity + amount));
     }
 
-    float maturity = m_chaosMaturity;
-    m_chaosMaturity = max(0.0f, min(100.0f, maturity + amount));
-    S06HUD_API::SetShadowChaosLevel(m_chaosBoostLevel, m_chaosMaturity);
+    S06HUD_API::SetShadowChaosLevel(triggerInfiniteAmmo ? 0 : m_chaosBoostLevel, m_chaosMaturity);
 
     if (m_chaosMaturity == 100.0f && maturity < 100.0f)
     {
-        static SharedPtrTypeless soundHandle;
-        Common::SonicContextPlaySound(soundHandle, 80041040, 1);
+        if (triggerInfiniteAmmo)
+        {
+            if (m_chaosBoostLevel == 0)
+            {
+                Common::SonicContextAddPlugin("TimeBreak");
+            }
+        }
+        else
+        {
+            static SharedPtrTypeless soundHandle;
+            Common::SonicContextPlaySound(soundHandle, 80041040, 1);
+        }
     }
 }
 
@@ -2402,6 +2453,36 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateTrickAttackEnd, 0x1202110, hh::f
 float timeBreakDeltaTime_Shadow;
 HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStatePluginTimeBreakBegin, 0x111AF10, int This)
 {
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+
+    if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Weapons && !Common::IsPlayerSuper())
+    {
+        Common::PlayBGM("Time_Break", 0.0f);
+        CObjWeapon::m_infiniteAmmo = true;
+
+        SharedPtrTypeless voiceHandle;
+        Common::SonicContextPlayVoice(voiceHandle, 3002036, 20);
+
+        // Refill weapon to full
+        CObjWeapon::ResetWeaponData();
+        if (CObjWeapon::m_type != WeaponType::WT_COUNT)
+        {
+            WeaponData const& weaponData = CObjWeapon::GetWeaponData(CObjWeapon::m_type);
+            S06HUD_API::SetGadgetCount(weaponData.m_ammo, weaponData.m_maxAmmo);
+        }
+
+        SharedPtrTypeless sfx;
+        Common::PlaySoundStatic(sfx, 200616003);
+        void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
+        Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle_awakeDark, matrixNode, "ef_ch_sh_awakedark", 1);
+
+        NextGenShadow::m_chaosBoostLevel = 1;
+        NextGenShadow::SetChaosBoostModelVisible(true);
+        context->StateFlag(eStateFlag_NoDamage)++;
+
+        return;
+    }
+
     isChaosControl = true;
 
     static SharedPtrTypeless voiceHandle;
@@ -2434,6 +2515,20 @@ HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStatePluginTimeBreakAdvance, 0x
 {
     auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 
+    if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Weapons && !Common::IsPlayerSuper())
+    {
+        NextGenShadow::AddChaosMaturity((timeBreakDeltaTime_Shadow - This->m_Time) * 100.0f / cShadow_chaosControlDuration);
+        timeBreakDeltaTime_Shadow = This->m_Time;
+
+        // no more gauge, quit plugin
+        if (!CObjWeapon::m_infiniteAmmo || context->StateFlag(eStateFlag_Dead) || NextGenShadow::m_chaosMaturity == 0.0f)
+        {
+            ((bool*)This)[0x1C] = true;
+        }
+
+        return;
+    }
+
     // scale time
     float* timeScale = (float*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x1A4 });
     if (This->m_Time >= cShadow_chaosControlSlowTime)
@@ -2461,6 +2556,25 @@ HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStatePluginTimeBreakAdvance, 0x
 
 HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStatePluginTimeBreakEnd, 0x111AE00, int This)
 {
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+
+    if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Weapons && !Common::IsPlayerSuper())
+    {
+        Common::StopBGM("Time_Break", 0.0f);
+        CObjWeapon::m_infiniteAmmo = false;
+        if (pfxHandle_awakeDark)
+        {
+            Common::fCGlitterEnd(*PLAYER_CONTEXT, pfxHandle_awakeDark, false);
+            pfxHandle_awakeDark = nullptr;
+        }
+
+        NextGenShadow::m_chaosBoostLevel = 0;
+        NextGenShadow::SetChaosBoostModelVisible(false);
+        context->StateFlag(eStateFlag_NoDamage)--;
+
+        return;
+    }
+
     isChaosControl = false;
 
     *(bool*)Common::GetMultiLevelAddress(0x1E0BE5C, { 0x8, 0x19D }) = false;
@@ -3363,6 +3477,7 @@ HOOK(void, __fastcall, NextGenShadow_CRASH, 0x8CD0F0, void* This, void* Edx, uin
 HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStateTransformSpAdvance, 0xE425B0, float* This)
 {
     isChaosControl = false;
+    CObjWeapon::m_infiniteAmmo = false;
 
     // Play super transform longer
     if (This[4] > 2.0f)

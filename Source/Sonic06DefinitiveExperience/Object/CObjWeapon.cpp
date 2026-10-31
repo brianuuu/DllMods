@@ -9,12 +9,8 @@ WeaponType CObjWeapon::m_type = WT_COUNT;
 WeaponFireType CObjWeapon::m_fireType = WFT_COUNT;
 
 bool CObjWeapon::m_infiniteAmmo = false;
-float CObjWeapon::m_darkMeter = 0.0f;
-SharedPtrTypeless pfxHandle_awakeDark;
 
 bool const cWeapon_infiniteAmmoDebug = false;
-float const cWeapon_infiniteAmmoTime = 20.0f;
-float const cWeapon_darkMeterAddAmount = 5.0f;
 float const cWeapon_projectileLifeTime = 3.0f;
 float const cWeapon_boneSlerpRate = 0.2f;
 float const cWeapon_noPhysicsSpeedAdd = 40.0f;
@@ -257,9 +253,6 @@ void CObjProjectile::UpdateTransform(float dt)
 
 void CObjWeapon::ResetWeaponData()
 {
-	m_darkMeter = 0.0f;
-	ToggleInfiniteAmmo(false);
-
 	for (WeaponData& data : m_weaponData)
 	{
 		data.Reset();
@@ -280,46 +273,6 @@ void CObjWeapon::VerifySpriteIndex()
 bool CObjWeapon::CanShoot()
 {
 	return m_type != WT_COUNT && m_weaponData[m_type].m_ammo > 0;
-}
-
-void CObjWeapon::AddDarkMeter()
-{
-	if (m_type == WT_COUNT) return;
-
-	m_darkMeter = min(100.0f, m_darkMeter + cWeapon_darkMeterAddAmount);
-	S06HUD_API::SetGadgetHP(m_darkMeter);
-}
-
-void CObjWeapon::ToggleInfiniteAmmo(bool enabled)
-{
-	if (enabled && !m_infiniteAmmo && m_type != WT_COUNT)
-	{
-		Common::PlayBGM("Time_Break", 0.0f); 
-		m_infiniteAmmo = true;
-
-		SharedPtrTypeless voiceHandle;
-		Common::SonicContextPlayVoice(voiceHandle, 3002036, 20);
-
-		// Refill current weapon to full
-		m_weaponData[m_type].Reset();
-		S06HUD_API::SetGadgetCount(m_weaponData[m_type].m_ammo, m_weaponData[m_type].m_maxAmmo);
-
-		SharedPtrTypeless sfx;
-		Common::PlaySoundStatic(sfx, 200616003);
-
-		void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
-		Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle_awakeDark, matrixNode, "ef_ch_sh_awakedark", 1);
-	}
-	else if (!enabled && m_infiniteAmmo)
-	{
-		Common::StopBGM("Time_Break", 0.0f);
-		m_infiniteAmmo = false;
-		if (pfxHandle_awakeDark)
-		{
-			Common::fCGlitterEnd(*PLAYER_CONTEXT, pfxHandle_awakeDark, false);
-			pfxHandle_awakeDark = nullptr;
-		}
-	}
 }
 
 void CObjWeapon::SetWeaponType(WeaponType type, bool updateHUD)
@@ -344,7 +297,6 @@ void CObjWeapon::SetWeaponType(WeaponType type, bool updateHUD)
 			WeaponData const& data = m_weaponData[type];
 			S06HUD_API::SetGadgetMaxCount(data.m_maxAmmo, data.m_spriteIndex);
 			S06HUD_API::SetGadgetCount(data.m_ammo, data.m_maxAmmo);
-			S06HUD_API::SetGadgetHP(m_darkMeter);
 		}
 	}
 
@@ -359,9 +311,6 @@ void CObjWeapon::SetWeaponType(WeaponType type, bool updateHUD)
 
 		// Enable boost
 		NextGenPhysics::toggleBoost(true);
-
-		// Stop infinite ammo
-		ToggleInfiniteAmmo(false);
 	}
 	else
 	{
@@ -514,23 +463,6 @@ bool CObjWeapon::ProcessMessage
 			SetWeaponType(WT_COUNT);
 			return true;
 		}
-
-		if (message.Is<Sonic::Message::MsgSetVisible>())
-		{
-			auto& msg = static_cast<Sonic::Message::MsgSetVisible&>(message);
-			if (pfxHandle_awakeDark && !msg.m_Visible)
-			{
-				// hide awakeDark effect immediately
-				Common::fCGlitterEnd(*PLAYER_CONTEXT, pfxHandle_awakeDark, true);
-				pfxHandle_awakeDark = nullptr;
-			}
-			else if (m_infiniteAmmo && !pfxHandle_awakeDark && msg.m_Visible)
-			{
-				// resume awakeDark effect but without initial flare
-				void* matrixNode = (void*)((uint32_t)*PLAYER_CONTEXT + 0x30);
-				Common::fCGlitterCreate(*PLAYER_CONTEXT, pfxHandle_awakeDark, matrixNode, "ef_ch_sh_awakedark_loop", 1);
-			}
-		}
 	}
 
 	return Sonic::CObjectBase::ProcessMessage(message, flag);
@@ -542,22 +474,6 @@ void CObjWeapon::UpdateParallel
 )
 {
 	std::lock_guard<std::mutex> guard(m_mutex);
-
-	CSonicStateFlags const* flags = Common::GetSonicStateFlags();
-	if (m_infiniteAmmo)
-	{
-		m_darkMeter = max(0.0f, m_darkMeter - 100.0f * in_rUpdateInfo.DeltaTime / cWeapon_infiniteAmmoTime);
-		S06HUD_API::SetGadgetHP(m_darkMeter);
-
-		if (flags->Dead || m_darkMeter == 0.0f || NextGenShadow::m_chaosBoostLevel == 0)
-		{
-			ToggleInfiniteAmmo(false);
-		}
-	}
-	else if (m_darkMeter == 100.0f && NextGenShadow::m_chaosBoostLevel > 0 && !flags->Dead)
-	{
-		ToggleInfiniteAmmo(true);
-	}
 
 	// make sure dummy transform follows the model
 	m_spMatrixNodeTransform->m_Transform.SetPosition(m_spNodeModel->GetWorldMatrix().translation());
