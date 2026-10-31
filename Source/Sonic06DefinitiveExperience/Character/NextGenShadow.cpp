@@ -1036,7 +1036,7 @@ void NextGenShadow::SetChaosBoostModelVisible(bool visible, bool allInvisible)
 void NextGenShadow::SetChaosBoostLevel(uint8_t level, bool notifyHUD)
 {
     if (!Configuration::m_characterMoveset && level > 0) return;
-    if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens) return;
+    if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens && level > 0) return;
 
     m_chaosBoostLevel = level;
     m_chaosMaturity = 0.0f; // change level always resets maturity
