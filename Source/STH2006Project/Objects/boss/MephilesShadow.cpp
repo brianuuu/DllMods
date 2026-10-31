@@ -318,6 +318,13 @@ bool MephilesShadow::ProcessMessage
 			return true;
 		}
 
+		if (message.Is<Sonic::Message::MsgGetLockOnType>())
+		{
+			auto& msg = static_cast<Sonic::Message::MsgGetLockOnType&>(message);
+			*msg.m_pType = LockOnType::Enemy;
+			return true;
+		}
+
 		if (message.Is<Sonic::Message::MsgGetHomingAttackPriority>() && !m_ownerDead)
 		{
 			auto& msg = static_cast<Sonic::Message::MsgGetHomingAttackPriority&>(message);
