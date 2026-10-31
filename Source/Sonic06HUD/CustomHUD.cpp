@@ -270,8 +270,8 @@ void CustomHUD::SetGadgetMaxCount(int count, int spriteIndex)
         gadgetCountWasHidden = false;
     }
 
-    bool const hideHP = false;
-    fnPlayGadget(m_sceneGadgetBG);
+    bool const hideHP = spriteIndex > 0;
+    fnPlayGadget(m_sceneGadgetBG, hideHP);
 
     // play animation for in/out, don't play for switching weapon if HUD is already enabled
     if (gadgetPrevSpriteIndex == 0 || spriteIndex == 0 || count < 0)
