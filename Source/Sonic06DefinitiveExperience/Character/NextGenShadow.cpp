@@ -3459,16 +3459,6 @@ HOOK(int*, __fastcall, NextGenShadow_CSonicStateSquatEnd, 0x12309A0, void* This)
     return originalNextGenShadow_CSonicStateSquatEnd(This);
 }
 
-HOOK(void, __fastcall, NextGenShadow_CRASH, 0x8CD0F0, void* This, void* Edx, uint16_t* a2, int a3, void* a4)
-{
-    if (*a2 == 0xA)
-    {
-        printf("\n\n\n\n*********************************\nCRASH DETECTED\n*********************************\n\n\n\n");
-        *a2 = 0;
-    }
-    originalNextGenShadow_CRASH(This, Edx, a2, a3, a4);
-}
-
 //---------------------------------------------------
 // Super Shadow
 //---------------------------------------------------
@@ -3802,9 +3792,6 @@ void NextGenShadow::applyPatches()
     INSTALL_HOOK(NextGenShadow_CSonicDestructor);
     INSTALL_HOOK(NextGenShadow_AssignFootstepFloorCues);
     WRITE_JUMP(0x6CCD4C, NextGenShadow_AimWeapon);
-
-    // HACK: CRASH PREVENTION
-    INSTALL_HOOK(NextGenShadow_CRASH);
 
     if (!Configuration::m_characterMoveset) return;
 
