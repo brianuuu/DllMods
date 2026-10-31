@@ -279,10 +279,23 @@ bool NextGenPhysics::addTargetData(uint32_t actorID, float dist, uint32_t priori
     {
         auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 
-        uint32_t lockOnType = 0u;
-        context->m_pPlayer->SendMessageImm(actorID, boost::make_shared<Sonic::Message::MsgGetLockOnType>(lockOnType));
+        bool matched = false;
+        if (m_lockOnFilter & LockOnType::Enemy)
+        {
+            // check enemy manually for legacy support
+            uint32_t enemyType = 0u;
+            context->m_pPlayer->SendMessageImm(actorID, boost::make_shared<Sonic::Message::MsgGetEnemyType>(&enemyType));
+            matched = enemyType > 0;
+        }
 
-        if ((lockOnType & m_lockOnFilter) == 0)
+        if (!matched)
+        {
+            uint32_t lockOnType = 0u;
+            context->m_pPlayer->SendMessageImm(actorID, boost::make_shared<Sonic::Message::MsgGetLockOnType>(lockOnType));
+            matched = (lockOnType & m_lockOnFilter) > 0;
+        }
+
+        if (!matched)
         {
             return false;
         }
