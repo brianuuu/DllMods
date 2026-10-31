@@ -4,6 +4,7 @@
 #include "Character/NextGenShadow.h"
 #include "Object/CObjWeapon.h"
 
+bool c_chaosEnergyOverride = false;
 float c_chaosEnergyReward = 5.0f;
 
 HOOK(void, __fastcall, ChaosEnergy_MsgGetHudPosition, 0x1096790, void* This, void* Edx, MsgGetHudPosition* message)
@@ -231,5 +232,11 @@ void __fastcall ChaosEnergy::playChaosEnergyPfx(bool isLightcore)
 
 void ChaosEnergy::setChaosEnergyRewardOverride(float amount)
 {
+	c_chaosEnergyOverride = amount > 0.0f;
 	c_chaosEnergyReward = (amount > 0.0f) ? amount : 5.0f;
+}
+
+bool ChaosEnergy::hasChaosEnergyRewardOverride()
+{
+	return c_chaosEnergyOverride;
 }

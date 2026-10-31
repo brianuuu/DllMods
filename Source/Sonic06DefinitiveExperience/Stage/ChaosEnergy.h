@@ -14,5 +14,6 @@ public:
 
 	static void __fastcall playChaosEnergyPfx(bool isLightcore);
 	static void setChaosEnergyRewardOverride(float amount = 0.0f);
+	static bool hasChaosEnergyRewardOverride();
 };
 
