@@ -68,6 +68,8 @@ float const cShadow_chaosSpearSuperTurnRate = 720.0f * DEG_TO_RAD;
 float const cShadow_chaosSpearShockDuration = 8.0f;
 float const cShadow_chaosSpearSuperLockDist = 30.0f;
 float const cShadow_weaponLockDist = 25.0f;
+bool canDoomSpearLock = false;
+bool isDoomSpearLock = false;
 
 // Chaos Snap
 bool NextGenShadow::m_chaosSnapActivated = false;
@@ -1766,6 +1768,12 @@ bool NextGenShadow::AirActionCheck()
         return false;
     }
 
+    // Doom Spear already handled
+    if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
+    {
+        return false;
+    }
+
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 
     // Chaos Spear
@@ -1815,18 +1823,15 @@ HOOK(bool, __fastcall, NextGenShadow_AirAction, 0xDFFE30, Sonic::Player::CPlayer
     // Handle air action that ignores various flag checks
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 
-    // TODO: Chaos Spear (Shadow Gens)
-    //if (Configuration::Shadow::m_chaosSpearMomentum && !context->StateFlag(eStateFlag_EnableGravityControl) && padState->IsTapped(Sonic::EKeyState::eKeyState_X))
-    //{
-    //    if (NextGenPhysics::checkUseLightSpeedDash())
-    //    {
-    //        return true;
-    //    }
-    //
-    //    NextGenShadow::m_overrideType = NextGenShadow::OverrideType::SH_SpearWait;
-    //    StateManager::ChangeState(StateAction::TrickAttack, *PLAYER_CONTEXT);
-    //    return true;
-    //}
+    // Doom Spear (Shadow Gens)
+    if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
+    {
+        canDoomSpearLock = true;
+        if (!isDoomSpearLock && padState->IsDown(Sonic::EKeyState::eKeyState_X))
+        {
+            Common::SonicContextAddPlugin("Paraloop");
+        }
+    }
 
     return originalNextGenShadow_AirAction(context, Edx, a2);
 }
@@ -2007,13 +2012,7 @@ HOOK(void*, __fastcall, NextGenShadow_CSonicStateTrickAttackAdvance, 0x1201B30, 
                 currentTargetCount = 1u;
             }
 
-            // sort by priority then distance
-            std::sort(NextGenPhysics::m_targetData.begin(), NextGenPhysics::m_targetData.end(),
-                [](NextGenPhysics::TargetData const& a, NextGenPhysics::TargetData const& b)
-                {
-                    return a.m_priority > b.m_priority || (a.m_priority == b.m_priority && a.m_dist < b.m_dist);
-                }
-            );
+            NextGenPhysics::sortTargetData();
 
             // record new targets (except for main target)
             std::set<uint32_t> lockonActors;
@@ -2770,9 +2769,16 @@ bool NextGenShadow::bActionHandlerImpl()
         return true;
     }
 
+    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+
     if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
     {
         // no spin kick or spindash
+        canDoomSpearLock = true;
+        if (!isDoomSpearLock && padState->IsDown(Sonic::EKeyState::eKeyState_X))
+        {
+            Common::SonicContextAddPlugin("Paraloop");
+        }
         return false;
     }
     
@@ -2784,7 +2790,6 @@ bool NextGenShadow::bActionHandlerImpl()
 
     bool const moving = playerVelocity.norm() > 0.2f;
 
-    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
     if (padState->IsTapped(Sonic::EKeyState::eKeyState_RightTrigger) && CObjWeapon::m_type != WT_COUNT)
     {
         m_overrideType = moving ? OverrideType::SH_WeaponRun : OverrideType::SH_WeaponStand;
@@ -3575,7 +3580,7 @@ HOOK(bool, __fastcall, NextGenShadow_CSonicStateStartCrouchingEnd, 0xDEF0A0, hh:
 }
 
 //---------------------------------------------------
-// Moveset extras
+// Vehicles
 //---------------------------------------------------
 void __declspec(naked) NextGenShadow_fixExternalControlBobbing()
 {
@@ -3597,6 +3602,9 @@ void __declspec(naked) NextGenShadow_fixExternalControlBobbing()
     }
 }
 
+//---------------------------------------------------
+// Weapons
+//---------------------------------------------------
 HOOK(void, __fastcall, NextGenShadow_CSonicStateGrindAdvance_Weapon, 0xDF2890, hh::fnd::CStateMachineBase::CStateBase* This)
 {
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
@@ -3694,6 +3702,9 @@ HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStateHangOnEnd, 0xE46A10, hh::f
     originalNextGenShadow_CPlayerSpeedStateHangOnEnd(This);
 }
 
+//---------------------------------------------------
+// Shadow Gen
+//---------------------------------------------------
 HOOK(bool, __stdcall, NextGenShadow_CheckStartDrift, 0xDFF510, Sonic::Player::CPlayerSpeedContext* context)
 {
     if (!Common::IsPlayerOnBoard())
@@ -3706,6 +3717,281 @@ HOOK(bool, __stdcall, NextGenShadow_CheckStartDrift, 0xDFF510, Sonic::Player::CP
 HOOK(bool, __fastcall, NextGenShadow_CheckBoardSquat, 0xE490E0, void* This, void* Edx, void* a2)
 {
     return false;
+}
+
+class CObjDoomSpearSearch : public Sonic::CGameObject3D
+{
+private:
+    float m_LifeTime = 0.0f;
+    boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
+
+public:
+    CObjDoomSpearSearch()
+    {
+    }
+
+    ~CObjDoomSpearSearch()
+    {
+    }
+
+    void AddCallback
+    (
+        const Hedgehog::Base::THolder<Sonic::CWorld>& worldHolder,
+        Sonic::CGameDocument* pGameDocument,
+        const boost::shared_ptr<Hedgehog::Database::CDatabase>& spDatabase
+    ) override
+    {
+        auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+        Sonic::CGameObject3D::AddCallback(worldHolder, pGameDocument, spDatabase);
+
+        Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
+        pGameDocument->AddUpdateUnit("0", this);
+
+        // damage to object
+        uint32_t const typeLockOn = *(uint32_t*)0x1E5E7F4;
+        uint64_t const bitfield = (1llu << typeLockOn);
+        uint32_t collisionID = Common::MakeCollisionID(0, bitfield);
+
+        // set up collision with lock on
+        hk2010_2_0::hkpSphereShape* eventTriggerDamage = new hk2010_2_0::hkpSphereShape(cShadow_chaosSpearSuperLockDist);
+        AddEventCollision("Lock", eventTriggerDamage, collisionID, true, context->m_spField30);
+    
+        NextGenPhysics::m_targetData.clear();
+        NextGenPhysics::setLockOnFilter(LockOnType::Enemy | LockOnType::ChaosSpear);
+    }
+
+    void KillCallback() override
+    {
+        // clear cursors if not already
+        for (auto& iter : m_spLockonCursors)
+        {
+            auto& spLockonCursor = iter.second;
+            spLockonCursor->Kill();
+        }
+        m_spLockonCursors.clear();
+
+        NextGenPhysics::m_targetData.clear();
+        NextGenPhysics::setLockOnFilter();
+    }
+
+    bool ProcessMessage
+    (
+        Hedgehog::Universe::Message& message,
+        bool flag
+    ) override
+    {
+        if (flag)
+        {
+            if (message.Is<Sonic::Message::MsgRestartStage>() || message.Is<Sonic::Message::MsgStageClear>())
+            {
+                Kill();
+                return true;
+            }
+
+            if (message.Is<Sonic::Message::MsgHitEventCollision>())
+            {
+                int32_t priority = 0;
+                SendMessageImm(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPriority>(priority));
+
+                hh::math::CVector position;
+                SendMessageImm(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(position));
+
+                NextGenPhysics::addTargetData(message.m_SenderActorID, 0.0f, priority);
+                return true;
+            }
+
+            if (message.Is<Sonic::Message::MsgLeaveEventCollision>())
+            {
+                NextGenPhysics::removeTargetData(message.m_SenderActorID);
+                return true;
+            }
+        }
+
+        return Sonic::CGameObject3D::ProcessMessage(message, flag);
+    }
+
+    void UpdateParallel
+    (
+        const Hedgehog::Universe::SUpdateInfo& updateInfo
+    ) override
+    {
+        auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+        hh::math::CVector const playerPos = context->m_spField30->GetWorldMatrix().translation();
+        Eigen::Vector4f const rayStartPos(playerPos.x(), playerPos.y(), playerPos.z(), 1.0f);
+
+        // update position of targets and sort
+        for (NextGenPhysics::TargetData& data : NextGenPhysics::m_targetData)
+        {
+            hh::math::CVector position;
+            SendMessageImm(data.m_actorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(position));
+            data.m_dist = (position - playerPos).norm();
+        }
+        NextGenPhysics::sortTargetData();
+
+        uint8_t const spearMaxCount = Common::IsPlayerSuper() ? cShadow_chaosSpearSuperMaxCount : cShadow_chaosSpearMaxCount;
+        uint32_t const currentTargetCount = min(spearMaxCount, 1 + uint32_t(m_LifeTime / cShadow_chaosSpearAddTime));
+
+        // record new targets
+        std::set<uint32_t> lockonActors;
+        for (NextGenPhysics::TargetData const& data : NextGenPhysics::m_targetData)
+        {
+            if (lockonActors.size() < currentTargetCount)
+            {
+                hh::math::CVector position;
+                SendMessageImm(data.m_actorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(position));
+                Eigen::Vector4f const rayEndPos(position.x(), position.y(), position.z(), 1.0f);
+                
+                Eigen::Vector4f screenPosition;
+                Common::fGetScreenPosition(rayEndPos, screenPosition);
+                if (screenPosition.x() < 0.0f || screenPosition.x() > 1280.0f || screenPosition.y() < 0.0f || screenPosition.y() > 720.0f)
+                {
+                    // no lock outside screen
+                    continue;
+                }
+
+                Eigen::Vector4f outPos;
+                Eigen::Vector4f outNormal;
+                //if (!Common::fRaycast(rayStartPos, rayEndPos, outPos, outNormal, *(uint32_t*)0x1E0AFAC))
+                {
+                    // not blocked by terrain
+                    lockonActors.insert(data.m_actorID);
+                }
+            }
+        }
+
+        // update existing cursors
+        for (auto iter = m_spLockonCursors.begin(); iter != m_spLockonCursors.end();)
+        {
+            uint32_t actorID = iter->first;
+            auto& spLockonCursor = iter->second;
+
+            // check if actor still locked
+            if (lockonActors.count(actorID))
+            {
+                hh::math::CVector targetPosition = hh::math::CVector::Zero();
+                SendMessageImm(actorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
+
+                Eigen::Vector4f pos4f(targetPosition.x(), targetPosition.y(), targetPosition.z(), 1.0f);
+                spLockonCursor->SetPos(pos4f);
+
+                lockonActors.erase(actorID);
+                iter++;
+            }
+            else
+            {
+                spLockonCursor->Kill();
+                iter = m_spLockonCursors.erase(iter);
+            }
+        }
+
+        // create cursors for new targets
+        if (!lockonActors.empty())
+        {
+            // play single lock-on sound
+            static SharedPtrTypeless soundHandle;
+            Common::SonicContextPlaySound(soundHandle, 4002012, 0);
+
+            for (uint32_t actorID : lockonActors)
+            {
+                hh::math::CVector targetPosition = hh::math::CVector::Zero();
+                SendMessageImm(actorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
+
+                Eigen::Vector4f pos4f(targetPosition.x(), targetPosition.y(), targetPosition.z(), 1.0f);
+                m_spLockonCursors[actorID] = boost::make_shared<CObjChaosLockonCursor>(pos4f);
+
+                m_pMember->m_pGameDocument->AddGameObject(m_spLockonCursors[actorID]);
+            }
+        }
+
+        m_LifeTime += updateInfo.DeltaTime;
+    }
+};
+
+boost::shared_ptr<CObjDoomSpearSearch> m_doomSpearSearchSingleton;
+int doomSpearBuffer = 0;
+void NextGenShadow_CPlayerSpeedStatePluginParaloopBegin(Sonic::Player::CPlayerSpeedContext::CStateSpeedBase* This)
+{
+    doomSpearBuffer = 0;
+    isDoomSpearLock = true;
+
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+    m_doomSpearSearchSingleton = boost::make_shared<CObjDoomSpearSearch>();
+    context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(m_doomSpearSearchSingleton);
+}
+
+HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStatePluginParaloopAdvance, 0xE3F060, Sonic::Player::CPlayerSpeedContext::CStateSpeedBase* This)
+{
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+
+    if (canDoomSpearLock)
+    {
+        // 5 frame buffer to disable, allows transition to jumping
+        doomSpearBuffer = 5;
+
+        // TODO:
+        if (!padState->IsDown(Sonic::EKeyState::eKeyState_X))
+        {
+            if (m_spLockonCursors.size())
+            {
+                // TODO: finish animation
+                Common::SonicContextChangeAnimation(Common::IsPlayerSuper() ? AnimationSetPatcher::SpearSuperShot : AnimationSetPatcher::SpearShot);
+
+                for (auto& iter : m_spLockonCursors)
+                {
+                    uint32_t actorID = iter.first;
+
+                    // get initial target position
+                    hh::math::CVector targetPosition = hh::math::CVector::Zero();
+                    context->m_pPlayer->SendMessageImm(actorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
+
+                    // spawn chaos spear
+                    Hedgehog::Math::CVector const position = context->m_spMatrixNode->m_Transform.m_Position + Hedgehog::Math::CVector::UnitY() * 0.7f;
+                    Hedgehog::Math::CVector const targetDir = targetPosition - position;
+
+                    float const horizontalSpeed = context->m_HorizontalVelocity.norm();
+                    context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjChaosSpear>(actorID, position, targetDir, horizontalSpeed, NextGenShadow::m_chaosBoostLevel >= 2));
+
+                    auto& spLockonCursor = iter.second;
+                    spLockonCursor->SetOutro();
+                }
+                m_spLockonCursors.clear();
+
+                // only play one sound, not per spear
+                static SharedPtrTypeless voiceHandle;
+                static SharedPtrTypeless soundHandle;
+                Common::SonicContextPlayVoice(voiceHandle, 3002030, 10);
+                Common::SonicContextPlaySound(soundHandle, Common::IsPlayerSuper() && NextGenPhysics::m_targetData.size() > 1 ? 80041044 : 80041032, 1);
+
+                m_doomSpearSearchSingleton->Kill();
+                m_doomSpearSearchSingleton.reset();
+            }
+
+            This->m_Field1C = true;
+        }
+    }
+    else
+    {
+        if (--doomSpearBuffer <= 0)
+        {
+            This->m_Field1C = true;
+        }
+    }
+
+    // allows states to tell if this plugin is still valid or not
+    canDoomSpearLock = false;
+}
+
+HOOK(void*, __fastcall, NextGenShadow_CPlayerSpeedStatePluginParaloopEnd, 0xE3E640, Sonic::Player::CPlayerSpeedContext::CStateSpeedBase* This)
+{
+    isDoomSpearLock = false;
+    if (m_doomSpearSearchSingleton)
+    {
+        m_doomSpearSearchSingleton->Kill();
+        m_doomSpearSearchSingleton.reset();
+    }
+
+    return nullptr;
 }
 
 //---------------------------------------------------
@@ -4058,6 +4344,11 @@ void NextGenShadow::applyPatches()
         INSTALL_HOOK(NextGenShadow_CheckStartDrift);
         INSTALL_HOOK(NextGenShadow_CheckBoardSquat);
         WRITE_JUMP(0xDFF73F, (void*)0xDFF838);
+
+        // Doom Spear lock on
+        WRITE_MEMORY(0x16D3290, void*, NextGenShadow_CPlayerSpeedStatePluginParaloopBegin);
+        INSTALL_HOOK(NextGenShadow_CPlayerSpeedStatePluginParaloopAdvance);
+        INSTALL_HOOK(NextGenShadow_CPlayerSpeedStatePluginParaloopEnd);
         break;
     }
     }

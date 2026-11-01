@@ -81,6 +81,8 @@ public:
 	static void setHomingCollisionDistance(float dist = -1.0f);
 	static void setLockOnFilter(uint32_t filter = 0);
 	static bool addTargetData(uint32_t actorID, float dist, uint32_t priority);
+	static void removeTargetData(uint32_t actorID);
+	static void sortTargetData();
 	static void homingUpdate(bool getAll = false);
 };
 

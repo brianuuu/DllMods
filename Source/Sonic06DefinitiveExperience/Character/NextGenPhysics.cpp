@@ -313,6 +313,29 @@ bool NextGenPhysics::addTargetData(uint32_t actorID, float dist, uint32_t priori
     return true;
 }
 
+void NextGenPhysics::removeTargetData(uint32_t actorID)
+{
+    for (auto it = m_targetData.begin(); it != m_targetData.end(); it++)
+    {
+        if (it->m_actorID == actorID)
+        {
+            m_targetData.erase(it);
+            return;
+        }
+    }
+}
+
+void NextGenPhysics::sortTargetData()
+{
+    // sort by priority then distance
+    std::sort(NextGenPhysics::m_targetData.begin(), NextGenPhysics::m_targetData.end(),
+        [](NextGenPhysics::TargetData const& a, NextGenPhysics::TargetData const& b)
+        {
+            return a.m_priority > b.m_priority || (a.m_priority == b.m_priority && a.m_dist < b.m_dist);
+        }
+    );
+}
+
 void __declspec(naked) NextGenPhysics_GetAllHomingTargets()
 {
     static uint32_t returnAddress = 0xE7484F;
