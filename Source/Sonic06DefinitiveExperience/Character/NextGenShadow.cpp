@@ -1184,9 +1184,10 @@ void NextGenShadow::AddChaosMaturity(float amount)
 {
     if (!Configuration::m_characterMoveset) return;
     if (Configuration::m_model != Configuration::ModelType::Shadow) return;
-    if (m_chaosBoostMaxLevel < 3 && m_chaosBoostLevel == m_chaosBoostMaxLevel) return;
-
+    
     bool const triggerInfiniteAmmo = Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Weapons && !Common::IsPlayerSuper();
+    if (m_chaosBoostMaxLevel < 3 && m_chaosBoostLevel == m_chaosBoostMaxLevel && !triggerInfiniteAmmo) return;
+    
     float maturity = m_chaosMaturity;
     if (amount == 100.0f)
     {
