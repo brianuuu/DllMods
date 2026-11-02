@@ -1128,6 +1128,24 @@ bool NextGenShadow::CheckChaosControl()
     return false;
 }
 
+bool NextGenShadow::CheckDoomSpear()
+{
+    Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
+
+    // Doom Spear (Shadow Gens)
+    if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
+    {
+        canDoomSpearLock = true;
+        if (!isDoomSpearLock && doomSpearCooldown <= 0.0f && padState->IsDown(Sonic::EKeyState::eKeyState_X))
+        {
+            Common::SonicContextAddPlugin("Paraloop");
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool NextGenShadow::CheckChaosSnapTarget()
 {
     if (!CanChaosSnap())
@@ -1833,14 +1851,7 @@ HOOK(bool, __fastcall, NextGenShadow_AirAction, 0xDFFE30, Sonic::Player::CPlayer
     Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 
     // Doom Spear (Shadow Gens)
-    if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
-    {
-        canDoomSpearLock = true;
-        if (!isDoomSpearLock && doomSpearCooldown <= 0.0f && padState->IsDown(Sonic::EKeyState::eKeyState_X))
-        {
-            Common::SonicContextAddPlugin("Paraloop");
-        }
-    }
+    NextGenShadow::CheckDoomSpear();
 
     return originalNextGenShadow_AirAction(context, Edx, a2);
 }
@@ -2670,6 +2681,7 @@ HOOK(void, __fastcall, NextGenShadow_CSonicStateBoardDriftAdvance, 0x11194F0, vo
 
 HOOK(void, __fastcall, NextGenShadow_CSonicStateGrindAdvance, 0xDF2890, void* This)
 {
+    NextGenShadow::CheckDoomSpear();
     NextGenShadow::CheckChaosControl();
     originalNextGenShadow_CSonicStateGrindAdvance(This);
 }
@@ -2782,12 +2794,7 @@ bool NextGenShadow::bActionHandlerImpl()
 
     if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
     {
-        // no spin kick or spindash
-        canDoomSpearLock = true;
-        if (!isDoomSpearLock && doomSpearCooldown <= 0.0f && padState->IsDown(Sonic::EKeyState::eKeyState_X))
-        {
-            Common::SonicContextAddPlugin("Paraloop");
-        }
+        NextGenShadow::CheckDoomSpear();
         return false;
     }
     

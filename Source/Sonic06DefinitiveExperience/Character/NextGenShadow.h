@@ -59,6 +59,7 @@ public:
 	static void SetChaosBoostLevel(uint8_t level, bool notifyHUD);
 	static bool CheckChaosBoost();
 	static bool CheckChaosControl();
+	static bool CheckDoomSpear();
 	static bool CheckChaosSnapTarget();
 	static bool CanChaosSnap();
 	static void AddChaosMaturity(float amount);
