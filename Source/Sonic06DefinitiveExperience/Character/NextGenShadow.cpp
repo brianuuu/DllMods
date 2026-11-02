@@ -3858,7 +3858,7 @@ public:
                 
                 Eigen::Vector4f screenPosition;
                 Common::fGetScreenPosition(rayEndPos, screenPosition);
-                if (screenPosition.x() < 0.0f || screenPosition.x() > 1280.0f || screenPosition.y() < 0.0f || screenPosition.y() > 720.0f)
+                if (screenPosition.z() < 0.0f || screenPosition.x() < 0.0f || screenPosition.x() > 1280.0f || screenPosition.y() < 0.0f || screenPosition.y() > 720.0f)
                 {
                     // no lock outside screen
                     continue;
