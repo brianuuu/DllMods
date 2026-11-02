@@ -1061,7 +1061,8 @@ bool NextGenShadow::CheckChaosBoost()
 {
     if (NextGenShadow::CheckChaosControl())
     {
-        return true;
+        // doesn't change state, so return false
+        return false;
     }
 
     if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
@@ -1798,6 +1799,7 @@ bool NextGenShadow::AirActionCheck()
     // Doom Spear already handled
     if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
     {
+        NextGenShadow::CheckChaosControl();
         return false;
     }
 
