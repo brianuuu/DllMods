@@ -67,9 +67,11 @@ float const cShadow_chaosSpearTurnRate = 180.0f * DEG_TO_RAD;
 float const cShadow_chaosSpearSuperTurnRate = 720.0f * DEG_TO_RAD;
 float const cShadow_chaosSpearShockDuration = 8.0f;
 float const cShadow_chaosSpearSuperLockDist = 30.0f;
+float const cShadow_doomSpearLockDist = 40.0f;
 float const cShadow_weaponLockDist = 25.0f;
 bool canDoomSpearLock = false;
 bool isDoomSpearLock = false;
+float doomSpearCooldown = 0.0f;
 
 // Chaos Snap
 bool NextGenShadow::m_chaosSnapActivated = false;
@@ -347,6 +349,13 @@ HOOK(void, __fastcall, NextGenShadow_CSonicUpdate, 0xE6BF20, Sonic::Player::CPla
             {
                 CObjWeapon::NextGun();
             }
+        }
+    }
+    else if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
+    {
+        if (doomSpearCooldown > 0.0f)
+        {
+            doomSpearCooldown -= *dt;
         }
     }
 
@@ -1827,7 +1836,7 @@ HOOK(bool, __fastcall, NextGenShadow_AirAction, 0xDFFE30, Sonic::Player::CPlayer
     if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
     {
         canDoomSpearLock = true;
-        if (!isDoomSpearLock && padState->IsDown(Sonic::EKeyState::eKeyState_X))
+        if (!isDoomSpearLock && doomSpearCooldown <= 0.0f && padState->IsDown(Sonic::EKeyState::eKeyState_X))
         {
             Common::SonicContextAddPlugin("Paraloop");
         }
@@ -2775,7 +2784,7 @@ bool NextGenShadow::bActionHandlerImpl()
     {
         // no spin kick or spindash
         canDoomSpearLock = true;
-        if (!isDoomSpearLock && padState->IsDown(Sonic::EKeyState::eKeyState_X))
+        if (!isDoomSpearLock && doomSpearCooldown <= 0.0f && padState->IsDown(Sonic::EKeyState::eKeyState_X))
         {
             Common::SonicContextAddPlugin("Paraloop");
         }
@@ -3723,7 +3732,6 @@ class CObjDoomSpearSearch : public Sonic::CGameObject3D
 {
 private:
     float m_LifeTime = 0.0f;
-    boost::shared_ptr<Sonic::CMatrixNodeTransform> m_spNodeEventCollision;
 
 public:
     CObjDoomSpearSearch()
@@ -3753,7 +3761,7 @@ public:
         uint32_t collisionID = Common::MakeCollisionID(0, bitfield);
 
         // set up collision with lock on
-        hk2010_2_0::hkpSphereShape* eventTriggerDamage = new hk2010_2_0::hkpSphereShape(cShadow_chaosSpearSuperLockDist);
+        hk2010_2_0::hkpSphereShape* eventTriggerDamage = new hk2010_2_0::hkpSphereShape(cShadow_doomSpearLockDist);
         AddEventCollision("Lock", eventTriggerDamage, collisionID, true, context->m_spField30);
     
         NextGenPhysics::m_targetData.clear();
@@ -3949,7 +3957,7 @@ HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStatePluginParaloopAdvance, 0xE
                     Hedgehog::Math::CVector const position = context->m_spMatrixNode->m_Transform.m_Position + Hedgehog::Math::CVector::UnitY() * 0.7f;
                     Hedgehog::Math::CVector const targetDir = targetPosition - position;
 
-                    float const horizontalSpeed = context->m_HorizontalVelocity.norm();
+                    float const horizontalSpeed = context->m_HorizontalVelocity.norm() + 5.0f;
                     context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjChaosSpear>(actorID, position, targetDir, horizontalSpeed, NextGenShadow::m_chaosBoostLevel >= 2));
 
                     auto& spLockonCursor = iter.second;
@@ -3961,10 +3969,12 @@ HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStatePluginParaloopAdvance, 0xE
                 static SharedPtrTypeless voiceHandle;
                 static SharedPtrTypeless soundHandle;
                 Common::SonicContextPlayVoice(voiceHandle, 3002030, 10);
-                Common::SonicContextPlaySound(soundHandle, Common::IsPlayerSuper() && NextGenPhysics::m_targetData.size() > 1 ? 80041044 : 80041032, 1);
+                Common::SonicContextPlaySound(soundHandle, Common::IsPlayerSuper() ? 80041044 : 80041032, 1);
 
                 m_doomSpearSearchSingleton->Kill();
                 m_doomSpearSearchSingleton.reset();
+
+                doomSpearCooldown = cShadow_chaosSpearStiffening;
             }
 
             This->m_Field1C = true;
