@@ -3766,7 +3766,7 @@ public:
         Sonic::CGameObject3D::AddCallback(worldHolder, pGameDocument, spDatabase);
 
         Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
-        pGameDocument->AddUpdateUnit("0", this);
+        pGameDocument->AddUpdateUnit("1", this); // unscaled time
 
         // damage to object
         uint32_t const typeLockOn = *(uint32_t*)0x1E5E7F4;
