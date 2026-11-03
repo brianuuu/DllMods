@@ -1518,12 +1518,14 @@ class CObjChaosLockonCursor : public Sonic::CGameObject
 
     Eigen::Vector4f m_pos;
     bool m_isOutro = false;
+    bool m_isEnemy = false;
 
     std::mutex m_mutex;
 
 public:
-    CObjChaosLockonCursor(Eigen::Vector4f inPos)
+    CObjChaosLockonCursor(Eigen::Vector4f inPos, bool inEnemy = false)
         : m_pos(inPos)
+        , m_isEnemy(inEnemy)
     {
     }
 
@@ -1542,7 +1544,7 @@ public:
         pGameDocument->AddUpdateUnit("1", this);
 
         Sonic::CCsdDatabaseWrapper wrapper(m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
-        auto spCsdProject = wrapper.GetCsdProject("ui_lockon_cursor");
+        auto spCsdProject = wrapper.GetCsdProject(m_isEnemy ? "ui_lcursor_enemy" : "ui_lockon_cursor");
         Common::CopyCCsdProject(spCsdProject.get(), m_projectLockonCursor);
 
         if (m_projectLockonCursor)
@@ -1621,7 +1623,7 @@ public:
 
     void PlayIntro()
     {
-        PlayMotion("Intro_Anim", false);
+        PlayMotion(m_isEnemy ? "Lock_Anim" : "Intro_Anim", false);
     }
 
     void SetPos(Eigen::Vector4f inPos)
@@ -1639,19 +1641,20 @@ public:
     void SetOutro()
     {
         std::lock_guard<std::mutex> guard(m_mutex);
-        PlayMotion("Outro_Anim", false);
+        PlayMotion(m_isEnemy ? "Intro_Anim" : "Outro_Anim", false, m_isEnemy);
         m_isOutro = true;
     }
 
-    void PlayMotion(char const* motion, bool loop = false)
+    void PlayMotion(char const* motion, bool loop = false, bool reverse = false)
     {
         if (!m_sceneLockonCursor) return;
         m_sceneLockonCursor->SetHideFlag(false);
         m_sceneLockonCursor->SetMotion(motion);
         m_sceneLockonCursor->m_MotionDisableFlag = false;
-        m_sceneLockonCursor->m_MotionFrame = 0.0f;
-        m_sceneLockonCursor->m_MotionSpeed = 1.0f;
+        m_sceneLockonCursor->m_MotionFrame = reverse ? m_sceneLockonCursor->m_MotionEndFrame : 0.0f;
+        m_sceneLockonCursor->m_MotionSpeed = reverse ? -1.0f : 1.0f;
         m_sceneLockonCursor->m_MotionRepeatType = loop ? Chao::CSD::eMotionRepeatType_Loop : Chao::CSD::eMotionRepeatType_PlayOnce;
+        *(uint32_t*)((uint32_t)m_sceneLockonCursor.Get() + 0xB4) = 0; // this stops the reverse animation
         m_sceneLockonCursor->Update();
     }
 };
@@ -3915,7 +3918,7 @@ public:
                 SendMessageImm(actorID, boost::make_shared<Sonic::Message::MsgGetHomingAttackPosition>(&targetPosition));
 
                 Eigen::Vector4f pos4f(targetPosition.x(), targetPosition.y(), targetPosition.z(), 1.0f);
-                m_spLockonCursors[actorID] = boost::make_shared<CObjChaosLockonCursor>(pos4f);
+                m_spLockonCursors[actorID] = boost::make_shared<CObjChaosLockonCursor>(pos4f, true);
 
                 m_pMember->m_pGameDocument->AddGameObject(m_spLockonCursors[actorID]);
             }
