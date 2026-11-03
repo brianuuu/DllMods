@@ -798,7 +798,12 @@ void NextGenPhysics::applyPatches()
         WRITE_JUMP(0xDFDDCB, lightDashHigherPriority);
 
         // X actions
-        if (Configuration::m_model != Configuration::ModelType::Shadow || Configuration::Shadow::m_moveset != Configuration::ShadowMovesetType::Gens)
+        if (Configuration::m_model == Configuration::ModelType::Shadow && Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
+        {
+            // change boost to R2 only
+            WRITE_STRING(0x16A6AA4, "ui_shadow_gen_btn_guide");
+        }
+        else
         {
             WRITE_MEMORY(0xDFDDBD, uint32_t, 4);    // Stomping
             WRITE_MEMORY(0xDFDE7F, uint32_t, 4);    // Unknown B hold
@@ -810,6 +815,9 @@ void NextGenPhysics::applyPatches()
             WRITE_MEMORY(0x1118970, uint32_t, 4);   // GrindSquat end
             WRITE_MEMORY(0x11D6B03, uint32_t, 4);   // Sliding end
             WRITE_MEMORY(0x1230BB6, uint32_t, 4);   // Squat end
+
+            // Change notification buttons
+            WRITE_STRING(0x16A6AA4, "ui_06_btn_guide");
         }
 
         // R2 actions
@@ -838,9 +846,6 @@ void NextGenPhysics::applyPatches()
         WRITE_MEMORY(0xDFF81B, uint8_t, 0x81);
         WRITE_MEMORY(0x1119549, uint32_t, 1);
         WRITE_MEMORY(0x119910D, uint32_t, 1);
-
-        // Change notification buttons
-        WRITE_STRING(0x16A6AA4, "ui_06_btn_guide");
     }
 
     // After light dash, force using mach speed animation
