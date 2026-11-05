@@ -1554,7 +1554,7 @@ public:
 
             if (!m_spLockonCursor)
             {
-                m_spLockonCursor = boost::make_shared<Sonic::CGameObjectCSD>(m_projectLockonCursor, 0.5f, "HUD", false);
+                m_spLockonCursor = boost::make_shared<Sonic::CGameObjectCSD>(m_projectLockonCursor, 0.5f, "HUD_B1", false);
                 Sonic::CGameDocument::GetInstance()->AddGameObject(m_spLockonCursor, "main", this);
             }
         }
