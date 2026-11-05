@@ -23,6 +23,7 @@
 #include <Sonic/Message/MsgMissionFinish.h>
 #include <Sonic/Message/MsgNotifyInput.h>
 #include <Sonic/Message/MsgNotifyObjectEvent.h>
+#include <Sonic/Message/MsgNotifySenseEvent.h>
 #include <Sonic/Message/MsgNotifyShockWave.h>
 #include <Sonic/Message/MsgReopenActivity.h>
 #include <Sonic/Message/MsgRestartStage.h>
