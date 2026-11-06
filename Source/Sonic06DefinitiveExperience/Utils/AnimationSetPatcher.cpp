@@ -52,6 +52,10 @@ const char* volatile const AnimationSetPatcher::SpearSuperWait = "SpearSuperWait
 const char* volatile const AnimationSetPatcher::SpearSuperWaitLoop = "SpearSuperWaitLoop";
 const char* volatile const AnimationSetPatcher::SpearSuperShot = "SpearSuperShot";
 const char* volatile const AnimationSetPatcher::SpearSuperShotLoop = "SpearSuperShotLoop";
+const char* volatile const AnimationSetPatcher::SpearIdle = "SpearIdle";
+const char* volatile const AnimationSetPatcher::SpearRun = "SpearRun";
+const char* volatile const AnimationSetPatcher::SpearFall = "SpearFall";
+const char* volatile const AnimationSetPatcher::SpearGrind = "SpearGrind";
 const char* volatile const AnimationSetPatcher::ChaosBoost = "ChaosBoost";
 const char* volatile const AnimationSetPatcher::ChaosBoostLoop = "ChaosBoostLoop";
 const char* volatile const AnimationSetPatcher::ChaosBlastWait = "ChaosBlastWait";
@@ -209,26 +213,35 @@ HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* 
         A2->SetAnimationBlend("JeepBLoop", "JeepL", 0.1f);
         A2->SetAnimationBlend("JeepBLoop", "JeepR", 0.1f);
 
-        for (int i = 0; i < WAT_COUNT; i++)
+        if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Weapons)
         {
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Stand][i], "Stand", 0.2f);
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Stand][i], "Stand", 0.2f);
+            for (int i = 0; i < WAT_COUNT; i++)
+            {
+                A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Stand][i], "Stand", 0.2f);
+                A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Stand][i], "Stand", 0.2f);
 
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Stand][i], AnimationSetPatcher::WeaponFire[WFT_Run][i], 0.2f);
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Stand][i], AnimationSetPatcher::WeaponLoop[WFT_Run][i], 0.2f);
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Stand][i], AnimationSetPatcher::WeaponFire[WFT_Run][i], 0.2f);
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Stand][i], AnimationSetPatcher::WeaponLoop[WFT_Run][i], 0.2f);
+                A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Stand][i], AnimationSetPatcher::WeaponFire[WFT_Run][i], 0.2f);
+                A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Stand][i], AnimationSetPatcher::WeaponLoop[WFT_Run][i], 0.2f);
+                A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Stand][i], AnimationSetPatcher::WeaponFire[WFT_Run][i], 0.2f);
+                A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Stand][i], AnimationSetPatcher::WeaponLoop[WFT_Run][i], 0.2f);
 
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Run][i], AnimationSetPatcher::WeaponFire[WFT_Stand][i], 0.2f);
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Run][i], AnimationSetPatcher::WeaponLoop[WFT_Stand][i], 0.2f);
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Run][i], AnimationSetPatcher::WeaponFire[WFT_Stand][i], 0.2f);
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Run][i], AnimationSetPatcher::WeaponLoop[WFT_Stand][i], 0.2f);
+                A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Run][i], AnimationSetPatcher::WeaponFire[WFT_Stand][i], 0.2f);
+                A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Run][i], AnimationSetPatcher::WeaponLoop[WFT_Stand][i], 0.2f);
+                A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Run][i], AnimationSetPatcher::WeaponFire[WFT_Stand][i], 0.2f);
+                A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Run][i], AnimationSetPatcher::WeaponLoop[WFT_Stand][i], 0.2f);
 
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Hang][i], AnimationSetPatcher::WeaponLoop[WFT_Hang][i], 0.2f);
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Hang][i], AnimationSetPatcher::UpReelRightStart, 0.2f);
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Hang][i], AnimationSetPatcher::UpReelRightLoop, 0.2f);
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Hang][i], AnimationSetPatcher::UpReelRightStart, 0.2f);
-            A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Hang][i], AnimationSetPatcher::UpReelRightLoop, 0.2f);
+                A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Hang][i], AnimationSetPatcher::WeaponLoop[WFT_Hang][i], 0.2f);
+                A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Hang][i], AnimationSetPatcher::UpReelRightStart, 0.2f);
+                A2->SetAnimationBlend(AnimationSetPatcher::WeaponFire[WFT_Hang][i], AnimationSetPatcher::UpReelRightLoop, 0.2f);
+                A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Hang][i], AnimationSetPatcher::UpReelRightStart, 0.2f);
+                A2->SetAnimationBlend(AnimationSetPatcher::WeaponLoop[WFT_Hang][i], AnimationSetPatcher::UpReelRightLoop, 0.2f);
+            }
+        }
+        else if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
+        {
+            A2->SetAnimationBlend(AnimationSetPatcher::SpearIdle, "Stand", 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::SpearRun, "Stand", 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::SpearFall, "Fall", 0.2f);
         }
     }
 }
@@ -337,7 +350,7 @@ void AnimationSetPatcher::createAnimationState(void* A2, NewAnimationDataList co
             }
         }
 
-        if (found)
+        //if (found)
         {
             uint32_t* pTransitionData = fpGetAnimationTransitionData(A2, data.m_stateName);
             *(uint64_t*)(*pTransitionData + 96) = 1;
@@ -347,10 +360,10 @@ void AnimationSetPatcher::createAnimationState(void* A2, NewAnimationDataList co
             *(bool*)(*pTransitionData + 144) = true;
             *(Hedgehog::Base::CSharedString*)(*pTransitionData + 136) = data.m_destinationState;
         }
-        else
-        {
-            MessageBox(NULL, L"Animation transition destination does not exist, please check your code!", NULL, MB_ICONERROR);
-        }
+        //else
+        //{
+        //    MessageBox(NULL, L"Animation transition destination does not exist, please check your code!", NULL, MB_ICONERROR);
+        //}
     }
 }
 
@@ -724,6 +737,18 @@ void AnimationSetPatcher::applyPatches()
                 m_newAnimationData.emplace_back(WeaponLoop[WFT_Hang][i], "wpn_gun_hang_l", 1.0f, true, nullptr);
                 m_newAnimationData.emplace_back(WeaponFire[WFT_Hang][i], "wpn_gun_hang_fire", 1.0f, false, WeaponLoop[WFT_Hang][i]);
             }
+        }
+        else if (Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
+        {
+            // TODO:
+            m_newAnimationData.emplace_back(SpearIdle, "sh_spear_shot_s_Root", 1.0f, false, "Stand");
+            m_newAnimationData.emplace_back(SpearRun, "sh_spear_shot_s_Root", 1.0f, false, "Walk");
+            m_newAnimationData.emplace_back(SpearFall, "sh_spear_shot_s_Root", 1.0f, false, "Fall");
+            m_newAnimationData.emplace_back(SpearGrind, "sh_spear_shot_s_Root", 1.0f, false, nullptr);
+            m_newAnimationDataSuper.emplace_back(SpearIdle, "sh_spear_shot_s_Root", 1.0f, false, "Stand");
+            m_newAnimationDataSuper.emplace_back(SpearRun, "sh_spear_shot_s_Root", 1.0f, false, "Walk");
+            m_newAnimationDataSuper.emplace_back(SpearFall, "ssh_chaos_attack", 1.0f, false, "Fall");
+            m_newAnimationDataSuper.emplace_back(SpearGrind, "sh_spear_shot_s_Root", 1.0f, false, nullptr);
         }
     }
 

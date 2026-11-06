@@ -3910,7 +3910,7 @@ public:
         {
             // play single lock-on sound
             static SharedPtrTypeless soundHandle;
-            Common::SonicContextPlaySound(soundHandle, 4002012, 0);
+            Common::SonicContextPlaySound(soundHandle, 80041046, 1);
 
             for (uint32_t actorID : lockonActors)
             {
@@ -3950,13 +3950,27 @@ HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStatePluginParaloopAdvance, 0xE
         // 5 frame buffer to disable, allows transition to jumping
         doomSpearBuffer = 5;
 
-        // TODO:
         if (!padState->IsDown(Sonic::EKeyState::eKeyState_X))
         {
             if (m_spLockonCursors.size())
             {
-                // TODO: finish animation
-                Common::SonicContextChangeAnimation(Common::IsPlayerSuper() ? AnimationSetPatcher::SpearSuperShot : AnimationSetPatcher::SpearShot);
+                // finish animation
+                if (!Common::IsPlayerGrounded())
+                {
+                    Common::SonicContextChangeAnimation(AnimationSetPatcher::SpearFall);
+                }
+                else if (Common::IsPlayerGrinding())
+                {
+                    context->m_pPlayer->SendMessageSelfImm(Sonic::Message::MsgNotifySenseEvent());
+                }
+                else
+                {
+                    Eigen::Vector3f playerVelocity;
+                    Common::GetPlayerVelocity(playerVelocity);
+                    bool const moving = playerVelocity.norm() > 0.2f;
+
+                    Common::SonicContextChangeAnimation(moving ? AnimationSetPatcher::SpearRun : AnimationSetPatcher::SpearIdle);
+                }
 
                 for (auto& iter : m_spLockonCursors)
                 {
@@ -4015,6 +4029,26 @@ HOOK(void*, __fastcall, NextGenShadow_CPlayerSpeedStatePluginParaloopEnd, 0xE3E6
     }
 
     return nullptr;
+}
+
+HOOK(void, __fastcall, NextGenShadow_CStateMoveStopAdvance, 0x1197E80, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    if (This->m_Time > 0.15f)
+    {
+        alignas(16) MsgGetAnimationInfo message {};
+        Common::SonicContextGetAnimationInfo(message);
+        if (message.IsAnimation(AnimationSetPatcher::SpearRun))
+        {
+            Common::SonicContextChangeAnimation("Stand");
+        }
+    }
+
+    originalNextGenShadow_CStateMoveStopAdvance(This);
+}
+
+HOOK(void, __fastcall, NextGenShadow_CStateGrindSurpriseBegin, 0xDF1E70, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    Common::SonicContextChangeAnimation(AnimationSetPatcher::SpearGrind);
 }
 
 //---------------------------------------------------
@@ -4372,6 +4406,10 @@ void NextGenShadow::applyPatches()
         WRITE_MEMORY(0x16D3290, void*, NextGenShadow_CPlayerSpeedStatePluginParaloopBegin);
         INSTALL_HOOK(NextGenShadow_CPlayerSpeedStatePluginParaloopAdvance);
         INSTALL_HOOK(NextGenShadow_CPlayerSpeedStatePluginParaloopEnd);
+
+        // Fix doom spear animations
+        INSTALL_HOOK(NextGenShadow_CStateMoveStopAdvance);
+        INSTALL_HOOK(NextGenShadow_CStateGrindSurpriseBegin);
         break;
     }
     }
