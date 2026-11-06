@@ -67,6 +67,7 @@ float const cShadow_chaosSpearTurnRate = 180.0f * DEG_TO_RAD;
 float const cShadow_chaosSpearSuperTurnRate = 720.0f * DEG_TO_RAD;
 float const cShadow_chaosSpearShockDuration = 8.0f;
 float const cShadow_chaosSpearSuperLockDist = 30.0f;
+float const cShadow_doomSpearAddTime = 0.1f;
 float const cShadow_doomSpearLockDist = 40.0f;
 float const cShadow_weaponLockDist = 25.0f;
 bool canDoomSpearLock = false;
@@ -3867,7 +3868,7 @@ public:
         NextGenPhysics::sortTargetData();
 
         uint8_t const spearMaxCount = Common::IsPlayerSuper() ? cShadow_chaosSpearSuperMaxCount : cShadow_chaosSpearMaxCount;
-        uint32_t const currentTargetCount = min(spearMaxCount, 1 + uint32_t(m_LifeTime / cShadow_chaosSpearAddTime));
+        uint32_t const currentTargetCount = min(spearMaxCount, 1 + uint32_t(m_LifeTime / cShadow_doomSpearAddTime));
 
         // record new targets
         std::set<uint32_t> lockonActors;
