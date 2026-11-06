@@ -44,6 +44,7 @@ public:
 	// X Action
 	static float m_xHeldTimer;
 	static bool m_enableAutoRunAction;
+	static bool m_doubleJumpEnabled;
 	static bool bActionHandlerImpl();
 
 	// Chaos Boost
@@ -64,6 +65,7 @@ public:
 	static bool CanChaosSnap();
 	static void AddChaosMaturity(float amount);
 	static bool AirActionCheck();
+	static bool __fastcall DoubleJumpImpl(bool pressedJump);
 
 	static enum class OverrideType
 	{

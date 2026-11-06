@@ -115,6 +115,10 @@ float const cShadow_chaosAttackWaitTime = 0.2f;
 float NextGenShadow::m_xHeldTimer = 0.0f;
 bool NextGenShadow::m_enableAutoRunAction = true;
 
+// double jump
+bool NextGenShadow::m_doubleJumpEnabled = true;
+float const cShadow_doubleJumpPower = 18.0f;
+
 // Chaos Boost
 uint8_t NextGenShadow::m_chaosBoostMaxLevel = 3u;
 uint8_t NextGenShadow::m_chaosBoostLevel = 0u;
@@ -690,6 +694,9 @@ void PlayNextChaosAttack()
 
 HOOK(int32_t*, __fastcall, NextGenShadow_CSonicStateHomingAttackAfterBegin, 0x1118300, hh::fnd::CStateMachineBase::CStateBase* This)
 {
+    // allow double jump (Shadow Gen)
+    NextGenShadow::m_doubleJumpEnabled = true;
+
     // run the original function as some context members need to be set
     int32_t* result = originalNextGenShadow_CSonicStateHomingAttackAfterBegin(This);
 
@@ -2763,6 +2770,9 @@ HOOK(void, __fastcall, NextGenShadow_CRivalShadowMsgDamage, 0xCB4620, void* This
 //---------------------------------------------------
 HOOK(bool, __stdcall, NextGenShadow_BActionHandler, 0xDFF660, CSonicContext* context, bool buttonHoldCheck)
 {
+    // Reset double jump status
+    NextGenShadow::m_doubleJumpEnabled = true;
+
     // Handle X button action
     bool result = originalNextGenShadow_BActionHandler(context, buttonHoldCheck);
     if (result || Common::IsPlayerControlLocked())
@@ -4058,6 +4068,96 @@ HOOK(void, __fastcall, NextGenShadow_CStateGrindSurpriseBegin, 0xDF1E70, hh::fnd
     Common::SonicContextChangeAnimation(AnimationSetPatcher::SpearGrind);
 }
 
+bool NextGenShadow::DoubleJumpImpl(bool pressedJump)
+{
+    auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+
+    if (pressedJump)
+    {
+        if (context->m_HomingAttackTargetActorID)
+        {
+            StateManager::ChangeState(StateAction::HomingAttack, *PLAYER_CONTEXT);
+            return true;
+        }
+        else if (m_doubleJumpEnabled)
+        {
+            m_doubleJumpEnabled = false;
+
+            // Set velocity
+            Eigen::Vector3f velocity;
+            Common::GetPlayerVelocity(velocity);
+            velocity.y() = cShadow_doubleJumpPower;
+            if (Common::GetSonicStateFlags()->OnWater)
+            {
+                velocity.y() -= 5.0f;
+            }
+            Common::SetPlayerVelocity(velocity);
+
+            // Change state
+            Common::GetSonicStateFlags()->EnableAttenuateJump = true;
+            StateManager::ChangeState(StateAction::Jump, *PLAYER_CONTEXT);
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void __declspec(naked) NextGenShadow_AirActionAfterFlagGens()
+{
+    static uint32_t returnAddress = 0xDFFEE5;
+    static uint32_t fnButtonPress = 0xD97E00;
+    __asm
+    {
+        call    NextGenShadow::AirActionCheck
+        test    al, al
+        jnz     jump
+
+        // Double jump
+        mov     eax, [esi+11Ch]
+        push    edi
+        xor     edi, edi
+        call    [fnButtonPress]
+        pop     edi
+        mov     ecx, eax
+        call    NextGenShadow::DoubleJumpImpl
+
+        jump:
+        jmp     [returnAddress]
+    }
+}
+
+HOOK(void, __fastcall, NextGenShadow_MsgSpringImpulse, 0xE6C3D0, void* This, void* Edx, MsgApplyImpulse* message)
+{
+    NextGenShadow::m_doubleJumpEnabled = true;
+    originalNextGenShadow_MsgSpringImpulse(This, Edx, message);
+}
+
+HOOK(void, __fastcall, NextGenShadow_MsgWideSpringImpulse, 0xE6C310, void* This, void* Edx, MsgApplyImpulse* message)
+{
+    NextGenShadow::m_doubleJumpEnabled = true;
+    originalNextGenShadow_MsgWideSpringImpulse(This, Edx, message);
+}
+
+HOOK(void, __fastcall, NextGenShadow_MsgApplyImpulse, 0xE6CFA0, void* This, void* Edx, MsgApplyImpulse* message)
+{
+    NextGenShadow::m_doubleJumpEnabled = true;
+    originalNextGenShadow_MsgApplyImpulse(This, Edx, message);
+}
+
+HOOK(int*, __fastcall, NextGenShadow_CSonicStateGrindBegin, 0xDF26A0, void* This)
+{
+    NextGenShadow::m_doubleJumpEnabled = true;
+    return originalNextGenShadow_CSonicStateGrindBegin(This);
+}
+
+HOOK(void, __fastcall, NextGenShadow_CSonicStateWallJumpReadyBegin, 0x123DA70, void* This)
+{
+    NextGenShadow::m_doubleJumpEnabled = true;
+    return originalNextGenShadow_CSonicStateWallJumpReadyBegin(This);
+}
+
 //---------------------------------------------------
 // APIs
 //---------------------------------------------------
@@ -4417,6 +4517,15 @@ void NextGenShadow::applyPatches()
         // Fix doom spear animations
         INSTALL_HOOK(NextGenShadow_CStateMoveStopAdvance);
         INSTALL_HOOK(NextGenShadow_CStateGrindSurpriseBegin);
+
+        // Double Jump
+        WRITE_MEMORY(0x11BCC7E, int, 2002028);
+        WRITE_JUMP(0xDFFEA3, NextGenShadow_AirActionAfterFlagGens);
+        INSTALL_HOOK(NextGenShadow_MsgSpringImpulse);
+        INSTALL_HOOK(NextGenShadow_MsgWideSpringImpulse);
+        INSTALL_HOOK(NextGenShadow_MsgApplyImpulse);
+        INSTALL_HOOK(NextGenShadow_CSonicStateGrindBegin);
+        INSTALL_HOOK(NextGenShadow_CSonicStateWallJumpReadyBegin);
         break;
     }
     }
