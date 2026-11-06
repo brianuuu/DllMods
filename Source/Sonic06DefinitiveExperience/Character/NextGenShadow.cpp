@@ -1558,6 +1558,8 @@ public:
                 Sonic::CGameDocument::GetInstance()->AddGameObject(m_spLockonCursor, "main", this);
             }
         }
+
+        UpdatePosition();
     }
 
     void KillCallback() override
@@ -1611,14 +1613,7 @@ public:
             }
         }
 
-        // Handle position
-        if (m_sceneLockonCursor)
-        {
-            Eigen::Vector4f screenPosition;
-            Common::fGetScreenPosition(m_pos, screenPosition);
-            m_sceneLockonCursor->SetHideFlag(screenPosition.z() < 0.0f);
-            m_sceneLockonCursor->SetPosition(screenPosition.x(), screenPosition.y());
-        }
+        UpdatePosition();
     }
 
     void PlayIntro()
@@ -1656,6 +1651,18 @@ public:
         m_sceneLockonCursor->m_MotionRepeatType = loop ? Chao::CSD::eMotionRepeatType_Loop : Chao::CSD::eMotionRepeatType_PlayOnce;
         *(uint32_t*)((uint32_t)m_sceneLockonCursor.Get() + 0xB4) = 0; // this stops the reverse animation
         m_sceneLockonCursor->Update();
+    }
+
+    void UpdatePosition()
+    {
+        // Handle position
+        if (m_sceneLockonCursor)
+        {
+            Eigen::Vector4f screenPosition;
+            Common::fGetScreenPosition(m_pos, screenPosition);
+            m_sceneLockonCursor->SetHideFlag(screenPosition.z() < 0.0f);
+            m_sceneLockonCursor->SetPosition(screenPosition.x(), screenPosition.y());
+        }
     }
 };
 
