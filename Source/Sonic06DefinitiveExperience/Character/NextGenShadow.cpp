@@ -3943,6 +3943,9 @@ public:
         }
 
         m_LifeTime += updateInfo.DeltaTime;
+
+        // don't allow cursor to all appear at the same time if play has hold X for a long time
+        m_LifeTime = min(m_LifeTime, m_spLockonCursors.size() * cShadow_doomSpearAddTime);
     }
 };
 
@@ -4055,13 +4058,29 @@ HOOK(void, __fastcall, NextGenShadow_CStateMoveStopAdvance, 0x1197E80, hh::fnd::
     {
         alignas(16) MsgGetAnimationInfo message {};
         Common::SonicContextGetAnimationInfo(message);
-        if (message.IsAnimation(AnimationSetPatcher::SpearRun))
+        if (message.IsAnimation(AnimationSetPatcher::SpearRun) || message.IsAnimation(AnimationSetPatcher::SpearIdle))
         {
             Common::SonicContextChangeAnimation("Stand");
         }
     }
 
     originalNextGenShadow_CStateMoveStopAdvance(This);
+}
+
+HOOK(void, __fastcall, NextGenShadow_CStateBrakeTurnAdvance, 0x1235A60, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    if (This->m_Time > 0.15f)
+    {
+        alignas(16) MsgGetAnimationInfo message {};
+        Common::SonicContextGetAnimationInfo(message);
+        if (message.IsAnimation(AnimationSetPatcher::SpearRun) || message.IsAnimation(AnimationSetPatcher::SpearIdle))
+        {
+            StateManager::ChangeState(StateAction::Stand, *PLAYER_CONTEXT);
+            return;
+        }
+    }
+
+    originalNextGenShadow_CStateBrakeTurnAdvance(This);
 }
 
 HOOK(void, __fastcall, NextGenShadow_CStateGrindSurpriseBegin, 0xDF1E70, hh::fnd::CStateMachineBase::CStateBase* This)
@@ -4517,6 +4536,7 @@ void NextGenShadow::applyPatches()
 
         // Fix doom spear animations
         INSTALL_HOOK(NextGenShadow_CStateMoveStopAdvance);
+        INSTALL_HOOK(NextGenShadow_CStateBrakeTurnAdvance);
         INSTALL_HOOK(NextGenShadow_CStateGrindSurpriseBegin);
 
         // Double Jump

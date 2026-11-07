@@ -241,6 +241,8 @@ HOOK(void, __fastcall, CSonicCreateAnimationStates, 0xE1B6C0, void* This, void* 
         {
             A2->SetAnimationBlend(AnimationSetPatcher::SpearIdle, "Stand", 0.2f);
             A2->SetAnimationBlend(AnimationSetPatcher::SpearRun, "Stand", 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::SpearIdle, "Walk", 0.2f);
+            A2->SetAnimationBlend(AnimationSetPatcher::SpearRun, "Walk", 0.2f);
             A2->SetAnimationBlend(AnimationSetPatcher::SpearFall, "Fall", 0.2f);
         }
     }
