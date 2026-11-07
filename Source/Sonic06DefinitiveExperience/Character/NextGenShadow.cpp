@@ -3961,6 +3961,7 @@ void NextGenShadow_CPlayerSpeedStatePluginParaloopBegin(Sonic::Player::CPlayerSp
     context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(m_doomSpearSearchSingleton);
 }
 
+bool grindSurpriseSpear = false;
 HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStatePluginParaloopAdvance, 0xE3F060, Sonic::Player::CPlayerSpeedContext::CStateSpeedBase* This)
 {
     auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
@@ -3982,6 +3983,7 @@ HOOK(void, __fastcall, NextGenShadow_CPlayerSpeedStatePluginParaloopAdvance, 0xE
                 }
                 else if (Common::IsPlayerGrinding())
                 {
+                    grindSurpriseSpear = true;
                     context->m_pPlayer->SendMessageSelfImm(Sonic::Message::MsgNotifySenseEvent());
                 }
                 else
@@ -4060,7 +4062,8 @@ HOOK(void, __fastcall, NextGenShadow_CStateMoveStopAdvance, 0x1197E80, hh::fnd::
         Common::SonicContextGetAnimationInfo(message);
         if (message.IsAnimation(AnimationSetPatcher::SpearRun) || message.IsAnimation(AnimationSetPatcher::SpearIdle))
         {
-            Common::SonicContextChangeAnimation("Stand");
+            StateManager::ChangeState(StateAction::Stand, *PLAYER_CONTEXT);
+            return;
         }
     }
 
@@ -4083,9 +4086,33 @@ HOOK(void, __fastcall, NextGenShadow_CStateBrakeTurnAdvance, 0x1235A60, hh::fnd:
     originalNextGenShadow_CStateBrakeTurnAdvance(This);
 }
 
+HOOK(void, __fastcall, NextGenShadow_CStateNormalDamageAdvance, 0x123EFB0, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+    if (This->m_Time > 0.15f)
+    {
+        alignas(16) MsgGetAnimationInfo message {};
+        Common::SonicContextGetAnimationInfo(message);
+        if (message.IsAnimation(AnimationSetPatcher::SpearRun) || message.IsAnimation(AnimationSetPatcher::SpearIdle))
+        {
+            StateManager::ChangeState(StateAction::Stand, *PLAYER_CONTEXT);
+            return;
+        }
+    }
+
+    originalNextGenShadow_CStateBrakeTurnAdvance(This);
+}
+
 HOOK(void, __fastcall, NextGenShadow_CStateGrindSurpriseBegin, 0xDF1E70, hh::fnd::CStateMachineBase::CStateBase* This)
 {
-    Common::SonicContextChangeAnimation(AnimationSetPatcher::SpearGrind);
+    if (grindSurpriseSpear)
+    {
+        Common::SonicContextChangeAnimation(AnimationSetPatcher::SpearGrind);
+        grindSurpriseSpear = false;
+    }
+    else
+    {
+        originalNextGenShadow_CStateGrindSurpriseBegin(This);
+    }
 }
 
 bool NextGenShadow::DoubleJumpImpl(bool pressedJump)
@@ -4537,6 +4564,7 @@ void NextGenShadow::applyPatches()
         // Fix doom spear animations
         INSTALL_HOOK(NextGenShadow_CStateMoveStopAdvance);
         INSTALL_HOOK(NextGenShadow_CStateBrakeTurnAdvance);
+        INSTALL_HOOK(NextGenShadow_CStateNormalDamageAdvance);
         INSTALL_HOOK(NextGenShadow_CStateGrindSurpriseBegin);
 
         // Double Jump
