@@ -4,6 +4,7 @@
 #include "Managers/MstManager.h"
 #include "System/Application.h"
 #include "UI/UIContext.h"
+#include "Configuration.h"
 
 bool LoadingUI::m_init = false;
 bool LoadingUI::m_drawEnabled = false;
@@ -110,28 +111,42 @@ HOOK(void, __fastcall, LoadingUI_MsgRequestStartLoading, 0x1092D80, uint32_t* Th
 			{
 				if (S06DE_API::IsUsingCharacterMoveset())
 				{
+					std::wstring texture;
 					switch (S06DE_API::GetModelType())
 					{
 						case S06DE_API::ModelType::Sonic:
 						{
-							UIContext::loadTextureFromFile((dir + L"Assets\\Title\\tips_sonic" + std::to_wstring(std::rand() % 3) + L".dds").c_str(), &LoadingUI::m_tipsTexture);
+							texture = dir + L"Assets\\Title\\tips_sonic" + std::to_wstring(std::rand() % 3);
 							break;
 						}
 						case S06DE_API::ModelType::SonicElise:
 						{
-							UIContext::loadTextureFromFile((dir + L"Assets\\Title\\tips_princess.dds").c_str(), &LoadingUI::m_tipsTexture);
+							texture = dir + L"Assets\\Title\\tips_princess";
 							break;
 						}
 						case S06DE_API::ModelType::Blaze:
 						{
-							UIContext::loadTextureFromFile((dir + L"Assets\\Title\\tips_blaze.dds").c_str(), &LoadingUI::m_tipsTexture);
+							texture = dir + L"Assets\\Title\\tips_blaze";
 							break;
 						}
 						case S06DE_API::ModelType::Shadow:
 						{
-							UIContext::loadTextureFromFile((dir + L"Assets\\Title\\tips_shadow" + std::to_wstring(std::rand() % 3) + L".dds").c_str(), &LoadingUI::m_tipsTexture);
+							texture = dir + L"Assets\\Title\\tips_shadow" + std::to_wstring(std::rand() % 3);
 							break;
 						}
+					}
+
+					if (!texture.empty())
+					{
+						if (Configuration::m_buttonType == Configuration::BT_PS3)
+						{
+							texture += L"_ps.dds";
+						}
+						else
+						{
+							texture += L".dds";
+						}
+						UIContext::loadTextureFromFile(texture.c_str(), &LoadingUI::m_tipsTexture);
 					}
 				}
 			}
