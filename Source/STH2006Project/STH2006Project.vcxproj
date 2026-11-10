@@ -250,6 +250,7 @@
       <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </ForcedIncludeFiles>
     </ClCompile>
+    <ClCompile Include="Utils\bbValidator.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="Objects\cmn\GenericObject.cpp" />
     <ClCompile Include="Objects\twn\SoleannaCar.cpp" />
@@ -330,6 +331,7 @@
     <ClCompile Include="Utils\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Utils\bbValidator.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="Objects\cmn\GenericObject.h" />
     <ClInclude Include="Objects\twn\SoleannaCar.h" />

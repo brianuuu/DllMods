@@ -16,11 +16,15 @@
 #include "UI/TitleUI.h"
 #include "UI/UIContext.h"
 #include "Utils/ArchiveTreePatcher.h"
+#include "Utils/bbValidator.h"
 #include "Utils/SynchronizedObject.h"
 #include "Utils/Window.h"
 
 extern "C" __declspec(dllexport) void Init(ModInfo_t * modInfo)
 {
+    // Validate if there are missing files, comment out for release
+    bbValidator::validate();
+
     std::string modDir = modInfo->CurrentMod->Path;
     size_t pos = modDir.find_last_of("\\/");
     if (pos != std::string::npos)

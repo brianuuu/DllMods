@@ -100,6 +100,7 @@
     <ClCompile Include="UI\ExtraUI.cpp" />
     <ClCompile Include="Objects\cmn\GenericObject.cpp" />
     <ClCompile Include="Objects\twn\SoleannaCar.cpp" />
+    <ClCompile Include="Utils\bbValidator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -170,6 +171,7 @@
     <ClInclude Include="UI\ExtraUI.h" />
     <ClInclude Include="Objects\cmn\GenericObject.h" />
     <ClInclude Include="Objects\twn\SoleannaCar.h" />
+    <ClInclude Include="Utils\bbValidator.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">
