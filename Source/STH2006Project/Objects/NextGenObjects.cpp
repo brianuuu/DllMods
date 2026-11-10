@@ -111,9 +111,6 @@ void NextGenObjects::applyPatches()
     //---------------------------------------------------
     // Custom Objects
     //---------------------------------------------------
-    // 06 itembox
-    Itembox::applyPatches();
-
     // boss
     Mephiles::registerObject();
 
@@ -124,6 +121,7 @@ void NextGenObjects::applyPatches()
     GenericObject::registerObject();
     Guillotine::registerObject();
     Hint::registerObject();
+    Itembox::applyPatches();
     JumpChain::registerObject();
     Laser::registerObject();
     UpDownReel::registerObject();

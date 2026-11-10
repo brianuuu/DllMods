@@ -50,6 +50,12 @@ void __declspec(naked) EnemyEggRobo_TrackBeam()
 
 void EnemyEggRobo::applyPatches()
 {
+    // Move EnemyEggRobo (Lancer/Stinger) lock-on
+    static float const c_eggRoboLockScale = 0.3f;
+    WRITE_MEMORY(0xBAAFBD, uint8_t, 0xD);
+    WRITE_MEMORY(0xBAAFBE, float*, &c_eggRoboLockScale);
+    WRITE_NOP(0xBAAFC2, 0x1);
+
     // Fix EggRoboB using wrong brk object
     INSTALL_HOOK(EnemyEggRobo_SpawnBrk);
 
@@ -62,7 +68,7 @@ void EnemyEggRobo::applyPatches()
     WRITE_JUMP(0x601CE7, (void*)EnemyEggRobo_TrackBeam);
     WRITE_JUMP(0x601E54, (void*)0x601E7E);
 
-    // fix chaos energy amount
+    // Fix chaos energy amount
     WRITE_MEMORY(0x16F7C9C + 0xC8, void*, AddCallback);
 }
 
