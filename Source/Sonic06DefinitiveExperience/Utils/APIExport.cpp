@@ -16,6 +16,12 @@ extern "C" __declspec(dllexport) Configuration::ModelType API_GetModelType()
 
 extern "C" __declspec(dllexport) bool API_IsUsingCharacterMoveset()
 {
+	if (Configuration::m_model == Configuration::ModelType::Shadow && Configuration::Shadow::m_moveset == Configuration::ShadowMovesetType::Gens)
+	{
+		// prevent 06 character hint display in STH2006
+		return false;
+	}
+
 	return Configuration::m_characterMoveset;
 }
 
