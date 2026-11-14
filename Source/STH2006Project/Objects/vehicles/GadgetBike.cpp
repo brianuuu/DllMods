@@ -131,7 +131,7 @@ bool GadgetBike::SetAddColliders
 {
 	// Rigid body
 	char const* rigidBodyName = "Gadget_Bike";
-	AddRigidBody(m_spRigidBody, rigidBodyName, rigidBodyName, *(int*)0x1E0AFF4, m_spNodeModel, in_spDatabase);
+	AddRigidBody(m_spRigidBody, rigidBodyName, rigidBodyName, *(int*)0x1E0AFF0, m_spNodeModel, in_spDatabase);
 
 	// damage to object
 	uint32_t const typeEnemy = *(uint32_t*)0x1E5E7E8;

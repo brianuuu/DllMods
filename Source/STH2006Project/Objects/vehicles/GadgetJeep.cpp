@@ -252,15 +252,15 @@ bool GadgetJeep::SetAddColliders
 {
 	// Rigid body
 	char const* rigidBodyName = "Gadget_Jeep";
-	AddRigidBody(m_spRigidBody, rigidBodyName, rigidBodyName, *(int*)0x1E0AFF4, m_spMatrixNodeTransform, in_spDatabase);
+	AddRigidBody(m_spRigidBody, rigidBodyName, rigidBodyName, *(int*)0x1E0AFF0, m_spMatrixNodeTransform, in_spDatabase);
 
 	// Wheel collisions
 	hk2010_2_0::hkpCylinderShape* wheelLShape = new hk2010_2_0::hkpCylinderShape(hh::math::CVector::Zero(), hh::math::CVector(0.5f, 0.0f, 0.0f), 0.54f);
 	hk2010_2_0::hkpCylinderShape* wheelRShape = new hk2010_2_0::hkpCylinderShape(hh::math::CVector::Zero(), hh::math::CVector(-0.5f, 0.0f, 0.0f), 0.54f);
-	AddRigidBody(m_spRigidBodyWheelFL, wheelLShape, *(int*)0x1E0AFF4, m_spNodeGuardL);
-	AddRigidBody(m_spRigidBodyWheelFR, wheelRShape, *(int*)0x1E0AFF4, m_spNodeGuardR);
-	AddRigidBody(m_spRigidBodyWheelBL, wheelLShape, *(int*)0x1E0AFF4, m_spModelBase->GetNode("Wheel_B_L"));
-	AddRigidBody(m_spRigidBodyWheelBR, wheelRShape, *(int*)0x1E0AFF4, m_spModelBase->GetNode("Wheel_B_R"));
+	AddRigidBody(m_spRigidBodyWheelFL, wheelLShape, *(int*)0x1E0AFF0, m_spNodeGuardL);
+	AddRigidBody(m_spRigidBodyWheelFR, wheelRShape, *(int*)0x1E0AFF0, m_spNodeGuardR);
+	AddRigidBody(m_spRigidBodyWheelBL, wheelLShape, *(int*)0x1E0AFF0, m_spModelBase->GetNode("Wheel_B_L"));
+	AddRigidBody(m_spRigidBodyWheelBR, wheelRShape, *(int*)0x1E0AFF0, m_spModelBase->GetNode("Wheel_B_R"));
 
 	// damage to object
 	uint32_t const typeEnemy = *(uint32_t*)0x1E5E7E8;

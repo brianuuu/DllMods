@@ -126,7 +126,7 @@ bool GadgetGlider::SetAddColliders
 {
 	// Rigid body
 	char const* rigidBodyName = "Gadget_Glider";
-	AddRigidBody(m_spRigidBody, rigidBodyName, rigidBodyName, *(int*)0x1E0AFF4, m_spNodeModel, in_spDatabase);
+	AddRigidBody(m_spRigidBody, rigidBodyName, rigidBodyName, *(int*)0x1E0AFF0, m_spNodeModel, in_spDatabase);
 
 	// Disable rigid body for a bit
 	Common::ToggleRigidBodyCollision(m_spRigidBody.get(), false);

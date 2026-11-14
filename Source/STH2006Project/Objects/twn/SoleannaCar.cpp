@@ -144,7 +144,7 @@ bool SoleannaCar::SetAddColliders
 {
 	// Rigid body
 	char const* rigidBodyName = c_carNames[(int)m_type];
-	AddRigidBody(m_spRigidBody, rigidBodyName, rigidBodyName, *(int*)0x1E0AFF4, m_spMatrixNodeTransform, in_spDatabase);
+	AddRigidBody(m_spRigidBody, rigidBodyName, rigidBodyName, *(int*)0x1E0AFF0, m_spMatrixNodeTransform, in_spDatabase);
 
 	return true;
 }

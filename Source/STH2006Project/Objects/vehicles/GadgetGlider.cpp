@@ -165,7 +165,7 @@ bool GadgetGlider::SetAddColliders
 {
 	// Rigid body
 	char const* rigidBodyName = "Gadget_Glider";
-	AddRigidBody(m_spRigidBody, rigidBodyName, rigidBodyName, *(int*)0x1E0AFF4, m_spMatrixNodeTransform, in_spDatabase);
+	AddRigidBody(m_spRigidBody, rigidBodyName, rigidBodyName, *(int*)0x1E0AFF0, m_spMatrixNodeTransform, in_spDatabase);
 
 	// damage to object
 	uint32_t const typeEnemy = *(uint32_t*)0x1E5E7E8;
