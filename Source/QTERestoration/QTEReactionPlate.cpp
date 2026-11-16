@@ -184,9 +184,11 @@ HOOK(bool, __stdcall, QTEReactionPlate_PlayUIEffect, 0xE6F3E0, float* This, void
 
         if (Configuration::m_wiiSFX)
         {
-            // Wii OK sfx
+            bool success = *(bool*)((uint32_t)This + 57);
+
+            // Wii OK/Fail sfx
             SharedPtrTypeless soundHandle;
-            Common::SonicContextPlaySound(soundHandle, 3000812995, 0);
+            Common::SonicContextPlaySound(soundHandle, success ? 3000812995 : 3000812996, 0);
         }
     }
 
