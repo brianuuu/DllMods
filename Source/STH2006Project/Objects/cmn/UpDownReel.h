@@ -28,7 +28,7 @@ private:
 	uint32_t m_playerID = 0u;
 
 	bool m_isOn = true;
-	bool m_statusLoaded = false;
+	bool m_useBank = false;
 
 	boost::shared_ptr<hh::mr::CSingleElement> m_spModelBase;
 

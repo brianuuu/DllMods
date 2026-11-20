@@ -117,14 +117,16 @@ void UpDownReel::AddCallback
 {
 	Sonic::CObjectBase::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
 
-	if ((!m_statusLoaded && !m_Data.m_DefaultOn) || !m_isOn)
+	if (!m_useBank)
 	{
-		m_isOn = false;
-		if (m_Data.m_HeightStart > 1.5f)
-		{
-			m_spNodeModelHandle->m_Transform.SetPosition(hh::math::CVector(0.0f, -1.5f, 0.0f));
-			m_spNodeModelHandle->NotifyChanged();
-		}
+		m_isOn = m_Data.m_DefaultOn;
+		m_useBank = true;
+	}
+
+	if (!m_isOn && m_Data.m_HeightStart > 1.5f)
+	{
+		m_spNodeModelHandle->m_Transform.SetPosition(hh::math::CVector(0.0f, -1.5f, 0.0f));
+		m_spNodeModelHandle->NotifyChanged();
 	}
 }
 
@@ -187,7 +189,7 @@ void UpDownReel::AddParameterBank
 )
 {
 	in_rParameterBank->AccessParameterBankBool("IsOn", &m_isOn);
-	m_statusLoaded = true;
+	in_rParameterBank->AccessParameterBankBool("UseBank", &m_useBank);
 }
 
 bool UpDownReel::ProcessMessage
