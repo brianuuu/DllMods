@@ -82,7 +82,7 @@ bool GadgetMissile::ProcessMessage(Hedgehog::Universe::Message& message, bool fl
 					SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgNotifyObjectEvent>(422));
 					SendMessage(message.m_SenderActorID, boost::make_shared<Sonic::Message::MsgDamage>
 						(
-							*(uint32_t*)0x1E0BE28, // DamageID_SonicHeavy
+							Common::MakeDamageID(SonicCollision::TypeGunTruckAttack),
 							m_spMatrixNodeTransform->m_Transform.m_Position,
 							m_velocity
 						)

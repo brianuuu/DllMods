@@ -2140,6 +2140,54 @@ inline uint32_t MakeCollisionID(uint64_t self, uint64_t other)
 	return fpMakeCollisionID(0, 0, true, self, other);
 }
 
+static uint64_t* fGetDamageBitfields
+(
+	uint64_t* bitfields,
+	SonicCollision collision
+)
+{
+	static void* const pfGetDamageBitfields = (void*)0x45EFE0;
+	__asm
+	{
+		mov		esi, bitfields
+		mov		eax, collision
+		mov		eax, [eax]
+		push	eax
+		call	[pfGetDamageBitfields]
+	}
+}
+
+inline uint32_t MakeDamageID(SonicCollision type)
+{
+	uint64_t bitfields[2];
+	fGetDamageBitfields(bitfields, type);
+
+	FUNCTION_PTR(uint32_t, __cdecl, fpMakeDamageID, 0x4F85C0, uint64_t first, uint64_t second);
+	return fpMakeDamageID(bitfields[0], bitfields[1]);
+}
+
+static uint32_t fCombineDamageID
+(
+	uint32_t damageID,
+	uint64_t* bitfields
+)
+{
+	static void* const pfCombineDamageID = (void*)0x4F8640;
+	__asm
+	{
+		mov		ecx, bitfields
+		mov		eax, damageID
+		call	[pfCombineDamageID]
+	}
+}
+
+inline uint32_t MakeDamageID(uint32_t damageID, SonicCollision type)
+{
+	uint64_t bitfields[2];
+	fGetDamageBitfields(bitfields, type);
+	return fCombineDamageID(damageID, bitfields);
+}
+
 static void* ObjectPlaySound
 (
 	void* pObject,
