@@ -52,7 +52,6 @@ bool WvoRevolvingNet::SetAddRenderables
 	// states
 	SetContext(this);
 	AddAnimationState("WrongSide");
-	ChangeState("WrongSide");
 
 	// mat-anim
 	m_spEffectMotionAll = boost::make_shared<hh::mot::CSingleElementEffectMotionAll>();
