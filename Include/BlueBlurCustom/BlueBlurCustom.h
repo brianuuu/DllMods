@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Sonic/Message/MsgApplyImpulse.h>
 #include <Sonic/Message/MsgChangeGameSpeed.h>
 #include <Sonic/Message/MsgChangeMotionInExternalControl.h>
 #include <Sonic/Message/MsgCheckPermissionAttack.h>
