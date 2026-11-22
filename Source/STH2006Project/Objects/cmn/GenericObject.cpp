@@ -6,6 +6,14 @@ void GenericObject::registerObject()
 	BB_INSTALL_SET_OBJECT_MAKE_HOOK(GenericObject);
 }
 
+GenericObject::~GenericObject()
+{
+	if (m_Data.m_Name)
+	{
+		m_Data.m_Name->Release();
+	}
+}
+
 void GenericObject::InitializeEditParam
 (
 	Sonic::CEditParam& in_rEditParam
@@ -53,8 +61,8 @@ bool GenericObject::SetAddColliders
 {
 	if (m_Data.m_HasCollision || m_Data.m_HasDamage)
 	{
-		// Rigid body, ColID_BasicCamTerrain + TypeReactRing
-		AddRigidBody(m_spRigidBody, m_Data.m_Name->m_pMember->m_DefaultValueName.c_str(), m_Data.m_Name->m_pMember->m_DefaultValueName.c_str(), *(int*)0x1E0AF18, m_spMatrixNodeTransform, in_spDatabase);
+		// Rigid body, ColID_Basic
+		AddRigidBody(m_spRigidBody, m_Data.m_Name->m_pMember->m_DefaultValueName.c_str(), m_Data.m_Name->m_pMember->m_DefaultValueName.c_str(), *(int*)0x1E0AFF0, m_spMatrixNodeTransform, in_spDatabase);
 
 		if (!m_Data.m_HasCollision)
 		{

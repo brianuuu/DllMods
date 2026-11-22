@@ -11,6 +11,8 @@ public:
 	BB_SET_OBJECT_MAKE("GenericObject");
 	static void registerObject();
 
+	virtual ~GenericObject() override;
+
 private:
 	struct Data
 	{
