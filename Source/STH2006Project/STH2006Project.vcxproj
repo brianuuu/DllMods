@@ -299,7 +299,6 @@
     <ClCompile Include="Objects\cmn\Laser.cpp" />
     <ClCompile Include="Objects\cmn\UpDownReel.cpp" />
     <ClCompile Include="Objects\gens\Navigation.cpp" />
-    <ClCompile Include="Objects\gens\Omochao.cpp" />
     <ClCompile Include="Objects\mission\Pele.cpp" />
     <ClCompile Include="Objects\mission\SoleannaBoys.cpp" />
     <ClCompile Include="Objects\mission\SonicMan.cpp" />
@@ -380,7 +379,6 @@
     <ClInclude Include="Objects\cmn\Laser.h" />
     <ClInclude Include="Objects\cmn\UpDownReel.h" />
     <ClInclude Include="Objects\gens\Navigation.h" />
-    <ClInclude Include="Objects\gens\Omochao.h" />
     <ClInclude Include="Objects\mission\Pele.h" />
     <ClInclude Include="Objects\mission\SoleannaBoys.h" />
     <ClInclude Include="Objects\mission\SonicMan.h" />

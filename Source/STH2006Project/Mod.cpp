@@ -4,8 +4,6 @@
 #include "Managers/ParamManager.h"
 #include "Managers/ScoreManager.h"
 #include "Managers/StageManager.h"
-#include "Objects/gens/Navigation.h"
-#include "Objects/gens/Omochao.h"
 #include "Objects/NextGenObjects.h"
 #include "Objects/twn/SoleannaNPC.h"
 #include "System/Application.h"
@@ -48,12 +46,6 @@ extern "C" __declspec(dllexport) void Init(ModInfo_t * modInfo)
     // Enable enemy event and triggers
     EnemyTrigger::applyPatches();
     EnemyHealth::applyPatches();
-
-    // Disable lightdash hints
-    Navigation::applyPatches();
-
-    // Character specific dialogs
-    Omochao::applyPatches();
 
     // Changes how Chaos Enemgy awards boost
     ChaosEnergy::applyPatches();
