@@ -32,6 +32,8 @@
 #include "vehicles/GadgetGlider.h"
 #include "vehicles/GadgetJeep.h"
 
+#include "wvo/WvoRevolvingNet.h"
+
 void NextGenObjects::applyPatches()
 {
     // Ring
@@ -147,4 +149,7 @@ void NextGenObjects::applyPatches()
 
     // twn
     SoleannaCar::registerObject();
+
+    // wvo
+    WvoRevolvingNet::registerObject();
 }
