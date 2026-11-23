@@ -61,7 +61,14 @@ bool UpDownReel::SetAddRenderables
 	// beam
 	m_spNodeModelBeam = boost::make_shared<Sonic::CMatrixNodeTransform>();
 	m_spNodeModelBeam->m_Transform.SetPosition(hh::math::CVector(0.0f, 0.05f, 0.0f));
-	m_spNodeModelBeam->m_Transform.m_Matrix.scale(hh::math::CVector(1.0f, m_Data.m_HeightStart - 0.9f, 0.55f));
+	if (!m_isOn && m_Data.m_HeightStart > 1.5f)
+	{
+		m_spNodeModelBeam->m_Transform.m_Matrix.scale(hh::math::CVector(1.0f, 0.4f, 0.55f));
+	}
+	else
+	{
+		m_spNodeModelBeam->m_Transform.m_Matrix.scale(hh::math::CVector(1.0f, m_Data.m_HeightStart - 0.9f, 0.55f));
+	}
 	m_spNodeModelBeam->NotifyChanged();
 	m_spNodeModelBeam->SetParent(m_spMatrixNodeTransform.get());
 	boost::shared_ptr<hh::mr::CModelData> spModelBeamData = wrapper.GetModelData("cmn_updownreel_beam", 0);
@@ -71,7 +78,14 @@ bool UpDownReel::SetAddRenderables
 
 	// handle
 	m_spNodeModelHandle = boost::make_shared<Sonic::CMatrixNodeTransform>();
-	m_spNodeModelHandle->m_Transform.SetPosition(hh::math::CVector(0.0f, -m_Data.m_HeightStart, 0.0f));
+	if (!m_isOn && m_Data.m_HeightStart > 1.5f)
+	{
+		m_spNodeModelHandle->m_Transform.SetPosition(hh::math::CVector(0.0f, -1.5f, 0.0f));
+	}
+	else
+	{
+		m_spNodeModelHandle->m_Transform.SetPosition(hh::math::CVector(0.0f, -m_Data.m_HeightStart, 0.0f));
+	}
 	m_spNodeModelHandle->NotifyChanged();
 	m_spNodeModelHandle->SetParent(m_spMatrixNodeTransform.get());
 	boost::shared_ptr<hh::mr::CModelData> spModelHoldData = wrapper.GetModelData("cmn_updownreel02", 0);
@@ -82,7 +96,6 @@ bool UpDownReel::SetAddRenderables
 	// culling
 	SetCullingRange(max(m_Data.m_HeightStart, m_Data.m_HeightEnd) + 10.0f);
 
-	m_currentHeight = m_Data.m_HeightStart;
 	return true;
 }
 
@@ -115,19 +128,13 @@ void UpDownReel::AddCallback
 	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
 )
 {
-	Sonic::CObjectBase::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
-
 	if (!m_useBank)
 	{
 		m_isOn = m_Data.m_DefaultOn;
 		m_useBank = true;
 	}
 
-	if (!m_isOn && m_Data.m_HeightStart > 1.5f)
-	{
-		m_spNodeModelHandle->m_Transform.SetPosition(hh::math::CVector(0.0f, -1.5f, 0.0f));
-		m_spNodeModelHandle->NotifyChanged();
-	}
+	Sonic::CObjectBase::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
 }
 
 void UpDownReel::SetUpdateParallel

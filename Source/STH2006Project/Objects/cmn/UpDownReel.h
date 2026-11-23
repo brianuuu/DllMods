@@ -23,7 +23,6 @@ private:
 
 private:
 	SharedPtrTypeless m_loopSfx;
-	float m_currentHeight = 0.0f;
 	float m_speed = 0.0f;
 	uint32_t m_playerID = 0u;
 
