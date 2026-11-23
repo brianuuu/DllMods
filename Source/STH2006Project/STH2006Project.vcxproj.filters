@@ -101,6 +101,7 @@
     <ClCompile Include="Objects\twn\SoleannaCar.cpp" />
     <ClCompile Include="Utils\bbValidator.cpp" />
     <ClCompile Include="Objects\wvo\WvoRevolvingNet.cpp" />
+    <ClCompile Include="Objects\cmn\GenericDoor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
@@ -172,6 +173,7 @@
     <ClInclude Include="Objects\twn\SoleannaCar.h" />
     <ClInclude Include="Utils\bbValidator.h" />
     <ClInclude Include="Objects\wvo\WvoRevolvingNet.h" />
+    <ClInclude Include="Objects\cmn\GenericDoor.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">

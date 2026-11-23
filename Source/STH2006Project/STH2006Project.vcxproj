@@ -250,6 +250,7 @@
       <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </ForcedIncludeFiles>
     </ClCompile>
+    <ClCompile Include="Objects\cmn\GenericDoor.cpp" />
     <ClCompile Include="Objects\wvo\WvoRevolvingNet.cpp" />
     <ClCompile Include="Utils\bbValidator.cpp" />
     <ClCompile Include="Configuration.cpp" />
@@ -331,6 +332,7 @@
     <ClCompile Include="Utils\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Objects\cmn\GenericDoor.h" />
     <ClInclude Include="Objects\wvo\WvoRevolvingNet.h" />
     <ClInclude Include="Utils\bbValidator.h" />
     <ClInclude Include="Configuration.h" />
