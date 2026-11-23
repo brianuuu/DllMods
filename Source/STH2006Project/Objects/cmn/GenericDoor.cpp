@@ -10,7 +10,7 @@ GenericDoor::~GenericDoor()
 {
 	if (m_Data.m_Name)
 	{
-		m_Data.m_Name->AddRef();
+		m_Data.m_Name->Release();
 	}
 }
 
@@ -32,6 +32,7 @@ void GenericDoor::InitializeEditParam
 
 	in_rEditParam.CreateParamFloat(&m_Data.m_CullingRange, "CullingRange");
 	in_rEditParam.CreateParamInt(&m_Data.m_CueID, "CueID");
+	in_rEditParam.CreateParamBool(&m_Data.m_DefaultTriggered, "DefaultTriggered");
 }
 
 bool GenericDoor::SetAddRenderables
@@ -56,36 +57,23 @@ bool GenericDoor::SetAddRenderables
 	m_spAnimPose->CreateAnimationCache();
 	m_spModel->BindPose(m_spAnimPose);
 
-	// states
-	SetContext(this);
-	AddAnimationState("Trigger");
-
 	// mat-anim
 	m_spEffectMotionAll = boost::make_shared<hh::mot::CSingleElementEffectMotionAll>();
 	m_spModel->BindEffect(m_spEffectMotionAll);
-
-	FUNCTION_PTR(void, __thiscall, fpGetMaterialAnimData, 0x759720,
-		hh::mot::CMotionDatabaseWrapper const& wrapper,
-		boost::shared_ptr<Hedgehog::Motion::CMaterialAnimationData>&materialAnimData,
-		hh::base::CSharedString const& name,
-		uint32_t flag
-	);
-
-	FUNCTION_PTR(void, __thiscall, fpCreateMatAnim, 0x753910,
-		Hedgehog::Motion::CSingleElementEffectMotionAll * This,
-		boost::shared_ptr<hh::mr::CModelData> const& modelData,
-		boost::shared_ptr<Hedgehog::Motion::CMaterialAnimationData> const& materialAnimData
-	);
-
-	hh::mot::CMotionDatabaseWrapper motWrapper(in_spDatabase.get());
-	boost::shared_ptr<Hedgehog::Motion::CMaterialAnimationData> materialAnimData;
 	if (m_Data.m_Name->m_pMember->m_DefaultValueName == "wvo_obj_doorA")
 	{
-		fpGetMaterialAnimData(motWrapper, materialAnimData, "wvo_obj_doorA_light", 0);
-		fpCreateMatAnim(m_spEffectMotionAll.get(), spModelBaseData, materialAnimData);
+		AddMatAnim("wvo_obj_doorA_light_close");
 	}
 
 	SetCullingRange(m_Data.m_CullingRange);
+
+	// states
+	SetContext(this);
+	AddAnimationState("Trigger");
+	if (m_triggered)
+	{
+		Trigger(true);
+	}
 
 	return true;
 }
@@ -102,13 +90,45 @@ bool GenericDoor::SetAddColliders
 	return true;
 }
 
+void GenericDoor::AddCallback
+(
+	const Hedgehog::Base::THolder<Sonic::CWorld>& in_rWorldHolder,
+	Sonic::CGameDocument* in_pGameDocument,
+	const boost::shared_ptr<Hedgehog::Database::CDatabase>& in_spDatabase
+)
+{
+	if (!m_useBank)
+	{
+		m_triggered = m_Data.m_DefaultTriggered;
+		m_useBank = true;
+	}
+
+	Sonic::CObjectBase::AddCallback(in_rWorldHolder, in_pGameDocument, in_spDatabase);
+}
+
+void GenericDoor::AddParameterBank
+(
+	const Hedgehog::Base::CRefPtr<Sonic::CParameterBank>& in_rParameterBank
+)
+{
+	in_rParameterBank->AccessParameterBankBool("Triggered", &m_triggered);
+	in_rParameterBank->AccessParameterBankBool("UseBank", &m_useBank);
+}
+
 void GenericDoor::SetUpdateParallel
 (
 	const Hedgehog::Universe::SUpdateInfo& in_rUpdateInfo
 )
 {
 	FUNCTION_PTR(void, __thiscall, fpUpdateMotionAll, 0x752F00, Hedgehog::Motion::CSingleElementEffectMotionAll * This, float dt);
-	fpUpdateMotionAll(m_spEffectMotionAll.get(), in_rUpdateInfo.DeltaTime);
+	if (m_effectEndTime > 0.0f)
+	{
+		m_effectTime += in_rUpdateInfo.DeltaTime;
+	}
+	if (m_effectTime <= m_effectEndTime)
+	{
+		fpUpdateMotionAll(m_spEffectMotionAll.get(), in_rUpdateInfo.DeltaTime);
+	}
 
 	Update(in_rUpdateInfo);
 	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
@@ -133,16 +153,64 @@ bool GenericDoor::ProcessMessage
 	if (message.Is<Sonic::Message::MsgNotifyObjectEvent>())
 	{
 		auto& msg = static_cast<Sonic::Message::MsgNotifyObjectEvent&>(message);
-		if (msg.m_Event == 6)
+		if (!m_triggered && msg.m_Event == 6)
 		{
-			ChangeState("Trigger");
-			if (m_Data.m_CueID)
-			{
-				Common::ObjectPlaySound(this, m_Data.m_CueID, m_sfx);
-			}
+			Trigger();
 		}
 		return true;
 	}
 
 	return Sonic::CObjectBase::ProcessMessage(message, flag);
+}
+
+void GenericDoor::Trigger(bool skip)
+{
+	m_triggered = true;
+	ChangeState("Trigger");
+
+	// special cases
+	if (m_Data.m_Name->m_pMember->m_DefaultValueName == "wvo_obj_doorA")
+	{
+		m_effectEndTime = 1.0f;
+		m_spEffectMotionAll->m_MaterialMotionList.clear();
+		AddMatAnim("wvo_obj_doorA_light_open", skip);
+	}
+
+	// jump to animation end
+	if (skip)
+	{
+		m_effectTime = m_effectEndTime;
+		m_spAnimPose->Update(1000.0f);
+		return;
+	}
+
+	// play sfx if provided
+	if (m_Data.m_CueID)
+	{
+		Common::ObjectPlaySound(this, m_Data.m_CueID, m_sfx);
+	}
+}
+
+void GenericDoor::AddMatAnim(std::string const& name, bool skip)
+{
+	FUNCTION_PTR(void, __thiscall, fpGetMaterialAnimData, 0x759720,
+		hh::mot::CMotionDatabaseWrapper const& wrapper,
+		boost::shared_ptr<Hedgehog::Motion::CMaterialAnimationData>&materialAnimData,
+		hh::base::CSharedString const& name,
+		uint32_t flag
+	);
+
+	FUNCTION_PTR(void, __thiscall, fpCreateMatAnim, 0x753910,
+		Hedgehog::Motion::CSingleElementEffectMotionAll * This,
+		boost::shared_ptr<hh::mr::CModelData> const& modelData,
+		boost::shared_ptr<Hedgehog::Motion::CMaterialAnimationData> const& materialAnimData
+	);
+
+	FUNCTION_PTR(void, __thiscall, fpUpdateMotionAll, 0x752F00, Hedgehog::Motion::CSingleElementEffectMotionAll * This, float dt);
+
+	hh::mot::CMotionDatabaseWrapper motWrapper(m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
+	boost::shared_ptr<Hedgehog::Motion::CMaterialAnimationData> materialAnimData;
+	fpGetMaterialAnimData(motWrapper, materialAnimData, name.c_str(), 0);
+	fpCreateMatAnim(m_spEffectMotionAll.get(), m_spModel->m_spModel, materialAnimData);
+	fpUpdateMotionAll(m_spEffectMotionAll.get(), skip ? m_effectEndTime : 0.0f);
 }
