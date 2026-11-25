@@ -74,6 +74,12 @@ bool GenericDoor::SetAddRenderables
 	{
 		Trigger(true);
 	}
+	else
+	{
+		// make sure first frame matches animation
+		ChangeState("Trigger");
+		m_spAnimPose->Update(0.00001f);
+	}
 
 	return true;
 }
@@ -130,8 +136,11 @@ void GenericDoor::SetUpdateParallel
 		fpUpdateMotionAll(m_spEffectMotionAll.get(), in_rUpdateInfo.DeltaTime);
 	}
 
-	Update(in_rUpdateInfo);
-	m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
+	if (m_triggered)
+	{
+		Update(in_rUpdateInfo);
+		m_spAnimPose->Update(in_rUpdateInfo.DeltaTime);
+	}
 
 	if (m_sfx && Common::IsAnimationFinished(this))
 	{
